@@ -1,13 +1,13 @@
 export const profile = {
   name: 'Ian Abiel Wangsa',
   shortName: 'Ian Wangsa',
-  role: 'Software engineer building quantitative systems and applied AI.',
+  role: 'NUS computer science student building applied AI, quantitative systems, and secure software.',
   introduction:
-    'I turn noisy data and complex workflows into dependable software—from real-time market systems and ' +
-    'agentic developer tools to products that help teams make better decisions.',
+    'I build practical software that helps people make better decisions. My work sits at the intersection of ' +
+    'cybersecurity, AI, and finance, with a bias toward collaborative teams and solutions that create real impact.',
   location: 'Singapore',
-  education: 'Computer Science @ NUS',
-  focus: 'Quant systems · AI · Full-stack',
+  education: 'Computer Science @ NUS · Economics & Statistics minor',
+  focus: 'AI · Cybersecurity · Finance',
   availability: 'Open to meaningful collaborations',
   email: 'ianwangsa2@gmail.com',
   linkedin: 'https://www.linkedin.com/in/ian-abiel-wangsa-70625a290/',
@@ -15,10 +15,24 @@ export const profile = {
   resumeUrl: `${import.meta.env.BASE_URL}Ian_Abiel_Wangsa_Resume.pdf`,
 };
 
+// Public profile index captured from LinkedIn on 21 August 2026. Counts keep the portfolio honest
+// without copying private analytics or turning the site into a raw social-feed mirror.
+export const linkedinSnapshot = {
+  url: profile.linkedin,
+  headline: 'NUS CS | Ex-Accenture | AI, Finance, Cybersecurity',
+  projectCount: 14,
+  skillCount: 61,
+  certificationCount: 11,
+  courseCount: 8,
+  awardCount: 15,
+  volunteerCount: 7,
+  languageCount: 4,
+};
+
 export const impactStats = [
   { value: '1st', label: 'BrainHack TIL-AI 2026' },
-  { value: '95%+', label: 'Workflow efficiency gain' },
-  { value: '100 ms', label: 'Cross-venue analysis grid' },
+  { value: String(linkedinSnapshot.projectCount), label: 'LinkedIn projects' },
+  { value: String(linkedinSnapshot.skillCount), label: 'Skills across the stack' },
   { value: '4.50', label: 'NUS GPA / 5.00' },
 ];
 
@@ -47,9 +61,9 @@ export const projects = [
       'Five air-gapped AI microservices spanning speech, vision, retrieval, adversarial noise, and ' +
       'autonomous navigation for the DSTA TIL-AI finals.',
     outcome:
-      'Combined fine-tuned ASR, YOLOv11 detection, BM25-first RAG, and a MaskablePPO agent with robust ' +
-      'fallback pathfinding.',
-    tags: ['PyTorch', 'FastAPI', 'YOLOv11', 'NeMo', 'Docker'],
+      'Combined fine-tuned NVIDIA Parakeet ASR, YOLOv26 detection, BM25-first RAG, and a PPO agent with ' +
+      'robust fallback pathfinding.',
+    tags: ['PyTorch', 'FastAPI', 'YOLOv26', 'Parakeet', 'Docker'],
     repository: 'https://github.com/Manutd1234/BrainHack_V2',
     accent: 'gold',
   },
@@ -66,6 +80,36 @@ export const projects = [
     tags: ['Python', 'Pandas', 'NumPy', 'SciPy', 'Statsmodels'],
     repository: 'https://github.com/Manutd1234/Delta1_Trading_Strategy',
     accent: 'alpine',
+  },
+  {
+    number: '04',
+    title: 'CS2 Decision Coach',
+    category: 'Evidence-grounded AI · Garena AI Build Challenge',
+    description:
+      'A coaching platform that turns Counter-Strike 2 match telemetry into moment-specific tactical ' +
+      'adjustments without relying on hindsight.',
+    outcome:
+      'Parses native .dem files, detects first-contact decisions, and combines bounded evidence with player ' +
+      'intent to produce grounded coaching through LightGBM and LLMs.',
+    tags: ['Next.js', 'FastAPI', 'AWPy', 'LightGBM', 'Pydantic'],
+    repository: 'https://www.linkedin.com/in/ian-abiel-wangsa-70625a290/',
+    repositoryLabel: 'LinkedIn project',
+    accent: 'cobalt',
+  },
+  {
+    number: '05',
+    title: 'Agentic Fraud Investigation Crew',
+    category: 'AML automation · Microsoft Hack the Future',
+    description:
+      'A Microsoft-native multi-agent system for triage, evidence enrichment, adjudication, and SAR drafting ' +
+      'in high-volume financial-crime workflows.',
+    outcome:
+      'Keeps consequential decisions human-controlled with explainable evidence packs, conservative thresholds, ' +
+      'and Teams plus Power Automate approval workflows.',
+    tags: ['Azure AI', 'RAG', 'Cosmos DB', 'Power Automate', 'Power BI'],
+    repository: 'https://www.linkedin.com/in/ian-abiel-wangsa-70625a290/',
+    repositoryLabel: 'LinkedIn project',
+    accent: 'gold',
   },
 ];
 
@@ -143,8 +187,8 @@ export const education = [
     credential: 'B.Sc. Computer Science · Minor in Economics & Statistics',
     dates: 'Aug 2025 — Aug 2029',
     detail:
-      'GPA 4.50/5.00 · Programming Methodology · Data Structures & Algorithms · Linear Algebra · ' +
-      'Discrete Structures · Calculus',
+      'First Class Honours · GPA 4.50/5.00 · Programming Methodology · Data Structures & Algorithms · ' +
+      'Calculus for Computing · Community Service Club · NUS Sports Club · NUS Games Development Group',
   },
   {
     school: 'Eunoia Junior College',
@@ -194,6 +238,14 @@ export const leadership = [
     description:
       'Taught primary-school learners Scratch, logic, and introductory AI concepts through hands-on lessons.',
   },
+  {
+    title: 'BrainHack TIL-AI · Pandamonium',
+    role: 'Champion · DSTA and AngelHack',
+    dates: 'Jun 2026 — Jul 2026',
+    description:
+      'Learned and shipped five Dockerised multimodal AI services with a five-person team under an air-gapped ' +
+      'competition deadline.',
+  },
 ];
 
 export const skillGroups = [
@@ -207,7 +259,17 @@ export const skillGroups = [
   },
   {
     label: 'AI & data',
-    items: ['PyTorch', 'TensorFlow', 'Scikit-learn', 'Pandas', 'ChromaDB', 'MediaPipe'],
+    items: [
+      'PyTorch',
+      'TensorFlow',
+      'Scikit-learn',
+      'Pandas',
+      'LightGBM',
+      'RAG',
+      'Agentic AI',
+      'ChromaDB',
+      'MediaPipe',
+    ],
   },
   {
     label: 'Infrastructure',
@@ -220,7 +282,7 @@ export const credentials = [
   'Databricks AI/BI',
   'GitHub Foundations',
   'Docker Foundations',
-  'Anthropic AI Fluency',
+  'Anthropic AI Fluency: Frameworks & Foundations',
   'Anthropic Claude 101',
   'Cisco Content Networking Specialist',
   'DataCamp Machine Learning Fundamentals in Python',
