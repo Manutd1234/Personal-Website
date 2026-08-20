@@ -2341,3 +2341,149 @@ body::before {
     min-height: 70px;
   }
 }
+
+/* Compact index density */
+.content-section,
+.contact-section {
+  padding-top: 84px;
+}
+
+.section-heading {
+  margin-bottom: 26px;
+  gap: 36px;
+}
+
+.project-grid {
+  gap: 20px;
+}
+
+.project-body {
+  padding: 22px;
+  gap: 18px;
+}
+
+.pokedex-section {
+  margin-top: 56px;
+}
+
+.pokedex-card {
+  padding: clamp(22px, 3vw, 36px);
+}
+
+.pokedex-topline {
+  margin-bottom: 16px;
+}
+
+.pokedex-heading {
+  margin-bottom: 18px;
+}
+
+.profile-tabs {
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px;
+}
+
+.profile-tab {
+  padding: 10px 13px;
+}
+
+.dex-about {
+  margin-bottom: 16px;
+  padding: 15px;
+  gap: 16px;
+}
+
+.dex-stat-row {
+  margin-bottom: 18px;
+}
+
+.dex-section {
+  padding: 14px;
+}
+
+.dex-entries {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dex-entry {
+  padding: 12px;
+}
+
+.dex-entry h3 {
+  margin-top: 8px;
+}
+
+.dex-entry-note {
+  margin-top: 6px;
+}
+
+.dex-entry-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dex-entry-tags li {
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--cobalt-dark);
+  background: #fff;
+  font-family: var(--display);
+  font-size: 0.55rem;
+  font-weight: 900;
+}
+
+.dex-entry-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.dex-entry-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--cobalt-dark);
+  font-family: var(--display);
+  font-size: 0.58rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.dex-footnote {
+  margin-top: 16px;
+  padding-top: 14px;
+}
+
+@media (max-width: 860px) {
+  .content-section,
+  .contact-section {
+    padding-top: 68px;
+  }
+
+  .dex-entries {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .content-section,
+  .contact-section {
+    padding-top: 58px;
+  }
+
+  .project-grid {
+    gap: 16px;
+  }
+
+  .project-body {
+    padding: 18px;
+  }
+}
