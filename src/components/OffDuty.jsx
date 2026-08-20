@@ -35,7 +35,7 @@ export default function OffDuty() {
         </figure>
 
         <div className="off-duty-copy">
-          <p className="eyebrow">05 / BEYOND THE TERMINAL</p>
+          <p className="eyebrow">06 / BEYOND THE TERMINAL</p>
           <h2 id="off-duty-title">Curiosity travels well.</h2>
           <p className="off-duty-lead">
             The best engineering work is technical and human. I make space for unfamiliar places, team sport,
