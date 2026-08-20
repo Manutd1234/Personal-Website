@@ -39,7 +39,8 @@ function ProjectCard({ project }) {
 
       <div className="project-links">
         <a href={project.repository} target="_blank" rel="noreferrer">
-          <GitHubIcon size={18} /> Repository <ArrowUpRightIcon size={17} />
+          {project.repositoryLabel === 'LinkedIn project' ? null : <GitHubIcon size={18} />}
+          {project.repositoryLabel || 'Repository'} <ArrowUpRightIcon size={17} />
         </a>
         {project.live && (
           <a href={project.live} target="_blank" rel="noreferrer">
