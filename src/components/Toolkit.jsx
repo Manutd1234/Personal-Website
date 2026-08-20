@@ -5,8 +5,8 @@ export default function Toolkit() {
   return (
     <section className="content-section section-shell toolkit-section" aria-labelledby="toolkit-title">
       <div className="toolkit-intro">
-        <p className="eyebrow">04 / TOOLKIT & SIGNALS</p>
-        <h2 id="toolkit-title">Tools are choices, not personality traits.</h2>
+        <p className="eyebrow">05 / MOVE SET & BADGES</p>
+        <h2 id="toolkit-title">Choose the right move.</h2>
         <p>
           I pick the smallest stack that can carry the operational load, then make its assumptions visible and
           testable.
