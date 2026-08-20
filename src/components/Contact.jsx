@@ -7,7 +7,7 @@ export default function Contact() {
       <div className="contact-card">
         <div>
           <p className="eyebrow">07 / OPEN CHANNEL</p>
-          <h2 id="contact-title">Ready for a new challenge?</h2>
+          <h2 id="contact-title">Have a difficult system to make simpler?</h2>
           <p>
             I’m always glad to compare notes on quantitative engineering, applied AI, product infrastructure,
             or ambitious student projects.

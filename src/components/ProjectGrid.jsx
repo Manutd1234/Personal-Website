@@ -57,11 +57,11 @@ export default function ProjectGrid() {
     <section className="content-section section-shell" id="builds" aria-labelledby="builds-title">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">03 / TRAINER PARTY</p>
-          <h2 id="builds-title">The systems in my party.</h2>
+          <p className="eyebrow">03 / PROJECT INDEX</p>
+          <h2 id="builds-title">Systems with a clear job.</h2>
         </div>
         <p>
-          Each build has a type, a role, and a reason to exist. Choose a card to inspect the move set.
+          Each project pairs a real problem with the tools and constraints used to solve it.
         </p>
       </div>
 

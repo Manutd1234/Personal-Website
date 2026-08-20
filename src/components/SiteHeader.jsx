@@ -1,8 +1,8 @@
 const navigation = [
-  { label: 'Trainer', href: '#profile' },
-  { label: 'Pokédex', href: '#pokedex' },
-  { label: 'Party', href: '#builds' },
-  { label: 'Quest log', href: '#experience' },
+  { label: 'Profile', href: '#profile' },
+  { label: 'Index', href: '#pokedex' },
+  { label: 'Projects', href: '#builds' },
+  { label: 'Timeline', href: '#experience' },
 ];
 
 export default function SiteHeader() {
@@ -27,7 +27,7 @@ export default function SiteHeader() {
         </nav>
 
         <a className="header-cta" href="#contact">
-          Challenge me
+          Contact
         </a>
       </div>
     </header>
