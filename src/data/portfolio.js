@@ -1,14 +1,33 @@
 export const profile = {
   name: 'Ian Abiel Wangsa',
   shortName: 'Ian Wangsa',
-  role: 'NUS computer science student building applied AI, quantitative systems, and secure software.',
+  role: 'NUS computer science student and software engineer building applied AI, quantitative infrastructure, and secure products.',
   introduction:
-    'I build practical software that helps people make better decisions. My work sits at the intersection of ' +
-    'cybersecurity, AI, and finance, with a bias toward collaborative teams and solutions that create real impact.',
+    'I turn ambiguous problems into dependable systems: agentic workflows at Accenture, full-stack automation at CTES, ' +
+    'quantitative research at D+A and Caerus, and mission-focused communications during National Service.',
+  summary:
+    'I am an NUS Computer Science student who enjoys taking a messy operational problem and giving it a reliable shape. ' +
+    'My experience spans applied AI, quantitative research, secure product engineering, and technical leadership—from ' +
+    'agentic root-cause analysis at Accenture and AI sourcing systems at CTES to market-data infrastructure, hackathon builds, ' +
+    'and a two-year signals command appointment in the Republic of Singapore Air Force.',
+  coreSkills: [
+    'Applied AI',
+    'Agentic workflows',
+    'Quantitative research',
+    'Secure product engineering',
+    'Python',
+    'TypeScript',
+    'Java',
+    'React & Next.js',
+    'FastAPI & Node.js',
+    'PyTorch & LightGBM',
+    'SQL & PostgreSQL',
+    'AWS & Docker',
+  ],
   location: 'Singapore',
   education: 'Computer Science @ NUS · Economics & Statistics minor',
-  focus: 'AI · Cybersecurity · Finance',
-  availability: 'Open to meaningful collaborations',
+  focus: 'Applied AI · Quant systems · Secure products',
+  availability: 'Open to engineering, AI & quant work',
   email: 'ianwangsa2@gmail.com',
   linkedin: 'https://www.linkedin.com/in/ian-abiel-wangsa-70625a290/',
   github: 'https://github.com/Manutd1234',
@@ -21,7 +40,7 @@ export const linkedinSnapshot = {
   url: profile.linkedin,
   headline: 'NUS CS | Ex-Accenture | AI, Finance, Cybersecurity',
   about:
-    "Hi! I'm Ian. I am an NUS Computer Science student with a passion for building innovative solutions that actually make a difference. I view technology as a tool to enhance human life and improve the way we make decisions. My academic and personal focus is currently centered on Cybersecurity, AI, and Finance.\n\nI am fascinated by the rapid evolution of these fields and am dedicated to gaining a deep, well-rounded understanding of the industry. I approach my work with diligence and a collaborative spirit, believing that diverse perspectives are the key to unlocking true innovation.\n\nIf you are interested in discussing the future of tech, security, or AI, let’s connect!",
+    "Hi! I'm Ian, an NUS Computer Science student focused on applied AI, cybersecurity, and finance. I like building tools that turn complex information into clear decisions and dependable workflows.\n\nMy recent work includes agentic root-cause analysis at Accenture, AI sourcing and authenticated product workflows at CTES, quantitative research with D+A Strategies, and competition systems spanning multimodal AI and financial-crime investigation.\n\nI also bring two years of signals command experience in the Republic of Singapore Air Force, where communication, readiness, and ownership mattered every day. If you are working on difficult systems or useful technology, let’s connect!",
   topSkills: ['JavaScript', 'Java', 'SQL', 'Amazon Web Services (AWS)'],
   followerCount: 1227,
   projectCount: 14,
