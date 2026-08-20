@@ -95,12 +95,12 @@ export default function Archive() {
     <section className="content-section section-shell" id="experience" aria-labelledby="archive-title">
       <div className="section-heading archive-heading">
         <div>
-          <p className="eyebrow">03 / EXPERIENCE LOG</p>
-          <h2 id="archive-title">Built across different kinds of pressure.</h2>
+          <p className="eyebrow">04 / QUEST LOG</p>
+          <h2 id="archive-title">Built across different regions.</h2>
         </div>
         <p>
-          From production incident workflows to market microstructure and military communications, the common
-          thread is clear ownership and dependable execution.
+          From product engineering to quantitative finance, student leadership, and service, the common thread is
+          clear ownership and dependable execution.
         </p>
       </div>
 
