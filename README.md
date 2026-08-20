@@ -3,6 +3,8 @@
 A responsive field-journal portfolio for Ian Abiel Wangsa, built around selected work in quantitative systems,
 applied AI, and full-stack engineering.
 
+Live site: https://manutd1234.github.io/Personal-Website/
+
 ## What is included
 
 - An original hero and section design inspired by tactile game interfaces and engineering field notes.
