@@ -57,12 +57,11 @@ export default function ProjectGrid() {
     <section className="content-section section-shell" id="builds" aria-labelledby="builds-title">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">02 / SELECTED BUILDS</p>
-          <h2 id="builds-title">Work that earns its complexity.</h2>
+          <p className="eyebrow">03 / TRAINER PARTY</p>
+          <h2 id="builds-title">The systems in my party.</h2>
         </div>
         <p>
-          A small set of systems where speed, reliability, and honest evaluation matter more than surface-level
-          polish alone.
+          Each build has a type, a role, and a reason to exist. Choose a card to inspect the move set.
         </p>
       </div>
 
