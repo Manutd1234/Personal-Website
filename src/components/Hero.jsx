@@ -70,7 +70,7 @@ export default function Hero() {
 
           <p className="hero-name">{profile.name}</p>
           <h1 id="hero-title">
-            Building systems that stay useful <em>under pressure.</em>
+            Turning complex problems into <em>dependable systems.</em>
           </h1>
           <p className="hero-role">{profile.role}</p>
           <p className="hero-introduction">{profile.introduction}</p>
@@ -86,17 +86,17 @@ export default function Hero() {
 
           <dl className="hero-facts">
             <div>
-              <dt>Current track</dt>
+              <dt>Current focus</dt>
               <dd>{profile.focus}</dd>
             </div>
             <div>
-              <dt>Base</dt>
+              <dt>Based in</dt>
               <dd>
                 <MapPinIcon size={17} /> {profile.location}
               </dd>
             </div>
             <div>
-              <dt>Class</dt>
+              <dt>Degree</dt>
               <dd>{profile.education}</dd>
             </div>
           </dl>

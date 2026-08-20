@@ -58,10 +58,11 @@ export default function ProjectGrid() {
       <div className="section-heading">
         <div>
           <p className="eyebrow">03 / PROJECT INDEX</p>
-          <h2 id="builds-title">Systems with a clear job.</h2>
+          <h2 id="builds-title">Software for decisions, operations, and risk.</h2>
         </div>
         <p>
-          Each project pairs a real problem with the tools and constraints used to solve it.
+          From low-latency market data to evidence-grounded AI, these builds show how I move from a messy brief to a system
+          people can actually operate.
         </p>
       </div>
 

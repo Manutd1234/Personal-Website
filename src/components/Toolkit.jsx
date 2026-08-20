@@ -6,10 +6,10 @@ export default function Toolkit() {
     <section className="content-section section-shell toolkit-section" aria-labelledby="toolkit-title">
       <div className="toolkit-intro">
         <p className="eyebrow">05 / TOOLKIT & CREDENTIALS</p>
-        <h2 id="toolkit-title">A practical stack, clearly explained.</h2>
+        <h2 id="toolkit-title">Tools for shipping with evidence.</h2>
         <p>
-          I pick the smallest stack that can carry the operational load, then make its assumptions visible and
-          testable.
+          I work comfortably from model and data layer to product surface, choosing tools that make a system easier to
+          test, explain, and run in the real world.
         </p>
 
         <div className="award-ticket">

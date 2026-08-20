@@ -96,11 +96,11 @@ export default function Archive() {
       <div className="section-heading archive-heading">
         <div>
           <p className="eyebrow">04 / TIMELINE</p>
-          <h2 id="archive-title">Built across different kinds of pressure.</h2>
+          <h2 id="archive-title">A track record across software, finance, and service.</h2>
         </div>
         <p>
-          From product engineering to quantitative finance, student leadership, and service, the common thread is
-          clear ownership and dependable execution.
+          I have worked across agentic AI, full-stack product systems, quantitative research, student operations, and
+          National Service—learning to communicate clearly and own the outcome in each setting.
         </p>
       </div>
 
