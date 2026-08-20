@@ -1113,6 +1113,11 @@ img {
   padding: 24px;
 }
 
+.credential-block + .credential-block {
+  border-top: 2px solid var(--ink);
+  background: var(--surface-cool);
+}
+
 .credential-block ol {
   display: grid;
   margin: 18px 0 0;
