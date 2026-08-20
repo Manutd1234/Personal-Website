@@ -111,12 +111,78 @@ export const linkedinDetails = {
       organisation: 'Garena AI Build Challenge 2026 · Pandamonium',
       dates: 'Jul 2026 — Aug 2026',
       note: 'Evidence-grounded coaching from native .dem telemetry. The system detects first-contact moments, evaluates reset/reposition/re-engage decisions with LightGBM, and keeps LLM advice inside strict evidence boundaries.',
+      skills: ['Next.js', 'FastAPI', 'Python', 'AWPy', 'LightGBM', 'LLMs'],
     },
     {
       title: 'Agentic Fraud Investigation Crew',
       organisation: 'NTT DATA × Microsoft Hack the Future 2026 · OneBrainCell',
       dates: 'Jun 2026 — Jul 2026',
       note: 'Microsoft-native multi-agent AML workflow covering alert triage, KYC and transaction enrichment, explainable adjudication, SAR drafting, and human approval through Teams and Power Automate.',
+      skills: ['Azure AI', 'RAG', 'Cosmos DB', 'Power Automate', 'Teams', 'Power BI'],
+    },
+    {
+      title: 'RiskSignal Continuum',
+      organisation: 'SAP S.C.A.L.E 2026',
+      dates: 'Jul 2026',
+      note: 'Explainable risk scoring and queue prioritisation for TrustSphere Bank. A seven-factor financial risk engine and confidence-gated routing model targeted a 90–95% false-positive rate and approval delays.',
+      skills: ['SAP HANA', 'SAP BTP', 'SAP Joule', 'Next.js', 'TypeScript', 'FastAPI'],
+      repository: 'https://github.com/Manutd1234/SAP_Group-4',
+    },
+    {
+      title: 'BrainHack AI Systems',
+      organisation: 'BrainHack TIL-AI 2026 · DSTA Singapore',
+      dates: 'May 2026 — Jun 2026',
+      note: 'Champion project built as five Dockerised FastAPI services for an air-gapped evaluation: speech recognition, computer vision, adversarial-noise robustness, BM25 retrieval, and reinforcement-learning navigation.',
+      skills: ['Python', 'Docker', 'FastAPI', 'PyTorch', 'YOLOv11', 'BM25', 'MaskablePPO'],
+      repository: 'https://github.com/Manutd1234/BrainHack_V2',
+    },
+    {
+      title: 'Pick-a-Road',
+      organisation: 'LTA Game Design Hackathon',
+      dates: 'May 2026',
+      note: 'Browser-based decision game that turns Singapore transport planning into a resource-constrained systems problem, balancing network trade-offs and long-term outcomes.',
+      skills: ['HTML5', 'JavaScript', 'Game design', 'Systems thinking'],
+      repository: 'https://github.com/yujiankoh/PickARoad',
+      live: 'https://nanomickey.itch.io/pickaroad',
+    },
+    {
+      title: 'Cyber Defence CTF',
+      organisation: 'BrainHack CDDC 2026',
+      dates: 'May 2026',
+      note: 'Live-fire enterprise security simulation covering network and web vulnerabilities, digital forensics, packet and log analysis, threat reconstruction, and incident response.',
+      skills: ['Network security', 'Digital forensics', 'Vulnerability assessment', 'Incident response'],
+    },
+    {
+      title: 'FormForward',
+      organisation: 'Gemma 4 Good Hackathon',
+      dates: 'Apr 2026 — May 2026',
+      note: 'AI running coach that synchronises MediaPipe pose landmarks with Garmin telemetry, detects form degradation against a personal baseline, and turns noisy signals into local, natural-language coaching cues.',
+      skills: ['MediaPipe', 'Computer vision', 'Gemma 4', 'React', 'Python', 'Garmin data'],
+      repository: 'https://github.com/Manutd1234/FormForward',
+    },
+    {
+      title: 'DealMachine',
+      organisation: 'BugleRock Rockathon 2026',
+      dates: 'Mar 2026',
+      note: 'AI-powered investment-banking workflow connecting market research, document generation, approvals, and a live deal dashboard into one operating surface.',
+      skills: ['Python', 'Claude', 'TypeScript', 'React', 'PostgreSQL', 'Chart.js'],
+      repository: 'https://github.com/Manutd1234/Rockathon-2026-',
+    },
+    {
+      title: 'Nexus Academic Coach',
+      organisation: 'National University of Singapore',
+      dates: 'Jan 2026 — Mar 2026',
+      note: 'Full-stack productivity platform combining an AI academic coach, task breakdown, Pomodoro sessions, habit tracking, analytics, and a motivating progress loop.',
+      skills: ['Next.js', 'LangChain', 'React', 'Node.js', 'PostgreSQL', 'AI product design'],
+      repository: 'https://github.com/Manutd1234/Nexus-AI-Helper',
+      live: 'https://frontend-virid-tau-70.vercel.app/login',
+    },
+    {
+      title: 'TryingOut Fleet Optimiser',
+      organisation: 'Maritime Hackathon 2026',
+      dates: 'Feb 2026',
+      note: 'Operations-research pipeline for global cargo fleets: processed AIS data, modelled fuel and carbon costs, and used OR-Tools CP-SAT to search billions of safe, cost-aware configurations.',
+      skills: ['Operations research', 'Python', 'OR-Tools', 'AIS data', 'Optimisation'],
     },
   ],
   volunteering: [
@@ -359,14 +425,6 @@ export const leadership = [
     dates: 'Aug 2025 — Jan 2026',
     description:
       'Taught primary-school learners Scratch, logic, and introductory AI concepts through hands-on lessons.',
-  },
-  {
-    title: 'BrainHack TIL-AI · Pandamonium',
-    role: 'Champion · DSTA and AngelHack',
-    dates: 'Jun 2026 — Jul 2026',
-    description:
-      'Learned and shipped five Dockerised multimodal AI services with a five-person team under an air-gapped ' +
-      'competition deadline.',
   },
 ];
 
