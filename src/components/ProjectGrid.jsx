@@ -1,5 +1,28 @@
-import { projects } from '../data/portfolio.js';
+import { linkedinDetails, projects as portfolioProjects, profile } from '../data/portfolio.js';
 import { ArrowUpRightIcon, GitHubIcon } from './Icons.jsx';
+
+const portfolioOnlyProjects = portfolioProjects.filter(
+  ({ title }) => !['BrainHack TIL-AI', 'CS2 Decision Coach', 'Agentic Fraud Investigation Crew'].includes(title),
+);
+
+const projectCards = [
+  ...linkedinDetails.projects.map((project, index) => ({
+    number: String(index + 1).padStart(2, '0'),
+    title: project.title,
+    category: project.organisation,
+    description: project.note,
+    outcome: project.skills ? `Core stack · ${project.skills.join(' · ')}` : 'Project details from LinkedIn',
+    tags: project.skills || [],
+    repository: project.repository || profile.linkedin,
+    repositoryLabel: project.repository ? 'Repository' : 'LinkedIn project',
+    live: project.live,
+    accent: ['cobalt', 'gold', 'alpine'][index % 3],
+  })),
+  ...portfolioOnlyProjects.map((project, index) => ({
+    ...project,
+    number: String(linkedinDetails.projects.length + index + 1).padStart(2, '0'),
+  })),
+];
 
 function ProjectCard({ project }) {
   return (
@@ -67,7 +90,7 @@ export default function ProjectGrid() {
       </div>
 
       <div className="project-grid">
-        {projects.map((project) => (
+        {projectCards.map((project) => (
           <ProjectCard key={project.title} project={project} />
         ))}
       </div>
