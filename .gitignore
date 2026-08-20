@@ -1,3 +1,10 @@
+# Frontend build and local tooling
+node_modules/
+dist/
+tmp/
+.DS_Store
+npm-debug.log*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
