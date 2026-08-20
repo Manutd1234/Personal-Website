@@ -1,4 +1,4 @@
-import { credentials, skillGroups } from '../data/portfolio.js';
+import { credentials, linkedinSnapshot, skillGroups } from '../data/portfolio.js';
 import { SparkIcon } from './Icons.jsx';
 
 export default function Toolkit() {
@@ -44,6 +44,18 @@ export default function Toolkit() {
                 {credential}
               </li>
             ))}
+          </ol>
+        </div>
+
+        <div className="credential-block">
+          <h3>LinkedIn profile map</h3>
+          <ol>
+            <li><span>01</span>{linkedinSnapshot.projectCount} projects</li>
+            <li><span>02</span>{linkedinSnapshot.certificationCount} certifications</li>
+            <li><span>03</span>{linkedinSnapshot.courseCount} courses</li>
+            <li><span>04</span>{linkedinSnapshot.awardCount} honors &amp; awards</li>
+            <li><span>05</span>{linkedinSnapshot.volunteerCount} volunteer roles</li>
+            <li><span>06</span>{linkedinSnapshot.languageCount} languages</li>
           </ol>
         </div>
       </div>
