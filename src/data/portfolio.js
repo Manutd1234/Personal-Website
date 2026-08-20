@@ -20,6 +20,10 @@ export const profile = {
 export const linkedinSnapshot = {
   url: profile.linkedin,
   headline: 'NUS CS | Ex-Accenture | AI, Finance, Cybersecurity',
+  about:
+    "Hi! I'm Ian. I am an NUS Computer Science student with a passion for building innovative solutions that actually make a difference. I view technology as a tool to enhance human life and improve the way we make decisions. My academic and personal focus is currently centered on Cybersecurity, AI, and Finance.\n\nI am fascinated by the rapid evolution of these fields and am dedicated to gaining a deep, well-rounded understanding of the industry. I approach my work with diligence and a collaborative spirit, believing that diverse perspectives are the key to unlocking true innovation.\n\nIf you are interested in discussing the future of tech, security, or AI, let’s connect!",
+  topSkills: ['JavaScript', 'Java', 'SQL', 'Amazon Web Services (AWS)'],
+  followerCount: 1227,
   projectCount: 14,
   skillCount: 61,
   certificationCount: 11,
@@ -27,6 +31,105 @@ export const linkedinSnapshot = {
   awardCount: 15,
   volunteerCount: 7,
   languageCount: 4,
+};
+
+export const linkedinDetails = {
+  experience: [
+    {
+      title: 'Software Engineer',
+      organisation: 'CTES Consulting',
+      dates: 'Jul 2026 — Present',
+      note: 'Team lead for an AI sourcing pipeline that turns a client job description into an Excel shortlist with source documents in minutes; also contributed role-scoped portals across frontend, backend, and database layers.',
+    },
+    {
+      title: 'Product Engineer',
+      organisation: 'Stealth Startup',
+      dates: 'Jul 2026 — Present',
+      note: 'Built browser-driven E2E regression pipelines, SQL-backed product analytics, and full-stack features across onboarding, messaging, notifications, and mobile sign-in.',
+    },
+    {
+      title: 'Quant Trainee',
+      organisation: 'D+A Strategies',
+      dates: 'Mar 2026 — Present',
+      note: 'Training in quantitative finance, algorithmic strategy design, backtesting, financial modelling, and data-driven analysis of market inefficiencies.',
+    },
+    {
+      title: 'Admin & Finance Executive',
+      organisation: "NUS Students' Sports Club · RunNUS",
+      dates: 'Jan 2026 — Present',
+      note: 'Oversees budgets, logistics, and data consolidation for a 1,000+ participant charity run.',
+    },
+    {
+      title: 'Team Sport Series Executive',
+      organisation: "NUS Students' Sports Club · SunNUS",
+      dates: 'Jan 2026 — Jun 2026',
+      note: "Organised games, venues, logistics, and participant communications for NUS's largest beach sporting event with 300+ participants.",
+    },
+    {
+      title: 'Software Engineer',
+      organisation: 'NUS Game Development Group · Pandamonium',
+      dates: 'Jan 2026 — Present',
+      note: 'Leads C# development for an interactive murder mystery game, including game-state management, custom rendering, and scalable software design.',
+    },
+  ],
+  education: [
+    {
+      school: 'National University of Singapore',
+      credential: 'Bachelor of Computer Science · Minor in Economics and Statistics',
+      dates: 'Aug 2025 — Aug 2029',
+      note: 'First Class Honours. Activities include Project BHID, SunNUS, RunNUS, NUSSU VENtures, NUS Games Development Group, Rotaract, and NUS VCF.',
+    },
+    {
+      school: 'Eunoia Junior College',
+      credential: "GCE 'A' Level · AAAA/B",
+      dates: 'Feb 2021 — Nov 2022',
+      note: "Softball VIA Committee Member. Dean's List, Edusave Merit, Edusave Good Progress, Edusave Academic Achievement, and SSSC Colours awards.",
+    },
+  ],
+  projects: [
+    {
+      title: 'CS2 Post-Match Decision Coach',
+      organisation: 'Garena AI Build Challenge 2026 · Pandamonium',
+      dates: 'Jul 2026 — Aug 2026',
+      note: 'Evidence-grounded coaching from native .dem telemetry. The system detects first-contact moments, evaluates reset/reposition/re-engage decisions with LightGBM, and keeps LLM advice inside strict evidence boundaries.',
+    },
+    {
+      title: 'Agentic Fraud Investigation Crew',
+      organisation: 'NTT DATA × Microsoft Hack the Future 2026 · OneBrainCell',
+      dates: 'Jun 2026 — Jul 2026',
+      note: 'Microsoft-native multi-agent AML workflow covering alert triage, KYC and transaction enrichment, explainable adjudication, SAR drafting, and human approval through Teams and Power Automate.',
+    },
+  ],
+  volunteering: [
+    {
+      title: 'Programmes Head',
+      organisation: "NUS Students' Community Service Club",
+      dates: 'Aug 2025 — Present',
+      note: 'Leads a year-long volunteering initiative, designing curriculum and facilitating activities at Bishan Home for intellectually disabled elderly residents.',
+    },
+    {
+      title: 'Student Volunteer',
+      organisation: 'Rotaract Club of NUS · Project CUP',
+      dates: 'Aug 2025 — Nov 2025',
+      note: 'Facilitated community activities with primary-school children to provide social support and boost morale.',
+    },
+  ],
+  certifications: [
+    { title: 'AI Fluency: Frameworks & Foundations', issuer: 'Anthropic', dates: 'May 2026', id: 'neargg4ymdy4' },
+    { title: 'Claude 101', issuer: 'Anthropic', dates: 'May 2026', id: 'm5fbsw34pigo' },
+  ],
+  courses: [
+    { title: 'Calculus For Computing', code: 'MA1521', school: 'National University of Singapore' },
+    { title: 'Data Structures & Algorithms', code: 'CS2040S', school: 'National University of Singapore' },
+  ],
+  awards: [
+    { title: 'Edusave Merit Award', issuer: 'South West Community Development Council', dates: 'Jan 2023' },
+    { title: 'Edusave Certificate of Academic Achievement', issuer: 'Ministry of Education', dates: 'Dec 2022' },
+  ],
+  languages: [
+    { title: 'Chinese', level: 'Native or bilingual proficiency' },
+    { title: 'English', level: 'Native or bilingual proficiency' },
+  ],
 };
 
 export const impactStats = [
