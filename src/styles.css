@@ -2345,7 +2345,7 @@ body::before {
 /* Compact index density */
 .content-section,
 .contact-section {
-  padding-top: 84px;
+  padding-top: 64px;
 }
 
 .section-heading {
@@ -2354,6 +2354,7 @@ body::before {
 }
 
 .project-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
 }
 
@@ -2465,21 +2466,26 @@ body::before {
 @media (max-width: 860px) {
   .content-section,
   .contact-section {
-    padding-top: 68px;
+    padding-top: 54px;
   }
 
   .dex-entries {
     grid-template-columns: 1fr;
+  }
+
+  .project-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 620px) {
   .content-section,
   .contact-section {
-    padding-top: 58px;
+    padding-top: 46px;
   }
 
   .project-grid {
+    grid-template-columns: 1fr;
     gap: 16px;
   }
 
