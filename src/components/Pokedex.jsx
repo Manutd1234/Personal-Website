@@ -131,11 +131,11 @@ function OverviewPanel() {
       <div className="dex-about">
         <div>
           <span className="dex-about-label">PROFILE BIO</span>
-          {linkedinSnapshot.about.split('\n\n').map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+          {profile.summary.split('\n\n').map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
         </div>
         <div className="dex-skill-strip">
           <span className="dex-about-label">CORE SKILLS</span>
-          <ul>{linkedinSnapshot.topSkills.map((skill) => <li key={skill}>{skill}</li>)}</ul>
+          <ul>{profile.coreSkills.map((skill) => <li key={skill}>{skill}</li>)}</ul>
         </div>
       </div>
       <div className="dex-stat-row" aria-label="LinkedIn profile counts">
