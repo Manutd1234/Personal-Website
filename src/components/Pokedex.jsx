@@ -52,12 +52,17 @@ const experienceEntries = [...linkedinDetails.experience, ...resumeOnlyExperienc
 
 const projectEntries = [
   ...linkedinDetails.projects.map((entry) => ({ ...entry, source: 'LinkedIn project' })),
-  ...portfolioProjects.map((entry) => ({
+  ...portfolioProjects
+    .filter(({ title }) => !['BrainHack TIL-AI', 'CS2 Decision Coach', 'Agentic Fraud Investigation Crew'].includes(title))
+    .map((entry) => ({
     title: entry.title,
     organisation: entry.category,
     dates: 'Portfolio build',
     note: `${entry.description} ${entry.outcome}`,
     source: 'Project index',
+    skills: entry.tags,
+    repository: entry.repository,
+    live: entry.live,
   })),
 ];
 
@@ -103,8 +108,19 @@ function EntryCard({ entry, type }) {
       <h3>{title}</h3>
       <p className="dex-entry-subtitle">{subtitle}</p>
       {entry.note && <p className="dex-entry-note">{entry.note}</p>}
+      {entry.skills && (
+        <ul className="dex-entry-tags" aria-label={`${title} skills`}>
+          {entry.skills.map((skill) => <li key={skill}>{skill}</li>)}
+        </ul>
+      )}
       {entry.source && <p className="dex-entry-id">Source · {entry.source}</p>}
       {entry.id && <p className="dex-entry-id">ID · {entry.id}</p>}
+      {(entry.repository || entry.live) && (
+        <div className="dex-entry-links">
+          {entry.repository && <a href={entry.repository} target="_blank" rel="noreferrer">Code <ArrowUpRightIcon size={13} /></a>}
+          {entry.live && <a href={entry.live} target="_blank" rel="noreferrer">Live <ArrowUpRightIcon size={13} /></a>}
+        </div>
+      )}
     </article>
   );
 }
