@@ -23,7 +23,7 @@ export default function OffDuty() {
           <img
             alt="Ian riding a mountain cable car above an alpine forest"
             decoding="async"
-            height="1200"
+            height="1600"
             loading="lazy"
             src={`${imageBase}ian-alpine-1200.webp`}
             width="1200"

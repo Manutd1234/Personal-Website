@@ -1158,6 +1158,7 @@ img {
 }
 
 .travel-frame {
+  min-width: 0;
   margin: 0;
   padding: 10px;
   border: 3px solid var(--ink);
@@ -1168,7 +1169,7 @@ img {
 
 .travel-frame img {
   width: 100%;
-  aspect-ratio: 4 / 5;
+  height: auto;
   object-fit: cover;
   object-position: 50% 72%;
   filter: saturate(0.84) contrast(1.03);
