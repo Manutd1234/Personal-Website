@@ -2493,3 +2493,9 @@ body::before {
     padding: 18px;
   }
 }
+
+/* Keep the contact panel readable against its light card neighbors. */
+.contact-card {
+  color: #fff;
+  background: var(--cobalt);
+}
