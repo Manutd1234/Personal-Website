@@ -1,10 +1,10 @@
 import { ArrowUpRightIcon } from './Icons.jsx';
 
 const navigation = [
-  { label: 'About', href: '#about' },
-  { label: 'Work', href: '#builds' },
-  { label: 'Experience', href: '#experience' },
-  { label: 'Toolkit', href: '#toolkit' },
+  { label: 'Player', href: '#about' },
+  { label: 'Quests', href: '#builds' },
+  { label: 'History', href: '#experience' },
+  { label: 'Inventory', href: '#toolkit' },
 ];
 
 export default function SiteHeader() {
@@ -15,7 +15,7 @@ export default function SiteHeader() {
           <span className="wordmark-mark" aria-hidden="true">IW</span>
           <span className="wordmark-text">
             Ian Wangsa
-            <small>Software engineer</small>
+            <small>System builder · LV. 21</small>
           </span>
         </a>
 
@@ -30,7 +30,7 @@ export default function SiteHeader() {
         </nav>
 
         <a className="header-cta" href="#contact">
-          Let&apos;s talk <ArrowUpRightIcon size={16} />
+          Connect <ArrowUpRightIcon size={16} />
         </a>
       </div>
     </header>

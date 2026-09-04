@@ -3,12 +3,12 @@ export const profile = {
   shortName: 'Ian Wangsa',
   role: 'NUS computer science student and software engineer building applied AI, quantitative infrastructure, and secure products.',
   introduction:
-    'I turn ambiguous problems into dependable systems: agentic workflows at Accenture, full-stack automation at CTES, ' +
-    'quantitative research at D+A and Caerus, and mission-focused communications during National Service.',
+    'I turn ambiguous problems into dependable systems: quant infrastructure at Caerus, product engineering at a startup, ' +
+    'agentic workflows at Accenture, full-stack automation at CTES, and mission-focused communications during National Service.',
   summary:
     'I am an NUS Computer Science student who enjoys taking a messy operational problem and giving it a reliable shape. ' +
     'My experience spans applied AI, quantitative research, secure product engineering, and technical leadership—from ' +
-    'agentic root-cause analysis at Accenture and AI sourcing systems at CTES to market-data infrastructure, hackathon builds, ' +
+    'agentic root-cause analysis at Accenture, product engineering at a startup, and AI sourcing systems at CTES to market-data infrastructure, hackathon builds, ' +
     'and a two-year signals command appointment in the Republic of Singapore Air Force.',
   coreSkills: [
     'Applied AI',
@@ -19,6 +19,7 @@ export const profile = {
     'TypeScript',
     'Java',
     'React & Next.js',
+    'React Native',
     'FastAPI & Node.js',
     'PyTorch & LightGBM',
     'SQL & PostgreSQL',
@@ -230,7 +231,7 @@ export const projects = [
     title: 'AlphaEngine',
     category: 'Quant infrastructure',
     description:
-      'A real-time quantitative execution workspace for cross-venue order books, pre-trade risk, ' +
+      'A real-time quantitative execution workspace spanning Binance, Bybit, and Hyperliquid order books, pre-trade risk, ' +
       'strategy research, and live operator telemetry.',
     outcome:
       'Reconstructs stateful L2 books, validates sequence gaps, and aligns Binance and Hyperliquid feeds ' +
@@ -316,6 +317,18 @@ export const experience = [
     ],
   },
   {
+    company: 'Stealth Startup',
+    role: 'Product Engineer Intern',
+    location: 'Singapore',
+    dates: 'Jul 2026 — Present',
+    summary:
+      'Building product infrastructure across browser-driven QA, analytics, core web flows, and a React Native mobile app.',
+    highlights: [
+      'Architected automated E2E regression pipelines with artifact-backed QA reports.',
+      'Shipped SQL-backed product analytics and full-stack features from triage through post-merge verification.',
+    ],
+  },
+  {
     company: 'CTES Consulting',
     role: 'Software Engineer · Off-Cycle Intern',
     location: 'Singapore',
@@ -389,6 +402,34 @@ export const education = [
 
 export const leadership = [
   {
+    title: 'NUS MedTech',
+    role: 'Software Engineer',
+    dates: 'Aug 2026 — Present',
+    description:
+      'Developing healthcare and medical technology software with robust frontend and backend integrations.',
+  },
+  {
+    title: 'NUS Student Investment Fund',
+    role: 'Quantitative Developer Analyst',
+    dates: 'Aug 2026 — Present',
+    description:
+      'Engineering quantitative tooling and automated financial analysis pipelines for data-driven portfolio management.',
+  },
+  {
+    title: 'Google Developer Group @ NUS',
+    role: 'Software Engineer',
+    dates: 'Aug 2026 — Present',
+    description:
+      'Building full-stack platforms and infrastructure for non-profit partner Caring For Life.',
+  },
+  {
+    title: 'NUS FinTech Society',
+    role: 'Machine Learning Trainee',
+    dates: 'Aug 2026 — Present',
+    description:
+      'Researching and building machine-learning models for finance, prediction, and agentic workflows.',
+  },
+  {
     title: 'NUS Games Development Group',
     role: 'Software Engineer · Pandamonium',
     dates: 'Jan 2026 — Present',
@@ -399,10 +440,10 @@ export const leadership = [
   {
     title: 'RunNUS & SunNUS',
     role: 'Executive Member · NUS Sports Club',
-    dates: 'Jan 2026 — Present',
+    dates: 'Jan 2026 — Sep 2026',
     description:
       'Managing logistics, vendors, budgets, safety, and cross-functional operations for events including ' +
-      'a charity run with more than 1,000 participants.',
+      'a charity run with more than 1,000 participants and a beach sports event for more than 400 people.',
   },
   {
     title: 'NUSSU VENtures',
@@ -435,7 +476,7 @@ export const skillGroups = [
   },
   {
     label: 'Product & backend',
-    items: ['React', 'Next.js', 'FastAPI', 'Node.js', 'Spring Boot', 'Flask', 'PostgreSQL'],
+    items: ['React', 'React Native', 'Next.js', 'FastAPI', 'Node.js', 'Spring Boot', 'Flask', 'PostgreSQL'],
   },
   {
     label: 'AI & data',

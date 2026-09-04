@@ -29,14 +29,14 @@ export default function OffDuty() {
             width="1200"
           />
           <figcaption>
-            <span>Field note · 02</span>
-            <span>Off-duty / on the move</span>
+            <span>Overworld map · 02</span>
+            <span>Off-duty / exploring</span>
           </figcaption>
         </figure>
 
         <div className="off-duty-copy">
-          <div className="section-kicker"><span>06</span><p>Beyond the terminal</p></div>
-          <h2 id="off-duty-title">Curiosity travels <em>well.</em></h2>
+          <div className="section-kicker"><span>06</span><p>The overworld</p></div>
+          <h2 id="off-duty-title">The map is bigger than the <em>terminal.</em></h2>
           <p className="off-duty-lead">
             The best engineering work is technical and human. I make space for unfamiliar places, team sport,
             and teaching because each one sharpens a different kind of attention.

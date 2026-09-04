@@ -1,15 +1,15 @@
 # Ian Abiel Wangsa — Personal Portfolio
 
-A responsive editorial portfolio for Ian Abiel Wangsa, built around selected work in quantitative systems,
+A responsive pixel-RPG portfolio for Ian Abiel Wangsa, built around selected work in quantitative systems,
 applied AI, and full-stack engineering.
 
 Live site: https://manutd1234.github.io/Personal-Website/
 
 ## What is included
 
-- A dark editorial visual system with a focused hero, outcome-led proof points, and subtle motion.
+- An original monster-collecting RPG visual system with a trainer card, quest log, campaign history, skill inventory, custom pixel sprites, and stepped motion.
 - Five curated project case studies including AlphaEngine, BrainHack TIL-AI, and Delta1 Research.
-- Complete experience, education, leadership, skills, and certification sections sourced from the supplied résumé.
+- Complete experience, education, leadership, skills, and certification sections sourced from the latest supplied résumé.
 - Direct links to Ian's GitHub, LinkedIn, email, live AlphaEngine workspace, and downloadable résumé.
 - Responsive desktop and mobile layouts with keyboard-accessible tabs, visible focus states, scroll progress, and reduced-motion support.
 - Optimized WebP photographs and a relative Vite asset base suitable for repository-hosted deployments.
