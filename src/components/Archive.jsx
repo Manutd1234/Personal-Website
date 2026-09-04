@@ -95,17 +95,17 @@ export default function Archive() {
     <section className="content-section section-shell archive-section" id="experience" aria-labelledby="archive-title">
       <div className="section-heading archive-heading" data-reveal>
         <div>
-          <div className="section-kicker"><span>04</span><p>Campaign history</p></div>
-          <h2 id="archive-title">Experience points <em>earned.</em></h2>
+          <div className="section-kicker"><span>04</span><p>Experience · Campaign</p></div>
+          <h2 id="archive-title">The work behind the <em>work.</em></h2>
         </div>
         <div className="section-intro"><p>
-          Six chapters across quantitative research, product engineering, agentic AI, full-stack systems, and National
-          Service—each one added a different ability to the build.
+          Six chapters across quantitative research, product engineering, agentic AI, full-stack systems, and
+          National Service—each one added a different ability to the build.
         </p></div>
       </div>
 
       <div className="archive-card" data-reveal>
-        <div className="archive-tabs" role="tablist" aria-label="Campaign history sections">
+        <div className="archive-tabs" role="tablist" aria-label="Portfolio archive sections">
           {tabs.map((tab, index) => (
             <button
               aria-controls={`${tab.id}-panel`}

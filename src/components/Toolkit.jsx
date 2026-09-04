@@ -5,17 +5,17 @@ export default function Toolkit() {
   return (
     <section className="content-section section-shell toolkit-section" id="toolkit" aria-labelledby="toolkit-title">
       <div className="toolkit-intro" data-reveal>
-        <div className="section-kicker"><span>05</span><p>Skill inventory</p></div>
-        <h2 id="toolkit-title">Equip the right <em>loadout.</em></h2>
+        <div className="section-kicker"><span>05</span><p>Toolkit</p></div>
+        <h2 id="toolkit-title">Tools are choices, not <em>trophies.</em></h2>
         <p>
-          From model and data layer to product surface, I choose tools that make the system easier to test, explain,
-          and operate in the real world.
+          I work comfortably from model and data layer to product surface, choosing tools that make a system easier to
+          test, explain, and run in the real world.
         </p>
 
         <div className="award-ticket">
           <SparkIcon size={24} />
           <div>
-            <span>Rare achievement unlocked</span>
+            <span>Achievement unlocked</span>
             <strong>BrainHack TIL-AI 2026 · 1st Place</strong>
           </div>
         </div>
@@ -36,7 +36,7 @@ export default function Toolkit() {
         </div>
 
         <div className="credential-block">
-          <h3>Achievement badges</h3>
+          <h3>Credentials</h3>
           <ol>
             {credentials.map((credential, index) => (
               <li key={credential}>
@@ -48,7 +48,7 @@ export default function Toolkit() {
         </div>
 
         <div className="credential-block">
-          <h3>Profile completion</h3>
+          <h3>LinkedIn profile map</h3>
           <ol>
             <li><span>01</span>{linkedinSnapshot.projectCount} projects</li>
             <li><span>02</span>{linkedinSnapshot.certificationCount} certifications</li>

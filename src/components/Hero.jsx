@@ -6,7 +6,6 @@ import {
   LinkedInIcon,
   MailIcon,
 } from './Icons.jsx';
-import PixelSprite from './PixelSprites.jsx';
 
 const imageBase = `${import.meta.env.BASE_URL}images/`;
 
@@ -17,22 +16,22 @@ export default function Hero() {
         <div className="hero-copy">
           <div className="eyebrow">
             <span className="status-dot" aria-hidden="true" />
-            Player one ready · {profile.availability}
+            {profile.availability}
           </div>
 
-          <p className="hero-name">PLAYER / {profile.name} · {profile.location}</p>
+          <p className="hero-name">{profile.name} · {profile.location}</p>
           <h1 id="hero-title">
-            Turning complex <em>quests</em> into dependable systems.
+            I build systems that stay <em>useful</em> when things get complex.
           </h1>
           <p className="hero-role">{profile.role}</p>
           <p className="hero-introduction">{profile.introduction}</p>
 
           <div className="hero-actions">
             <a className="button button-primary" href="#builds">
-              Open quest log <ArrowUpRightIcon />
+              Explore selected work <ArrowUpRightIcon />
             </a>
             <a className="button button-secondary" href={profile.resumeUrl} target="_blank" rel="noreferrer">
-              View résumé <DownloadIcon />
+              Résumé <DownloadIcon />
             </a>
           </div>
 
@@ -45,7 +44,6 @@ export default function Hero() {
 
         <div className="hero-visual">
           <div className="hero-index" aria-hidden="true">01</div>
-          <div className="trainer-card-label"><span>TRAINER CARD</span><span>NO. 2005</span></div>
           <figure className="portrait-frame">
             <picture>
               <source
@@ -69,22 +67,15 @@ export default function Hero() {
             </figcaption>
           </figure>
           <div className="focus-card">
-            <PixelSprite type="circuit" />
-            <div>
-              <span>Builder class</span>
-              <strong>AI · QUANT<br />FULL STACK</strong>
-            </div>
+            <span>Current quest</span>
+            <strong>Applied AI<br />Quant systems<br />Secure products</strong>
           </div>
         </div>
       </div>
 
       <dl className="impact-strip" aria-label="Selected impact">
         {impactStats.map((stat, index) => (
-          <div
-            data-achievement={`Achievement ${String(index + 1).padStart(2, '0')}`}
-            key={stat.label}
-            style={{ '--stat-delay': `${index * 80}ms` }}
-          >
+          <div key={stat.label} style={{ '--stat-delay': `${index * 80}ms` }}>
             <dt>{stat.value}</dt>
             <dd>{stat.label}</dd>
           </div>
@@ -92,7 +83,7 @@ export default function Hero() {
       </dl>
 
       <a className="scroll-cue" href="#about">
-        <span aria-hidden="true" /> Press down to explore
+        <span aria-hidden="true" /> Scroll to explore
       </a>
     </section>
   );
