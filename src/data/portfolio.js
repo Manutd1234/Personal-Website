@@ -219,8 +219,8 @@ export const linkedinDetails = {
 
 export const impactStats = [
   { value: '1st', label: 'BrainHack TIL-AI 2026' },
-  { value: String(linkedinSnapshot.projectCount), label: 'LinkedIn projects' },
-  { value: String(linkedinSnapshot.skillCount), label: 'Skills across the stack' },
+  { value: '0.7–0.8s', label: 'Measured market lead-lag' },
+  { value: '<30m', label: 'AI workflow from multi-day' },
   { value: '4.50', label: 'NUS GPA / 5.00' },
 ];
 

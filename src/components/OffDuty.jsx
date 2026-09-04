@@ -18,7 +18,7 @@ const fieldNotes = [
 export default function OffDuty() {
   return (
     <section className="content-section section-shell" id="off-duty" aria-labelledby="off-duty-title">
-      <div className="off-duty-card">
+      <div className="off-duty-card" data-reveal>
         <figure className="travel-frame">
           <img
             alt="Ian riding a mountain cable car above an alpine forest"
@@ -29,14 +29,14 @@ export default function OffDuty() {
             width="1200"
           />
           <figcaption>
-            <span>FIELD NOTE 02</span>
-            <span>OFF-DUTY / ON THE MOVE</span>
+            <span>Field note · 02</span>
+            <span>Off-duty / on the move</span>
           </figcaption>
         </figure>
 
         <div className="off-duty-copy">
-          <p className="eyebrow">06 / BEYOND THE TERMINAL</p>
-          <h2 id="off-duty-title">Curiosity travels well.</h2>
+          <div className="section-kicker"><span>06</span><p>Beyond the terminal</p></div>
+          <h2 id="off-duty-title">Curiosity travels <em>well.</em></h2>
           <p className="off-duty-lead">
             The best engineering work is technical and human. I make space for unfamiliar places, team sport,
             and teaching because each one sharpens a different kind of attention.

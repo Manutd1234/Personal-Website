@@ -3,10 +3,10 @@ import { SparkIcon } from './Icons.jsx';
 
 export default function Toolkit() {
   return (
-    <section className="content-section section-shell toolkit-section" aria-labelledby="toolkit-title">
-      <div className="toolkit-intro">
-        <p className="eyebrow">05 / TOOLKIT & CREDENTIALS</p>
-        <h2 id="toolkit-title">Tools for shipping with evidence.</h2>
+    <section className="content-section section-shell toolkit-section" id="toolkit" aria-labelledby="toolkit-title">
+      <div className="toolkit-intro" data-reveal>
+        <div className="section-kicker"><span>05</span><p>Toolkit</p></div>
+        <h2 id="toolkit-title">Tools are choices, not <em>trophies.</em></h2>
         <p>
           I work comfortably from model and data layer to product surface, choosing tools that make a system easier to
           test, explain, and run in the real world.
@@ -15,13 +15,13 @@ export default function Toolkit() {
         <div className="award-ticket">
           <SparkIcon size={24} />
           <div>
-            <span>SELECTED SIGNAL</span>
+            <span>Selected signal</span>
             <strong>BrainHack TIL-AI 2026 · 1st Place</strong>
           </div>
         </div>
       </div>
 
-      <div className="toolkit-board">
+      <div className="toolkit-board" data-reveal>
         <div className="skill-groups">
           {skillGroups.map((group) => (
             <div className="skill-group" key={group.label}>

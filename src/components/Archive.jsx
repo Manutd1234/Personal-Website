@@ -92,19 +92,19 @@ export default function Archive() {
   }
 
   return (
-    <section className="content-section section-shell" id="experience" aria-labelledby="archive-title">
-      <div className="section-heading archive-heading">
+    <section className="content-section section-shell archive-section" id="experience" aria-labelledby="archive-title">
+      <div className="section-heading archive-heading" data-reveal>
         <div>
-          <p className="eyebrow">04 / TIMELINE</p>
-          <h2 id="archive-title">A track record across software, finance, and service.</h2>
+          <div className="section-kicker"><span>04</span><p>Experience</p></div>
+          <h2 id="archive-title">The work behind the <em>work.</em></h2>
         </div>
-        <p>
+        <div className="section-intro"><p>
           I have worked across agentic AI, full-stack product systems, quantitative research, student operations, and
           National Service—learning to communicate clearly and own the outcome in each setting.
-        </p>
+        </p></div>
       </div>
 
-      <div className="archive-card">
+      <div className="archive-card" data-reveal>
         <div className="archive-tabs" role="tablist" aria-label="Portfolio archive sections">
           {tabs.map((tab, index) => (
             <button

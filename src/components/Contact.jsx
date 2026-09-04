@@ -4,10 +4,10 @@ import { ArrowUpRightIcon, DownloadIcon, GitHubIcon, LinkedInIcon, MailIcon } fr
 export default function Contact() {
   return (
     <section className="contact-section section-shell" id="contact" aria-labelledby="contact-title">
-      <div className="contact-card">
-        <div>
-          <p className="eyebrow">07 / OPEN CHANNEL</p>
-          <h2 id="contact-title">Have a difficult system to make simpler?</h2>
+      <div className="contact-card" data-reveal>
+        <div className="contact-copy">
+          <div className="section-kicker"><span>07</span><p>Open channel</p></div>
+          <h2 id="contact-title">Let&apos;s make something <em>useful.</em></h2>
           <p>
             I’m always glad to compare notes on quantitative engineering, applied AI, product infrastructure,
             or ambitious student projects.
@@ -17,7 +17,7 @@ export default function Contact() {
         <div className="contact-actions">
           <a className="contact-primary" href={`mailto:${profile.email}`}>
             <span>
-              <MailIcon size={22} /> Email Ian
+              <MailIcon size={22} /> Start a conversation
             </span>
             <small>{profile.email}</small>
             <ArrowUpRightIcon />
@@ -42,9 +42,9 @@ export default function Contact() {
 export function SiteFooter() {
   return (
     <footer className="site-footer section-shell">
-      <p>© {new Date().getFullYear()} Ian Abiel Wangsa</p>
-      <p>Designed as an engineer’s field journal · Singapore</p>
-      <a href="#top">Back to top ↑</a>
+      <div className="footer-mark"><span>IW</span><p>© {new Date().getFullYear()} Ian Abiel Wangsa</p></div>
+      <p>Built with intent in Singapore</p>
+      <a href="#top">Back to top <span aria-hidden="true">↑</span></a>
     </footer>
   );
 }
