@@ -1,5 +1,6 @@
 import { profile } from '../data/portfolio.js';
 import { ArrowUpRightIcon, LinkedInIcon, SparkIcon } from './Icons.jsx';
+import SectionKicker from './SectionKicker.jsx';
 
 const disciplines = [
   {
@@ -32,10 +33,7 @@ const operatingLoop = [
 export default function Pokedex() {
   return (
     <section className="pokedex-section section-shell" id="about" aria-labelledby="pokedex-title" data-reveal>
-      <div className="section-kicker">
-        <span>02</span>
-        <p>How I work</p>
-      </div>
+      <SectionKicker number="02" label="How I work" />
 
       <div className="about-grid">
         <article className="about-statement">

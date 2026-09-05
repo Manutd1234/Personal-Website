@@ -1,12 +1,13 @@
 import { profile } from '../data/portfolio.js';
 import { ArrowUpRightIcon, DownloadIcon, GitHubIcon, LinkedInIcon, MailIcon } from './Icons.jsx';
+import SectionKicker from './SectionKicker.jsx';
 
 export default function Contact() {
   return (
     <section className="contact-section section-shell" id="contact" aria-labelledby="contact-title">
       <div className="contact-card" data-reveal>
         <div className="contact-copy">
-          <div className="section-kicker"><span>07</span><p>Open channel</p></div>
+          <SectionKicker number="07" label="Open channel" />
           <h2 id="contact-title">Let&apos;s make something <em>useful.</em></h2>
           <p>
             I’m always glad to compare notes on quantitative engineering, applied AI, product infrastructure,

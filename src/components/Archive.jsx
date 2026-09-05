@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 
 import { education, experience, leadership } from '../data/portfolio.js';
+import SectionKicker from './SectionKicker.jsx';
 
 const tabs = [
   { id: 'work', label: 'Experience' },
@@ -95,7 +96,7 @@ export default function Archive() {
     <section className="content-section section-shell archive-section" id="experience" aria-labelledby="archive-title">
       <div className="section-heading archive-heading" data-reveal>
         <div>
-          <div className="section-kicker"><span>04</span><p>Experience · Campaign</p></div>
+          <SectionKicker number="04" label="Experience · Campaign" />
           <h2 id="archive-title">The work behind the <em>work.</em></h2>
         </div>
         <div className="section-intro"><p>

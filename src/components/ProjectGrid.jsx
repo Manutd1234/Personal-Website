@@ -1,5 +1,6 @@
 import { profile, projects } from '../data/portfolio.js';
 import { ArrowUpRightIcon, GitHubIcon } from './Icons.jsx';
+import SectionKicker from './SectionKicker.jsx';
 
 const projectSignals = {
   AlphaEngine: { value: '100ms', label: 'Unified analysis grid', code: 'L2 / LIVE' },
@@ -81,7 +82,7 @@ export default function ProjectGrid() {
     <section className="content-section section-shell projects-section" id="builds" aria-labelledby="builds-title">
       <div className="section-heading" data-reveal>
         <div>
-          <div className="section-kicker"><span>03</span><p>Selected work · Quest log</p></div>
+          <SectionKicker number="03" label="Selected work · Quest log" />
           <h2 id="builds-title">Built for the messy part between idea and <em>impact.</em></h2>
         </div>
         <div className="section-intro">

@@ -1,3 +1,5 @@
+import SectionKicker from './SectionKicker.jsx';
+
 const imageBase = `${import.meta.env.BASE_URL}images/`;
 
 const fieldNotes = [
@@ -35,7 +37,7 @@ export default function OffDuty() {
         </figure>
 
         <div className="off-duty-copy">
-          <div className="section-kicker"><span>06</span><p>Beyond the terminal</p></div>
+          <SectionKicker number="06" label="Beyond the terminal" />
           <h2 id="off-duty-title">Curiosity travels <em>well.</em></h2>
           <p className="off-duty-lead">
             The best engineering work is technical and human. I make space for unfamiliar places, team sport,

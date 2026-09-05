@@ -1,11 +1,12 @@
 import { credentials, linkedinSnapshot, skillGroups } from '../data/portfolio.js';
 import { SparkIcon } from './Icons.jsx';
+import SectionKicker from './SectionKicker.jsx';
 
 export default function Toolkit() {
   return (
     <section className="content-section section-shell toolkit-section" id="toolkit" aria-labelledby="toolkit-title">
       <div className="toolkit-intro" data-reveal>
-        <div className="section-kicker"><span>05</span><p>Toolkit</p></div>
+        <SectionKicker number="05" label="Toolkit" />
         <h2 id="toolkit-title">Tools are choices, not <em>trophies.</em></h2>
         <p>
           I work comfortably from model and data layer to product surface, choosing tools that make a system easier to
