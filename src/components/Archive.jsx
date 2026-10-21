@@ -1,13 +1,22 @@
 import { useRef, useState } from 'react';
 
-import { earlierEducation, earlierExperience, education, experience, leadership } from '../data/portfolio.js';
+import * as careerData from '../data/portfolio.js';
 import SectionKicker from './SectionKicker.jsx';
 import '../credentials.css';
 
+const { earlierEducation = [], earlierExperience = [], education = [], experience = [], leadership = [] } = careerData;
+const volunteerRecords = Array.isArray(careerData.volunteering)
+  ? careerData.volunteering
+  : leadership.filter((item) => /Volunteer|Programmes Head/i.test(item.role));
+const volunteerTitles = new Set(volunteerRecords.map((item) => item.title));
+const leadershipRecords = leadership.filter((item) => !volunteerTitles.has(item.title));
+const educationRecords = [...education, ...earlierEducation];
+
 const tabs = [
-  { id: 'work', label: 'Experience' },
-  { id: 'education', label: 'Education' },
-  { id: 'community', label: 'Leadership & service' },
+  { id: 'work', label: 'Experience', count: experience.length + earlierExperience.length },
+  { id: 'education', label: 'Education', count: educationRecords.length },
+  { id: 'community', label: 'Leadership & CCAs', count: leadershipRecords.length },
+  { id: 'volunteering', label: 'Volunteering', count: volunteerRecords.length },
 ];
 
 function ExperiencePanel() {
@@ -38,29 +47,28 @@ function ExperiencePanel() {
           </li>
         ))}
       </ol>
-      <details className="career-details">
-        <summary>Earlier work · Teaching & operations</summary>
+      <section className="career-history-group" aria-labelledby="earlier-work-title">
+        <h3 id="earlier-work-title">Earlier experience</h3>
         <div className="earlier-work-grid">
           {earlierExperience.map((item) => (
             <article key={item.company}>
-              <h3>{item.company}</h3>
+              <h4>{item.company}</h4>
               <p className="career-role">{item.role}</p>
               <p className="career-date">{item.dates}</p>
               <p>{item.summary}</p>
             </article>
           ))}
         </div>
-      </details>
+      </section>
     </>
   );
 }
 
-function EducationCards({ items, startIndex = 0 }) {
+function EducationCards({ items }) {
   return (
     <div className="education-grid">
-      {items.map((item, index) => (
+      {items.map((item) => (
         <article key={item.school}>
-          <span className="archive-index">EDU / {String(startIndex + index + 1).padStart(2, '0')}</span>
           <h3>{item.school}</h3>
           <p className="education-credential">{item.credential}</p>
           <time>{item.dates}</time>
@@ -74,23 +82,14 @@ function EducationCards({ items, startIndex = 0 }) {
 }
 
 function EducationPanel() {
-  return (
-    <>
-      <EducationCards items={education} />
-      <details className="career-details">
-        <summary>Earlier education · SST & Bukit Timah Primary</summary>
-        <EducationCards items={earlierEducation} startIndex={education.length} />
-      </details>
-    </>
-  );
+  return <EducationCards items={educationRecords} />;
 }
 
-function LeadershipPanel() {
+function CommunityPanel({ items }) {
   return (
     <div className="leadership-grid">
-      {leadership.map((item, index) => (
+      {items.map((item) => (
         <article key={item.title}>
-          <span className="archive-index">LOG / {String(index + 1).padStart(2, '0')}</span>
           <h3>{item.title}</h3>
           <p className="leadership-role">{item.role}</p>
           <time>{item.dates}</time>
@@ -131,7 +130,7 @@ export default function Archive() {
     <section className="content-section section-shell archive-section career-workspace" id="experience" aria-labelledby="archive-title">
       <div className="section-heading archive-heading" data-reveal>
         <div>
-          <SectionKicker number="04" label="Experience & education" />
+          <SectionKicker label="Experience & education" />
           <h2 id="archive-title">The work behind the <em>work.</em></h2>
         </div>
         <div className="section-intro"><p>
@@ -145,6 +144,7 @@ export default function Archive() {
           {tabs.map((tab, index) => (
             <button
               aria-controls={`${tab.id}-panel`}
+              aria-label={`${tab.label}, ${tab.count} records`}
               aria-selected={activeTab === tab.id}
               id={`${tab.id}-tab`}
               key={tab.id}
@@ -157,8 +157,8 @@ export default function Archive() {
               tabIndex={activeTab === tab.id ? 0 : -1}
               type="button"
             >
-              <span aria-hidden="true">0{index + 1}</span>
               {tab.label}
+              <span aria-hidden="true" className="career-tab-count">{tab.count}</span>
             </button>
           ))}
         </div>
@@ -191,7 +191,17 @@ export default function Archive() {
           role="tabpanel"
           tabIndex="0"
         >
-          <LeadershipPanel />
+          <CommunityPanel items={leadershipRecords} />
+        </div>
+        <div
+          aria-labelledby="volunteering-tab"
+          className="archive-panel"
+          hidden={activeTab !== 'volunteering'}
+          id="volunteering-panel"
+          role="tabpanel"
+          tabIndex="0"
+        >
+          <CommunityPanel items={volunteerRecords} />
         </div>
       </div>
     </section>

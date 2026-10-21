@@ -128,7 +128,14 @@ function ProjectCard({ project, index, prominent = false }) {
         ) : null}
         <ProjectLinks project={project} />
       </div>
-      <MediaFigure className="portfolio-project-image" media={media} onImageError={() => setMediaFailed(true)} priority={index === 0} title={project.title} />
+      {media?.secondaryImage ? (
+        <div className="portfolio-project-image portfolio-project-media-pair">
+          <MediaFigure media={media} onImageError={() => setMediaFailed(true)} priority={index === 0} title={`${project.title} — live arena`} />
+          <MediaFigure className="portfolio-project-secondary-image" media={media.secondaryImage} title={`${project.title} — final results`} />
+        </div>
+      ) : (
+        <MediaFigure className="portfolio-project-image" media={media} onImageError={() => setMediaFailed(true)} priority={index === 0} title={project.title} />
+      )}
     </article>
   );
 }

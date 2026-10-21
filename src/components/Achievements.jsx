@@ -59,7 +59,7 @@ export default function Achievements() {
     >
       <div className="section-heading" data-reveal>
         <div>
-          <SectionKicker number="06" label="Awards & credentials" />
+          <SectionKicker label="Awards & credentials" />
           <h2 id="achievements-title">Milestones along <em>the way.</em></h2>
         </div>
         <div className="section-intro">
@@ -67,41 +67,48 @@ export default function Achievements() {
         </div>
       </div>
 
-      <div className="competition-awards" aria-label={technical.title} data-reveal>
-        {technical.items.map((item, index) => (
+      <section className="technical-award-record" aria-labelledby="technical-awards-title">
+        <div className="achievement-section-heading">
+          <h3 id="technical-awards-title">{technical.title}</h3>
+          <p>{technical.description}</p>
+        </div>
+        <div className="competition-awards">
+        {technical.items.map((item) => (
           <article className="competition-award" key={item.title}>
             <div className="competition-award-top">
-              <span className="archive-index">Team achievement / {String(index + 1).padStart(2, '0')}</span>
+              <span className="archive-index">Achievement</span>
               <span className="achievement-year">{item.year}</span>
             </div>
             <p className="competition-result">{item.detail}</p>
-            <h3>{item.title}</h3>
+            <h4>{item.title}</h4>
             <p className="competition-issuer">{item.issuer}</p>
             <CertificateLink item={item} certificateFiles={certificateFiles} />
           </article>
         ))}
-      </div>
+        </div>
+      </section>
 
-      <div className="achievement-records" data-reveal>
-        <div className="learning-record">
+      <div className="achievement-records">
+        {communityGroups.map((group, index) => (
+          <section
+            aria-labelledby={`award-group-${index}`}
+            className={`achievement-group${index === 0 || group.items.length >= 8 ? ' achievement-group-wide' : ''}`}
+            key={group.title}
+          >
+            <div className="achievement-group-heading">
+              <h3 id={`award-group-${index}`}>{group.title}</h3>
+            </div>
+            <p className="achievement-group-description">{group.description}</p>
+            <AchievementList items={group.items} certificateFiles={certificateFiles} />
+          </section>
+        ))}
+        <section className="learning-record" aria-labelledby="learning-record-title">
           <div className="achievement-group-heading">
             <span className="archive-index">Continued learning</span>
-            <h3>Credentials & certificates</h3>
+            <h3 id="learning-record-title">Credentials & certificates</h3>
           </div>
           <AchievementList items={certifications} certificateFiles={certificateFiles} />
-        </div>
-        <div className="community-records">
-          {communityGroups.map((group) => (
-            <details className="achievement-details" key={group.title} open={group.title === 'Service & leadership'}>
-              <summary>
-                <h3>{group.title}</h3>
-                <span className="achievement-details-count">{group.items.length} records</span>
-              </summary>
-              <p className="achievement-group-description">{group.description}</p>
-              <AchievementList items={group.items} certificateFiles={certificateFiles} />
-            </details>
-          ))}
-        </div>
+        </section>
       </div>
     </section>
   );
