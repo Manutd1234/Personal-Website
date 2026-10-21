@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import Archive from './components/Archive.jsx';
+import Achievements from './components/Achievements.jsx';
 import Contact, { SiteFooter } from './components/Contact.jsx';
 import Hero from './components/Hero.jsx';
 import OffDuty from './components/OffDuty.jsx';
@@ -8,6 +9,7 @@ import Pokedex from './components/Pokedex.jsx';
 import ProjectGrid from './components/ProjectGrid.jsx';
 import SiteHeader from './components/SiteHeader.jsx';
 import Toolkit from './components/Toolkit.jsx';
+import TeamGallery from './components/TeamGallery.jsx';
 
 export default function App() {
   useEffect(() => {
@@ -70,8 +72,10 @@ export default function App() {
         <Hero />
         <Pokedex />
         <ProjectGrid />
+        <TeamGallery />
         <Archive />
         <Toolkit />
+        <Achievements />
         <OffDuty />
         <Contact />
       </main>

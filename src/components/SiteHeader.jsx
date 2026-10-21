@@ -2,9 +2,10 @@ import { ArrowUpRightIcon } from './Icons.jsx';
 
 const navigation = [
   { label: 'About', href: '#about' },
-  { label: 'Work', href: '#builds' },
+  { label: 'Projects', href: '#builds' },
   { label: 'Experience', href: '#experience' },
-  { label: 'Toolkit', href: '#toolkit' },
+  { label: 'Skills', href: '#toolkit' },
+  { label: 'Awards', href: '#achievements' },
 ];
 
 export default function SiteHeader() {
@@ -21,9 +22,9 @@ export default function SiteHeader() {
 
         <nav aria-label="Primary navigation">
           <ul className="nav-list">
-            {navigation.map((item, index) => (
+            {navigation.map((item) => (
               <li key={item.href}>
-                <a href={item.href}><span aria-hidden="true">0{index + 1}</span>{item.label}</a>
+                <a href={item.href}>{item.label}</a>
               </li>
             ))}
           </ul>

@@ -67,7 +67,7 @@ export default function Hero() {
             </figcaption>
           </figure>
           <div className="focus-card">
-            <span>Current quest</span>
+            <span>Areas I work in</span>
             <strong>Applied AI<br />Quant systems<br />Secure products</strong>
           </div>
         </div>

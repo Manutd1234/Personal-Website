@@ -37,7 +37,7 @@ export default function Pokedex() {
 
       <div className="about-grid">
         <article className="about-statement">
-          <div className="eyebrow"><SparkIcon size={16} /> Builder profile · Level 21</div>
+          <div className="eyebrow"><SparkIcon size={16} /> Computer Science · NUS</div>
           <h2 id="pokedex-title">Technical depth.<br /><em>Operator empathy.</em></h2>
           <p>{profile.summary}</p>
           <a className="text-link" href={profile.linkedin} target="_blank" rel="noreferrer">

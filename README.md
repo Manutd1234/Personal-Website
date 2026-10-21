@@ -7,17 +7,18 @@ Live site: https://manutd1234.github.io/Personal-Website/
 
 ## What is included
 
-- A warm neutral interface with spacious editorial layouts, focused project storytelling, and restrained game-inspired details.
-- Five curated project case studies including AlphaEngine, BrainHack TIL-AI, and Delta1 Research.
+- A warm neutral interface with compact editorial layouts and focused project storytelling.
+- Five featured projects with authentic dashboard screens, research output, and team photographs, plus a broader project archive.
 - Complete experience, education, leadership, skills, and certification sections sourced from the latest supplied résumé.
 - Direct links to Ian's GitHub, LinkedIn, email, live AlphaEngine workspace, and downloadable résumé.
 - Responsive desktop and mobile layouts with keyboard-accessible tabs, visible focus states, scroll progress, and reduced-motion support.
+- Real event photography, an image viewer, filterable projects, and links to achievement certificate scans.
 - Optimized WebP photographs and a relative Vite asset base suitable for repository-hosted deployments.
 
 ## Run locally
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -38,7 +39,8 @@ for a final browser review.
 ```text
 public/                 Static résumé, favicon, and optimized photographs
 src/components/         Accessible page sections and reusable icons
-src/data/portfolio.js   Portfolio content kept separate from presentation
+src/data/portfolio.js   Career, project, skill, and award content
+src/data/media.js       Authentic project media and certificate catalogue
 src/App.jsx             Page composition
 src/styles.css          Responsive visual system
 ```

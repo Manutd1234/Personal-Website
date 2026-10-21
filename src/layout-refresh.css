@@ -1,0 +1,62 @@
+/* Editorial spacing keeps the portfolio readable as the work archive grows. */
+::selection { color: #fff; background: #087e64; }
+.section-shell, .header-inner { width: min(1240px, calc(100% - 64px)); }
+.hero { min-height: 0; padding-top: clamp(124px, 12vh, 156px); padding-bottom: 18px; }
+.hero-layout { gap: clamp(40px, 6vw, 88px); }
+.hero h1 { font-size: clamp(3.35rem, 5.7vw, 5.8rem); line-height: 1.02; letter-spacing: -.058em; }
+.hero-role { font-size: clamp(1.05rem, 1.55vw, 1.22rem); margin-top: 24px; }
+.hero-introduction { max-width: 620px; line-height: 1.7; }
+.hero-index { display: none; }
+.focus-card { box-shadow: 0 12px 32px rgba(24,24,24,.1); }
+.impact-strip { margin-top: 48px; }
+.pokedex-section, .content-section, .contact-section { padding-top: clamp(76px, 8vw, 112px); }
+.section-kicker { margin-bottom: 18px; color: var(--lime); font-size: .7rem; letter-spacing: .12em; }
+.section-kicker::before { content: ''; width: 22px; height: 2px; background: currentColor; }
+.section-heading { gap: 40px; margin-bottom: 32px; }
+.section-heading h2, .toolkit-intro h2, .off-duty-copy h2 { font-size: clamp(2.7rem, 4.5vw, 4.5rem); line-height: 1.06; letter-spacing: -.05em; }
+.about-statement h2 { font-size: clamp(2.75rem, 4.6vw, 4.7rem); line-height: 1.06; }
+.about-statement { min-height: 0; padding: clamp(28px, 3.5vw, 44px); }
+.about-statement > p { line-height: 1.75; }
+.discipline-card { min-height: 155px; }
+.proof-line { margin-top: 24px; }
+.timeline-list > li + li { margin-top: 32px; }
+.archive-panel { padding: clamp(24px, 4vw, 44px); }
+.toolkit-section { grid-template-columns: minmax(250px,.55fr) minmax(0,1.2fr); gap: 48px; }
+.contact-card { min-height: 400px; padding: clamp(28px,5vw,62px); }
+.contact-card h2 { font-size: clamp(3.1rem,5.7vw,5.5rem); line-height: 1.02; }
+.contact-section { padding-bottom: 64px; }
+.portrait-frame, .travel-frame { transform: none; }
+.site-footer { min-height: 80px; }
+@media (max-width: 1080px) {
+  .toolkit-section { grid-template-columns: 1fr; gap: 28px; }
+  .hero-layout { gap: 36px; }
+  .header-inner { gap: 18px; }
+}
+@media (max-width: 840px) {
+  .section-shell, .header-inner { width: min(100% - 36px, 720px); }
+  .hero { padding-top: 112px; }
+  .hero-layout { grid-template-columns: 1fr; }
+  .hero h1 { max-width: 680px; font-size: clamp(3.2rem,9vw,4.7rem); }
+  .hero-visual { width: min(82%,420px); }
+  .hero-role { max-width: 620px; }
+  .section-heading { gap: 20px; }
+}
+@media (max-width: 600px) {
+  .impact-strip > div { grid-template-columns: 1fr; gap: 8px; align-content: center; }
+  .impact-strip dd { max-width: none; }
+  .section-shell, .header-inner { width: calc(100% - 32px); }
+  .nav-list li:last-child { display: block; }
+  .nav-list a { padding-inline: 9px; font-size: .69rem; }
+  .header-inner { gap: 12px; }
+  .hero { padding-top: 104px; }
+  .hero h1 { font-size: clamp(2.8rem,11.5vw,4rem); line-height: 1.06; }
+  .hero-name { font-size: .64rem; line-height: 1.65; letter-spacing: .08em; }
+  .hero-actions { gap: 9px; }
+  .focus-card { right: -10px; bottom: 54px; }
+  .pokedex-section, .content-section, .contact-section { padding-top: 72px; }
+  .about-statement h2, .section-heading h2, .toolkit-intro h2, .off-duty-copy h2 { font-size: clamp(2.5rem,10.5vw,3.5rem); }
+  .about-statement { padding: 28px 24px; }
+  .section-intro > p { line-height: 1.7; }
+  .timeline-list > li { gap: 18px; }
+  .contact-card h2 { font-size: 2.9rem; }
+}
