@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import * as careerData from '../data/portfolio.js';
 import SectionKicker from './SectionKicker.jsx';
 import '../credentials.css';
+import '../experience-dynamic.css';
 
 const { earlierEducation = [], education = [], experience = [], leadership = [] } = careerData;
 const volunteerRecords = Array.isArray(careerData.volunteering)
@@ -35,36 +36,97 @@ function RecordHighlights({ items, title }) {
 }
 
 function ExperiencePanel() {
+  const [selectedRole, setSelectedRole] = useState(0);
+  const roleRefs = useRef([]);
+  const item = experience[selectedRole];
+
+  function handleRoleKeyDown(event, index) {
+    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const nextIndex = event.key === 'Home' ? 0
+      : event.key === 'End' ? experience.length - 1
+        : (index + (['ArrowDown', 'ArrowRight'].includes(event.key) ? 1 : -1) + experience.length) % experience.length;
+    setSelectedRole(nextIndex);
+    roleRefs.current[nextIndex]?.focus({ preventScroll: true });
+  }
+
+  if (!item) return null;
+
   return (
-    <>
-      <ol className="timeline-list">
-        {experience.map((item) => (
-          <li key={`${item.company}-${item.dates}`}>
-            <div className="timeline-marker" aria-hidden="true" />
-            <article>
-              <div className="timeline-heading">
-                <div>
-                  <h3>{item.company}</h3>
-                  <p>{item.role}</p>
-                </div>
-                <div className="timeline-meta">
-                  <time>{item.dates}</time>
-                  <span>{item.location}</span>
-                </div>
-              </div>
-              <p className="timeline-summary">{item.summary}</p>
-              <RecordHighlights items={item.highlights} title={item.company} />
-            </article>
-          </li>
-        ))}
-      </ol>
-    </>
+    <div className="career-role-browser">
+      <div className="career-role-rail">
+        <div className="career-role-rail-heading">
+          <span>Different teams, different lessons.</span>
+          <p>Explore a role</p>
+        </div>
+        <div className="career-role-list" role="tablist" aria-label="Work experience roles" aria-orientation="vertical">
+          {experience.map((role, index) => (
+            <button
+              aria-controls="career-role-story"
+              aria-selected={selectedRole === index}
+              className="career-role-choice"
+              id={`career-role-${index}-tab`}
+              key={`${role.company}-${role.dates}`}
+              onClick={() => setSelectedRole(index)}
+              onKeyDown={(event) => handleRoleKeyDown(event, index)}
+              ref={(element) => { roleRefs.current[index] = element; }}
+              role="tab"
+              tabIndex={selectedRole === index ? 0 : -1}
+              type="button"
+            >
+              <span className="career-role-choice-company">{role.company}</span>
+              <span className="career-role-choice-title">{role.role}</span>
+              <span className="career-role-choice-date">{role.dates}</span>
+              <span aria-hidden="true" className="career-role-choice-arrow">↗</span>
+            </button>
+          ))}
+        </div>
+        <div className="career-role-picker">
+          <label htmlFor="career-role-select">Choose a role</label>
+          <select
+            aria-controls="career-role-story"
+            id="career-role-select"
+            onChange={(event) => setSelectedRole(Number(event.target.value))}
+            value={selectedRole}
+          >
+            {experience.map((role, index) => (
+              <option key={`${role.company}-${role.dates}`} value={index}>{role.company} · {role.dates}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div
+        aria-labelledby={`career-role-${selectedRole}-tab`}
+        className="career-role-story"
+        id="career-role-story"
+        role="tabpanel"
+        tabIndex={0}
+      >
+        <article className="career-role-story-copy" key={`${item.company}-${item.dates}`}>
+          <div className="career-role-story-meta">
+            <span>{item.location}</span>
+            <time>{item.dates}</time>
+          </div>
+          <p className="career-role-story-eyebrow">{item.role}</p>
+          <h3>{item.company}</h3>
+          <p className="career-role-story-summary">{item.summary}</p>
+          {item.highlights?.length > 0 && (
+            <div className="career-role-contributions">
+              <h4>What I worked on</h4>
+              <ul className="career-bullets">
+                {item.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
+              </ul>
+            </div>
+          )}
+        </article>
+      </div>
+    </div>
   );
 }
 
 function EducationCards({ items }) {
   return (
-    <div className="education-grid">
+    <div className="education-grid career-education-cards">
       {items.map((item) => (
         <article key={item.school}>
           <h3>{item.school}</h3>
@@ -85,7 +147,7 @@ function EducationPanel() {
 
 function CommunityPanel({ items }) {
   return (
-    <div className="leadership-grid">
+    <div className="leadership-grid career-community-cards">
       {items.map((item) => (
         <article key={item.title}>
           <h3>{item.title}</h3>
@@ -121,19 +183,19 @@ export default function Archive() {
   }
 
   return (
-    <section className="content-section section-shell archive-section career-workspace" id="experience" aria-labelledby="archive-title">
+    <section className="content-section section-shell archive-section career-workspace career-dynamic" id="experience" aria-labelledby="archive-title">
       <div className="section-heading archive-heading" data-reveal>
         <div>
           <SectionKicker label="Experience & education" />
-          <h2 id="archive-title">Experience, education &amp; community</h2>
+          <h2 id="archive-title">Where I’ve been <em>building.</em></h2>
         </div>
         <div className="section-intro"><p>
-          Work, study, and the communities I contribute to — from engineering and quantitative research to
-          National Service, student events, and volunteering.
+          I’ve learned something different in each role — in software teams, quantitative research, National Service,
+          and the communities I spend time with.
         </p></div>
       </div>
 
-      <div className="archive-card" data-reveal>
+      <div className="archive-card" data-record-view={activeTab} data-reveal>
         <div className="archive-tabs" role="tablist" aria-label="Portfolio archive sections">
           {tabs.map((tab, index) => (
             <button

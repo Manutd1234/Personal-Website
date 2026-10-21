@@ -1,4 +1,5 @@
-import { profile, impactStats } from '../data/portfolio.js';
+import { profile } from '../data/portfolio.js';
+import RollingWords from './RollingWords.jsx';
 import {
   ArrowUpRightIcon,
   DownloadIcon,
@@ -8,6 +9,19 @@ import {
 } from './Icons.jsx';
 
 const imageBase = `${import.meta.env.BASE_URL}images/`;
+
+function tiltPortrait(event) {
+  if (event.pointerType !== 'mouse' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const bounds = event.currentTarget.parentElement.getBoundingClientRect();
+  const x = (event.clientX - bounds.left) / bounds.width - .5;
+  const y = (event.clientY - bounds.top) / bounds.height - .5;
+  event.currentTarget.style.setProperty('--portrait-x', `${-y * 6}deg`);
+  event.currentTarget.style.setProperty('--portrait-y', `${x * 7}deg`);
+}
+function resetPortrait(event) {
+  event.currentTarget.style.setProperty('--portrait-x', '0deg');
+  event.currentTarget.style.setProperty('--portrait-y', '0deg');
+}
 
 export default function Hero() {
   return (
@@ -23,7 +37,7 @@ export default function Hero() {
           <h1 id="hero-title">
             Ian Abiel<br /><em>Wangsa.</em>
           </h1>
-          <p className="hero-role">Software engineering. Applied AI. Quantitative systems.</p>
+          <RollingWords />
           <p className="hero-introduction">{profile.introduction}</p>
 
           <div className="hero-actions">
@@ -44,7 +58,9 @@ export default function Hero() {
 
         <div className="hero-visual">
           <div className="hero-index" aria-hidden="true">01</div>
-          <figure className="portrait-frame">
+          <span className="portrait-tape" aria-hidden="true" />
+          <span className="portrait-paint-dab" aria-hidden="true" />
+          <figure className="portrait-frame portrait-interactive" onPointerMove={tiltPortrait} onPointerLeave={resetPortrait}>
             <picture>
               <source
                 media="(min-width: 900px)"
@@ -63,20 +79,11 @@ export default function Hero() {
             </picture>
             <figcaption>
               <span>London, United Kingdom</span>
-              <span>Outside the code</span>
+              <span>A little outside the code</span>
             </figcaption>
           </figure>
         </div>
       </div>
-
-      <dl className="impact-strip" aria-label="Selected impact">
-        {impactStats.map((stat, index) => (
-          <div key={stat.label} style={{ '--stat-delay': `${index * 80}ms` }}>
-            <dt>{stat.value}</dt>
-            <dd>{stat.label}</dd>
-          </div>
-        ))}
-      </dl>
 
     </section>
   );

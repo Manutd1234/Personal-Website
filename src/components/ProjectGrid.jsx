@@ -3,6 +3,7 @@ import * as portfolio from '../data/portfolio.js';
 import { projectMedia } from '../data/media.js';
 import { ArrowUpRightIcon, GitHubIcon } from './Icons.jsx';
 import '../project-media.css';
+import BookCarousel from './BookCarousel.jsx';
 
 function imageUrl(src) {
   if (/^(?:https?:|data:|blob:)/i.test(src)) return src;
@@ -176,42 +177,17 @@ function ProjectLinks({ project }) {
   );
 }
 
-function ProjectDetail({ project, id, titleId, position, total, direction, onSwipe, onPreview }) {
-  const [mediaFailed, setMediaFailed] = useState(false);
-  const media = mediaFailed ? null : projectMedia[project.title];
-  const adjacentProjects = total > 1 ? [-1, 1].map((step) => ({ step, project: portfolio.projects[(position - 1 + step + total) % total] })) : [];
-
-  return (
-    <article aria-label={`${position} of ${total}`} aria-roledescription="slide" className={`portfolio-project-detail${media ? '' : ' portfolio-project-without-media'}`} data-direction={direction} id={id} role="group">
-      {media ? (
-        <div className="portfolio-project-deck">
-          {adjacentProjects.map(({ step, project: adjacent }) => projectMedia[adjacent.title]?.src ? (
-            <button aria-label={`${step < 0 ? 'Previous' : 'Next'} project: ${adjacent.title}`} className={`portfolio-deck-preview portfolio-deck-preview-${step < 0 ? 'previous' : 'next'}`} key={step} onClick={() => onPreview(step)} type="button">
-              <img alt="" decoding="async" draggable="false" loading="lazy" src={imageUrl(projectMedia[adjacent.title].src)} />
-            </button>
-          ) : null)}
-          <div className="project-dossier">
-            <div aria-hidden="true" className="project-dossier-label"><span>{String(position).padStart(2, '0')}</span><span>{media.kind}</span></div>
-            <MediaFigure className="portfolio-project-preview" media={media} onImageError={() => setMediaFailed(true)} onSwipe={onSwipe} priority title={project.title} />
-          </div>
-        </div>
-      ) : null}
-      <div className="portfolio-project-detail-copy">
-        <header className="portfolio-project-detail-heading">
-          {project.category ? <p>{project.category}</p> : null}
-          <h3 id={titleId}>{project.title}</h3>
-        </header>
-        <p className="project-description">{project.description}</p>
-        {project.outcome ? <p className="portfolio-project-outcome">{project.outcome}</p> : null}
-        {project.tags?.length ? (
-          <ul aria-label={`${project.title} technologies`} className="portfolio-project-stack">
-            {project.tags.map((tag) => <li key={tag}>{tag}</li>)}
-          </ul>
-        ) : null}
-        <ProjectLinks project={project} />
-      </div>
-    </article>
-  );
+function ProjectDetail({ project }) {
+  const media = projectMedia[project.title];
+  return <>
+    <p className="book-detail-category">{project.category}</p>
+    <h3>{project.title}</h3>
+    <p className="book-detail-description">{project.description}</p>
+    {project.outcome ? <p className="book-detail-outcome">{project.outcome}</p> : null}
+    <ul className="book-detail-tags">{project.tags?.map(tag => <li key={tag}>{tag}</li>)}</ul>
+    <ProjectLinks project={project} />
+    {media ? <MediaFigure className="book-source-image" media={media} title={project.title} /> : null}
+  </>;
 }
 
 function ProjectArchiveRow({ project }) {
@@ -231,21 +207,11 @@ function ProjectArchiveRow({ project }) {
 
 export default function ProjectGrid() {
   const [collection, setCollection] = useState('featured');
-  const [selectedTitle, setSelectedTitle] = useState(() => portfolio.projects.find((project) => project.title === 'AlphaEngine')?.title || portfolio.projects[0]?.title);
-  const [direction, setDirection] = useState('next');
   const collectionRefs = useRef([]);
-  const projectRefs = useRef([]);
-  const arrowRefs = useRef([]);
   const collectionId = useId();
   const archive = Array.isArray(portfolio.projectArchive) ? portfolio.projectArchive : [];
   const selectedTitles = new Set(portfolio.projects.map((project) => project.title));
   const extraProjects = archive.filter((project) => !selectedTitles.has(project.title));
-  const selectedProject = portfolio.projects.find((project) => project.title === selectedTitle) || portfolio.projects[0];
-  const selectedIndex = portfolio.projects.indexOf(selectedProject);
-  const detailId = `${collectionId}-detail`;
-  const detailTitleId = `${collectionId}-detail-title`;
-  const pickerId = `${collectionId}-picker`;
-  const instructionsId = `${collectionId}-instructions`;
   const collections = [
     { id: 'featured', label: 'Featured', count: portfolio.projects.length },
     { id: 'more', label: 'More projects', count: extraProjects.length },
@@ -264,33 +230,10 @@ export default function ProjectGrid() {
     collectionRefs.current[nextIndex]?.focus();
   }
 
-  function selectProject(index, nextDirection) {
-    if (index === selectedIndex || !portfolio.projects[index]) return;
-    setDirection(nextDirection || (index > selectedIndex ? 'next' : 'previous'));
-    setSelectedTitle(portfolio.projects[index].title);
-  }
-
-  function moveProject(step) {
-    selectProject((selectedIndex + step + portfolio.projects.length) % portfolio.projects.length, step > 0 ? 'next' : 'previous');
-  }
-
-  function navigateProjects(event) {
-    if (event.target.closest('input, select, textarea, summary, dialog, [contenteditable="true"]')) return;
-    const lastIndex = portfolio.projects.length - 1;
-    const nextIndex = event.key === 'ArrowRight' ? (selectedIndex + 1) % portfolio.projects.length
-      : event.key === 'ArrowLeft' ? (selectedIndex + lastIndex) % portfolio.projects.length
-        : event.key === 'Home' ? 0 : event.key === 'End' ? lastIndex : null;
-    if (nextIndex === null) return;
-    event.preventDefault();
-    selectProject(nextIndex, event.key === 'ArrowLeft' ? 'previous' : event.key === 'ArrowRight' ? 'next' : undefined);
-    if (event.target.closest('.portfolio-project-choice')) projectRefs.current[nextIndex]?.focus();
-    else if (event.target.closest('.portfolio-project-detail')) arrowRefs.current[event.key === 'ArrowLeft' || event.key === 'Home' ? 0 : 1]?.focus({ preventScroll: true });
-  }
-
   return (
     <section aria-labelledby="builds-title" className="content-section section-shell projects-section" id="builds">
       <div className="section-heading">
-        <div><h2 id="builds-title">Selected projects</h2></div>
+        <div><h2 id="builds-title">Selected <em>projects.</em></h2></div>
         <div className="section-intro">
           <p>Research tools, competition builds and other things I’ve worked on.</p>
           <a className="text-link" href={portfolio.profile.github} rel="noreferrer" target="_blank">GitHub <ArrowUpRightIcon size={16} /></a>
@@ -315,36 +258,7 @@ export default function ProjectGrid() {
         ))}
       </div>
       <div aria-labelledby={`${collectionId}-featured-tab`} className="portfolio-project-panel" hidden={collection !== 'featured'} id={`${collectionId}-featured-panel`} role="tabpanel" tabIndex={0}>
-        {selectedProject ? (
-          <div aria-describedby={instructionsId} aria-label="Featured projects" aria-roledescription="carousel" className="portfolio-project-carousel" onKeyDown={navigateProjects} role="region">
-            <p className="portfolio-project-status" id={instructionsId}>Use the previous and next buttons or left and right arrow keys to browse. Swipe the image to change projects, or click it to enlarge.</p>
-            <div className="portfolio-carousel-controls">
-              <p aria-hidden="true" className="portfolio-carousel-count">{String(selectedIndex + 1).padStart(2, '0')}<span>/ {String(portfolio.projects.length).padStart(2, '0')}</span></p>
-              <div className="portfolio-carousel-arrows">
-                <button aria-controls={detailId} aria-label="Previous project" disabled={portfolio.projects.length < 2} onClick={() => moveProject(-1)} ref={(element) => { arrowRefs.current[0] = element; }} type="button"><span aria-hidden="true">←</span></button>
-                <button aria-controls={detailId} aria-label="Next project" disabled={portfolio.projects.length < 2} onClick={() => moveProject(1)} ref={(element) => { arrowRefs.current[1] = element; }} type="button"><span aria-hidden="true">→</span></button>
-              </div>
-            </div>
-            <div className="portfolio-project-mobile-picker">
-              <label htmlFor={pickerId}>Featured project</label>
-              <select id={pickerId} onChange={(event) => selectProject(portfolio.projects.findIndex((project) => project.title === event.target.value))} value={selectedProject.title}>
-                {portfolio.projects.map((project) => <option key={project.title} value={project.title}>{project.title}</option>)}
-              </select>
-            </div>
-            <div className="portfolio-project-stage">
-              <p className="portfolio-project-status" role="status">Project {selectedIndex + 1} of {portfolio.projects.length}: {selectedProject.title}</p>
-              <ProjectDetail direction={direction} id={detailId} key={selectedProject.title} onPreview={(step) => { moveProject(step); arrowRefs.current[step < 0 ? 0 : 1]?.focus({ preventScroll: true }); }} onSwipe={moveProject} position={selectedIndex + 1} project={selectedProject} titleId={detailTitleId} total={portfolio.projects.length} />
-            </div>
-            <div aria-label="Choose a featured project" className="portfolio-project-selector" role="group">
-              {portfolio.projects.map((project, index) => (
-                <button aria-controls={detailId} aria-pressed={selectedProject.title === project.title} className="portfolio-project-choice" key={project.title} onClick={() => selectProject(index)} ref={(element) => { projectRefs.current[index] = element; }} type="button">
-                  <span aria-hidden="true" className="portfolio-project-choice-number">{String(index + 1).padStart(2, '0')}</span>
-                  <span className="portfolio-project-choice-title">{project.title}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : <p className="portfolio-project-empty">No featured projects to show yet.</p>}
+        <BookCarousel active={collection === 'featured'} projects={portfolio.projects} media={projectMedia} renderDetails={project => <ProjectDetail project={project} />} />
       </div>
       <div aria-labelledby={`${collectionId}-more-tab`} className="portfolio-project-panel" hidden={collection !== 'more'} id={`${collectionId}-more-panel`} role="tabpanel" tabIndex={0}>
         <div className="portfolio-more-projects">

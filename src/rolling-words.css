@@ -1,0 +1,110 @@
+.hero .rolling-words {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 2.6rem;
+  margin-top: 24px;
+}
+
+.rolling-words-accessible {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.rolling-words-line {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  margin: 0;
+  gap: .32em;
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.rolling-words-prefix {
+  flex: none;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: .72em;
+  font-weight: 500;
+  letter-spacing: -.025em;
+}
+
+.rolling-words-window {
+  position: relative;
+  display: inline-grid;
+  height: 1.4em;
+  overflow: hidden;
+  color: var(--lime);
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -.025em;
+}
+
+.rolling-words-sizing {
+  display: inline-grid;
+  visibility: hidden;
+  padding-right: .5em;
+}
+
+.rolling-words-sizing > span {
+  grid-area: 1 / 1;
+}
+
+.rolling-words-word {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  line-height: 1.4;
+}
+
+.rolling-words-cursor {
+  display: inline-block;
+  width: 1px;
+  height: .85em;
+  margin-left: .1em;
+  background: currentColor;
+  vertical-align: -.02em;
+  animation: typing-cursor-blink 1s steps(1) infinite;
+}
+
+.rolling-words[data-running="false"] .rolling-words-cursor {
+  animation: none;
+  opacity: 0;
+}
+
+.rolling-words-static {
+  max-width: 490px;
+  margin: 0;
+  color: var(--lime);
+  font-family: var(--serif);
+  font-size: clamp(1.3rem, 2vw, 1.6rem);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+@keyframes typing-cursor-blink {
+  0%, 45% { opacity: .7; }
+  46%, 100% { opacity: 0; }
+}
+
+@media (max-width: 840px) and (min-width: 601px) {
+  .rolling-words-line { font-size: 1.45rem; }
+}
+
+@media (max-width: 420px) {
+  .hero .rolling-words { margin-top: 22px; }
+  .rolling-words-line { font-size: clamp(1.3rem, 5.3vw, 1.4rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rolling-words-cursor { display: none; animation: none; }
+}

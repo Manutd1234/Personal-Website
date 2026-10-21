@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { ArrowUpRightIcon } from './Icons.jsx';
 
 const navigation = [
@@ -11,6 +11,23 @@ const navigation = [
 
 export default function SiteHeader({ activeSection }) {
   const navRefs = useRef([]);
+  const listRef = useRef(null);
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    const updateIndicator = () => {
+      const selected = navRefs.current[navigation.findIndex(item => item.id === activeSection)];
+      if (!selected) return;
+      list.style.setProperty('--nav-x', `${selected.offsetLeft}px`);
+      list.style.setProperty('--nav-y', `${selected.offsetTop}px`);
+      list.style.setProperty('--nav-width', `${selected.offsetWidth}px`);
+      list.style.setProperty('--nav-height', `${selected.offsetHeight}px`);
+      list.dataset.positioned = 'true';
+    };
+    updateIndicator();
+    const observer = new ResizeObserver(updateIndicator);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [activeSection]);
   function navigate(event, href) {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
     event.preventDefault();
@@ -47,7 +64,7 @@ export default function SiteHeader({ activeSection }) {
         </a>
 
         <nav aria-label="Primary navigation">
-          <ul className="nav-list" role="tablist" aria-label="Portfolio sections">
+          <ul className="nav-list" ref={listRef} role="tablist" aria-label="Portfolio sections">
             {navigation.map((item, index) => (
               <li key={item.href} role="presentation">
                 <a href={item.href} role="tab" id={`${item.id}-nav-tab`} aria-controls={`${item.id}-section`}
