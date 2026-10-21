@@ -11,7 +11,23 @@ const navigation = [
 
 export default function SiteHeader({ activeSection }) {
   const navRefs = useRef([]);
+  function navigate(event, href) {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    event.preventDefault();
+    if (window.location.hash !== href) {
+      window.history.pushState(null, '', href);
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    } else {
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      document.getElementById(href.slice(1))?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    }
+  }
   function handleKeyDown(event, index) {
+    if (event.key === ' ') {
+      event.preventDefault();
+      event.currentTarget.click();
+      return;
+    }
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();
     const next = event.key === 'Home' ? 0 : event.key === 'End' ? navigation.length - 1 :
@@ -36,7 +52,7 @@ export default function SiteHeader({ activeSection }) {
               <li key={item.href} role="presentation">
                 <a href={item.href} role="tab" id={`${item.id}-nav-tab`} aria-controls={`${item.id}-section`}
                   aria-selected={activeSection === item.id} tabIndex={activeSection === item.id ? 0 : -1}
-                  ref={element => { navRefs.current[index] = element; }} onKeyDown={event => handleKeyDown(event, index)}>{item.label}</a>
+                  ref={element => { navRefs.current[index] = element; }} onClick={event => navigate(event, item.href)} onKeyDown={event => handleKeyDown(event, index)}>{item.label}</a>
               </li>
             ))}
           </ul>

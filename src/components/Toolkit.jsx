@@ -7,7 +7,7 @@ export default function Toolkit() {
     <section className="content-section section-shell toolkit-section career-toolkit" id="toolkit" aria-labelledby="toolkit-title">
       <div className="toolkit-intro" data-reveal>
         <SectionKicker number="05" label="Toolkit" />
-        <h2 id="toolkit-title">What I build <em>with.</em></h2>
+        <h2 id="toolkit-title">Skills & languages</h2>
         <p>
           The languages, frameworks, and engineering tools I use across work, research, coursework, and team projects.
         </p>

@@ -74,8 +74,8 @@ export default function Achievements() {
     >
       <div className="section-heading" data-reveal>
         <div>
-          <SectionKicker label="Awards & credentials" />
-          <h2 id="achievements-title">Milestones along <em>the way.</em></h2>
+          <SectionKicker label="Recognition" />
+          <h2 id="achievements-title">Awards &amp; certificates</h2>
         </div>
         <div className="section-intro">
           <p>Competition results, continued learning, and recognition from school, sport, and service.</p>

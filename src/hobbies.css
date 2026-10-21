@@ -1,0 +1,29 @@
+.hobbies-section { padding: 12px 0 42px; scroll-margin-top: 110px; }
+.hobby-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 32px; }
+.hobby-tabs button { border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--muted); padding: 10px 20px; min-height: 44px; font: inherit; font-size: .85rem; cursor: pointer; transition: background 220ms, color 220ms, transform 220ms; }
+.hobby-tabs button[aria-selected="true"] { background: var(--lime); border-color: var(--lime); color: white; }
+.hobby-tabs button:hover { transform: translateY(-2px); }
+.hobbies-section [hidden] { display: none; }
+.hobby-postcard { display: grid; grid-template-columns: 1.1fr 1fr; align-items: center; gap: 68px; padding: 10px 18px 15px; }
+.hobby-postcard figure { margin: 0; padding: 12px 12px 0; border: 1px solid var(--line); border-radius: 5px; background: white; box-shadow: 0 15px 32px rgba(20,40,32,.09); transform: rotate(-2deg); animation: postcard-arrive 600ms cubic-bezier(.2,.8,.2,1) both; }
+.hobby-postcard img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 2px; }
+.hobby-postcard figure figcaption { padding: 14px 6px 17px; text-align: center; color: var(--muted); font-family: var(--serif); font-size: 1.1rem; font-style: italic; }
+.hobby-postcard-copy { animation: hobby-copy-arrive 550ms cubic-bezier(.2,.8,.2,1) both; }
+.hobby-number { margin: 0 0 16px; font-family: var(--mono); font-size: .7rem; color: var(--lime); }
+.hobby-postcard h3 { font: 400 clamp(2.5rem, 4vw, 3.6rem)/1.1 var(--serif); letter-spacing: -.04em; margin: 0 0 18px; color: var(--ink); }
+.hobby-postcard-copy > p:not(.hobby-number) { color: var(--muted); line-height: 1.75; font-size: 1rem; max-width: 38ch; }
+.hobby-postcard-copy > p.hobby-photo-credit { font-size: .7rem; line-height: 1.6; margin-top: 24px; }
+.hobby-photo-credit a { text-decoration: underline; text-underline-offset: 3px; }
+@keyframes postcard-arrive { from { opacity: 0; transform: translateX(-24px) rotate(-7deg) scale(.97); } to { opacity: 1; transform: rotate(-2deg); } }
+@keyframes hobby-copy-arrive { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@media (max-width: 600px) {
+  .hobby-tabs { gap: 6px; margin-bottom: 24px; }
+  .hobby-tabs button { padding: 9px 13px; font-size: .76rem; }
+  .hobby-postcard { grid-template-columns: 1fr; gap: 30px; padding-inline: 6px; }
+  .hobby-postcard h3 { font-size: 2.7rem; }
+  .hobby-postcard-copy > p:not(.hobby-number) { font-size: .92rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hobby-postcard figure, .hobby-postcard-copy { animation: none; transform: none; }
+  .hobby-tabs button:hover { transform: none; }
+}

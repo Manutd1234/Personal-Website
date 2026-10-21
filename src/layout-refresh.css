@@ -187,3 +187,22 @@ body::before { display: none; }
 @media (max-width: 360px) {
   .nav-list a { padding-inline: 7px; font-size: .65rem; }
 }
+
+/* Keep the original portfolio identity while simplifying the supporting copy. */
+.nav-list li { display: block; }
+.about-editorial { display: grid; grid-template-columns: .75fr 1.25fr; gap: 56px; }
+.about-editorial h2 { margin: 0; font-family: var(--display); font-size: clamp(2.4rem, 4vw, 3.45rem); letter-spacing: -.05em; line-height: 1.1; }
+.about-prose p { margin: 0 0 20px; color: var(--muted); font-size: .98rem; line-height: 1.8; }
+.about-prose .text-link { margin-top: 8px; }
+.contact-note { display: flex; align-items: center; justify-content: space-between; gap: 32px; padding: 34px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.contact-note h2 { margin: 0 0 12px; font-size: 2.6rem; letter-spacing: -.04em; }
+.contact-note p { margin: 0; color: var(--muted); font-size: .9rem; }
+.contact-note > a { display: inline-flex; align-items: center; gap: 18px; color: var(--lime); font-size: .95rem; border-bottom: 1px solid var(--lime); padding-block: 12px; }
+.site-footer > div { display: flex; gap: 24px; }
+@media (max-width: 600px) {
+  .about-editorial { grid-template-columns: 1fr; gap: 24px; }
+  .contact-note { align-items: flex-start; flex-direction: column; gap: 16px; }
+  .contact-note h2 { font-size: 2.3rem; }
+  .contact-note > a { font-size: .85rem; }
+  .site-footer { align-items: flex-start; flex-direction: column; padding: 20px 0; gap: 16px; }
+}

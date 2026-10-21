@@ -10,16 +10,14 @@ export default function TeamGallery() {
     <section aria-labelledby="team-gallery-title" className="content-section section-shell team-section" id="teams">
       <div className="portfolio-team-heading" data-reveal>
         <div>
-          <p className="portfolio-section-eyebrow">Along the way</p>
-          <h2 id="team-gallery-title">Good work takes <em>good people.</em></h2>
+          <h2 id="team-gallery-title">Hackathon photos</h2>
         </div>
-        <p>Competition days, shared challenges, and the teams behind the work.</p>
+        <p>With my teams at BrainHack and Hack the Future.</p>
       </div>
       <div className={`portfolio-team-grid${moments.length % 2 === 0 ? ' portfolio-team-grid-even' : ''}`}>
         {moments.map((moment) => (
           <article className="portfolio-team-moment" key={`${moment.title}-${moment.src}`}>
             <MediaFigure className="portfolio-team-image" media={{ ...moment, kind: 'photo' }} title={moment.title} />
-            <h3>{moment.title}</h3>
           </article>
         ))}
       </div>

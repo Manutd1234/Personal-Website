@@ -1,0 +1,27 @@
+/* Short editorial transitions; content remains usable with reduced motion. */
+@keyframes section-arrive {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes photo-arrive {
+  from { opacity: 0; transform: translateY(22px) rotate(3deg); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .site main > [role="tabpanel"]:not([hidden]) { animation: section-arrive 600ms cubic-bezier(.22,.7,.15,1) both; }
+  .hero-copy > * { animation: section-arrive 650ms cubic-bezier(.22,.7,.15,1) both; }
+  .hero-copy > :nth-child(2) { animation-delay: 50ms; }
+  .hero-copy > :nth-child(3) { animation-delay: 100ms; }
+  .hero-copy > :nth-child(4), .hero-copy > :nth-child(5) { animation-delay: 150ms; }
+  .hero-copy > :nth-child(6), .hero-copy > :nth-child(7) { animation-delay: 200ms; }
+  .hero-visual { animation: photo-arrive 800ms cubic-bezier(.22,.7,.15,1) 100ms both; }
+  .archive-panel:not([hidden]), .portfolio-project-panel:not([hidden]) { animation: section-arrive 450ms cubic-bezier(.22,.7,.15,1) both; }
+  .personal-details[open] > section, .career-record-details[open] > ul, .achievement-group[open] > :not(summary) { animation: section-arrive 400ms cubic-bezier(.22,.7,.15,1) both; }
+  .portrait-frame { transition: transform 450ms cubic-bezier(.2,.8,.2,1), box-shadow 450ms; }
+  .portrait-frame:hover { transform: translateY(-5px) rotate(1deg); box-shadow: 0 24px 48px rgba(24,24,24,.1); }
+  .button, .header-cta, .nav-list a, .hobby-tabs button { transition: color 220ms, background 220ms, border-color 220ms, transform 220ms; }
+  .button:hover { transform: translateY(-3px); }
+  .portfolio-media-trigger img { transition: transform 550ms cubic-bezier(.2,.8,.2,1); }
+  .portfolio-media-trigger:hover img { transform: scale(1.025); }
+  .portfolio-lightbox[open] .portfolio-lightbox-panel { animation: section-arrive 320ms cubic-bezier(.22,.7,.15,1) both; }
+}

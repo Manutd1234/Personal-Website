@@ -29,7 +29,7 @@ export const projects = [
     description: 'A quantitative research and execution workspace for Binance, Bybit, and Hyperliquid market data, pre-trade risk checks, and operator telemetry.',
     outcome: 'Reconstructs L2 order books with sequence checks and feed recovery, and aligns feeds on a 100 ms analysis grid.',
     tags: ['Python', 'C++', 'FastAPI', 'WebSockets', 'PostgreSQL'],
-    repository: 'https://github.com/Manutd1234/Developer_Analyst_Infra',
+    repository: 'https://github.com/Manutd1234/AlphaEngine', repositoryVisibility: 'public',
     live: 'https://alphaengine-workspace.vercel.app', accent: 'cobalt', featured: true,
   },
   {
@@ -37,28 +37,31 @@ export const projects = [
     description: 'Team Pandamonium’s five Dockerised AI services for the DSTA TIL-AI finals: speech, vision, retrieval, adversarial noise, and autonomous navigation.',
     outcome: 'Combined NVIDIA Parakeet speech recognition, YOLOv11 detection, BM25-first retrieval, and a MaskablePPO navigation agent for an air-gapped evaluation.',
     tags: ['PyTorch', 'FastAPI', 'YOLOv11', 'NeMo', 'Docker'],
-    repository: 'https://github.com/Manutd1234/BrainHack_V2', accent: 'gold',
+    repository: 'https://github.com/Manutd1234/BrainHack_V2', repositoryLabel: 'Finals source code', repositoryVisibility: 'public', accent: 'gold',
   },
   {
     number: '03', title: 'Delta1 Research', category: 'Systematic trading',
     description: 'A strategy research environment for testing predictive signals, execution assumptions, and portfolio behaviour.',
     outcome: 'Uses walk-forward validation, execution costs, and reproducible research artifacts to evaluate signals.',
     tags: ['Python', 'pandas', 'NumPy', 'SciPy', 'statsmodels'],
-    repository: 'https://github.com/Manutd1234/Delta1_Trading_Strategy', accent: 'alpine',
+    repository: 'https://github.com/Manutd1234/Delta1_Trading_Strategy', repositoryVisibility: 'public', accent: 'alpine',
   },
   {
     number: '04', title: 'CS2 Decision Coach', category: 'Garena AI Build Challenge',
     description: 'A Counter-Strike 2 coaching platform that turns native match telemetry into moment-specific tactical feedback.',
     outcome: 'Parses .dem files, detects first-contact decisions, and grounds LightGBM and LLM coaching in match evidence.',
     tags: ['Next.js', 'FastAPI', 'AWPy', 'LightGBM', 'Pydantic'],
-    repository: 'https://www.linkedin.com/in/ian-abiel-wangsa-70625a290/', repositoryLabel: 'LinkedIn project', accent: 'cobalt',
+    repository: 'https://github.com/Manutd1234/ReDecide-Garena-AI-Build-Challenge', repositoryVisibility: 'public', accent: 'cobalt',
   },
   {
     number: '05', title: 'Agentic Fraud Investigation Crew', category: 'Microsoft Hack the Future · 1st place',
     description: 'A Microsoft-native multi-agent workflow for financial-crime alert triage, evidence enrichment, adjudication, and suspicious activity report drafting.',
     outcome: 'Produces explainable evidence packs and keeps consequential decisions with a human reviewer through Teams and Power Automate approval workflows.',
     tags: ['Azure AI', 'RAG', 'Cosmos DB', 'Power Automate', 'Power BI'],
-    repository: 'https://www.linkedin.com/in/ian-abiel-wangsa-70625a290/', repositoryLabel: 'LinkedIn project', accent: 'gold',
+    repository: 'https://github.com/sudharsank/oneBrainCell-FraudCrew', repositoryLabel: 'Public team starter', repositoryVisibility: 'public', accent: 'gold',
+    repositories: [
+      { label: 'Full team build (private)', url: 'https://github.com/Asdao/oneBrainCell-FraudCrew', visibility: 'private' },
+    ],
   },
 ];
 
@@ -67,40 +70,57 @@ export const projectArchive = [
     title: 'Obital', category: 'NUS Orbital · Apollo 11', group: 'AI',
     description: 'An offline-first study platform with an encrypted document vault, grounded AI tutoring, quizzes, flashcards, XP, study streaks, and optional cloud sync.',
     tags: ['React', 'TypeScript', 'FastAPI', 'DeepSeek', 'Supabase'],
+    repository: 'https://github.com/Manutd1234/Obital-26', repositoryVisibility: 'public',
   },
   {
     title: 'NUSSIF Portfolio & Risk Tools', category: 'Portfolio analytics', group: 'Quant',
     description: 'IBKR NAV collectors, competition leaderboards, automated portfolio reports, and dashboards for historical and Monte Carlo VaR/ES.',
     tags: ['Python', 'IBKR', 'React', 'Streamlit', 'SQLite'],
+    repository: 'https://github.com/Manutd1234/Infrastructure_Projects', repositoryLabel: 'Public infrastructure', repositoryVisibility: 'public',
+    repositories: [
+      { label: 'Paper-account risk controls', url: 'https://github.com/NUSSIF-Developer/pm-risk-cut', visibility: 'public' },
+      { label: 'Portfolio tools (private)', url: 'https://github.com/NUSSIF-Developer/pm_competition', visibility: 'private' },
+      { label: 'Competition leaderboard (private)', url: 'https://github.com/NUSSIF-Developer/internal_competition', visibility: 'private' },
+      { label: 'Stress scenarios (private)', url: 'https://github.com/NUSSIF-Developer/Stress-Scenario-Ian', visibility: 'private' },
+      { label: 'EC2 and trade automation (private)', url: 'https://github.com/NUSSIF-Developer/Automatic-EC2-Replacement-Trade-Automation-', visibility: 'private' },
+    ],
   },
   {
     title: 'PneuRelief', category: 'NUS MedTech', group: 'Product',
     description: 'A cast-pressure monitoring app with BLE device connections, sensor notifications, and a mobile interface backed by FastAPI.',
     tags: ['React Native', 'Expo', 'BLE', 'FastAPI', 'TypeScript'],
+    repository: 'https://github.com/PneuReliefApp/frontend', repositoryLabel: 'Frontend (private)', repositoryVisibility: 'private',
+    repositories: [
+      { label: 'Backend (private)', url: 'https://github.com/PneuReliefApp/backend', visibility: 'private' },
+    ],
   },
   {
     title: 'SignMeUp', category: 'The Merge Hackathon 2026', group: 'AI',
     description: 'An accessibility suite combining on-device gesture recognition, wellness assistance, and voice-first navigation for independent living.',
     tags: ['React', 'TypeScript', 'MediaPipe', 'Gemini'],
+    repository: 'https://github.com/Asdao/Signmeup', repositoryLabel: 'Team source code', repositoryVisibility: 'public',
   },
   {
     title: 'Nexus Academic Coach', category: 'Student productivity', group: 'AI',
     description: 'An AI productivity platform combining academic guidance, task breakdowns, Pomodoro sessions, habit tracking, and progress analytics.',
     tags: ['Next.js', 'LangChain', 'FastAPI', 'React'],
-    repository: 'https://github.com/Manutd1234/Nexus-AI-Helper',
+    repository: 'https://github.com/Manutd1234/Nexus-AI-Helper', repositoryVisibility: 'public',
   },
   {
     title: 'DealMachine', category: 'BugleRock Rockathon 2026', group: 'AI',
     description: 'Investment-banking workflow tools for market research, information memorandum and NDA drafting, and a live deal dashboard.',
     tags: ['Python', 'React', 'PostgreSQL', 'Claude', 'Chart.js'],
-    repository: 'https://github.com/Manutd1234/Rockathon-2026-',
+    repository: 'https://github.com/Manutd1234/Rockathon-2026-', repositoryVisibility: 'public',
   },
   {
     title: 'Coca-Cola Indonesia growth strategy', category: 'Work Simulation Program', group: 'Strategy',
     description: 'A five-year case study proposing a Greater Jakarta launch for Coke Zero and Ades, with a US$10 million budget, staged investment, and an illustrative scenario model.',
     tags: ['Market research', 'Financial modelling', 'Growth strategy'],
     repository: `${import.meta.env.BASE_URL}Coca-Cola_Indonesia_Growth_Strategy.pdf`,
-    repositoryLabel: 'Read case study',
+    repositoryLabel: 'Read case study', repositoryVisibility: 'public',
+    repositories: [
+      { label: 'Case-study PDF on GitHub', url: 'https://github.com/Manutd1234/Personal-Website/blob/main/public/Coca-Cola_Indonesia_Growth_Strategy.pdf', visibility: 'public' },
+    ],
   },
 ];
 

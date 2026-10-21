@@ -12,7 +12,7 @@ import Toolkit from './components/Toolkit.jsx';
 import TeamGallery from './components/TeamGallery.jsx';
 
 const sectionForHash = (hash) => ({
-  '#builds': 'projects', '#experience': 'experience', '#toolkit': 'skills', '#achievements': 'awards',
+  '#builds': 'projects', '#teams': 'projects', '#experience': 'experience', '#toolkit': 'skills', '#achievements': 'awards',
 }[hash] || 'profile');
 
 export default function App() {
@@ -75,12 +75,17 @@ export default function App() {
           <Hero />
           <Pokedex />
           <details className="personal-details section-shell">
-            <summary>Beyond the code <span>Teams, travel & interests</span></summary>
-            <TeamGallery />
+            <summary>Beyond the code <span>Gym, travel, good food & learning</span></summary>
             <OffDuty />
           </details>
         </div>
-        <div role="tabpanel" id="projects-section" aria-labelledby="projects-nav-tab" hidden={activeSection !== 'projects'} tabIndex={0}><ProjectGrid /></div>
+        <div role="tabpanel" id="projects-section" aria-labelledby="projects-nav-tab" hidden={activeSection !== 'projects'} tabIndex={0}>
+          <ProjectGrid />
+          <details className="personal-details project-moments section-shell">
+            <summary>From the hackathons <span>Teams & photos</span></summary>
+            <TeamGallery />
+          </details>
+        </div>
         <div role="tabpanel" id="experience-section" aria-labelledby="experience-nav-tab" hidden={activeSection !== 'experience'} tabIndex={0}><Archive /></div>
         <div role="tabpanel" id="skills-section" aria-labelledby="skills-nav-tab" hidden={activeSection !== 'skills'} tabIndex={0}><Toolkit /></div>
         <div role="tabpanel" id="awards-section" aria-labelledby="awards-nav-tab" hidden={activeSection !== 'awards'} tabIndex={0}><Achievements /></div>
