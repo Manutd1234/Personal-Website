@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import Archive from './components/Archive.jsx';
 import Achievements from './components/Achievements.jsx';
@@ -11,10 +11,39 @@ import SiteHeader from './components/SiteHeader.jsx';
 import Toolkit from './components/Toolkit.jsx';
 import TeamGallery from './components/TeamGallery.jsx';
 
+const sectionForHash = (hash) => ({
+  '#builds': 'projects', '#experience': 'experience', '#toolkit': 'skills', '#achievements': 'awards',
+}[hash] || 'profile');
+
 export default function App() {
+  const [activeSection, setActiveSection] = useState(() => sectionForHash(window.location.hash));
+  const [currentHash, setCurrentHash] = useState(window.location.hash);
+
+  useEffect(() => {
+    function syncSection() {
+      setCurrentHash(window.location.hash);
+      if (['#contact', '#main-content'].includes(window.location.hash)) return;
+      setActiveSection(sectionForHash(window.location.hash));
+    }
+    window.addEventListener('hashchange', syncSection);
+    return () => window.removeEventListener('hashchange', syncSection);
+  }, []);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      const targetId = window.location.hash.slice(1);
+      const target = document.getElementById(targetId);
+      const disclosure = target?.closest('details');
+      if (disclosure) disclosure.open = true;
+      if (target && !target.closest('[hidden]')) target.scrollIntoView({ behavior: 'instant', block: 'start' });
+      else window.scrollTo({ top: 0, behavior: 'instant' });
+      window.dispatchEvent(new Event('scroll'));
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [activeSection, currentHash]);
+
   useEffect(() => {
     const root = document.documentElement;
-    const revealTargets = [...document.querySelectorAll('[data-reveal]')];
     let frameId;
 
     function updateScrollProgress() {
@@ -27,33 +56,6 @@ export default function App() {
       });
     }
 
-    if (!('IntersectionObserver' in window)) {
-      revealTargets.forEach((target) => target.classList.add('is-visible'));
-    } else {
-      revealTargets.forEach((target) => target.classList.add('reveal-ready'));
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('is-visible');
-              observer.unobserve(entry.target);
-            }
-          });
-        },
-        { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
-      );
-      revealTargets.forEach((target) => observer.observe(target));
-      window.addEventListener('scroll', updateScrollProgress, { passive: true });
-      updateScrollProgress();
-
-      return () => {
-        observer.disconnect();
-        window.removeEventListener('scroll', updateScrollProgress);
-        cancelAnimationFrame(frameId);
-        document.body.classList.remove('has-scrolled');
-      };
-    }
-
     window.addEventListener('scroll', updateScrollProgress, { passive: true });
     updateScrollProgress();
     return () => {
@@ -64,19 +66,24 @@ export default function App() {
   }, []);
 
   return (
-    <div className="site" id="top">
+    <div className="site" data-active-section={activeSection} id="top">
       <div className="ambient ambient-one" aria-hidden="true" />
       <div className="ambient ambient-two" aria-hidden="true" />
-      <SiteHeader />
+      <SiteHeader activeSection={activeSection} />
       <main id="main-content">
-        <Hero />
-        <Pokedex />
-        <ProjectGrid />
-        <TeamGallery />
-        <Archive />
-        <Toolkit />
-        <Achievements />
-        <OffDuty />
+        <div role="tabpanel" id="profile-section" aria-labelledby="profile-nav-tab" hidden={activeSection !== 'profile'} tabIndex={0}>
+          <Hero />
+          <Pokedex />
+          <details className="personal-details section-shell">
+            <summary>Beyond the code <span>Teams, travel & interests</span></summary>
+            <TeamGallery />
+            <OffDuty />
+          </details>
+        </div>
+        <div role="tabpanel" id="projects-section" aria-labelledby="projects-nav-tab" hidden={activeSection !== 'projects'} tabIndex={0}><ProjectGrid /></div>
+        <div role="tabpanel" id="experience-section" aria-labelledby="experience-nav-tab" hidden={activeSection !== 'experience'} tabIndex={0}><Archive /></div>
+        <div role="tabpanel" id="skills-section" aria-labelledby="skills-nav-tab" hidden={activeSection !== 'skills'} tabIndex={0}><Toolkit /></div>
+        <div role="tabpanel" id="awards-section" aria-labelledby="awards-nav-tab" hidden={activeSection !== 'awards'} tabIndex={0}><Achievements /></div>
         <Contact />
       </main>
       <SiteFooter />

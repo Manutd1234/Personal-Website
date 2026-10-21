@@ -19,16 +19,16 @@ export default function Hero() {
             {profile.availability}
           </div>
 
-          <p className="hero-name">{profile.name} · {profile.location}</p>
+          <p className="hero-name">Computer Science at NUS · {profile.location}</p>
           <h1 id="hero-title">
-            I build systems that stay <em>useful</em> when things get complex.
+            Ian Abiel<br /><em>Wangsa.</em>
           </h1>
-          <p className="hero-role">{profile.role}</p>
+          <p className="hero-role">Software engineering. Applied AI. Quantitative systems.</p>
           <p className="hero-introduction">{profile.introduction}</p>
 
           <div className="hero-actions">
             <a className="button button-primary" href="#builds">
-              Explore selected work <ArrowUpRightIcon />
+              View projects <ArrowUpRightIcon />
             </a>
             <a className="button button-secondary" href={profile.resumeUrl} target="_blank" rel="noreferrer">
               Résumé <DownloadIcon />
@@ -63,13 +63,9 @@ export default function Hero() {
             </picture>
             <figcaption>
               <span>London, United Kingdom</span>
-              <span>Field note · 01</span>
+              <span>Outside the code</span>
             </figcaption>
           </figure>
-          <div className="focus-card">
-            <span>Areas I work in</span>
-            <strong>Applied AI<br />Quant systems<br />Secure products</strong>
-          </div>
         </div>
       </div>
 
@@ -82,9 +78,6 @@ export default function Hero() {
         ))}
       </dl>
 
-      <a className="scroll-cue" href="#about">
-        <span aria-hidden="true" /> Scroll to explore
-      </a>
     </section>
   );
 }

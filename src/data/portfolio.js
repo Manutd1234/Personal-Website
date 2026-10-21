@@ -64,7 +64,7 @@ export const projects = [
 
 export const projectArchive = [
   {
-    title: 'BitAI', category: 'NUS Orbital · Apollo 11', group: 'AI',
+    title: 'Obital', category: 'NUS Orbital · Apollo 11', group: 'AI',
     description: 'An offline-first study platform with an encrypted document vault, grounded AI tutoring, quizzes, flashcards, XP, study streaks, and optional cloud sync.',
     tags: ['React', 'TypeScript', 'FastAPI', 'DeepSeek', 'Supabase'],
   },

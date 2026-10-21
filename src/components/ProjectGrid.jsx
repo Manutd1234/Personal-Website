@@ -31,9 +31,12 @@ export function MediaFigure({ media, title, className = '', priority = false, on
     if (!open) return undefined;
     const dialog = dialogRef.current;
     const previousOverflow = document.body.style.overflow;
+    const closeOnNavigation = () => setOpen(false);
     dialog.showModal();
     document.body.style.overflow = 'hidden';
+    window.addEventListener('hashchange', closeOnNavigation);
     return () => {
+      window.removeEventListener('hashchange', closeOnNavigation);
       if (dialog.open) dialog.close();
       document.body.style.overflow = previousOverflow;
       triggerRef.current?.focus({ preventScroll: true });
@@ -117,25 +120,22 @@ function ProjectCard({ project, index, prominent = false }) {
       style={{ '--card-index': index }}
     >
       <div className="project-copy">
-        {project.category ? <p className="portfolio-project-category">{project.category}</p> : null}
-        <h3>{project.title}</h3>
+        <div className="portfolio-project-heading">
+          {project.category ? <p className="portfolio-project-category">{project.category}</p> : null}
+          <h3>{project.title}</h3>
+        </div>
         <p className="project-description">{project.description}</p>
         {project.outcome ? <p className="portfolio-project-outcome">{project.outcome}</p> : null}
-        {project.tags?.length ? (
-          <ul aria-label={`${project.title} technologies`} className="tag-list">
-            {project.tags.map((tag) => <li key={tag}>{tag}</li>)}
-          </ul>
-        ) : null}
-        <ProjectLinks project={project} />
-      </div>
-      {media?.secondaryImage ? (
-        <div className="portfolio-project-image portfolio-project-media-pair">
-          <MediaFigure media={media} onImageError={() => setMediaFailed(true)} priority={index === 0} title={`${project.title} — live arena`} />
-          <MediaFigure className="portfolio-project-secondary-image" media={media.secondaryImage} title={`${project.title} — final results`} />
+        <div className="portfolio-project-footer">
+          {project.tags?.length ? (
+            <ul aria-label={`${project.title} technologies`} className="tag-list">
+              {project.tags.map((tag) => <li key={tag}>{tag}</li>)}
+            </ul>
+          ) : null}
+          <ProjectLinks project={project} />
         </div>
-      ) : (
-        <MediaFigure className="portfolio-project-image" media={media} onImageError={() => setMediaFailed(true)} priority={index === 0} title={project.title} />
-      )}
+      </div>
+      <MediaFigure className="portfolio-project-image" media={media} onImageError={() => setMediaFailed(true)} priority={index === 0} title={project.title} />
     </article>
   );
 }
@@ -160,16 +160,33 @@ function matchesFilter(project, filter) {
 
 export default function ProjectGrid() {
   const [filter, setFilter] = useState('All');
+  const [collection, setCollection] = useState('featured');
+  const collectionRefs = useRef([]);
+  const collectionId = useId();
   const archive = Array.isArray(portfolio.projectArchive) ? portfolio.projectArchive : [];
   const selectedTitles = new Set(portfolio.projects.map((project) => project.title));
   const extraProjects = archive.filter((project) => !selectedTitles.has(project.title));
   const visibleProjects = portfolio.projects.filter((project) => matchesFilter(project, filter));
-  const visualProjects = visibleProjects.filter((project) => projectMedia[project.title]?.src);
-  const textProjects = visibleProjects.filter((project) => !projectMedia[project.title]?.src);
-  const pairedProjects = visualProjects.filter((project) => !project.featured);
-  const finalProminentTitle = pairedProjects.length % 2 === 1 ? pairedProjects.at(-1).title : null;
   const visibleArchive = extraProjects.filter((project) => matchesFilter(project, filter));
-  const visibleCount = visibleProjects.length + visibleArchive.length;
+  const collections = [
+    { id: 'featured', label: 'Featured builds', count: visibleProjects.length },
+    { id: 'more', label: 'More projects', count: visibleArchive.length },
+  ];
+  const activePanelId = `${collectionId}-${collection}-panel`;
+  const visibleCount = collection === 'featured' ? visibleProjects.length : visibleArchive.length;
+
+  function navigateCollections(event, index) {
+    const lastIndex = collections.length - 1;
+    const nextIndex = event.key === 'ArrowRight' ? (index + 1) % collections.length
+      : event.key === 'ArrowLeft' ? (index + lastIndex) % collections.length
+        : event.key === 'Home' ? 0
+          : event.key === 'End' ? lastIndex
+            : null;
+    if (nextIndex === null) return;
+    event.preventDefault();
+    setCollection(collections[nextIndex].id);
+    collectionRefs.current[nextIndex]?.focus();
+  }
 
   return (
     <section aria-labelledby="builds-title" className="content-section section-shell projects-section" id="builds">
@@ -183,32 +200,61 @@ export default function ProjectGrid() {
           <a className="text-link" href={portfolio.profile.github} rel="noreferrer" target="_blank">All repositories <ArrowUpRightIcon size={16} /></a>
         </div>
       </div>
+      <div aria-label="Project collections" className="portfolio-project-browse" role="tablist">
+        {collections.map((item, index) => (
+          <button
+            aria-controls={`${collectionId}-${item.id}-panel`}
+            aria-selected={collection === item.id}
+            id={`${collectionId}-${item.id}-tab`}
+            key={item.id}
+            onClick={() => setCollection(item.id)}
+            onKeyDown={(event) => navigateCollections(event, index)}
+            ref={(element) => { collectionRefs.current[index] = element; }}
+            role="tab"
+            tabIndex={collection === item.id ? 0 : -1}
+            type="button"
+          >
+            {item.label}<span>{item.count}</span>
+          </button>
+        ))}
+      </div>
       <div className="portfolio-project-controls">
         <div aria-label="Filter projects by field" className="portfolio-project-filters" role="group">
           {['All', 'AI', 'Quant'].map((option) => (
-            <button aria-controls="portfolio-project-results" aria-pressed={filter === option} key={option} onClick={() => setFilter(option)} type="button">
+            <button aria-controls={activePanelId} aria-pressed={filter === option} key={option} onClick={() => setFilter(option)} type="button">
               {option === 'All' ? 'All work' : option}
             </button>
           ))}
         </div>
         <p aria-live="polite" aria-atomic="true" className="portfolio-project-count">{visibleCount} {visibleCount === 1 ? 'project' : 'projects'}</p>
       </div>
-      <div id="portfolio-project-results">
+      <div
+        aria-labelledby={`${collectionId}-featured-tab`}
+        className="portfolio-project-panel"
+        hidden={collection !== 'featured'}
+        id={`${collectionId}-featured-panel`}
+        role="tabpanel"
+        tabIndex={0}
+      >
         <div className="project-grid portfolio-project-grid">
-          {visualProjects.map((project, index) => (
-            <ProjectCard index={index} key={project.title} project={project} prominent={project.featured || project.title === finalProminentTitle} />
+          {visibleProjects.map((project, index) => (
+            <ProjectCard index={index} key={project.title} project={project} prominent={project.featured} />
           ))}
-          {textProjects.map((project, index) => <ProjectCard index={visualProjects.length + index} key={project.title} project={project} />)}
         </div>
-        {visibleArchive.length ? (
-          <div className="portfolio-project-archive">
-            <h3>More projects</h3>
-            <div className="portfolio-project-archive-grid">
-              {visibleArchive.map((project) => <ProjectArchiveCard key={project.title} project={project} />)}
-            </div>
-          </div>
-        ) : null}
-        {visibleCount === 0 ? <p className="portfolio-project-empty">No projects in this field yet. Choose All work to explore the full collection.</p> : null}
+        {visibleProjects.length === 0 ? <p className="portfolio-project-empty">No featured builds in this field. Choose All work or browse More projects.</p> : null}
+      </div>
+      <div
+        aria-labelledby={`${collectionId}-more-tab`}
+        className="portfolio-project-panel"
+        hidden={collection !== 'more'}
+        id={`${collectionId}-more-panel`}
+        role="tabpanel"
+        tabIndex={0}
+      >
+        <div className="portfolio-project-archive-grid">
+          {visibleArchive.map((project) => <ProjectArchiveCard key={project.title} project={project} />)}
+        </div>
+        {visibleArchive.length === 0 ? <p className="portfolio-project-empty">No additional projects in this field. Choose All work or browse Featured builds.</p> : null}
       </div>
     </section>
   );

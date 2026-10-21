@@ -23,22 +23,15 @@ const disciplines = [
   },
 ];
 
-const operatingLoop = [
-  { value: '01', label: 'Frame the operator problem' },
-  { value: '02', label: 'Make failure modes explicit' },
-  { value: '03', label: 'Prototype with evidence' },
-  { value: '04', label: 'Ship, observe, improve' },
-];
-
 export default function Pokedex() {
   return (
     <section className="pokedex-section section-shell" id="about" aria-labelledby="pokedex-title" data-reveal>
-      <SectionKicker number="02" label="How I work" />
+      <SectionKicker label="About me" />
 
       <div className="about-grid">
         <article className="about-statement">
           <div className="eyebrow"><SparkIcon size={16} /> Computer Science · NUS</div>
-          <h2 id="pokedex-title">Technical depth.<br /><em>Operator empathy.</em></h2>
+          <h2 id="pokedex-title">Engineering with<br /><em>people in mind.</em></h2>
           <p>{profile.summary}</p>
           <a className="text-link" href={profile.linkedin} target="_blank" rel="noreferrer">
             <LinkedInIcon size={18} /> Read the full profile <ArrowUpRightIcon size={16} />
@@ -59,14 +52,6 @@ export default function Pokedex() {
         </div>
       </div>
 
-      <div className="proof-line" aria-label="Ian's engineering process">
-        {operatingLoop.map((step) => (
-          <div key={step.label}>
-            <strong>{step.value}</strong>
-            <span>{step.label}</span>
-          </div>
-        ))}
-      </div>
     </section>
   );
 }

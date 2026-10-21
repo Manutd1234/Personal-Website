@@ -19,6 +19,21 @@ const tabs = [
   { id: 'volunteering', label: 'Volunteering', count: volunteerRecords.length },
 ];
 
+function RecordHighlights({ items, title }) {
+  if (!items?.length) return null;
+
+  return (
+    <details className="career-record-details">
+      <summary aria-label={`Contributions at ${title}`}>
+        Contributions <span aria-hidden="true">{items.length}</span>
+      </summary>
+      <ul className="career-bullets">
+        {items.map((item) => <li key={item}>{item}</li>)}
+      </ul>
+    </details>
+  );
+}
+
 function ExperiencePanel() {
   return (
     <>
@@ -38,11 +53,7 @@ function ExperiencePanel() {
                 </div>
               </div>
               <p className="timeline-summary">{item.summary}</p>
-              <ul>
-                {item.highlights.map((highlight) => (
-                  <li key={highlight}>{highlight}</li>
-                ))}
-              </ul>
+              <RecordHighlights items={item.highlights} title={item.company} />
             </article>
           </li>
         ))}
@@ -94,11 +105,7 @@ function CommunityPanel({ items }) {
           <p className="leadership-role">{item.role}</p>
           <time>{item.dates}</time>
           <p>{item.description}</p>
-          {item.highlights?.length > 0 && (
-            <ul className="career-bullets">
-              {item.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
-            </ul>
-          )}
+          <RecordHighlights items={item.highlights} title={item.title} />
         </article>
       ))}
     </div>

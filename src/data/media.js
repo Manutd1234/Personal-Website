@@ -11,13 +11,7 @@ export const projectMedia = {
     "src": "images/portfolio/brainhack-six-team-arena.webp",
     "alt": "The live TIL-AI six-team robot arena and leaderboard at step 106 of 200, with Team Pandamonium in second place during the match.",
     "kind": "Competition photo",
-    "caption": "Multimodal AI — live six-team arena; Team Pandamonium finished Novice Champions.",
-    "secondaryImage": {
-      "src": "images/portfolio/brainhack-final-results.webp",
-      "alt": "Final TIL-AI results announcing Pandamonium wins, in first place with a score of 330.0.",
-      "kind": "Competition result photo",
-      "caption": "Final results — Pandamonium wins, first place with 330.0 points."
-    }
+    "caption": "Multimodal AI — live six-team arena; Team Pandamonium finished Novice Champions."
   },
   "Delta1 Research": {
     "src": "images/portfolio/delta1-net-performance.webp",
