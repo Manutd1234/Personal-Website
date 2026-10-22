@@ -49,9 +49,7 @@
 }
 .deck-tab-label {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-align: center;
 }
 .deck-tab-count {
   display: grid;
@@ -147,7 +145,7 @@
   );
 }
 .deck-track[data-at-start="false"] {
-  --fade-start: 28px;
+  --fade-start: 20px;
 }
 .deck-track[data-at-end="true"] {
   --fade-end: 0px;
@@ -191,13 +189,9 @@
     border-color 0.18s,
     opacity 0.18s;
 }
-.deck-arrow:hover:not(:disabled) {
-  border-color: var(--career-green);
-  background: var(--career-green);
-  color: #fff;
-}
-.deck-arrow:disabled {
+.deck-arrow[aria-disabled="true"] {
   opacity: 0.38;
+  cursor: default;
 }
 .deck-dots {
   display: flex;
@@ -220,7 +214,7 @@
   width: 8px;
   height: 8px;
   margin: -4px 0 0 -4px;
-  border: 1.5px solid #8fb89a;
+  border: 1.5px solid #5f8a68;
   border-radius: 50%;
   content: "";
   transition:
@@ -229,7 +223,7 @@
     transform 0.2s;
 }
 .deck-dots button[data-collected="true"]::before {
-  background: #8fb89a;
+  background: #5f8a68;
 }
 .deck-dots button[data-visible="true"]::before {
   border-color: var(--career-green);
@@ -238,7 +232,7 @@
 }
 .deck-hint {
   margin: 0;
-  color: #58705f;
+  color: #4d6858;
   font: 400 11px/1.5 var(--font-mono);
 }
 .deck-hint-touch {
@@ -272,8 +266,10 @@
   --tcg-ink: #92400e;
   --tcg-orb: radial-gradient(circle at 35% 30%, #fff, #fde047 42%, #f59e0b);
   position: relative;
+  display: flex;
   width: 100%;
   height: 100%;
+  flex-direction: column;
   perspective: 1200px;
   color: #18181b;
   font-family: var(--classic-display);
@@ -332,6 +328,24 @@
   --tcg-ink: #166534;
   --tcg-orb: radial-gradient(circle at 35% 30%, #fff, #86efac 42%, #22c55e);
 }
+.tcg-card[data-type="sport"] {
+  --tcg-foil: linear-gradient(
+    140deg,
+    #e0f2fe 0%,
+    #38bdf8 17%,
+    #075985 35%,
+    #bae6fd 52%,
+    #0284c7 70%,
+    #e0f2fe 86%,
+    #0c4a6e 100%
+  );
+  --tcg-face: #f5fbff;
+  --tcg-band: linear-gradient(90deg, #e0f2fe, #bae6fd);
+  --tcg-line: #9fd3f2;
+  --tcg-mark: #0ea5e9;
+  --tcg-ink: #075985;
+  --tcg-orb: radial-gradient(circle at 35% 30%, #fff, #7dd3fc 42%, #0ea5e9);
+}
 /* Older cards wear a plainer silver frame, like an earlier print run. */
 .tcg-card[data-rarity="uncommon"] {
   --tcg-foil: linear-gradient(
@@ -348,13 +362,16 @@
 .tcg-tilt,
 .tcg-flipper {
   position: relative;
-  width: 100%;
-  height: 100%;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   transform-style: preserve-3d;
 }
 .tcg-face {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   padding: 8px;
   border-radius: 20px;
   background: var(--tcg-foil);
@@ -368,18 +385,25 @@
   cursor: pointer;
 }
 .tcg-back {
+  position: absolute;
+  inset: 0;
   transform: rotateY(180deg);
 }
 .tcg-inner {
   position: relative;
   display: flex;
-  height: 100%;
+  flex: 1;
   flex-direction: column;
   gap: 12px;
   overflow: hidden;
   border-radius: 13px;
   background: var(--tcg-face);
   box-shadow: inset 0 0 0 1px #00000014;
+}
+
+.tcg-inner > :not(.tcg-holo, .tcg-sheen, .tcg-glare) {
+  position: relative;
+  z-index: 1;
 }
 
 /* Header and footer bands frame the card's sections. */
@@ -396,6 +420,7 @@
   border-bottom: 1px solid var(--tcg-line);
 }
 .tcg-footer {
+  flex-wrap: wrap;
   justify-content: space-between;
   min-height: 48px;
   margin-top: auto;
@@ -415,18 +440,15 @@
   color: #18181b;
 }
 .tcg-title {
-  display: -webkit-box;
   min-width: 0;
   flex: 1;
   margin: 0;
-  overflow: hidden;
   color: #18181b;
   font-size: 15px;
   font-weight: 750;
   letter-spacing: -0.01em;
   line-height: 1.25;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
 }
 .tcg-level {
   display: flex;
@@ -484,17 +506,13 @@
   padding: 0 16px;
 }
 .tcg-identity h3 {
-  display: -webkit-box;
   margin: 0;
-  overflow: hidden;
   color: #18181b;
   font-size: 19px;
   font-weight: 750;
   letter-spacing: -0.02em;
   line-height: 1.25;
   text-wrap: balance;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
 }
 .tcg-identity p {
   margin: 5px 0 0;
@@ -516,7 +534,7 @@
   border: 1px solid #0000000f;
   border-left: 3px solid var(--tcg-mark);
   border-radius: 10px;
-  background: #fff;
+  background: #ffffffd9;
 }
 .tcg-move-name {
   display: flex;
@@ -538,14 +556,10 @@
   content: "";
 }
 .tcg-move-text {
-  display: -webkit-box;
   margin: 4px 0 0;
-  overflow: hidden;
   color: #3f3f46;
   font-size: 14px;
   line-height: 1.5;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
 }
 .tcg-move-text strong {
   color: var(--tcg-ink);
@@ -555,12 +569,9 @@
 .tcg-footer p {
   min-width: 0;
   margin: 0;
-  overflow: hidden;
   color: #3f3f46;
   font-size: 12px;
   font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .tcg-footer button {
   display: inline-flex;
@@ -580,14 +591,13 @@
     background 0.18s,
     color 0.18s;
 }
-.tcg-footer button:hover {
-  border-color: var(--tcg-ink);
-  background: #fff;
-  color: var(--tcg-ink);
-}
 .career-classic .tcg-card :is(button, a, [tabindex]):focus-visible {
   outline: 2px solid var(--tcg-ink);
   outline-offset: 2px;
+}
+/* The scrolling back body clips an outside ring, so draw it inside. */
+.career-classic .tcg-card .tcg-back-body:focus-visible {
+  outline-offset: -2px;
 }
 
 /* Holographic layers. Pointer position and opacity arrive as inline styles. */
@@ -633,7 +643,7 @@
 @media (hover: none) and (prefers-reduced-motion: no-preference) {
   .deck-slot[data-live] [data-rarity="rare-holo"] .tcg-holo {
     opacity: 0.35 !important;
-    animation: tcg-holo-drift 7s ease-in-out infinite alternate;
+    animation: tcg-holo-drift 2.5s ease-in-out 2 alternate;
   }
 }
 
@@ -827,11 +837,6 @@
   background: #172b1d;
   color: #a6e5ba;
 }
-.dark .deck-arrow:hover:not(:disabled) {
-  border-color: #a6e5ba;
-  background: #a6e5ba;
-  color: #153c27;
-}
 .dark .deck-dots button::before {
   border-color: #5f8a68;
 }
@@ -855,6 +860,23 @@
   --tcg-face: #f3f1ea;
 }
 
+@media (hover: hover) {
+  .deck-arrow:hover:not([aria-disabled="true"]) {
+    border-color: var(--career-green);
+    background: var(--career-green);
+    color: #fff;
+  }
+  .dark .deck-arrow:hover:not([aria-disabled="true"]) {
+    border-color: #a6e5ba;
+    background: #a6e5ba;
+    color: #153c27;
+  }
+  .tcg-footer button:hover {
+    border-color: var(--tcg-ink);
+    background: #fff;
+    color: var(--tcg-ink);
+  }
+}
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .deck-tabs button {
     transition:
@@ -917,6 +939,10 @@
     padding: 0 12px 16px;
   }
   /* Fifteen dots and two arrows must share one row on a phone. */
+  .deck-nav,
+  .deck-dots {
+    min-width: 0;
+  }
   .deck-nav {
     gap: 6px;
   }

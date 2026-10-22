@@ -15,6 +15,12 @@ import TradingCard from "./TradingCard";
 import { useMotionPreference } from "./useMotionPreference";
 
 type Collection = Readonly<Record<DeckId, readonly number[]>>;
+type TrackView = {
+  nearest: number;
+  visible: readonly number[];
+  atStart: boolean;
+  atEnd: boolean;
+};
 
 const pad = (value: number) => String(value).padStart(2, "0");
 const emptyCollection: Collection = {
@@ -23,11 +29,40 @@ const emptyCollection: Collection = {
   community: [],
   volunteering: [],
 };
+const deckFromHash: Readonly<Record<string, DeckId>> = {
+  "#work": "work",
+  "#education": "education",
+  "#community": "community",
+  "#leadership": "community",
+  "#volunteering": "volunteering",
+};
+const deckIndex = (id: DeckId) => decks.findIndex((deck) => deck.id === id);
 const deckMotion = {
   enter: (direction: number) => ({ opacity: 0, x: direction * 56 }),
   center: { opacity: 1, x: 0 },
   exit: (direction: number) => ({ opacity: 0, x: direction * -56 }),
 };
+
+// The card whose snap position is closest to the current scroll. On a phone no
+// card sits fully inside the track between snap points, so position must come
+// from the snaps rather than from what is fully visible.
+function nearestCard(
+  track: HTMLElement,
+  slots: readonly (HTMLLIElement | null)[],
+) {
+  const inset = parseFloat(getComputedStyle(track).scrollPaddingLeft) || 0;
+  let nearest = 0;
+  let distance = Infinity;
+  slots.forEach((slot, index) => {
+    if (!slot) return;
+    const gap = Math.abs(slot.offsetLeft - inset - track.scrollLeft);
+    if (gap < distance) {
+      distance = gap;
+      nearest = index;
+    }
+  });
+  return nearest;
+}
 
 function DeckTrack({
   deck,
@@ -44,9 +79,11 @@ function DeckTrack({
 }) {
   const trackRef = useRef<HTMLUListElement>(null);
   const slotRefs = useRef<(HTMLLIElement | null)[]>([]);
-  const [view, setView] = useState({
-    first: 0,
-    count: 1,
+  const pending = useRef<number | null>(null);
+  const pendingTimer = useRef(0);
+  const [view, setView] = useState<TrackView>({
+    nearest: 0,
+    visible: [],
     atStart: true,
     atEnd: false,
   });
@@ -55,8 +92,9 @@ function DeckTrack({
   const trackId = useId();
 
   // A card is collected once it has stayed mostly on screen for a moment, so
-  // swiping quickly past a card does not count. Only visible cards run their
-  // art animations; that attribute is written directly to skip renders.
+  // swiping quickly past a card does not count. "Mostly" is measured against
+  // what can fit, so short landscape screens can still collect tall cards.
+  // Only visible cards animate; that attribute is written directly.
   useEffect(() => {
     const timers = new Map<Element, number>();
     const observer = new IntersectionObserver(
@@ -65,7 +103,13 @@ function DeckTrack({
           const slot = entry.target as HTMLElement;
           slot.toggleAttribute("data-live", entry.isIntersecting);
           window.clearTimeout(timers.get(slot));
-          if (entry.intersectionRatio >= 0.6)
+          const box = entry.boundingClientRect;
+          const seen = entry.intersectionRect;
+          const fits = Math.min(
+            box.height,
+            entry.rootBounds?.height ?? box.height,
+          );
+          if (seen.width >= box.width * 0.6 && seen.height >= fits * 0.6)
             timers.set(
               slot,
               window.setTimeout(
@@ -75,7 +119,7 @@ function DeckTrack({
             );
         }
       },
-      { threshold: [0, 0.6] },
+      { threshold: [0, 0.25, 0.5, 0.6, 0.75, 1] },
     );
     slotRefs.current.forEach((slot) => slot && observer.observe(slot));
     return () => {
@@ -88,6 +132,7 @@ function DeckTrack({
     const track = trackRef.current;
     if (!track) return;
     let frame = 0;
+    let settle = 0;
     const measure = () => {
       frame = 0;
       const bounds = track.getBoundingClientRect();
@@ -100,14 +145,14 @@ function DeckTrack({
           : [];
       });
       const next = {
-        first: visible[0] ?? 0,
-        count: Math.max(1, visible.length),
+        nearest: nearestCard(track, slotRefs.current),
+        visible,
         atStart: track.scrollLeft <= 2,
         atEnd: track.scrollLeft + track.clientWidth >= track.scrollWidth - 2,
       };
       setView((previous) =>
-        previous.first === next.first &&
-        previous.count === next.count &&
+        previous.nearest === next.nearest &&
+        previous.visible.join() === next.visible.join() &&
         previous.atStart === next.atStart &&
         previous.atEnd === next.atEnd
           ? previous
@@ -117,15 +162,25 @@ function DeckTrack({
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(measure);
     };
+    // A queued arrow target only lives while the track is moving.
+    const onScroll = () => {
+      schedule();
+      window.clearTimeout(settle);
+      settle = window.setTimeout(() => {
+        pending.current = null;
+      }, 150);
+    };
     // The section mounts hidden behind another tab, so re-measure when the
     // track gains a size, not only on scroll.
     const resize = new ResizeObserver(schedule);
     resize.observe(track);
-    track.addEventListener("scroll", schedule, { passive: true });
+    track.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       cancelAnimationFrame(frame);
+      window.clearTimeout(settle);
+      window.clearTimeout(pendingTimer.current);
       resize.disconnect();
-      track.removeEventListener("scroll", schedule);
+      track.removeEventListener("scroll", onScroll);
     };
   }, []);
 
@@ -139,6 +194,23 @@ function DeckTrack({
       behavior: reduced ? "auto" : "smooth",
     });
   }
+  function goTo(index: number) {
+    pending.current = index;
+    window.clearTimeout(pendingTimer.current);
+    pendingTimer.current = window.setTimeout(() => {
+      pending.current = null;
+    }, 900);
+    scrollToCard(index);
+  }
+  // Rapid presses continue from the card already being scrolled to.
+  function step(delta: number) {
+    const track = trackRef.current;
+    if (!track) return;
+    const from = pending.current ?? nearestCard(track, slotRefs.current);
+    goTo(Math.min(cards.length - 1, Math.max(0, from + delta)));
+  }
+  const inView = (index: number) =>
+    view.visible.length ? view.visible.includes(index) : index === view.nearest;
   function focusCard(index: number) {
     setFocusIndex(index);
     const controls = slotRefs.current[index]?.querySelectorAll<HTMLElement>(
@@ -148,8 +220,7 @@ function DeckTrack({
       (element) => !element.closest("[inert]"),
     );
     control?.focus({ preventScroll: true });
-    if (index < view.first || index >= view.first + view.count)
-      scrollToCard(index);
+    if (!inView(index)) goTo(index);
   }
   function deckKeys(event: KeyboardEvent<HTMLUListElement>) {
     if (!(event.target as HTMLElement).matches("[data-card-control]")) return;
@@ -174,6 +245,7 @@ function DeckTrack({
         ref={trackRef}
         id={trackId}
         className="deck-track"
+        tabIndex={-1}
         data-deck-track
         data-at-start={view.atStart}
         data-at-end={view.atEnd}
@@ -186,7 +258,7 @@ function DeckTrack({
             ref={(slot) => {
               slotRefs.current[index] = slot;
             }}
-            className="deck-slot h-[600px] w-[min(340px,calc(100vw_-_58px))] flex-shrink-0 sm:w-[420px]"
+            className="deck-slot min-h-[600px] w-[min(340px,calc(100vw_-_58px))] flex-shrink-0 sm:w-[420px]"
             data-deck-card
             data-index={index}
             initial={{ opacity: 0, y: 30, rotate: index % 2 ? 2.5 : -2.5 }}
@@ -210,13 +282,16 @@ function DeckTrack({
       </ul>
       <div className="deck-controls">
         <div className="deck-nav">
+          {/* aria-disabled keeps a focused arrow focusable at either end. */}
           <button
             type="button"
             className="deck-arrow"
             aria-label="Previous card"
             aria-controls={trackId}
-            disabled={view.atStart}
-            onClick={() => scrollToCard(Math.max(0, view.first - 1))}
+            aria-disabled={view.atStart}
+            onClick={() => {
+              if (!view.atStart) step(-1);
+            }}
           >
             <ChevronLeft size={18} aria-hidden="true" />
           </button>
@@ -227,10 +302,8 @@ function DeckTrack({
                 tabIndex={-1}
                 key={card.id}
                 data-collected={collected.includes(index)}
-                data-visible={
-                  index >= view.first && index < view.first + view.count
-                }
-                onClick={() => scrollToCard(index)}
+                data-visible={inView(index)}
+                onClick={() => goTo(index)}
               />
             ))}
           </div>
@@ -239,10 +312,10 @@ function DeckTrack({
             className="deck-arrow"
             aria-label="Next card"
             aria-controls={trackId}
-            disabled={view.atEnd}
-            onClick={() =>
-              scrollToCard(Math.min(cards.length - 1, view.first + 1))
-            }
+            aria-disabled={view.atEnd}
+            onClick={() => {
+              if (!view.atEnd) step(1);
+            }}
           >
             <ChevronRight size={18} aria-hidden="true" />
           </button>
@@ -261,8 +334,10 @@ function DeckTrack({
 }
 
 export default function CardShowcase() {
-  const [active, setActive] = useState<DeckId>("work");
-  const [direction, setDirection] = useState(1);
+  const [{ active, direction }, setDeckState] = useState<{
+    active: DeckId;
+    direction: number;
+  }>({ active: "work", direction: 1 });
   const [collected, setCollected] = useState<Collection>(emptyCollection);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -270,18 +345,26 @@ export default function CardShowcase() {
   const reduced = useMotionPreference();
   const prefix = useId();
 
+  const select = useCallback((id: DeckId) => {
+    setDeckState((previous) =>
+      previous.active === id
+        ? previous
+        : {
+            active: id,
+            direction: deckIndex(id) >= deckIndex(previous.active) ? 1 : -1,
+          },
+    );
+  }, []);
+
   useEffect(() => {
     const syncHash = () => {
-      const hash = window.location.hash.toLowerCase();
-      if (hash === "#education") setActive("education");
-      else if (hash === "#volunteering") setActive("volunteering");
-      else if (hash === "#community" || hash === "#leadership")
-        setActive("community");
+      const id = deckFromHash[window.location.hash.toLowerCase()];
+      if (id) select(id);
     };
     syncHash();
     window.addEventListener("hashchange", syncHash);
     return () => window.removeEventListener("hashchange", syncHash);
-  }, []);
+  }, [select]);
 
   const collect = useCallback((deck: DeckId, index: number) => {
     setCollected((previous) =>
@@ -291,12 +374,6 @@ export default function CardShowcase() {
     );
   }, []);
 
-  function select(id: DeckId) {
-    const from = decks.findIndex((deck) => deck.id === active);
-    const to = decks.findIndex((deck) => deck.id === id);
-    setDirection(to >= from ? 1 : -1);
-    setActive(id);
-  }
   function tabKeys(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const next =
       event.key === "Home"
@@ -320,10 +397,7 @@ export default function CardShowcase() {
   const complete = count === total;
 
   return (
-    <div
-      className="deck-showcase career-archive-shell"
-      data-reduced-motion={reduced}
-    >
+    <div className="deck-showcase career-archive-shell">
       <div className="deck-toolbar">
         <div
           className="deck-tabs"
@@ -412,6 +486,23 @@ export default function CardShowcase() {
             />
           </motion.div>
         </AnimatePresence>
+        {/* The other decks stay in the static HTML, as the old panels did. */}
+        <div hidden>
+          {decks
+            .filter((item) => item.id !== active)
+            .map((item) => (
+              <section key={item.id} aria-label={`${item.label} cards`}>
+                <ul>
+                  {item.cards.map((card) => (
+                    <li key={card.id}>
+                      {card.org}: {card.role}, {card.location}, {card.dates}.{" "}
+                      {card.summary} {card.bullets.join(" ")}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+        </div>
       </div>
     </div>
   );

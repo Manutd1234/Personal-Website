@@ -1,5 +1,4 @@
 "use client";
-import { useMotionPreference } from "./useMotionPreference";
 
 import { useEffect, useId, useState } from "react";
 import { ArrowUpRight, ChevronDown } from "lucide-react";
@@ -201,9 +200,8 @@ export default function WorkPanel({
 }: {
   awardsOnly?: boolean;
 }) {
-  const reducedMotion = useMotionPreference();
   return (
-    <div className="career-classic" data-reduced-motion={reducedMotion}>
+    <div className="career-classic">
       {awardsOnly ? <AwardsArchive /> : <CardShowcase />}
     </div>
   );

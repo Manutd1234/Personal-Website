@@ -10,7 +10,8 @@ import {
 // portfolio.ts; this file adds the card layer on top of those records.
 
 export type DeckId = "work" | "education" | "community" | "volunteering";
-export type CardType = "systems" | "education" | "leadership" | "community";
+export type CardType =
+  "systems" | "education" | "leadership" | "community" | "sport";
 export type Rarity = "Rare Holo" | "Rare" | "Uncommon";
 
 export const cardTypes: Readonly<Record<CardType, { label: string }>> = {
@@ -18,6 +19,7 @@ export const cardTypes: Readonly<Record<CardType, { label: string }>> = {
   education: { label: "Education" },
   leadership: { label: "Leadership" },
   community: { label: "Community" },
+  sport: { label: "Sport" },
 };
 
 // Highlights condense real résumé bullets. Real results are marked **like this**.
@@ -148,7 +150,7 @@ const details: Readonly<Record<string, CardDetails>> = {
     stealth: true,
     moves: [
       move(
-        "Dashboards & Hotfixes",
+        "Dashboards & Fixes",
         "Built SQL/Grafana product dashboards; shipped fixes across sign-in, messaging, calendar sync and iOS.",
       ),
       move(
@@ -424,7 +426,7 @@ const details: Readonly<Record<string, CardDetails>> = {
     ],
   },
   "Eunoia Junior College · Softball": {
-    type: "leadership",
+    type: "sport",
     title: "Team Member",
     logo: "ejc",
     moves: [
@@ -451,7 +453,7 @@ const details: Readonly<Record<string, CardDetails>> = {
     ],
   },
   "School of Science and Technology · Football": {
-    type: "leadership",
+    type: "sport",
     title: "Team Member",
     logo: "sst",
     moves: [
@@ -487,7 +489,7 @@ const details: Readonly<Record<string, CardDetails>> = {
     ],
   },
   "Bukit Timah Primary School · Football": {
-    type: "leadership",
+    type: "sport",
     title: "Team Member",
     logo: "btps",
     moves: [

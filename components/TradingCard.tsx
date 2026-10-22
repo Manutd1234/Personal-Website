@@ -14,6 +14,7 @@ import {
   EyeOff,
   Flame,
   Leaf,
+  Medal,
   RotateCcw,
   Zap,
   type LucideIcon,
@@ -40,6 +41,7 @@ const typeIcons: Readonly<Record<CardType, LucideIcon>> = {
   education: Brain,
   leadership: Flame,
   community: Leaf,
+  sport: Medal,
 };
 const holoStrength: Readonly<Record<Rarity, number>> = {
   "Rare Holo": 0.55,
@@ -163,6 +165,27 @@ export default function TradingCard({
             onClick={flipFromFace}
           >
             <div className="tcg-inner">
+              {/* Holo layers paint beneath the content, so text keeps its contrast. */}
+              <motion.span
+                className="tcg-holo"
+                aria-hidden="true"
+                style={{
+                  opacity: holoOpacity,
+                  backgroundPosition: holoPosition,
+                  WebkitMaskImage: holoMask,
+                  maskImage: holoMask,
+                }}
+              />
+              <motion.span
+                className="tcg-sheen"
+                aria-hidden="true"
+                style={{ opacity: glow, backgroundPosition: sheenPosition }}
+              />
+              <motion.span
+                className="tcg-glare"
+                aria-hidden="true"
+                style={{ opacity: glow, backgroundImage: glare }}
+              />
               <header className="tcg-band tcg-header">
                 <span className="tcg-energy" title={`${type.label} card`}>
                   <TypeIcon size={14} strokeWidth={2.5} aria-hidden="true" />
@@ -230,33 +253,13 @@ export default function TradingCard({
                   data-card-control
                   tabIndex={tabbable ? 0 : -1}
                   onClick={flip}
-                  aria-label={`Flip the ${card.org} card for the full record`}
+                  aria-label={`Full record: flip the ${card.org} card`}
                 >
                   Full record
                   <RotateCcw size={13} strokeWidth={2.3} aria-hidden="true" />
                 </button>
               </footer>
             </div>
-            <motion.span
-              className="tcg-holo"
-              aria-hidden="true"
-              style={{
-                opacity: holoOpacity,
-                backgroundPosition: holoPosition,
-                WebkitMaskImage: holoMask,
-                maskImage: holoMask,
-              }}
-            />
-            <motion.span
-              className="tcg-sheen"
-              aria-hidden="true"
-              style={{ opacity: glow, backgroundPosition: sheenPosition }}
-            />
-            <motion.span
-              className="tcg-glare"
-              aria-hidden="true"
-              style={{ opacity: glow, backgroundImage: glare }}
-            />
           </article>
 
           <section
@@ -285,7 +288,7 @@ export default function TradingCard({
               </div>
               <div
                 className="tcg-back-body"
-                tabIndex={0}
+                tabIndex={tabbable ? 0 : -1}
                 aria-label={`${card.org} details`}
               >
                 {card.summary ? (
@@ -324,6 +327,7 @@ export default function TradingCard({
                           href={asset(file.src)}
                           target="_blank"
                           rel="noreferrer"
+                          tabIndex={tabbable ? undefined : -1}
                           aria-label={`${file.title} — view certificate, opens in a new tab`}
                         >
                           {short && short.length > 11 ? short : file.title}
@@ -341,7 +345,7 @@ export default function TradingCard({
                   data-card-control
                   tabIndex={tabbable ? 0 : -1}
                   onClick={flip}
-                  aria-label={`Flip the ${card.org} card back to its front`}
+                  aria-label={`Card front: flip the ${card.org} card back`}
                 >
                   <ArrowLeft size={13} strokeWidth={2.3} aria-hidden="true" />
                   Card front
