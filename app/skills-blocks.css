@@ -1,408 +1,436 @@
-.skill-stack {
+/* A real gravity sandbox. Labels remain HTML, including the still fallback. */
+.skill-physics {
   min-width: 0;
-  padding: 24px;
-  border: 1px solid #aecbb6;
+  padding: 23px;
+  border: 1px solid #aac9ac;
   border-radius: 20px;
   background: #fafff2;
-  box-shadow: 0 5px 0 #d9eacb;
   color: #234f37;
+  box-shadow: 0 5px 0 #dceacb;
 }
-.skill-stack-heading {
+.skill-physics-heading {
   display: flex;
-  align-items: end;
   justify-content: space-between;
+  align-items: end;
   gap: 20px;
 }
-.skill-stack-heading > div > p {
-  color: #6b7c51;
-  font: 500 10px/1.6 var(--font-mono);
+.skill-physics-heading > div > p {
+  color: #64764d;
+  font: 500 10px/1.7 var(--font-mono);
 }
-.skill-stack-heading h3 {
-  margin-top: 6px;
+.skill-physics-heading h3 {
+  margin-top: 7px;
   color: #174b35;
-  font: 700 clamp(21px, 2.5vw, 28px)/1.2 var(--classic-display);
+  font: 700 clamp(23px, 2.8vw, 31px)/1.2 var(--classic-display);
   letter-spacing: -0.04em;
 }
-.skill-stack-total {
+.skill-physics-heading > span {
   flex-shrink: 0;
   padding: 7px 10px;
   border-radius: 8px;
-  background: #e5efbd;
-  color: #52663d;
+  background: #e4efbf;
+  color: #4f6639;
   font: 500 10px/1.6 var(--font-mono);
 }
-.skill-stack-instructions {
-  max-width: 70ch;
-  margin-top: 13px;
-  color: #5c7053;
+.skill-physics-help {
+  max-width: 75ch;
+  min-height: 3.6em;
+  margin-top: 14px;
+  color: #526b4c;
   font: 400 12px/1.8 var(--classic-display);
 }
-.skill-stack-toolbar {
+.skill-physics-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 14px;
-  margin: 15px 0;
+  gap: 7px;
+  margin: 12px 0 17px;
 }
-.skill-stack-toolbar > button {
+.skill-physics-toolbar button,
+.skill-physics-picker > button {
   display: inline-flex;
   min-height: 44px;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   gap: 7px;
-  padding: 8px 10px;
-  border: 1px solid #c0d5ae;
+  padding: 8px 12px;
+  border: 1px solid #b7cea7;
   border-radius: 9px;
-  color: #3c6647;
   background: #fffff8;
+  color: #3a6546;
   font: 600 11px/1.5 var(--classic-display);
 }
-.skill-stack-toolbar > button:hover:not(:disabled) {
-  background: #eaf4ce;
-  border-color: #6f9c62;
+.skill-physics-toolbar button:hover:not(:disabled),
+.skill-physics-picker > button:hover {
+  border-color: #6f9b62;
+  background: #e7f2cf;
 }
-.skill-stack-toolbar > button:disabled {
+.skill-physics-toolbar button:disabled {
   opacity: 0.45;
 }
-.skill-stack-toolbar > .skill-stack-next-match {
-  margin-left: auto;
-  color: #fff;
-  background: #0b7755;
-  border-color: #0b7755;
-}
-.skill-stack-toolbar > .skill-stack-next-match:hover:not(:disabled) {
-  color: #fff;
-  background: #075c42;
-}
-.skill-stack-viewport {
-  position: relative;
-  max-height: 520px;
-  min-height: 280px;
-  overflow: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: #91b682 #edf4e2;
-  padding: 17px;
-  border: 1px solid #aac69c;
-  border-radius: 12px;
-  background-color: #edf4e2;
-  background-image:
-    linear-gradient(#7098540c 1px, transparent 1px),
-    linear-gradient(90deg, #7098540c 1px, transparent 1px);
-  background-size: 26px 26px;
-  box-shadow: inset 0 3px 13px #274d3510;
-}
-.skill-stack-grid {
-  display: grid;
-  position: relative;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 9px;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.skill-stack-cell {
-  min-width: 0;
-  position: relative;
-}
-.skill-block {
-  --block-fill: #d5edcc;
-  --block-ink: #285836;
-  --block-edge: #8bb67f;
+.skill-physics-picker {
   display: flex;
+  min-width: 0;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.skill-physics-picker > label {
+  flex-shrink: 0;
+  color: #4c684a;
+  font: 600 11px/1.5 var(--classic-display);
+}
+.skill-physics-picker select {
+  min-width: 0;
+  min-height: 44px;
+  flex: 1;
+  padding: 9px 10px;
+  border: 1px solid #adc5a5;
+  border-radius: 9px;
+  background: #fffef6;
+  color: #254e35;
+  font: 500 13px/1.5 var(--classic-display);
+}
+.skill-physics-world {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 460px;
+  flex-wrap: wrap;
+  align-content: flex-end;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 7px;
+  padding: 34px 14px 14px;
+  overflow: hidden;
+  border: 1px solid #b1c6a1;
+  border-radius: 14px;
+  background-color: #eaf3df;
+  background-image: radial-gradient(#78a0621c 0.8px, transparent 0.9px);
+  background-size: 17px 17px;
+  box-shadow: inset 0 -10px 24px #47743a08;
+  isolation: isolate;
+}
+.skill-physics-world::before {
+  position: absolute;
+  top: 14px;
+  left: 17px;
+  color: #81966e;
+  font: 500 8px/1 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  content: "Pick one up. See what happens.";
+  pointer-events: none;
+}
+.skill-physics-world.is-live {
+  display: block;
+  padding: 0;
+}
+.skill-pill {
+  --pill-fill: #d5edcc;
+  --pill-ink: #285836;
+  --pill-edge: #8bb67f;
+  display: inline-flex;
   position: relative;
   min-width: 0;
-  width: 100%;
-  height: 82px;
-  padding: 12px 7px 8px;
+  max-width: calc(100% - 28px);
+  min-height: 34px;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
-  gap: 6px;
-  border: 1px solid var(--block-edge);
-  border-bottom-width: 4px;
-  border-radius: 5px;
-  background: var(--block-fill);
-  color: var(--block-ink);
-  text-align: center;
+  padding: 7px 12px;
+  border: 1px solid var(--pill-edge);
+  border-bottom-width: 3px;
+  border-radius: 999px;
+  background: var(--pill-fill);
+  color: var(--pill-ink);
   box-shadow:
-    inset 2px 2px 0 #ffffff65,
-    inset -2px -1px 0 #234f3710;
+    inset 0 1px 0 #ffffffb3,
+    0 2px 3px #24483014;
+  font: 650 11px/1.3 var(--font-mono);
+  text-align: center;
+  white-space: nowrap;
   user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y pinch-zoom;
   cursor: grab;
   transition:
-    background 0.18s,
-    border-color 0.18s,
-    box-shadow 0.18s,
-    filter 0.18s;
+    background 0.16s,
+    border-color 0.16s,
+    box-shadow 0.16s,
+    color 0.16s;
 }
-.skill-block[data-tone="1"] {
-  --block-fill: #d5f1e5;
-  --block-ink: #185f4b;
-  --block-edge: #8abca4;
-}
-.skill-block[data-tone="2"] {
-  --block-fill: #f5e5a7;
-  --block-ink: #6d5624;
-  --block-edge: #d0b871;
-}
-.skill-block[data-tone="3"] {
-  --block-fill: #bde1c0;
-  --block-ink: #1e5631;
-  --block-edge: #73a77c;
-}
-.skill-block[data-tone="4"] {
-  --block-fill: #dfe99e;
-  --block-ink: #4b6121;
-  --block-edge: #adbd66;
-}
-.skill-block[data-tone="5"] {
-  --block-fill: #d3e7de;
-  --block-ink: #356658;
-  --block-edge: #94b9a6;
-}
-.skill-block[data-tone="6"] {
-  --block-fill: #e8efc8;
-  --block-ink: #516232;
-  --block-edge: #b4c188;
-}
-.skill-block[data-tone="7"] {
-  --block-fill: #f1dac0;
-  --block-ink: #755434;
-  --block-edge: #c8a47c;
-}
-.skill-block > svg {
+.skill-physics-world.is-live > .skill-pill {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  opacity: 0.32;
+  top: 0;
+  left: 0;
+  max-width: none;
+  transform-origin: 50% 50%;
+  will-change: transform;
 }
-.skill-block-name {
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  font: 650 11px/1.35 var(--font-mono);
+.skill-pill[data-tone="1"] {
+  --pill-fill: #d5f1e5;
+  --pill-ink: #185f4b;
+  --pill-edge: #8abca4;
 }
-.skill-block-family {
-  max-width: 100%;
-  color: inherit;
-  font: 500 9px/1.35 var(--classic-display);
+.skill-pill[data-tone="2"] {
+  --pill-fill: #f5e5a7;
+  --pill-ink: #6d5624;
+  --pill-edge: #d0b871;
 }
-.skill-block[data-filtering="true"][data-lit="false"] {
+.skill-pill[data-tone="3"] {
+  --pill-fill: #bde1c0;
+  --pill-ink: #1e5631;
+  --pill-edge: #73a77c;
+}
+.skill-pill[data-tone="4"] {
+  --pill-fill: #dfe99e;
+  --pill-ink: #4b6121;
+  --pill-edge: #adbd66;
+}
+.skill-pill[data-tone="5"] {
+  --pill-fill: #d3e7de;
+  --pill-ink: #356658;
+  --pill-edge: #94b9a6;
+}
+.skill-pill[data-tone="6"] {
+  --pill-fill: #e8efc8;
+  --pill-ink: #516232;
+  --pill-edge: #b4c188;
+}
+.skill-pill[data-tone="7"] {
+  --pill-fill: #f1dac0;
+  --pill-ink: #755434;
+  --pill-edge: #c8a47c;
+}
+.skill-pill[data-filtering="true"][data-lit="false"] {
   background: #e8ede3;
   color: #4f604a;
   border-color: #c9d1c1;
-  box-shadow: inset 1px 1px 0 #ffffff65;
+  box-shadow: inset 0 1px 0 #ffffff80;
 }
-.skill-block[data-filtering="true"][data-lit="true"] {
+.skill-pill[data-filtering="true"][data-lit="true"] {
   border-color: #087a4e;
   box-shadow:
-    0 0 0 2px #268b5833,
-    inset 2px 2px 0 #ffffff80;
+    0 0 0 2px #268b5838,
+    inset 0 1px 0 #ffffffcc;
 }
-.skill-block:hover {
-  filter: brightness(1.035);
+.skill-pill:hover {
   box-shadow:
-    0 3px 0 #28543622,
-    inset 2px 2px 0 #ffffff75;
+    0 2px 9px #264f3633,
+    inset 0 1px 0 #ffffffcc;
 }
-.skill-block[data-picked="true"] {
-  outline: 3px solid #126c42;
-  outline-offset: 2px;
+.skill-pill[data-grabbed="true"] {
+  z-index: 3;
   cursor: grabbing;
-  box-shadow: 0 4px 8px #214f3122;
+  outline: 2px solid #167344;
+  outline-offset: 2px;
+  touch-action: none;
 }
-.skill-block[data-dragging="true"] {
-  opacity: 0.45;
-}
-.skill-block[data-drop-target="true"] {
-  outline: 3px dashed #126c42;
-  outline-offset: 1px;
-}
-.skill-stack .skill-block:focus-visible {
+.skill-physics .skill-pill:focus-visible {
+  z-index: 4;
   outline: 3px solid #174d30;
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
-.skill-stack-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  margin-top: 15px;
-}
-.skill-stack-footer > p {
-  max-width: 60ch;
-  color: #6a795b;
+.skill-physics-keyboard {
+  margin-top: 14px;
+  color: #627452;
   font: 400 10px/1.8 var(--classic-display);
 }
-.skill-stack-footer > .skill-stack-selection {
-  max-width: 28ch;
-  flex-shrink: 0;
-  text-align: right;
-  color: #386747;
+.skill-physics-selection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 9px;
+  color: #315e40;
+  font: 400 11px/1.7 var(--classic-display);
 }
-.skill-stack-selection strong {
-  font-weight: 650;
+.skill-physics-selection strong {
+  font-weight: 700;
 }
-.skill-stack[data-reduced-motion="false"]
-  .skill-stack-grid[data-dropping="true"]
-  .skill-stack-cell {
-  animation: skill-block-fall 0.7s cubic-bezier(0.28, 0.75, 0.33, 1)
-    var(--fall-delay) both;
+.skill-physics-selection span {
+  color: #657850;
 }
-.skill-stack[data-available="false"] .skill-stack-cell {
-  animation-play-state: paused !important;
+.skill-physics-list {
+  margin-top: 20px;
+  border-top: 1px solid #c7dabb;
 }
-.skill-stack .skill-stack-cell[data-picked="true"],
-.skill-stack .skill-stack-cell:focus-within {
-  animation: none !important;
+.skill-physics-list > summary {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  color: #2f6340;
+  font: 650 13px/1.5 var(--classic-display);
 }
-@keyframes skill-block-fall {
-  0% {
-    opacity: 0;
-    transform: translateY(calc(-1 * var(--fall-distance))) rotate(-2deg);
-  }
-  76% {
-    opacity: 1;
-    transform: translateY(4px);
-  }
-  90% {
-    transform: translateY(-3px);
-  }
-  100% {
-    opacity: 1;
-    transform: none;
-  }
+.skill-physics-list > summary > svg {
+  transition: transform 0.2s;
 }
-.dark .skill-stack {
-  border-color: #547445;
+.skill-physics-list[open] > summary > svg {
+  transform: rotate(180deg);
+}
+.skill-physics-list > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  padding: 9px 0;
+}
+.skill-physics-list section {
+  min-width: 0;
+}
+.skill-physics-list h4 {
+  color: #315b3c;
+  font: 700 13px/1.5 var(--classic-display);
+}
+.skill-physics-list ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  margin-top: 10px;
+  padding: 0;
+  list-style: none;
+}
+.skill-physics-list li {
+  padding: 4px 7px;
+  border: 1px solid #c1d6b9;
+  border-radius: 5px;
+  background: #f9fff2;
+  color: #3d5e37;
+  font: 500 10px/1.6 var(--font-mono);
+}
+.dark .skill-physics {
+  border-color: #527044;
   background: #1d3020;
-  box-shadow: 0 5px 0 #15271a;
   color: #d8e6ca;
+  box-shadow: 0 5px 0 #15271a;
 }
-.dark .skill-stack-heading h3 {
+.dark .skill-physics-heading h3 {
   color: #d5eabd;
 }
-.dark .skill-stack-heading > div > p,
-.dark .skill-stack-instructions,
-.dark .skill-stack-footer > p {
+.dark .skill-physics-heading > div > p,
+.dark .skill-physics-help,
+.dark .skill-physics-picker > label,
+.dark .skill-physics-keyboard,
+.dark .skill-physics-selection span {
   color: #a6bb93;
 }
-.dark .skill-stack-total {
+.dark .skill-physics-heading > span {
   background: #3c512b;
   color: #d3e5af;
 }
-.dark .skill-stack-toolbar > button {
+.dark .skill-physics-toolbar button,
+.dark .skill-physics-picker > button {
   border-color: #58734b;
   background: #2c4329;
   color: #cde7b6;
 }
-.dark .skill-stack-toolbar > button:hover:not(:disabled) {
-  background: #3b542e;
+.dark .skill-physics-toolbar button:hover:not(:disabled),
+.dark .skill-physics-picker > button:hover {
   border-color: #97bb76;
+  background: #3b542e;
 }
-.dark .skill-stack-toolbar > .skill-stack-next-match {
-  color: #143b26;
-  background: #a8d58a;
+.dark .skill-physics-picker select {
+  border-color: #58734b;
+  background: #203522;
+  color: #d4e6bd;
 }
-.dark .skill-stack-viewport {
+.dark .skill-physics-world {
   border-color: #4e6f40;
   background-color: #15281a;
-  background-image:
-    linear-gradient(#9cbb7510 1px, transparent 1px),
-    linear-gradient(90deg, #9cbb7510 1px, transparent 1px);
-  scrollbar-color: #6b8b54 #20341f;
+  background-image: radial-gradient(#9cbb7520 0.8px, transparent 0.9px);
 }
-.dark .skill-block[data-filtering="true"][data-lit="false"] {
+.dark .skill-physics-world::before {
+  color: #8eaa78;
+}
+.dark .skill-pill[data-filtering="true"][data-lit="false"] {
   background: #283a29;
   color: #96aa8c;
   border-color: #496044;
-  box-shadow: inset 1px 1px 0 #ffffff06;
+  box-shadow: inset 0 1px 0 #ffffff08;
 }
-.dark .skill-block[data-filtering="true"][data-lit="true"] {
+.dark .skill-pill[data-filtering="true"][data-lit="true"] {
   border-color: #b7f3a0;
   box-shadow: 0 0 0 2px #b1e89b45;
 }
-.dark .skill-block[data-picked="true"],
-.dark .skill-stack .skill-block:focus-visible,
-.dark .skill-block[data-drop-target="true"] {
+.dark .skill-pill[data-grabbed="true"],
+.dark .skill-physics .skill-pill:focus-visible {
   outline-color: #e7f6bd;
 }
-.dark .skill-stack-footer > .skill-stack-selection {
+.dark .skill-physics-selection {
   color: #c5dfa6;
 }
-@media (max-width: 1100px) {
-  .skill-stack-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
+.dark .skill-physics-list {
+  border-color: #48633d;
+}
+.dark .skill-physics-list > summary,
+.dark .skill-physics-list h4 {
+  color: #c1dca4;
+}
+.dark .skill-physics-list li {
+  border-color: #48633d;
+  background: #293f27;
+  color: #cde2ba;
 }
 @media (max-width: 850px) {
-  .skill-stack-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-  .skill-stack-heading {
-    align-items: start;
+  .skill-physics-heading {
     flex-direction: column;
-    gap: 13px;
+    align-items: start;
+    gap: 12px;
   }
 }
 @media (max-width: 620px) {
-  .skill-stack {
-    padding: 17px;
+  .skill-physics {
+    padding: 16px;
   }
-  .skill-stack-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .skill-physics-picker {
+    flex-wrap: wrap;
     gap: 8px;
   }
-  .skill-stack-viewport {
-    max-height: 470px;
-    padding: 12px;
+  .skill-physics-picker > label {
+    flex-basis: 100%;
   }
-  .skill-stack-footer {
-    flex-direction: column;
-    gap: 9px;
+  .skill-physics-picker select {
+    font-size: 16px;
   }
-  .skill-stack-footer > .skill-stack-selection {
-    max-width: none;
-    text-align: left;
+  .skill-physics-list > div {
+    grid-template-columns: minmax(0, 1fr);
   }
-  .skill-stack-toolbar {
-    gap: 7px;
+  .skill-physics-world {
+    gap: 6px;
+    padding-inline: 12px;
   }
-  .skill-stack-toolbar > button {
-    flex: 1 1 auto;
-  }
-  .skill-stack-toolbar > .skill-stack-next-match {
-    margin-left: 0;
+  .skill-pill {
+    min-height: 32px;
+    padding: 6px 10px;
+    font-size: 10px;
   }
 }
 @media (max-width: 420px) {
-  .skill-stack {
+  .skill-physics {
     padding: 13px;
     border-radius: 14px;
   }
-  .skill-stack-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .skill-physics-heading h3 {
+    font-size: 25px;
   }
-  .skill-stack-heading h3 {
-    font-size: 22px;
+  .skill-physics-toolbar button {
+    flex: 1 1 auto;
   }
-  .skill-block {
-    height: 92px;
+  .skill-physics-picker > button {
+    padding-inline: 9px;
   }
-  .skill-block-name {
-    font-size: 10px;
+  .skill-physics-world {
+    padding-inline: 9px;
   }
-  .skill-stack-viewport {
-    max-height: 435px;
-    padding: 11px;
+  .skill-pill {
+    padding-inline: 9px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .skill-stack *,
-  .skill-stack *::before,
-  .skill-stack *::after {
-    animation: none !important;
+  .skill-physics *,
+  .skill-physics *::before,
+  .skill-physics *::after {
     transition: none !important;
+    animation: none !important;
     scroll-behavior: auto !important;
   }
 }

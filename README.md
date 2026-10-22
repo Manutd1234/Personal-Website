@@ -9,11 +9,12 @@ Live site: https://manutd1234.github.io/Personal-Website/
 - TypeScript, React 19, Tailwind CSS 4, Framer Motion and Lucide icons.
 - Original large-name hero, taped real portrait, green navigation and painterly accents.
 - Automatic typing and rolling hero roles with reduced-motion support.
-- One draggable 3D carousel for all twelve projects, with individual cover colours and typography, spring momentum, keyboard navigation, smooth open/back transitions, a named project picker and direct entry from the Workbench. BrainHack and Hack the Future photos live inside their relevant books; source links and private-access labels remain available.
+- One draggable 3D carousel for all twelve projects, with solid six-face page blocks, individual cover colours and typography, spring momentum, keyboard navigation, smooth open/back transitions, a named project picker and direct entry from the Workbench. Every cover has relevant project imagery; PneuRelief uses a labelled implementation diagram. BrainHack and Hack the Future photos live inside their relevant books; source links and private-access labels remain available.
 - An interactive Profile workbench with larger real previews and Problem / Build / Proof walkthroughs for AlphaEngine, BrainHack and RE:DECIDE.
 - Experience, Education, Leadership & CCAs and Volunteering as a trading-card showcase: 36 large, light cards with type-coloured foil frames (silver for cards before 2021), the organisation's official logo where one can be shown, one or two boxed highlights, 3D mouse tilt with a holo sheen, and flip-to-read backs that keep every original bullet and add certificate links where they exist. A per-deck `COLLECTED` tally counts cards once they have stayed on screen, and decks browse by swipe, arrows, dots or ← → keys. Highlights condense real résumé bullets; LVL (the start year) and rarity are game flavour.
-- A collectible award-card collection with 37 verified records and 25 real award-document or trophy previews. Category/search controls, full-size previews, multi-year documents, project notes and credential-status labels remain available.
-- A falling-block skill board with all 79 skills, eight category highlights, search, drag/tap/keyboard sorting, replay and reset. Filters highlight matching blocks without removing the rest. Spoken languages and grouped credentials remain below the board.
+- A collectible award-card collection with 37 records and 30 award-document, medal, photo or patch previews. All cards have imagery; missing scans use clearly labelled representative issuer or subject emblems. IPPT Gold and Marksmanship use credited representative cloth patch photographs beside cropped personal award evidence. Category/search controls, full-size previews, multi-year documents, supported project associations and credential-status labels remain available.
+- A Matter.js playground with all 79 skill pills, gravity, rotation, collisions, dragging and flinging. Eight category highlights and search light up matching pills without removing the rest. Keyboard controls, a full text list, replay and tidy arrangement remain available. Physics stops while hidden or offscreen; reduced motion uses static pills. Spoken languages and grouped credentials remain below the board.
+- Relevant project previews in Experience and Skills open the matching project books.
 - A Profile-only Polaroid photo board with twelve curated personal, learning, food, travel, friends and gym photographs, category filters and full-screen browsing. Pictures cycle every seven seconds in fixed frames while visible and idle; interaction, hidden panels and reduced motion stop the timer. The gym and food selections include copies exported through Photos. All public personal-photo copies have metadata removed; original files remain unchanged.
 - Sticky five-tab navigation, clear project actions and filter counts, aligned award categories, copy-email feedback, light/dark themes and visible focus states.
 
@@ -52,3 +53,11 @@ public/               Résumé, case study, photos, screenshots, certificates an
 ```
 
 Professional details come from the supplied résumé and LinkedIn material. Repository URLs, original project screenshots, research output and team photographs are retained. Unverified running times, music preferences and personal anecdotes are not invented. Off-duty interactions use Ian’s existing hobbies.
+
+## Image sources
+
+Project imagery comes from saved development screenshots, research charts, competition demos and the supplied case study. Personal medal photographs and cropped service transcript excerpts support the corresponding award records; identification numbers are omitted. Source originals remain unchanged.
+
+The Eunoia Junior College wordmark comes from [the official college website](https://www.eunoiajc.moe.edu.sg/), and the NUSSU mark from [NUSSU](https://nussu.net/). The SST Football badge, EJC Softball badge and EJC team photo were supplied by Ian. The softball badge received a clarity enhancement with the built-in image tool. The team photo uses a lossless WebP copy with identical RGB pixels and dimensions to the supplied original; no generated face detail is used.
+
+Representative No.4 patch photographs are credited in their award details: [IPPT Gold](https://g-military.com/products/ippt-gold-no-4-badge) and [Marksmanship](https://g-military.com/products/marksmanship-army-no-4-badge), photographed by G Military. They are distinguished from Ian’s own award photographs and transcript evidence.

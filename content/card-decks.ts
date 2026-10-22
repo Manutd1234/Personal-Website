@@ -27,10 +27,9 @@ export type CardMove = { name: string; text: string };
 
 // Official logos, saved locally under public/images/logos from the source noted
 // above each entry. A logo drawn for dark backgrounds sets `dark` so its panel
-// switches colour. Cards without an entry show a placeholder: Stealth Startup
-// has no public brand, NUSSU VENtures has no current logo, and Eunoia Junior
-// College asks that its identity not be reproduced.
-type Logo = { file: string; dark?: boolean };
+// switches colour. Student groups can use the identified parent organisation's
+// official mark. Stealth Startup has no public brand to show.
+type Logo = { file: string; dark?: boolean; alt?: string };
 const logos: Readonly<Record<string, Logo>> = {
   // https://caerusgm.com/
   caerus: { file: "images/logos/caerus.webp" },
@@ -46,6 +45,22 @@ const logos: Readonly<Record<string, Logo>> = {
   "singapore-army": { file: "images/logos/singapore-army.webp" },
   // https://en.wikipedia.org/wiki/File:NationalUniversityofSingapore.svg
   nus: { file: "images/logos/nus.webp" },
+  // Current wordmark from https://www.eunoiajc.moe.edu.sg/
+  ejc: { file: "images/logos/ejc.webp", alt: "Eunoia Junior College logo" },
+  "ejc-softball": {
+    file: "images/logos/ejc-softball.webp",
+    alt: "Eunoia Softball logo",
+  },
+  // Parent union mark from https://nussu.net/ (VENtures is a NUSSU committee).
+  "nussu-ventures": {
+    file: "images/logos/nussu.webp",
+    alt: "NUS Students’ Union (NUSSU) logo",
+  },
+  // SST Football artwork supplied by Ian.
+  "sst-football": {
+    file: "images/logos/sst-football.webp",
+    alt: "SST Football logo",
+  },
   // https://www.sst.edu.sg/about-sst/sst-identity/school-symbols/
   sst: { file: "images/logos/sst.webp" },
   // https://www.bukittimahpri.moe.edu.sg/school-info/our-vision-mission-and-motto
@@ -428,7 +443,7 @@ const details: Readonly<Record<string, CardDetails>> = {
   "Eunoia Junior College · Softball": {
     type: "sport",
     title: "Team Member",
-    logo: "ejc",
+    logo: "ejc-softball",
     moves: [
       move(
         "NSG A Division",
@@ -455,7 +470,7 @@ const details: Readonly<Record<string, CardDetails>> = {
   "School of Science and Technology · Football": {
     type: "sport",
     title: "Team Member",
-    logo: "sst",
+    logo: "sst-football",
     moves: [
       move(
         "NSG Football",

@@ -202,7 +202,7 @@ export default function TradingCard({
                 {card.logo ? (
                   <img
                     src={asset(card.logo.file)}
-                    alt=""
+                    alt={card.logo.alt ?? `${card.org} logo`}
                     loading="lazy"
                     decoding="async"
                     draggable={false}

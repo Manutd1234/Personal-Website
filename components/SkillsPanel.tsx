@@ -138,11 +138,11 @@ export default function SkillsPanel() {
         </div>
         <div className="skills-classic-result-bar">
           <p role="status" aria-live="polite">
-            <strong>{count}</strong> of {TOTAL_SKILLS} blocks lit up
+            <strong>{count}</strong> of {TOTAL_SKILLS} skills highlighted
             {category === "all" && count > 0
               ? ` across ${groups.length} ${groups.length === 1 ? "category" : "categories"}`
               : ""}
-            {!count ? ". No matches; every skill stays on the board." : "."}
+            {!count ? ". No matches; every skill stays in the sandbox." : "."}
           </p>
           <button
             type="button"

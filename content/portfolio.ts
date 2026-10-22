@@ -814,7 +814,19 @@ export const spokenLanguages = [
   { title: "Hokkien", level: "Limited proficiency" },
 ];
 
-export const achievementGroups = [
+export type AchievementRecord = {
+  title: string;
+  issuer: string;
+  detail?: string;
+  year?: string;
+  certificateKey?: string;
+  certificateKeys?: readonly string[];
+};
+export const achievementGroups: readonly {
+  title: string;
+  description: string;
+  items: readonly AchievementRecord[];
+}[] = [
   {
     title: "Technical competitions",
     description: "Building under pressure, with a team.",
@@ -825,6 +837,7 @@ export const achievementGroups = [
         detail: "Novice Champion",
         year: "2026",
         certificateKey: "brainHackChampion",
+        certificateKeys: ["brainHackMedal", "brainHackChampion"],
       },
       {
         title: "Hack the Future AI Hackathon 2026",
@@ -912,6 +925,7 @@ export const achievementGroups = [
         issuer: "Eunoia Junior College",
         detail: "1st runner-up · Team silver",
         year: "2022",
+        certificateKeys: ["ejcSoftballTeam", "coloursAward2022"],
       },
       {
         title: "Colours Award",
@@ -996,6 +1010,7 @@ export const achievementGroups = [
         issuer: "160 SQN · Unit award",
         detail: "Contributed as National Education IC",
         year: "2023/24, 2024/25",
+        certificateKey: "cdfNationalEducationPhoto",
       },
       {
         title: "Outstanding performance & conduct",
@@ -1003,18 +1018,21 @@ export const achievementGroups = [
         detail:
           "Outstanding grades for both overall performance and overall conduct",
         year: "Jan 2025",
+        certificateKey: "nsPerformanceConduct",
       },
       {
         title: "IPPT Gold Award",
         issuer: "Singapore Armed Forces",
         detail: "Award recorded in National Service transcript",
         year: "National Service",
+        certificateKeys: ["ipptGoldBadge", "nsAwardsExcerpt"],
       },
       {
         title: "Marksmanship Award",
         issuer: "Singapore Armed Forces",
         detail: "Award recorded in National Service transcript",
         year: "National Service",
+        certificateKeys: ["marksmanshipBadge", "nsAwardsExcerpt"],
       },
     ],
   },

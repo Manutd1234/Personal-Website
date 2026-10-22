@@ -33,6 +33,55 @@ export const projectMedia = {
     kind: "Dashboard",
     caption: "Actual project demo using synthetic evaluation data.",
   },
+  Obital: {
+    src: "images/portfolio/obital-dashboard.webp",
+    alt: "Saved Obital progress dashboard with a points graph, study streak and recent quiz scores.",
+    kind: "Dashboard",
+    caption:
+      "Saved Obital development dashboard: points progression, study streak and recent quiz scores.",
+  },
+  "NUSSIF Portfolio & Risk Tools": {
+    src: "images/portfolio/nussif-sector-heatmap.webp",
+    alt: "Original NUSSIF research heatmap showing 2026 second-quarter sector exposure across investment funds.",
+    kind: "Research output",
+    caption:
+      "Original 13F research output: sector exposure by fund for 2026 Q2.",
+  },
+  PneuRelief: {
+    src: "images/portfolio/pneurelief-architecture.svg",
+    alt: "PneuRelief architecture linking BLE pressure-sensor notifications to a React Native and Expo app with a FastAPI backend.",
+    kind: "Architecture diagram",
+    caption:
+      "PneuRelief implementation: BLE sensor notifications, a React Native/Expo app and a FastAPI backend.",
+  },
+  SignMeUp: {
+    src: "images/portfolio/signmeup-gesture-demo.webp",
+    alt: "Actual SignMeUp assistive-interpreter demo showing camera landmark tracking and a live hello prediction.",
+    kind: "Application demo",
+    caption:
+      "Actual SignMeUp demo frame with live gesture landmarks and word prediction.",
+  },
+  "Nexus Academic Coach": {
+    src: "images/portfolio/nexus-dashboard.webp",
+    alt: "Nexus dashboard showing the focus timer, task list, study-plan panel and weekly progress graph.",
+    kind: "Dashboard",
+    caption:
+      "Saved Nexus dashboard for focus sessions, tasks and weekly study progress.",
+  },
+  DealMachine: {
+    src: "images/portfolio/dealmachine-pipeline.webp",
+    alt: "The Deal Machine hackathon prototype showing its deal pipeline, sample deal cards and integration navigation.",
+    kind: "Prototype dashboard",
+    caption:
+      "Saved Rockathon prototype dashboard with the sample pipeline entries defined in the project HTML.",
+  },
+  "Coca-Cola Indonesia growth strategy": {
+    src: "images/portfolio/coca-cola-indonesia-case-study.webp",
+    alt: "A page from the Coca-Cola Indonesia strategy case study presenting a sourced chart of reported sweet-drink consumption frequency.",
+    kind: "Case-study page",
+    caption:
+      "Page 4 of the saved strategy case study: the audience evidence chart, including its source and assumptions.",
+  },
 };
 
 export const teamMoments = [
@@ -63,6 +112,70 @@ export const teamMoments = [
 ];
 
 export const certificateFiles = {
+  ejcSoftballTeam: {
+    src: "images/awards/ejc-softball-team-original.webp",
+    title: "Eunoia softball — user-supplied team photo",
+    kind: "Team photo" as const,
+    caption: "Eunoia softball team photo supplied by Ian.",
+  },
+  brainHackMedal: {
+    src: "images/portfolio/brainhack-champion-medal.webp",
+    title: "BrainHack 2026 — TIL-AI Novice Champion medal on its black ribbon",
+    kind: "Medal photo" as const,
+    caption:
+      "Actual medal photograph from the saved BrainHack competition photos.",
+  },
+  ipptGoldBadge: {
+    src: "images/awards/ippt-gold-cloth-patch.webp",
+    title: "IPPT Gold No.4 cloth patch — representative product photo",
+    kind: "Representative patch" as const,
+    representative: true,
+    caption:
+      "Representative Army No.4 cloth patch. Product photo by G Military, cropped for layout; the personal award is recorded in the transcript excerpt below.",
+    source: {
+      label: "Patch photo — G Military",
+      url: "https://g-military.com/products/ippt-gold-no-4-badge",
+    },
+  },
+  marksmanshipBadge: {
+    src: "images/awards/marksmanship-cloth-patch.webp",
+    title: "Marksmanship No.4 cloth patch — representative product photo",
+    kind: "Representative patch" as const,
+    representative: true,
+    caption:
+      "Representative Army No.4 cloth patch. Product photo by G Military, cropped for layout; the personal award is recorded in the transcript excerpt below.",
+    source: {
+      label: "Patch photo — G Military",
+      url: "https://g-military.com/products/marksmanship-army-no-4-badge",
+    },
+  },
+  nsAwardsExcerpt: {
+    src: "certificates/ns-ippt-marksmanship-excerpt.webp",
+    title:
+      "National Service transcript — IPPT Gold and Marksmanship award excerpt",
+    kind: "Transcript excerpt" as const,
+    caption:
+      "Original achievements section, cropped to omit personal identifiers and unrelated service details.",
+  },
+  nsPerformanceConduct: {
+    src: "certificates/ns-performance-conduct-excerpt.webp",
+    title: "National Service transcript — Outstanding performance and conduct",
+    kind: "Transcript excerpt" as const,
+    caption:
+      "Original transcript excerpt. Personal and document identification numbers have been removed.",
+  },
+  cdfNationalEducationPhoto: {
+    src: "images/awards/160-sqn-ne-award-presentation.webp",
+    title:
+      "160 SQN — CDF National Education Excellence unit award presentation",
+    kind: "Award photo" as const,
+    caption:
+      "Unit award presentation photographed in the RSAF’s post dated 4 November 2024. This is unit recognition.",
+    source: {
+      label: "RSAF — official account",
+      url: "https://www.instagram.com/thersaf/",
+    },
+  },
   esisScholarship2020: {
     src: "certificates/esis-scholarship-2020-letter.webp",
     title: "Edusave Scholarships for Independent Schools — AY2020 award letter",

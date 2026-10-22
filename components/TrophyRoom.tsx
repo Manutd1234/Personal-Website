@@ -24,7 +24,7 @@ import {
   type PointerEvent,
 } from "react";
 import { achievementGroups, certifications } from "@/content/portfolio";
-import { certificateFiles } from "@/content/media";
+import { certificateFiles, projectMedia } from "@/content/media";
 import { asset } from "@/content/paths";
 import { trophies, type Trophy as TrophyRecord } from "@/content/trophies";
 import { useMotionPreference } from "./useMotionPreference";
@@ -40,10 +40,16 @@ type AwardRecord = {
 };
 type CertificateFile = {
   src: string;
+  originalSrc?: string;
   title: string;
-  kind?: "Award letter" | "Trophy photo";
+  kind?: string;
+  representative?: boolean;
+  caption?: string;
+  source?: { label: string; url: string };
 };
 const previewKind = (file: CertificateFile) => file.kind ?? "Certificate";
+const isSoftballAward = (record: AwardRecord) =>
+  /softball/i.test(`${record.title} ${record.detail ?? ""}`);
 type CategoryId =
   | "competitions"
   | "government"
@@ -57,6 +63,7 @@ type Achievement = AwardRecord & {
   category: CategoryId;
   categoryLabel: string;
   certificates: readonly CertificateFile[];
+  preview: CertificateFile;
   project?: TrophyRecord;
 };
 
@@ -120,23 +127,76 @@ const slug = (text: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+function representativePreview(record: AwardRecord): CertificateFile {
+  const issuer = record.issuer;
+  const issuerLogo = isSoftballAward(record)
+    ? "ejc-softball"
+    : /Eunoia Junior College/i.test(issuer)
+      ? "ejc"
+      : /School of Science and Technology|SST Changemakers/i.test(issuer)
+        ? "sst"
+        : /Bukit Timah Primary School/i.test(issuer)
+          ? "btps"
+          : /Singapore Armed Forces|160 SQN/i.test(issuer)
+            ? "rsaf"
+            : undefined;
+  const subject = /swim/i.test(record.title)
+    ? "swimming"
+    : /piano/i.test(record.title)
+      ? "music"
+      : /Cisco/i.test(issuer)
+        ? "network"
+        : "course";
+  return {
+    src: issuerLogo
+      ? `images/logos/${issuerLogo}.webp`
+      : `images/awards/representative-${subject}-emblem.svg`,
+    title: issuerLogo
+      ? `${issuer} — representative issuer emblem`
+      : `Representative ${subject} emblem`,
+    kind: "Representative emblem",
+    representative: true,
+    caption: issuerLogo
+      ? "Representative issuer emblem. A personal award photograph or certificate preview is not available for this record."
+      : "Representative subject emblem. A personal award photograph or certificate preview is not available for this record.",
+  };
+}
+const relatedProjectTitles: Readonly<Record<string, string>> = {
+  "BrainHack TIL-AI 2026": "BrainHack TIL-AI",
+  "Hack the Future AI Hackathon 2026": "Agentic Fraud Investigation Crew",
+  "BügleRock Rockathon 2026": "DealMachine",
+  "SignMeUp · The Merge Hackathon 2026": "SignMeUp",
+};
+const projectPreviews: Readonly<
+  Record<
+    string,
+    { src: string; alt: string; caption: string; kind: string } | undefined
+  >
+> = projectMedia;
 const collection: readonly Achievement[] = categories.flatMap((category) =>
-  category.records.map((record) => ({
-    ...record,
-    id: `${category.id}-${slug(record.title)}`,
-    category: category.id,
-    categoryLabel: category.label,
-    certificates: (
+  category.records.map((record) => {
+    const certificates = (
       record.certificateKeys ??
       (record.certificateKey ? [record.certificateKey] : [])
-    ).flatMap((key) => (files[key] ? [files[key]] : [])),
-    project: projectRecords.get(record.title),
-  })),
+    ).flatMap((key) => (files[key] ? [files[key]] : []));
+    return {
+      ...record,
+      id: `${category.id}-${slug(record.title)}`,
+      category: category.id,
+      categoryLabel: category.label,
+      certificates,
+      preview: certificates[0] ?? representativePreview(record),
+      project: projectRecords.get(record.title),
+    };
+  }),
 );
-const previewCount = collection.reduce(
-  (count, record) => count + record.certificates.length,
-  0,
-);
+const previewCount = new Set(
+  collection.flatMap((record) =>
+    record.certificates
+      .filter((file) => !file.representative)
+      .map((file) => file.src),
+  ),
+).size;
 const hashFilters: Readonly<Record<string, CollectionFilter>> = {
   "#competitions": "competitions",
   "#government": "government",
@@ -160,7 +220,7 @@ function AchievementCard({
   const Icon =
     categories.find((category) => category.id === record.category)?.icon ??
     Award;
-  const first = record.certificates[0];
+  const first = record.preview;
   function lean(event: PointerEvent<HTMLElement>) {
     if (reduced || event.pointerType !== "mouse") return;
     const box = event.currentTarget.getBoundingClientRect();
@@ -194,30 +254,42 @@ function AchievementCard({
       <div className="achievement-card-inner">
         <div className="achievement-card-type">
           <span>
-            <Icon size={14} aria-hidden="true" />
+            {isSoftballAward(record) ? (
+              <img
+                src={asset("images/logos/ejc-softball.webp")}
+                alt="Eunoia softball logo"
+                width={24}
+                height={24}
+                style={{
+                  width: 24,
+                  height: 24,
+                  objectFit: "contain",
+                  flexShrink: 0,
+                }}
+              />
+            ) : (
+              <Icon size={14} aria-hidden="true" />
+            )}
             {record.categoryLabel}
           </span>
           {record.year ? <span>{record.year}</span> : null}
         </div>
-        <div className={`achievement-art${first ? " has-certificate" : ""}`}>
-          {first ? (
+        <div
+          className={`achievement-art has-certificate${first.kind === "Representative emblem" ? " is-emblem" : ""}`}
+        >
+          {
             <img
               src={asset(first.src)}
               alt={first.title}
               loading="lazy"
               decoding="async"
             />
-          ) : (
-            <div className="achievement-typography">
-              <Icon size={35} strokeWidth={1.3} aria-hidden="true" />
-              <span>
-                {record.category === "certificates"
-                  ? "Credential record"
-                  : "Achievement record"}
-              </span>
-              <small>No public preview</small>
-            </div>
-          )}
+          }
+          {first.representative ? (
+            <span className="achievement-preview-label">
+              Representative image
+            </span>
+          ) : null}
           {record.certificates.length > 1 ? (
             <span className="achievement-scan-count">
               {record.certificates.length} previews
@@ -248,7 +320,9 @@ function AchievementCard({
         ) : null}
         <div className="achievement-card-footer">
           <span>
-            {first ? `${previewKind(first)} on file` : "Portfolio record"}
+            {first.representative
+              ? previewKind(first)
+              : `${previewKind(first)} on file`}
           </span>
           <button
             ref={buttonRef}
@@ -561,12 +635,15 @@ export default function TrophyRoom() {
                 </div>
               ) : null}
             </dl>
-            {selected.certificates.length ? (
+            {
               <section
                 className="achievement-certificates"
-                aria-label="Original award documents and trophy photographs"
+                aria-label="Award evidence and labelled representative images"
               >
-                {selected.certificates.map((file) => (
+                {(selected.certificates.length
+                  ? selected.certificates
+                  : [selected.preview]
+                ).map((file) => (
                   <figure key={file.src}>
                     <a
                       href={asset(file.src)}
@@ -593,14 +670,67 @@ export default function TrophyRoom() {
                         <span className="sr-only">, opens in a new tab</span>
                       </a>
                     </figcaption>
+                    {file.caption ? (
+                      <p className="achievement-preview-note">{file.caption}</p>
+                    ) : null}
+                    {file.originalSrc ? (
+                      <a
+                        className="achievement-preview-source"
+                        href={asset(file.originalSrc)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        View original photo{" "}
+                        <ArrowUpRight size={14} aria-hidden="true" />
+                        <span className="sr-only">, opens in a new tab</span>
+                      </a>
+                    ) : null}
+                    {file.source ? (
+                      <a
+                        className="achievement-preview-source"
+                        href={file.source.url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {file.source.label}
+                        <ArrowUpRight size={14} aria-hidden="true" />
+                        <span className="sr-only">, opens in a new tab</span>
+                      </a>
+                    ) : null}
                   </figure>
                 ))}
               </section>
-            ) : (
-              <p className="achievement-no-preview">
-                This portfolio record does not have a public image preview.
-              </p>
-            )}
+            }
+            {projectPreviews[relatedProjectTitles[selected.title]]
+              ? (() => {
+                  const preview =
+                    projectPreviews[relatedProjectTitles[selected.title]]!;
+                  return (
+                    <figure className="achievement-related-project">
+                      <p className="trophy-eyebrow">
+                        The project behind the award
+                      </p>
+                      <a
+                        href={asset(preview.src)}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`${relatedProjectTitles[selected.title]} — open project image in a new tab`}
+                      >
+                        <img
+                          src={asset(preview.src)}
+                          alt={preview.alt}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </a>
+                      <figcaption>
+                        <strong>{relatedProjectTitles[selected.title]}</strong>
+                        <span>{preview.caption}</span>
+                      </figcaption>
+                    </figure>
+                  );
+                })()
+              : null}
             {selected.project ? (
               <section
                 className="achievement-project-notes"

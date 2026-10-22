@@ -228,9 +228,14 @@ function Book({
         <b>{design.title}</b>
         <small>IW</small>
       </span>
-      <span className="book-pages book-pages-side" />
-      <span className="book-pages book-pages-top" />
-      <span className="book-pages book-pages-bottom" />
+      <span className="book-page-block">
+        <span className="book-pages book-pages-front" />
+        <span className="book-pages book-pages-back" />
+        <span className="book-pages book-pages-side" />
+        <span className="book-pages book-pages-binding" />
+        <span className="book-pages book-pages-top" />
+        <span className="book-pages book-pages-bottom" />
+      </span>
       <span className="book-front">
         <span className="book-cover-author">IAN WANGSA</span>
         <span className="book-cover-title">{design.title}</span>
@@ -271,6 +276,7 @@ export default function BookCarousel({
   const step = count ? 360 / count : 360;
   const [currentState, setCurrent] = useState(0);
   const [opened, setOpened] = useState<number | null>(null);
+  const [opening, setOpening] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [returning, setReturning] = useState(false);
   const radius = 340;
@@ -433,6 +439,9 @@ export default function BookCarousel({
     lastOpenedRef.current = index;
     setReturning(false);
     setOpened(index);
+    // An opening is an event even if this exact book was already open in a
+    // hidden Projects tab. Keep focus in sync when React batches the same index.
+    setOpening((previous) => previous + 1);
   }
 
   function closeBook() {
@@ -558,7 +567,7 @@ export default function BookCarousel({
       returnFocusRef.current = false;
       bookRefs.current[lastOpenedRef.current]?.focus({ preventScroll: true });
     }
-  }, [opened, returning, canInteract]);
+  }, [opened, opening, returning, canInteract]);
 
   useEffect(() => {
     if (!active) {

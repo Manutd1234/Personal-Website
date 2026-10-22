@@ -8,6 +8,7 @@ import ProjectsPanel from "./ProjectsPanel";
 import ProfilePanel from "./ProfilePanel";
 import ContactPanel from "./ContactPanel";
 import OffDutyPanel from "./OffDutyPanel";
+import ProjectEvidence from "./ProjectEvidence";
 
 const tabs = [
   {
@@ -285,9 +286,29 @@ export default function Portfolio() {
                       requestedProject={projectRequest}
                     />
                   ) : tab.id === "experience" ? (
-                    <WorkPanel />
+                    <>
+                      <WorkPanel />
+                      <ProjectEvidence
+                        title="From the student teams."
+                        note="A closer look at the software behind my NUSSIF and MedTech roles."
+                        titles={["NUSSIF Portfolio & Risk Tools", "PneuRelief"]}
+                        onOpen={openProjects}
+                      />
+                    </>
                   ) : tab.id === "skills" ? (
-                    <SkillsPanel />
+                    <>
+                      <SkillsPanel />
+                      <ProjectEvidence
+                        title="The toolkit, in action."
+                        note="Actual project screens and outputs. Pick one to see the implementation and source."
+                        titles={[
+                          "AlphaEngine",
+                          "Obital",
+                          "Nexus Academic Coach",
+                        ]}
+                        onOpen={openProjects}
+                      />
+                    </>
                   ) : (
                     <WorkPanel awardsOnly />
                   )}
