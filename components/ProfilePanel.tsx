@@ -1,12 +1,7 @@
 "use client";
 import { useMotionPreference } from "./useMotionPreference";
-import {
-  AnimatePresence,
-  motion,
-  useMotionValue,
-  useSpring,
-} from "framer-motion";
-import { ArrowDownToLine, ArrowUpRight, Mail, RotateCw } from "lucide-react";
+import { motion, useMotionValue, useSpring } from "framer-motion";
+import { ArrowDown, ArrowDownToLine, ArrowUpRight, Mail } from "lucide-react";
 import {
   useId,
   useRef,
@@ -20,12 +15,7 @@ import { projectMedia } from "@/content/media";
 import { buildNotes as projectNotes } from "@/content/build-notes";
 import { asset } from "@/content/paths";
 import OffDutyPanel from "./OffDutyPanel";
-const roles = [
-  "a software builder",
-  "an AI enthusiast",
-  "a quant researcher",
-  "a curious learner",
-];
+import RoleIntro from "./RoleIntro";
 
 const workbenchNotes = [
   {
@@ -270,8 +260,8 @@ export default function ProfilePanel({
 }: {
   openProjects: () => void;
 }) {
-  const [role, setRole] = useState(0);
   const reduced = useMotionPreference();
+  const hobbiesRef = useRef<HTMLDetailsElement>(null);
   const x = useMotionValue(0),
     y = useMotionValue(0);
   const rotateX = useSpring(x, { stiffness: 180, damping: 24 }),
@@ -299,41 +289,7 @@ export default function ProfilePanel({
               <br />
               <em>Wangsa.</em>
             </h1>
-            <motion.div
-              className="classic-role"
-              initial={reduced ? false : { opacity: 0, y: 8 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.5 }}
-              transition={{ duration: reduced ? 0 : 0.45, ease: "easeOut" }}
-            >
-              <span>I’m</span>
-              <button
-                onClick={() => setRole((i) => (i + 1) % roles.length)}
-                aria-label={`Change role. Currently ${roles[role]}`}
-                className="classic-role-flip"
-              >
-                <AnimatePresence initial={false} mode="popLayout">
-                  <motion.em
-                    key={role}
-                    initial={{ y: reduced ? 0 : "110%", opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: reduced ? 0 : "-110%", opacity: 0 }}
-                    transition={
-                      reduced
-                        ? { duration: 0 }
-                        : { type: "spring", stiffness: 300, damping: 30 }
-                    }
-                    aria-hidden="true"
-                  >
-                    {roles[role]}
-                  </motion.em>
-                </AnimatePresence>
-                <RotateCw aria-hidden="true" size={14} />
-              </button>
-              <span className="sr-only" aria-live="polite">
-                {roles[role]}
-              </span>
-            </motion.div>
+            <RoleIntro />
             <p className="classic-intro">{profile.introduction}</p>
             <div className="classic-actions">
               <button className="classic-primary" onClick={openProjects}>
@@ -360,6 +316,15 @@ export default function ProfilePanel({
               <a href={`mailto:${profile.email}`}>
                 <Mail size={19} />
                 Email
+              </a>
+              <a
+                href="#life-in-pictures"
+                className="classic-photo-shortcut"
+                onClick={() => {
+                  if (hobbiesRef.current) hobbiesRef.current.open = true;
+                }}
+              >
+                Life in pictures <ArrowDown size={15} aria-hidden="true" />
               </a>
             </div>
           </div>
@@ -422,7 +387,12 @@ export default function ProfilePanel({
         </div>
       </section>
       <Workbench openProjects={openProjects} />
-      <details className="classic-hobbies" open>
+      <details
+        className="classic-hobbies"
+        id="life-in-pictures"
+        ref={hobbiesRef}
+        open
+      >
         <summary>
           <span className="classic-disclosure-icon" aria-hidden="true">
             +

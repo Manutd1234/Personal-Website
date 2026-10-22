@@ -58,6 +58,12 @@ const aliases: Record<string, TabId> = {
   skills: "skills",
   awards: "awards",
   achievements: "awards",
+  certificates: "awards",
+  competitions: "awards",
+  academic: "awards",
+  government: "awards",
+  sport: "awards",
+  service: "awards",
 };
 const sectionNumber = {
   projects: "02",
@@ -84,13 +90,13 @@ export default function Portfolio() {
     setDark(document.documentElement.classList.contains("dark"));
     return () => window.removeEventListener("hashchange", sync);
   }, []);
-  function navigate(id: TabId) {
+  function navigate(id: TabId, history: "push" | "replace" = "push") {
     setActive(id);
-    window.history.pushState(
-      null,
-      "",
-      `#${tabs.find((t) => t.id === id)!.hash}`,
-    );
+    const hash = `#${tabs.find((tab) => tab.id === id)!.hash}`;
+    if (window.location.hash !== hash) {
+      if (history === "replace") window.history.replaceState(null, "", hash);
+      else window.history.pushState(null, "", hash);
+    }
     window.scrollTo({ top: 0, behavior: "instant" });
   }
   function navKeys(event: KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -106,7 +112,7 @@ export default function Portfolio() {
               : null;
     if (next === null) return;
     event.preventDefault();
-    navigate(tabs[next].id);
+    navigate(tabs[next].id, "replace");
     navRefs.current[next]?.focus({ preventScroll: true });
   }
   function theme() {

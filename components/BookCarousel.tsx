@@ -631,8 +631,15 @@ export default function BookCarousel({
                 {String(current + 1).padStart(2, "0")} /{" "}
                 {String(count).padStart(2, "0")}
               </span>
-              <button onClick={() => openBook(current)} type="button">
-                {projects[current].title} <span aria-hidden="true">↗</span>
+              <button
+                onClick={() => openBook(current)}
+                type="button"
+                aria-label={`Open project: ${projects[current].title}`}
+              >
+                <span className="book-current-action">Open project</span>
+                <span className="book-current-name">
+                  {projects[current].title} <span aria-hidden="true">↗</span>
+                </span>
               </button>
             </div>
             <button

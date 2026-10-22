@@ -170,7 +170,18 @@ function ExperienceBrowser({ prefix }: { prefix: string }) {
       <div className="career-role-rail">
         <div className="career-role-rail-heading">
           <span>Different teams, different lessons.</span>
-          <p>Explore a role</p>
+          <p>
+            Explore a role{" "}
+            <span className="career-role-position">
+              <span aria-hidden="true">
+                {String(selected + 1).padStart(2, "0")} /{" "}
+                {String(workRecords.length).padStart(2, "0")}
+              </span>
+              <span className="sr-only">
+                Role {selected + 1} of {workRecords.length}
+              </span>
+            </span>
+          </p>
         </div>
         <div
           className="career-role-list"
@@ -412,7 +423,18 @@ function AwardRecord({ record }: { record: CertificateRecord }) {
 
 function AwardsArchive() {
   const [filter, setFilter] = useState("competitions");
+  const prefix = useId();
   const technical = awardSections[0];
+  useEffect(() => {
+    const syncHash = () => {
+      const hash = window.location.hash.toLowerCase();
+      const section = awardSections.find((item) => `#${item.id}` === hash);
+      if (section) setFilter(section.id);
+    };
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, []);
   return (
     <div className="career-awards">
       <div
@@ -425,6 +447,7 @@ function AwardsArchive() {
             type="button"
             key={section.id}
             aria-pressed={filter === section.id}
+            aria-controls={`${prefix}-${section.id}-panel`}
             onClick={() => setFilter(section.id)}
           >
             {section.label} <span>{section.records.length}</span>
@@ -440,10 +463,11 @@ function AwardsArchive() {
       <section
         className="career-competition-section"
         hidden={filter !== technical.id}
-        aria-labelledby="career-competition-title"
+        id={`${prefix}-${technical.id}-panel`}
+        aria-labelledby={`${prefix}-${technical.id}-title`}
       >
         <header className="career-award-section-heading">
-          <h3 id="career-competition-title">{technical.title}</h3>
+          <h3 id={`${prefix}-${technical.id}-title`}>{technical.title}</h3>
           <p>{technical.description}</p>
         </header>
         <div className="career-competition-grid">
@@ -474,9 +498,11 @@ function AwardsArchive() {
             key={`${filter}-${section.id}`}
             hidden={filter !== section.id}
             open={filter === section.id}
+            id={`${prefix}-${section.id}-panel`}
+            aria-labelledby={`${prefix}-${section.id}-title`}
           >
             <summary>
-              <span>{section.title}</span>
+              <span id={`${prefix}-${section.id}-title`}>{section.title}</span>
               <span className="career-group-count">
                 {section.records.length} records
               </span>

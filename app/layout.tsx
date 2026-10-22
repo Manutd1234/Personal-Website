@@ -7,6 +7,8 @@ import "./profile-builder.css";
 import "./life-gallery.css";
 import "./skills-classic.css";
 import "./career-classic.css";
+import "./role-intro.css";
+import "./tab-polish.css";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 export const metadata: Metadata = {

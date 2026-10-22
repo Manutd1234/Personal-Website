@@ -1,6 +1,6 @@
 "use client";
-import { useMotionPreference } from "./useMotionPreference";
 
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import {
   useEffect,
@@ -8,12 +8,12 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type KeyboardEvent,
-  type MouseEvent,
+  type PointerEvent,
 } from "react";
 import { lifePhotos, type LifePhoto } from "@/content/life-photos";
 import { asset } from "@/content/paths";
+import { useMotionPreference } from "./useMotionPreference";
 
 type GalleryFilter = "All" | LifePhoto["category"];
 const categoryOrder: readonly LifePhoto["category"][] = [
@@ -29,90 +29,34 @@ const filters: readonly GalleryFilter[] = [
     lifePhotos.some((photo) => photo.category === category),
   ),
 ];
-const rotations = [-2.1, 1.5, -0.8, 2.2, -1.4, 0.7] as const;
-
-function PhotoTile({
-  photo,
-  index,
-  duplicate,
-  filler = false,
-  onOpen,
-}: {
-  photo: LifePhoto;
-  index: number;
-  duplicate: boolean;
-  filler?: boolean;
-  onOpen: (photo: LifePhoto, opener: HTMLButtonElement) => void;
-}) {
-  const contents = (
-    <>
-      <span className="life-photo-image">
-        <img
-          src={asset(photo.thumb ?? photo.src)}
-          alt={duplicate ? "" : photo.alt}
-          width={photo.width}
-          height={photo.height}
-          loading="lazy"
-          decoding="async"
-          style={
-            photo.position ? { objectPosition: photo.position } : undefined
-          }
-        />
-        <span className="life-photo-open" aria-hidden="true">
-          ↗
-        </span>
-      </span>
-      <span className="life-photo-caption">{photo.caption || photo.alt}</span>
-      <span className="life-photo-category">{photo.category}</span>
-    </>
-  );
-  return (
-    <div
-      className={`life-photo-tile${filler ? " is-filler" : ""}`}
-      data-photo-id={photo.id}
-      aria-hidden={duplicate ? true : undefined}
-      inert={duplicate}
-      style={
-        {
-          "--photo-turn": `${rotations[index % rotations.length]}deg`,
-        } as CSSProperties
-      }
-    >
-      {duplicate ? (
-        <div className="life-photo-card">{contents}</div>
-      ) : (
-        <button
-          type="button"
-          className="life-photo-card"
-          aria-label={`Open photo: ${photo.caption || photo.alt}`}
-          onClick={(event) => {
-            event.stopPropagation();
-            onOpen(photo, event.currentTarget);
-          }}
-        >
-          {contents}
-        </button>
-      )}
-    </div>
-  );
-}
+const mod = (value: number, length: number) =>
+  ((value % length) + length) % length;
 
 export default function OffDutyPanel() {
   const [filter, setFilter] = useState<GalleryFilter>("All");
-  const [autoRoll, setAutoRoll] = useState(true);
+  const [index, setIndex] = useState(0);
+  const [autoPlay, setAutoPlay] = useState(true);
   const [inView, setInView] = useState(false);
   const [documentVisible, setDocumentVisible] = useState(false);
-  const [disclosureOpen, setDisclosureOpen] = useState(false);
+  const [parentVisible, setParentVisible] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [keyboardFocused, setKeyboardFocused] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const galleryRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const thumbRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
+  const mountedRef = useRef(false);
+  const restoreAfterCloseRef = useRef(true);
+  const swipeRef = useRef<{ pointer: number; x: number; y: number } | null>(
+    null,
+  );
+  const suppressClickUntilRef = useRef(0);
   const reducedMotion = useMotionPreference();
   const prefix = useId();
-
   const photos = useMemo(
     () =>
       filter === "All"
@@ -120,109 +64,128 @@ export default function OffDutyPanel() {
         : lifePhotos.filter((photo) => photo.category === filter),
     [filter],
   );
-  const rows = useMemo(() => {
-    const split = Math.ceil(photos.length / 2);
-    const groups =
-      photos.length < 6
-        ? [photos]
-        : [photos.slice(0, split), photos.slice(split)];
-    return groups
-      .filter((row) => row.length > 0)
-      .map((row, index) => ({
-        photos: row,
-        tiles: Array.from(
-          { length: Math.max(6, row.length) },
-          (_, tile) => row[tile % row.length],
-        ),
-        secondsPerPhoto: index === 0 ? 8 : 9,
-      }));
-  }, [photos]);
-  const selectedIndex = photos.findIndex((photo) => photo.id === selectedId);
-  const selectedPhoto = photos[selectedIndex];
-  const lightboxOpen = selectedPhoto !== undefined;
-  const canAutoRoll = !reducedMotion && photos.length > 1;
-  const staticMode = !canAutoRoll || !autoRoll || focused;
-  const rolling =
-    !staticMode &&
+  const currentIndex = photos.length ? mod(index, photos.length) : 0;
+  const photo = photos[currentIndex];
+  const canAutoPlay = !reducedMotion && photos.length > 1;
+  const playing =
+    autoPlay &&
+    canAutoPlay &&
     inView &&
     documentVisible &&
-    disclosureOpen &&
+    parentVisible &&
     !hovered &&
+    !keyboardFocused &&
     !lightboxOpen;
 
   useEffect(() => {
     const gallery = galleryRef.current;
-    if (!gallery) return;
-    const disclosure = gallery.closest("details");
-    const panel = gallery.closest<HTMLElement>('[role="tabpanel"]');
-    const closeForNavigation = () => setSelectedId(null);
-    const panelObserver = new MutationObserver(() => {
-      if (
-        panel?.hidden ||
-        panel?.getAttribute("aria-hidden") === "true" ||
-        panel?.inert
-      ) {
-        setSelectedId(null);
-        setFocused(false);
-      }
-    });
-    if (panel)
-      panelObserver.observe(panel, {
-        attributes: true,
-        attributeFilter: ["hidden", "aria-hidden", "inert"],
-      });
-    const syncVisibility = () =>
+    if (!gallery) return undefined;
+    mountedRef.current = true;
+    const disclosures: HTMLDetailsElement[] = [];
+    for (
+      let ancestor = gallery.parentElement;
+      ancestor;
+      ancestor = ancestor.parentElement
+    ) {
+      if (ancestor instanceof HTMLDetailsElement) disclosures.push(ancestor);
+    }
+    const closeForNavigation = () => {
+      restoreAfterCloseRef.current = false;
+      setLightboxOpen(false);
+      setKeyboardFocused(false);
+      setHovered(false);
+      swipeRef.current = null;
+    };
+    const syncVisibility = () => {
       setDocumentVisible(document.visibilityState === "visible");
-    const syncDisclosure = () =>
-      setDisclosureOpen(!disclosure || disclosure.open);
-    const observer =
+      const visible =
+        gallery.getClientRects().length > 0 &&
+        !gallery.closest('[hidden], [inert], [aria-hidden="true"]') &&
+        disclosures.every((disclosure) => disclosure.open);
+      setParentVisible(visible);
+      if (!visible) closeForNavigation();
+    };
+    const intersection =
       typeof IntersectionObserver === "undefined"
         ? null
         : new IntersectionObserver(
-            ([entry]) => {
-              setInView(entry.isIntersecting && entry.intersectionRatio > 0);
-            },
+            ([entry]) =>
+              setInView(entry.isIntersecting && entry.intersectionRatio > 0),
             { threshold: [0, 0.05] },
           );
-    if (observer) observer.observe(gallery);
+    if (intersection) intersection.observe(stageRef.current ?? gallery);
     else setInView(true);
+    const visibility = new MutationObserver(syncVisibility);
+    for (
+      let ancestor: HTMLElement | null = gallery;
+      ancestor;
+      ancestor = ancestor.parentElement
+    ) {
+      visibility.observe(ancestor, {
+        attributes: true,
+        attributeFilter: ["hidden", "aria-hidden", "inert", "open", "class"],
+      });
+    }
     syncVisibility();
-    syncDisclosure();
+    disclosures.forEach((disclosure) =>
+      disclosure.addEventListener("toggle", syncVisibility),
+    );
     document.addEventListener("visibilitychange", syncVisibility);
-    disclosure?.addEventListener("toggle", syncDisclosure);
     window.addEventListener("hashchange", closeForNavigation);
     return () => {
-      observer?.disconnect();
-      panelObserver.disconnect();
-      window.removeEventListener("hashchange", closeForNavigation);
+      mountedRef.current = false;
+      swipeRef.current = null;
+      intersection?.disconnect();
+      visibility.disconnect();
+      disclosures.forEach((disclosure) =>
+        disclosure.removeEventListener("toggle", syncVisibility),
+      );
       document.removeEventListener("visibilitychange", syncVisibility);
-      disclosure?.removeEventListener("toggle", syncDisclosure);
+      window.removeEventListener("hashchange", closeForNavigation);
     };
   }, []);
 
   useEffect(() => {
-    if (!staticMode)
-      galleryRef.current
-        ?.querySelectorAll<HTMLElement>(".life-marquee-row")
-        .forEach((row) => {
-          row.scrollLeft = 0;
-        });
-  }, [staticMode]);
+    if (!playing) return undefined;
+    const timer = window.setTimeout(
+      () => setIndex((current) => mod(current + 1, photos.length)),
+      4500,
+    );
+    return () => window.clearTimeout(timer);
+  }, [playing, currentIndex, photos.length, filter]);
 
   useEffect(() => {
-    if (!disclosureOpen) setSelectedId(null);
-  }, [disclosureOpen]);
+    const strip = stripRef.current;
+    const selected = thumbRefs.current[currentIndex];
+    if (!strip || !selected || !parentVisible) return;
+    strip.scrollTo({
+      left: Math.max(
+        0,
+        selected.offsetLeft - (strip.clientWidth - selected.offsetWidth) / 2,
+      ),
+      behavior: reducedMotion ? "instant" : "smooth",
+    });
+  }, [currentIndex, filter, parentVisible, reducedMotion]);
 
   useEffect(() => {
-    if (!lightboxOpen) return;
+    if (!parentVisible || photos.length < 2) return;
+    const next = new window.Image();
+    next.decoding = "async";
+    next.src = asset(photos[mod(currentIndex + 1, photos.length)].src);
+  }, [currentIndex, parentVisible, photos]);
+
+  useEffect(() => {
+    if (!lightboxOpen) return undefined;
     const dialog = dialogRef.current;
-    if (!dialog) return;
+    if (!dialog) return undefined;
     const body = document.body;
     const html = document.documentElement;
     const previous = {
       bodyOverflow: body.style.overflow,
       htmlOverflow: html.style.overflow,
       paddingRight: body.style.paddingRight,
+      x: window.scrollX,
+      y: window.scrollY,
     };
     const scrollbar = Math.max(0, window.innerWidth - html.clientWidth);
     const stableGutter = window
@@ -240,86 +203,123 @@ export default function OffDutyPanel() {
       body.style.overflow = previous.bodyOverflow;
       html.style.overflow = previous.htmlOverflow;
       body.style.paddingRight = previous.paddingRight;
+      if (!mountedRef.current || !restoreAfterCloseRef.current) return;
+      const opener = openerRef.current;
       if (
-        openerRef.current?.isConnected &&
-        openerRef.current.getClientRects().length > 0 &&
-        !openerRef.current.closest('[hidden], [inert], [aria-hidden="true"]')
+        opener?.isConnected &&
+        opener.getClientRects().length > 0 &&
+        !opener.closest(
+          '[hidden], [inert], [aria-hidden="true"], details:not([open])',
+        )
       ) {
-        openerRef.current.focus({ preventScroll: true });
-        setFocused(true);
-        const opener = openerRef.current;
-        requestAnimationFrame(() => {
-          if (
-            opener.isConnected &&
-            opener.getClientRects().length > 0 &&
-            opener.matches(".life-photo-card")
-          )
-            opener.scrollIntoView({
-              block: "nearest",
-              inline: "nearest",
-              behavior: "instant",
-            });
+        window.scrollTo({
+          left: previous.x,
+          top: previous.y,
+          behavior: "instant",
         });
+        opener.focus({ preventScroll: true });
+        setKeyboardFocused(opener.matches(":focus-visible"));
       }
     };
   }, [lightboxOpen]);
 
-  function openPhoto(photo: LifePhoto, opener: HTMLElement | null) {
-    openerRef.current = opener ?? galleryRef.current;
-    setSelectedId(photo.id);
+  function move(offset: number) {
+    if (photos.length > 1)
+      setIndex((current) => mod(current + offset, photos.length));
   }
 
-  // Cloned sequences stay inert for assistive technology. Pointer clicks are
-  // resolved at their non-inert parent, using the visible frame's coordinates.
-  function openVisibleFrame(event: MouseEvent<HTMLDivElement>) {
-    if (event.target instanceof Element && event.target.closest("button"))
+  function choose(next: number, focusThumbnail = false) {
+    if (!photos.length) return;
+    const selected = mod(next, photos.length);
+    setIndex(selected);
+    if (focusThumbnail)
+      thumbRefs.current[selected]?.focus({ preventScroll: true });
+  }
+
+  function openPhoto(opener: HTMLElement) {
+    if (!parentVisible || !photo) return;
+    restoreAfterCloseRef.current = true;
+    openerRef.current = opener;
+    setLightboxOpen(true);
+  }
+
+  function galleryKeys(event: KeyboardEvent<HTMLDivElement>) {
+    if (
+      lightboxOpen ||
+      !(event.target instanceof Element) ||
+      !event.target.closest(".life-photo-card, .life-slideshow-controls")
+    )
       return;
-    const frame = [
-      ...event.currentTarget.querySelectorAll<HTMLElement>("[data-photo-id]"),
-    ].find((node) => {
-      const box = node.getBoundingClientRect();
-      return (
-        event.clientX >= box.left &&
-        event.clientX <= box.right &&
-        event.clientY >= box.top &&
-        event.clientY <= box.bottom
-      );
-    });
-    const photo = photos.find((item) => item.id === frame?.dataset.photoId);
-    if (!photo) return;
-    const original = [
-      ...(galleryRef.current?.querySelectorAll<HTMLElement>(
-        "[data-photo-id]",
-      ) ?? []),
-    ]
-      .find(
-        (node) =>
-          node.dataset.photoId === photo.id && !node.hasAttribute("inert"),
-      )
-      ?.querySelector<HTMLButtonElement>("button");
-    openPhoto(photo, original ?? null);
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      move(event.key === "ArrowRight" ? 1 : -1);
+    } else if (event.key === "Home" || event.key === "End") {
+      event.preventDefault();
+      choose(event.key === "Home" ? 0 : photos.length - 1);
+    }
   }
 
-  function movePhoto(offset: number) {
-    if (photos.length < 2) return;
-    setSelectedId((current) => {
-      const index = photos.findIndex((photo) => photo.id === current);
-      return photos[(index + offset + photos.length) % photos.length].id;
-    });
+  function thumbnailKeys(
+    event: KeyboardEvent<HTMLButtonElement>,
+    position: number,
+  ) {
+    const next =
+      event.key === "ArrowRight"
+        ? position + 1
+        : event.key === "ArrowLeft"
+          ? position - 1
+          : event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? photos.length - 1
+              : null;
+    if (next === null) return;
+    event.preventDefault();
+    choose(next, true);
+  }
+
+  function startSwipe(event: PointerEvent<HTMLButtonElement>) {
+    if (event.pointerType === "mouse" || !event.isPrimary) {
+      swipeRef.current = null;
+      return;
+    }
+    swipeRef.current = {
+      pointer: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+    };
+  }
+
+  function finishSwipe(event: PointerEvent<HTMLButtonElement>) {
+    const swipe = swipeRef.current;
+    swipeRef.current = null;
+    if (!swipe || swipe.pointer !== event.pointerId) return;
+    const dx = event.clientX - swipe.x;
+    const dy = event.clientY - swipe.y;
+    if (Math.abs(dx) >= 45 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+      suppressClickUntilRef.current = performance.now() + 250;
+      move(dx < 0 ? 1 : -1);
+    }
   }
 
   function lightboxKeys(event: KeyboardEvent<HTMLDialogElement>) {
-    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+    if (event.key === "Escape") {
       event.preventDefault();
-      movePhoto(event.key === "ArrowRight" ? 1 : -1);
+      setLightboxOpen(false);
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      move(event.key === "ArrowRight" ? 1 : -1);
+    } else if (event.key === "Home" || event.key === "End") {
+      event.preventDefault();
+      choose(event.key === "Home" ? 0 : photos.length - 1);
     } else if (event.key === "Tab") {
       const targets = [
         ...event.currentTarget.querySelectorAll<HTMLButtonElement>(
           "button:not(:disabled)",
         ),
       ];
-      const first = targets[0],
-        last = targets[targets.length - 1];
+      const first = targets[0];
+      const last = targets[targets.length - 1];
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
         last?.focus();
@@ -330,7 +330,7 @@ export default function OffDutyPanel() {
     }
   }
 
-  if (!lifePhotos.length)
+  if (!photo)
     return (
       <div ref={galleryRef} className="life-gallery-empty">
         Photos will appear here once they’re added.
@@ -339,11 +339,9 @@ export default function OffDutyPanel() {
 
   return (
     <div
-      ref={galleryRef}
       className="life-gallery"
-      tabIndex={-1}
-      data-static={staticMode}
-      data-rolling={rolling}
+      ref={galleryRef}
+      onKeyDown={galleryKeys}
       onPointerEnter={(event) => {
         if (event.pointerType === "mouse") setHovered(true);
       }}
@@ -351,7 +349,7 @@ export default function OffDutyPanel() {
         if (event.pointerType === "mouse") setHovered(false);
       }}
       onFocusCapture={(event) =>
-        setFocused(
+        setKeyboardFocused(
           event.target instanceof HTMLElement &&
             event.target.matches(":focus-visible"),
         )
@@ -361,7 +359,7 @@ export default function OffDutyPanel() {
           !(event.relatedTarget instanceof Node) ||
           !event.currentTarget.contains(event.relatedTarget)
         )
-          setFocused(false);
+          setKeyboardFocused(false);
       }}
     >
       <div className="life-gallery-heading">
@@ -371,19 +369,19 @@ export default function OffDutyPanel() {
         </div>
         <button
           type="button"
-          className="life-roll-toggle"
+          className="life-autoplay-toggle"
           role="switch"
-          aria-checked={autoRoll && canAutoRoll}
-          aria-describedby={!canAutoRoll ? `${prefix}-motion-note` : undefined}
-          disabled={!canAutoRoll}
-          onClick={() => setAutoRoll((value) => !value)}
+          aria-checked={autoPlay && canAutoPlay}
+          aria-describedby={`${prefix}-motion-note`}
+          disabled={!canAutoPlay}
+          onClick={() => setAutoPlay((value) => !value)}
         >
-          Auto-roll{" "}
-          <span aria-hidden="true" className="life-roll-switch">
+          Auto-play{" "}
+          <span aria-hidden="true" className="life-autoplay-switch">
             <span />
           </span>
-          <span className="life-roll-state">
-            {autoRoll && canAutoRoll ? "On" : "Off"}
+          <span className="life-autoplay-state">
+            {autoPlay && canAutoPlay ? "On" : "Off"}
           </span>
         </button>
       </div>
@@ -397,76 +395,164 @@ export default function OffDutyPanel() {
             key={category}
             type="button"
             aria-pressed={filter === category}
-            onClick={() => setFilter(category)}
+            onClick={() => {
+              setFilter(category);
+              setIndex(0);
+            }}
           >
             {category}
           </button>
         ))}
       </div>
       <p className="life-gallery-help" id={`${prefix}-motion-note`}>
-        Open a photo to look closer. With Auto-roll off, scroll to browse at
-        your own pace.
+        {reducedMotion
+          ? "Choose a photo below. Automatic switching is off for reduced motion."
+          : "A new memory every few seconds. Tap the photo to look closer, or swipe to browse."}
       </p>
+      <div className="life-polaroid-stage" ref={stageRef}>
+        <div className="life-polaroid-stack">
+          <span aria-hidden="true" className="life-polaroid-back is-first" />
+          <span aria-hidden="true" className="life-polaroid-back is-second" />
+          <span aria-hidden="true" className="life-photo-tape" />
+          <button
+            type="button"
+            className="life-photo-card"
+            aria-label={`Open photo: ${photo.alt}`}
+            aria-describedby={`${prefix}-slide-caption ${prefix}-slide-count`}
+            onPointerDown={startSwipe}
+            onPointerUp={finishSwipe}
+            onPointerCancel={() => {
+              swipeRef.current = null;
+            }}
+            onClick={(event) => {
+              if (
+                event.detail !== 0 &&
+                performance.now() < suppressClickUntilRef.current
+              )
+                return;
+              openPhoto(event.currentTarget);
+            }}
+          >
+            <span className="life-photo-image" aria-hidden="true">
+              <AnimatePresence initial={false}>
+                <motion.span
+                  className="life-photo-slide"
+                  key={photo.id}
+                  initial={
+                    reducedMotion
+                      ? false
+                      : { opacity: 0, rotate: 0.8, scale: 1.01 }
+                  }
+                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                  exit={{ opacity: 0, rotate: reducedMotion ? 0 : -0.6 }}
+                  transition={{
+                    duration: reducedMotion ? 0 : 0.5,
+                    ease: [0.2, 0.7, 0.2, 1],
+                  }}
+                >
+                  <img
+                    src={asset(photo.src)}
+                    alt=""
+                    width={photo.width}
+                    height={photo.height}
+                    decoding="async"
+                    draggable={false}
+                  />
+                </motion.span>
+              </AnimatePresence>
+              <span className="life-photo-open">↗</span>
+            </span>
+            <span className="life-photo-caption" id={`${prefix}-slide-caption`}>
+              {photo.caption || photo.alt}
+            </span>
+            <span className="life-photo-meta">
+              <span>{photo.category}</span>
+              <span id={`${prefix}-slide-count`}>
+                {String(currentIndex + 1).padStart(2, "0")} /{" "}
+                {String(photos.length).padStart(2, "0")}
+              </span>
+            </span>
+          </button>
+        </div>
+      </div>
       <div
-        className="life-gallery-marquees"
-        aria-label={`${filter === "All" ? "Personal" : filter} photos`}
+        className="life-slideshow-controls"
+        aria-label="Browse personal photos"
       >
-        {rows.map((row, rowIndex) => (
-          <div key={`${filter}-${rowIndex}`} className="life-marquee-row">
-            <div
-              className={`life-marquee-track${rowIndex === 1 ? " is-reversed" : ""}`}
-              style={{
-                animationDuration: `${row.tiles.length * row.secondsPerPhoto}s`,
-              }}
-              onClick={openVisibleFrame}
-            >
-              <div className="life-marquee-sequence">
-                {row.tiles.map((photo, index) => (
-                  <PhotoTile
-                    key={`${photo.id}-${index}`}
-                    photo={photo}
-                    index={index + rowIndex * 2}
-                    duplicate={index >= row.photos.length}
-                    filler={index >= row.photos.length}
-                    onOpen={openPhoto}
-                  />
-                ))}
-              </div>
-              <div
-                className="life-marquee-sequence life-gallery-copy"
-                aria-hidden="true"
-                inert
-              >
-                {row.tiles.map((photo, index) => (
-                  <PhotoTile
-                    key={`${photo.id}-${index}`}
-                    photo={photo}
-                    index={index + rowIndex * 2}
-                    duplicate
-                    onOpen={openPhoto}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
+        <button
+          type="button"
+          onClick={() => move(-1)}
+          disabled={photos.length < 2}
+          aria-label="Previous photo"
+        >
+          <ArrowLeft size={19} aria-hidden="true" />
+        </button>
+        <p>
+          Little moments, kept close.<span>← → to browse · Enter to open</span>
+        </p>
+        <button
+          type="button"
+          onClick={() => move(1)}
+          disabled={photos.length < 2}
+          aria-label="Next photo"
+        >
+          <ArrowRight size={19} aria-hidden="true" />
+        </button>
+      </div>
+      <div
+        className="life-thumbnail-strip"
+        ref={stripRef}
+        role="group"
+        aria-label="Choose a personal photo"
+      >
+        {photos.map((item, position) => (
+          <button
+            key={item.id}
+            type="button"
+            className="life-thumbnail"
+            aria-label={`Show photo ${position + 1}: ${item.caption || item.alt}`}
+            aria-current={currentIndex === position ? "true" : undefined}
+            tabIndex={currentIndex === position ? 0 : -1}
+            ref={(element) => {
+              thumbRefs.current[position] = element;
+            }}
+            onClick={() => choose(position)}
+            onKeyDown={(event) => thumbnailKeys(event, position)}
+          >
+            <img
+              src={asset(item.thumb ?? item.src)}
+              alt=""
+              width={item.width}
+              height={item.height}
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+            />
+          </button>
         ))}
       </div>
-      <span className="sr-only" role="status">
-        Showing {photos.length}{" "}
-        {filter === "All" ? "personal" : filter.toLowerCase()} photos.
+      <span
+        className="sr-only"
+        role="status"
+        aria-live={playing ? "off" : "polite"}
+      >
+        {!lightboxOpen
+          ? `${photo.caption || photo.alt} Photo ${currentIndex + 1} of ${photos.length}.`
+          : ""}
       </span>
-
       <dialog
-        ref={dialogRef}
         className="life-lightbox"
-        aria-labelledby={`${prefix}-caption`}
+        ref={dialogRef}
+        aria-labelledby={`${prefix}-lightbox-caption`}
         aria-describedby={`${prefix}-photo-meta`}
         onKeyDown={lightboxKeys}
         onCancel={(event) => {
           event.preventDefault();
-          setSelectedId(null);
+          setLightboxOpen(false);
         }}
-        onClose={() => setSelectedId(null)}
+        onClose={() => {
+          if (!dialogRef.current?.open) setLightboxOpen(false);
+        }}
         onClick={(event) => {
           if (event.target !== event.currentTarget) return;
           const box = event.currentTarget.getBoundingClientRect();
@@ -476,23 +562,23 @@ export default function OffDutyPanel() {
             event.clientY < box.top ||
             event.clientY > box.bottom
           )
-            setSelectedId(null);
+            setLightboxOpen(false);
         }}
       >
-        {selectedPhoto ? (
+        {lightboxOpen ? (
           <>
             <header className="life-lightbox-heading">
               <p id={`${prefix}-photo-meta`}>
-                {selectedPhoto.category}
+                {photo.category}
                 <span aria-hidden="true"> · </span>
                 <span aria-live="polite">
-                  {selectedIndex + 1} / {photos.length}
+                  {currentIndex + 1} / {photos.length}
                 </span>
               </p>
               <button
                 ref={closeRef}
                 type="button"
-                onClick={() => setSelectedId(null)}
+                onClick={() => setLightboxOpen(false)}
                 aria-label="Close photo"
               >
                 <X size={21} aria-hidden="true" />
@@ -500,21 +586,21 @@ export default function OffDutyPanel() {
             </header>
             <div className="life-lightbox-image">
               <img
-                src={asset(selectedPhoto.src)}
-                alt={selectedPhoto.alt}
-                width={selectedPhoto.width}
-                height={selectedPhoto.height}
+                src={asset(photo.src)}
+                alt={photo.alt}
+                width={photo.width}
+                height={photo.height}
                 decoding="async"
               />
             </div>
             <footer className="life-lightbox-footer">
-              <h3 id={`${prefix}-caption`} aria-live="polite">
-                {selectedPhoto.caption || selectedPhoto.alt}
+              <h3 id={`${prefix}-lightbox-caption`} aria-live="polite">
+                {photo.caption || photo.alt}
               </h3>
               <div className="life-lightbox-navigation">
                 <button
                   type="button"
-                  onClick={() => movePhoto(-1)}
+                  onClick={() => move(-1)}
                   disabled={photos.length < 2}
                   aria-label="Previous photo"
                 >
@@ -522,7 +608,7 @@ export default function OffDutyPanel() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => movePhoto(1)}
+                  onClick={() => move(1)}
                   disabled={photos.length < 2}
                   aria-label="Next photo"
                 >

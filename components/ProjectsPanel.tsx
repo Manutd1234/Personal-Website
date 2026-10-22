@@ -98,7 +98,7 @@ function SourceLink({ source, title }: { source: Source; title: string }) {
     <div className="min-w-0">
       <a
         aria-label={`${label}: ${title}${source.label ? ` — ${source.label}` : ""}${privateSource ? " (private, access required)" : ""}`}
-        className="inline-flex min-h-9 max-w-full items-center gap-2 rounded-sm text-sm font-semibold text-emerald-800 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700 dark:text-emerald-300"
+        className="inline-flex min-h-11 max-w-full items-center gap-2 rounded-sm text-sm font-semibold text-emerald-800 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700 dark:text-emerald-300"
         href={source.url}
         rel="noreferrer"
         target="_blank"
@@ -161,7 +161,7 @@ function ProjectSources({ project }: { project: Project }) {
         {project.live ? (
           <a
             aria-label={`Live demo: ${project.title}`}
-            className="inline-flex min-h-9 items-center gap-2 rounded-sm text-sm font-semibold text-emerald-800 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700 dark:text-emerald-300"
+            className="inline-flex min-h-11 items-center gap-2 rounded-sm text-sm font-semibold text-emerald-800 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700 dark:text-emerald-300"
             href={project.live}
             rel="noreferrer"
             target="_blank"
@@ -172,7 +172,7 @@ function ProjectSources({ project }: { project: Project }) {
       </div>
       {additional.length ? (
         <details className="group/sources">
-          <summary className="flex min-h-9 w-fit cursor-pointer items-center gap-2 rounded-sm py-1 text-xs font-medium text-stone-600 hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700 dark:text-stone-400 dark:hover:text-emerald-300">
+          <summary className="flex min-h-11 w-fit cursor-pointer items-center gap-2 rounded-sm py-1 text-xs font-medium text-stone-600 hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700 dark:text-stone-400 dark:hover:text-emerald-300">
             <span>
               {additional.length} more {additionalNoun}
             </span>
@@ -263,10 +263,14 @@ function MoreProjects() {
     (project) => filter === "all" || projectGroups[project.title] === filter,
   );
   return (
-    <div>
+    <div className="project-archive">
+      <header className="project-archive-heading">
+        <h2>More from the workbench.</h2>
+        <p>Apps, research tools and team builds—with the code to explore.</p>
+      </header>
       <LayoutGroup id={groupId}>
         <div
-          aria-label="Filter projects"
+          aria-label="Filter the seven additional builds"
           className="mb-6 flex flex-wrap gap-1.5 rounded-xl border border-emerald-950/10 bg-stone-50 p-1.5 dark:border-white/10 dark:bg-stone-900"
           role="group"
         >
@@ -274,7 +278,7 @@ function MoreProjects() {
             <button
               aria-controls={gridId}
               aria-pressed={filter === item.id}
-              className={`relative isolate min-h-10 rounded-lg px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 sm:text-sm ${filter === item.id ? "text-white" : "text-stone-600 hover:text-emerald-900 dark:text-stone-400 dark:hover:text-emerald-200"}`}
+              className={`relative isolate min-h-11 rounded-lg px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 sm:text-sm ${filter === item.id ? "text-white" : "text-stone-600 hover:text-emerald-900 dark:text-stone-400 dark:hover:text-emerald-200"}`}
               key={item.id}
               onClick={() => setFilter(item.id)}
               type="button"
@@ -292,12 +296,20 @@ function MoreProjects() {
                 />
               ) : null}
               {item.label}
+              <span className="project-filter-count" aria-hidden="true">
+                {item.id === "all"
+                  ? archiveProjects.length
+                  : archiveProjects.filter(
+                      (project) => projectGroups[project.title] === item.id,
+                    ).length}
+              </span>
             </button>
           ))}
         </div>
       </LayoutGroup>
-      <p aria-live="polite" className="sr-only">
-        Showing {filteredProjects.length} projects.
+      <p aria-live="polite" className="project-result-count" role="status">
+        Showing <strong>{filteredProjects.length}</strong> of{" "}
+        {archiveProjects.length} additional builds
       </p>
       <div
         className="relative grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2"
@@ -321,7 +333,7 @@ function MoreProjects() {
                 </p>
                 <h3 className="mb-3 text-lg font-semibold leading-snug tracking-tight text-stone-900 dark:text-stone-100">
                   <a
-                    className="inline-flex min-h-9 items-start gap-2 hover:text-emerald-700 dark:hover:text-emerald-300"
+                    className="inline-flex min-h-11 items-start gap-2 hover:text-emerald-700 dark:hover:text-emerald-300"
                     href={project.live ?? project.repository}
                     target="_blank"
                     rel="noreferrer"
@@ -371,7 +383,7 @@ function MoreProjects() {
 function TeamPhotos() {
   return (
     <details className="group/photos mt-8 rounded-xl border border-emerald-950/10 bg-stone-50/70 p-4 sm:p-5 dark:border-white/10 dark:bg-stone-900">
-      <summary className="flex min-h-9 w-fit cursor-pointer items-center gap-2 rounded-sm text-sm font-semibold text-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700 dark:text-emerald-200">
+      <summary className="flex min-h-11 w-fit cursor-pointer items-center gap-2 rounded-sm text-sm font-semibold text-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700 dark:text-emerald-200">
         Hackathon photos{" "}
         <span
           aria-hidden="true"

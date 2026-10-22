@@ -2,7 +2,7 @@
 
 import { useId, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Search } from "lucide-react";
+import { ArrowUpRight, ChevronDown, Search } from "lucide-react";
 import {
   certifications,
   skillGroups,
@@ -35,7 +35,10 @@ export default function SkillsPanel() {
   const resultsId = useId();
   const languagesId = useId();
   const credentialsId = useId();
+  const playgroundId = useId();
   const searchRef = useRef<HTMLInputElement>(null);
+  const playgroundRef = useRef<HTMLDetailsElement>(null);
+  const playgroundSummaryRef = useRef<HTMLElement>(null);
   const reducedMotion = useMotionPreference();
   const query = search.trim().toLocaleLowerCase();
   const matches = skillGroups.map((group, index) => ({
@@ -73,9 +76,31 @@ export default function SkillsPanel() {
     searchRef.current?.focus();
   }
 
+  function openPlayground() {
+    const playground = playgroundRef.current;
+    if (!playground) return;
+    playground.open = true;
+    setPlaygroundOpen(true);
+    playgroundSummaryRef.current?.focus({ preventScroll: true });
+    playground.scrollIntoView({
+      behavior: reducedMotion ? "instant" : "smooth",
+      block: "start",
+    });
+  }
+
   return (
     <div className="skills-classic">
       <div className="skills-classic-workspace">
+        <div className="skills-classic-quick-action">
+          <button
+            type="button"
+            aria-controls={playgroundId}
+            aria-expanded={playgroundOpen}
+            onClick={openPlayground}
+          >
+            Try the skill playground <span aria-hidden="true">↓</span>
+          </button>
+        </div>
         <div className="skills-classic-search">
           <label htmlFor={searchId}>Find a skill</label>
           <div className="skills-classic-search-field">
@@ -223,19 +248,21 @@ export default function SkillsPanel() {
               <p>Continued learning</p>
               <h2 id={credentialsId}>Credentials</h2>
             </div>
-            <a href="#achievements">
+            <a href="#certificates">
               Awards & certificates{" "}
               <ArrowUpRight size={16} aria-hidden="true" />
             </a>
           </header>
           <div className="skills-classic-credential-grid">
             {credentialGroups.map((group) => (
-              <section
-                key={group.issuer}
-                className="skills-classic-issuer"
-                aria-label={`${group.issuer} credentials`}
-              >
-                <h3>{group.issuer}</h3>
+              <details key={group.issuer} className="skills-classic-issuer">
+                <summary>
+                  <h3>{group.issuer}</h3>
+                  <span className="skills-classic-issuer-count">
+                    {group.records.length}
+                    <ChevronDown size={16} aria-hidden="true" />
+                  </span>
+                </summary>
                 <ul>
                   {group.records.map((record) => {
                     const certificate =
@@ -268,7 +295,7 @@ export default function SkillsPanel() {
                     );
                   })}
                 </ul>
-              </section>
+              </details>
             ))}
           </div>
         </section>
@@ -276,9 +303,11 @@ export default function SkillsPanel() {
 
       <details
         className="skills-classic-playground"
+        id={playgroundId}
+        ref={playgroundRef}
         onToggle={(event) => setPlaygroundOpen(event.currentTarget.open)}
       >
-        <summary>
+        <summary ref={playgroundSummaryRef}>
           <span>
             <strong>A little hands-on</strong>
             <span>Try the interactive skill tags</span>
