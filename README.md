@@ -8,7 +8,7 @@ Live site: https://manutd1234.github.io/Personal-Website/
 
 - TypeScript, React 19, Tailwind CSS 4, Framer Motion and Lucide icons.
 - Original large-name hero, taped real portrait, green navigation and painterly accents.
-- Automatic rolling hero roles, manual next control and reduced-motion support; a bounded Matter.js skill playground with keyboard nudges and reset.
+- Automatic typing and rolling hero roles with reduced-motion support; a bounded Matter.js skill playground with keyboard nudges and reset.
 - A draggable 3D bookshelf for five featured projects, with keyboard navigation, animated open/close, engineering notes, authentic media and source links.
 - Seven more builds in a filterable card collection with uniform 16:10 previews, equal grid rows and private-access labels.
 - An interactive Profile workbench with larger real previews and Problem / Build / Proof walkthroughs for AlphaEngine, BrainHack and RE:DECIDE.

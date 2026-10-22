@@ -2,7 +2,7 @@
   display: flex;
   min-width: 0;
   min-height: 2.8rem;
-  align-items: baseline;
+  align-items: center;
   gap: 0.32em;
   margin-top: 24px;
   font: 500 clamp(1.35rem, 2.6vw, 2rem)/1.4 var(--classic-display);
@@ -13,26 +13,15 @@
   font-size: 0.75em;
 }
 
-.role-intro-trigger {
-  display: inline-grid;
-  max-width: calc(100% - 2em);
-  min-height: 44px;
-  grid-template-columns: minmax(0, 1fr) 13px;
-  align-items: center;
-  gap: 10px;
-  border-radius: 3px;
-  color: var(--classic-green);
-  font: inherit;
-  text-align: left;
-}
-
 .role-intro-stage {
   position: relative;
   display: grid;
   overflow: hidden;
   min-width: 0;
+  max-width: calc(100% - 2em);
   min-height: 44px;
   align-items: center;
+  color: var(--classic-green);
   font: italic 400 1em/1.4 var(--classic-serif);
 }
 
@@ -62,24 +51,6 @@
   opacity: 0.6;
 }
 
-.role-intro-next {
-  opacity: 0.45;
-  transition:
-    opacity 0.18s,
-    transform 0.18s;
-}
-
-.role-intro-trigger:hover .role-intro-next,
-.role-intro-trigger:focus-visible .role-intro-next {
-  opacity: 0.9;
-  transform: rotate(35deg);
-}
-
-.role-intro-trigger:focus-visible {
-  outline: 2px solid var(--classic-green);
-  outline-offset: 4px;
-}
-
 @media (prefers-reduced-motion: no-preference) {
   .role-intro[data-running="true"] .role-intro-caret {
     animation: role-intro-caret 1.05s steps(1) infinite;
@@ -94,16 +65,5 @@
     100% {
       opacity: 0;
     }
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .role-intro-next {
-    transition: none;
-  }
-
-  .role-intro-trigger:hover .role-intro-next,
-  .role-intro-trigger:focus-visible .role-intro-next {
-    transform: none;
   }
 }

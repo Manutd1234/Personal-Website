@@ -1,8 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { RotateCw } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMotionPreference } from "./useMotionPreference";
 
 const roles = [
@@ -13,17 +12,13 @@ const roles = [
 ] as const;
 
 export default function RoleIntro() {
-  const [role, setRole] = useState(0);
+  const [frame, setFrame] = useState({ role: 0, letters: roles[0].length });
   const [inView, setInView] = useState(false);
   const [visible, setVisible] = useState(false);
   const [panelVisible, setPanelVisible] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  const [focused, setFocused] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
-  const descriptionId = useId();
   const reducedMotion = useMotionPreference();
-  const running =
-    !reducedMotion && inView && visible && panelVisible && !hovered && !focused;
+  const running = !reducedMotion && inView && visible && panelVisible;
 
   useEffect(() => {
     const root = rootRef.current;
@@ -33,12 +28,16 @@ export default function RoleIntro() {
       setVisible(document.visibilityState === "visible");
     const syncPanel = () =>
       setPanelVisible(!root.closest('[hidden], [aria-hidden="true"], [inert]'));
-    const intersection = new IntersectionObserver(
-      ([entry]) => setInView(entry.isIntersecting),
-      { threshold: 0.25 },
-    );
+    const intersection =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver(
+            ([entry]) => setInView(entry.isIntersecting),
+            { threshold: 0.25 },
+          );
     const changes = new MutationObserver(syncPanel);
-    intersection.observe(root);
+    if (intersection) intersection.observe(root);
+    else setInView(true);
     if (panel)
       changes.observe(panel, {
         attributes: true,
@@ -48,87 +47,67 @@ export default function RoleIntro() {
     syncPanel();
     document.addEventListener("visibilitychange", syncDocument);
     return () => {
-      intersection.disconnect();
+      intersection?.disconnect();
       changes.disconnect();
       document.removeEventListener("visibilitychange", syncDocument);
     };
   }, []);
 
   useEffect(() => {
-    if (reducedMotion) setRole(0);
+    if (reducedMotion)
+      setFrame((current) =>
+        current.role === 0 && current.letters === roles[0].length
+          ? current
+          : { role: 0, letters: roles[0].length },
+      );
   }, [reducedMotion]);
 
   useEffect(() => {
     if (!running) return;
+    const typing = frame.letters < roles[frame.role].length;
     const timer = window.setTimeout(
-      () => setRole((current) => (current + 1) % roles.length),
-      3100,
+      () => {
+        setFrame((current) =>
+          typing
+            ? { ...current, letters: current.letters + 1 }
+            : { role: (current.role + 1) % roles.length, letters: 1 },
+        );
+      },
+      typing ? 75 : 1900,
     );
     return () => window.clearTimeout(timer);
-  }, [running, role]);
+  }, [running, frame.role, frame.letters]);
 
   return (
-    <div
-      className="role-intro"
-      ref={rootRef}
-      data-running={running}
-      onPointerEnter={(event) => {
-        if (event.pointerType === "mouse") setHovered(true);
-      }}
-      onPointerLeave={(event) => {
-        if (event.pointerType === "mouse") setHovered(false);
-      }}
-      onFocusCapture={(event) =>
-        setFocused(
-          event.target instanceof Element &&
-            event.target.matches(":focus-visible"),
-        )
-      }
-      onBlurCapture={(event) => {
-        if (
-          !(event.relatedTarget instanceof Node) ||
-          !event.currentTarget.contains(event.relatedTarget)
-        )
-          setFocused(false);
-      }}
-    >
+    <div className="role-intro" ref={rootRef} data-running={running}>
       <span className="role-intro-label" aria-hidden="true">
         I’m
       </span>
-      <button
-        className="role-intro-trigger"
-        type="button"
-        onClick={() => setRole((current) => (current + 1) % roles.length)}
-        aria-label={`Show next introduction; currently I’m ${roles[role]}`}
-        aria-describedby={descriptionId}
-      >
-        <span className="role-intro-stage" aria-hidden="true">
-          {roles.map((text) => (
-            <span className="role-intro-measure" key={text}>
-              {text}
-            </span>
-          ))}
-          <AnimatePresence initial={false} mode="popLayout">
-            <motion.span
-              className="role-intro-word"
-              key={role}
-              initial={reducedMotion ? false : { y: "105%", opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: reducedMotion ? 0 : "-105%", opacity: 0 }}
-              transition={
-                reducedMotion
-                  ? { duration: 0 }
-                  : { type: "spring", stiffness: 280, damping: 28 }
-              }
-            >
-              {roles[role]}
-              <span className="role-intro-caret" />
-            </motion.span>
-          </AnimatePresence>
-        </span>
-        <RotateCw className="role-intro-next" size={13} aria-hidden="true" />
-      </button>
-      <span id={descriptionId} className="sr-only">
+      <span className="role-intro-stage" aria-hidden="true">
+        {roles.map((text) => (
+          <span className="role-intro-measure" key={text}>
+            {text}
+          </span>
+        ))}
+        <AnimatePresence initial={false} mode="popLayout">
+          <motion.span
+            className="role-intro-word"
+            key={frame.role}
+            initial={reducedMotion ? false : { y: "105%", opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: reducedMotion ? 0 : "-105%", opacity: 0 }}
+            transition={
+              reducedMotion
+                ? { duration: 0 }
+                : { type: "spring", stiffness: 280, damping: 28 }
+            }
+          >
+            {roles[frame.role].slice(0, frame.letters)}
+            <span className="role-intro-caret" />
+          </motion.span>
+        </AnimatePresence>
+      </span>
+      <span className="sr-only">
         I’m a software builder, an AI enthusiast, a quant researcher, and a
         curious learner.
       </span>
