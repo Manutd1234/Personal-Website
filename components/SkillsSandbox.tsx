@@ -31,6 +31,7 @@ const skills = skillGroups
     (a, b) => a.itemIndex - b.itemIndex || a.categoryIndex - b.categoryIndex,
   );
 const STEP = 1000 / 60;
+const DROP_INTERVAL = 70;
 const clamp = (value: number, low: number, high: number) =>
   Math.min(high, Math.max(low, value));
 type PillPointer = PointerEvent<HTMLButtonElement>;
@@ -49,10 +50,12 @@ export default function SkillsSandbox({
   category = "all",
   search = "",
   id,
+  active = true,
 }: {
   category?: string;
   search?: string;
   id?: string;
+  active?: boolean;
 }) {
   const [selected, setSelected] = useState(0);
   const [grabbed, setGrabbed] = useState<number | null>(null);
@@ -66,6 +69,7 @@ export default function SkillsSandbox({
   const pillRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const controllerRef = useRef<Controller | null>(null);
   const availableRef = useRef(false);
+  const replayPendingRef = useRef(false);
   const pendingTouchRef = useRef<{
     pointer: number;
     index: number;
@@ -76,7 +80,7 @@ export default function SkillsSandbox({
   const focusFrameRef = useRef<number | null>(null);
   const prefix = useId();
   const reducedMotion = useMotionPreference();
-  availableRef.current = available && !reducedMotion;
+  availableRef.current = active && available && !reducedMotion;
   const query = search.trim().toLocaleLowerCase();
   const filtering = category !== "all" || Boolean(query);
   const matching = skills
@@ -137,7 +141,7 @@ export default function SkillsSandbox({
 
   // Matter is fetched only after the visible sandbox is allowed to move.
   useEffect(() => {
-    if (!available || reducedMotion || matter || loadFailed) return;
+    if (!active || !available || reducedMotion || matter || loadFailed) return;
     let cancelled = false;
     import("matter-js")
       .then((module) => {
@@ -149,15 +153,21 @@ export default function SkillsSandbox({
     return () => {
       cancelled = true;
     };
-  }, [available, reducedMotion, matter, loadFailed]);
+  }, [active, available, reducedMotion, matter, loadFailed]);
 
   useEffect(() => {
-    controllerRef.current?.availability(available && !reducedMotion);
-    if (!available || reducedMotion) {
+    const canMove = active && available && !reducedMotion;
+    controllerRef.current?.availability(canMove);
+    if (!active) replayPendingRef.current = true;
+    if (canMove && ready && replayPendingRef.current) {
+      controllerRef.current?.replay();
+      replayPendingRef.current = false;
+    }
+    if (!canMove) {
       pendingTouchRef.current = null;
       setGrabbed(null);
     }
-  }, [available, reducedMotion]);
+  }, [active, available, ready, reducedMotion]);
 
   useEffect(() => {
     if (!matter || reducedMotion) {
@@ -176,7 +186,7 @@ export default function SkillsSandbox({
       velocityIterations: 6,
       constraintIterations: 3,
     });
-    engine.gravity.y = 1;
+    engine.gravity.y = 0.48;
     let bodies: PhysicsBody[] = [];
     let sizes: { width: number; height: number }[] = [];
     let homes: { x: number; y: number }[] = [];
@@ -254,7 +264,7 @@ export default function SkillsSandbox({
       elapsed += delta;
       accumulator += delta;
       bodies.forEach((_, index) => {
-        if (!spawned[index] && elapsed >= index * 27) spawn(index);
+        if (!spawned[index] && elapsed >= index * DROP_INTERVAL) spawn(index);
       });
       while (accumulator >= STEP) {
         Engine.update(engine, STEP);
@@ -337,6 +347,7 @@ export default function SkillsSandbox({
       );
       spawned = bodies.map(() => false);
       elapsed = 0;
+      replayPendingRef.current = false;
       elements.forEach((element, index) => {
         element.style.width = `${sizes[index].width}px`;
         element.style.height = `${sizes[index].height}px`;
@@ -370,7 +381,7 @@ export default function SkillsSandbox({
           Body.setAngularVelocity(body, 0);
           Sleeping.set(body, true);
         });
-        elapsed = bodies.length * 27;
+        elapsed = bodies.length * DROP_INTERVAL;
         draw();
       },
       reveal(index) {

@@ -6,14 +6,12 @@ import {
   volunteering,
 } from "@/content/portfolio";
 
-// Trading-card presentation for section 03. Canonical facts stay in
-// portfolio.ts; this file adds the card layer on top of those records.
+// Field-note presentation for section 03. Canonical facts stay in
+// portfolio.ts; this file adds concise highlights to those records.
 
 export type DeckId = "work" | "education" | "community" | "volunteering";
 export type CardType =
   "systems" | "education" | "leadership" | "community" | "sport";
-export type Rarity = "Rare Holo" | "Rare" | "Uncommon";
-
 export const cardTypes: Readonly<Record<CardType, { label: string }>> = {
   systems: { label: "Systems / Quant" },
   education: { label: "Education" },
@@ -119,11 +117,8 @@ export type TradingCardData = {
   title: string;
   org: string;
   role: string;
-  // The start year; the card shows it as its level (2026 → LVL 26).
-  year: number;
   location: string;
   dates: string;
-  rarity: Rarity;
   logo?: Logo;
   stealth?: boolean;
   moves: readonly CardMove[];
@@ -715,14 +710,6 @@ const defaultType: Readonly<Record<DeckId, CardType>> = {
   volunteering: "community",
 };
 
-// Used only if a record has no year; a constant keeps the static export and
-// the browser render identical.
-const printYear = 2026;
-const startYear = (dates: string) =>
-  Number(dates.match(/(?:19|20)\d{2}/)?.[0] ?? printYear);
-const rarityFor = (year: number): Rarity =>
-  year >= 2025 ? "Rare Holo" : year >= 2021 ? "Rare" : "Uncommon";
-
 // Records added later without card details still deal a plain card.
 function fallbackDetails(deck: DeckId, record: SourceRecord): CardDetails {
   const lines = record.bullets.length
@@ -749,7 +736,6 @@ function buildDeck(
     label,
     cards: records.map((record, index) => {
       const card = details[record.org] ?? fallbackDetails(id, record);
-      const year = startYear(record.dates);
       const text = `${record.summary ?? ""} ${record.bullets.join(" ")}`;
       return {
         id: `${id}-${index}`,
@@ -758,10 +744,8 @@ function buildDeck(
         title: card.title,
         org: record.org,
         role: record.role,
-        year,
         location: card.location ?? record.location ?? "Singapore",
         dates: record.dates,
-        rarity: rarityFor(year),
         logo: card.logo ? logos[card.logo] : undefined,
         stealth: card.stealth,
         moves: card.moves,

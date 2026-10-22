@@ -244,6 +244,39 @@
 .achievement-card-type > span:last-child {
   text-align: right;
 }
+.achievement-provider-mark {
+  display: inline-grid;
+  width: 106px;
+  height: 42px;
+  flex: none;
+  place-items: center;
+  padding: 5px 8px;
+  border: 1px solid #dce5dd;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+.achievement-provider-mark img {
+  width: 100%;
+  height: 30px;
+  object-fit: contain;
+}
+.achievement-issuer > .achievement-provider-mark {
+  margin-block: 6px 5px;
+}
+.achievement-verification {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 22px;
+  color: var(--trophy-green);
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
 .achievement-art {
   display: grid;
   position: relative;

@@ -8,6 +8,7 @@ import {
   spokenLanguages,
 } from "@/content/portfolio";
 import { certificateFiles } from "@/content/media";
+import { credentialProviders } from "@/content/credential-providers";
 import { asset } from "@/content/paths";
 import SkillsSandbox from "./SkillsSandbox";
 
@@ -21,10 +22,11 @@ const credentialGroups = [
   issuer,
   records: certifications.filter((record) => record.issuer === issuer),
 }));
-const files: Readonly<Record<string, { src: string; title: string }>> =
-  certificateFiles;
+const files: Readonly<
+  Record<string, { src: string; title: string; kind?: string }>
+> = certificateFiles;
 
-export default function SkillsPanel() {
+export default function SkillsPanel({ active = true }: { active?: boolean }) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const searchId = useId();
@@ -152,7 +154,12 @@ export default function SkillsPanel() {
             Reset filters <span aria-hidden="true">↗</span>
           </button>
         </div>
-        <SkillsSandbox id={resultsId} category={category} search={search} />
+        <SkillsSandbox
+          id={resultsId}
+          category={category}
+          search={search}
+          active={active}
+        />
 
         <section
           className="skills-classic-languages"
@@ -190,6 +197,18 @@ export default function SkillsPanel() {
             {credentialGroups.map((group) => (
               <details key={group.issuer} className="skills-classic-issuer">
                 <summary>
+                  {credentialProviders[group.issuer] ? (
+                    <span className="credential-provider-mark">
+                      <img
+                        src={asset(credentialProviders[group.issuer]!.src)}
+                        alt=""
+                        width={92}
+                        height={36}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </span>
+                  ) : null}
                   <h3>{group.issuer}</h3>
                   <span className="skills-classic-issuer-count">
                     {group.records.length}
@@ -201,6 +220,11 @@ export default function SkillsPanel() {
                     const certificate =
                       "certificateKey" in record && record.certificateKey
                         ? files[record.certificateKey]
+                        : undefined;
+                    const verificationUrl =
+                      "verificationUrl" in record &&
+                      typeof record.verificationUrl === "string"
+                        ? record.verificationUrl
                         : undefined;
                     return (
                       <li key={record.title}>
@@ -215,15 +239,56 @@ export default function SkillsPanel() {
                         ) : null}
                         {certificate ? (
                           <a
+                            className="skills-credential-preview"
+                            data-format={
+                              certificate.kind === "Completion record"
+                                ? "record"
+                                : "document"
+                            }
                             href={asset(certificate.src)}
                             target="_blank"
                             rel="noreferrer"
-                            aria-label={`${certificate.title} — view certificate, opens in a new tab`}
+                            aria-label={`Open ${certificate.kind?.toLowerCase() ?? "certificate"}: ${record.title}, opens in a new tab`}
                           >
-                            View certificate{" "}
-                            <ArrowUpRight size={13} aria-hidden="true" />
+                            <img
+                              src={asset(certificate.src)}
+                              alt={certificate.title}
+                              width={1200}
+                              height={
+                                certificate.kind === "Completion record"
+                                  ? 362
+                                  : 800
+                              }
+                              loading="lazy"
+                              decoding="async"
+                            />
                           </a>
                         ) : null}
+                        <div className="skills-credential-actions">
+                          {certificate ? (
+                            <a
+                              href={asset(certificate.src)}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label={`${certificate.title} — view ${certificate.kind?.toLowerCase() ?? "certificate"}, opens in a new tab`}
+                            >
+                              View{" "}
+                              {certificate.kind?.toLowerCase() ?? "certificate"}{" "}
+                              <ArrowUpRight size={13} aria-hidden="true" />
+                            </a>
+                          ) : null}
+                          {verificationUrl ? (
+                            <a
+                              href={verificationUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label={`Verify ${record.title} on ${record.issuer}, opens in a new tab`}
+                            >
+                              Verify on {record.issuer}{" "}
+                              <ArrowUpRight size={13} aria-hidden="true" />
+                            </a>
+                          ) : null}
+                        </div>
                       </li>
                     );
                   })}

@@ -15,7 +15,10 @@
   --book-lime: #006d49;
   --book-width: clamp(170px, 21cqw, 238px);
   --book-height: calc(var(--book-width) * 1.42);
-  --open-book-left: 24%;
+  --open-book-left: 41.5%;
+  --open-book-offset-y: calc(var(--book-height) * 0.22);
+  --open-cover-angle: -112deg;
+  --open-leaf-angle: -11deg;
   position: relative;
   overflow: hidden;
   padding: 28px 34px 24px;
@@ -162,6 +165,16 @@
   transform-style: preserve-3d;
   transition: transform 450ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+.book-carousel .book-cover-hinge {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: visible;
+  transform: translateZ(calc(var(--book-half-depth) - 0.5px)) rotateY(0deg);
+  transform-origin: 0 50%;
+  transform-style: preserve-3d;
+  transition: transform 380ms cubic-bezier(0.3, 0.05, 0.25, 1);
+}
 .book-carousel .book-front,
 .book-carousel .book-back {
   display: flex;
@@ -179,9 +192,62 @@
     inset 5px 0 6px rgba(0, 0, 0, 0.18),
     inset 7px 0 0 rgba(255, 255, 255, 0.1),
     1px 1px 1px rgba(255, 255, 255, 0.15);
-  transform: translateZ(var(--book-half-depth));
+  transform: translateZ(0.5px);
   transform-origin: 0 50%;
   transition: transform 450ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.book-carousel .book-inside-cover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px 20px;
+  border: 7px solid var(--cover);
+  border-radius: 3px;
+  color: #52614a;
+  background: #eae9d7;
+  box-shadow: inset -6px 0 12px #384b2b22;
+  backface-visibility: hidden;
+  transform: rotateY(180deg) translateZ(0.5px);
+  font: 0.45rem/1.6 var(--book-mono);
+  overflow-wrap: anywhere;
+}
+.book-carousel .book-inside-title {
+  padding-block: 12px;
+  border-block: 1px solid #a9b39a;
+  font: italic 400 1.4rem/1.1 var(--book-serif);
+  white-space: pre-line;
+}
+.book-carousel .book-cover-edge,
+.book-carousel .book-cover-hinge::before,
+.book-carousel .book-cover-hinge::after {
+  position: absolute;
+  display: block;
+  background: var(--cover);
+  backface-visibility: hidden;
+}
+.book-carousel .book-cover-edge {
+  top: 0;
+  right: -0.5px;
+  width: 1px;
+  height: 100%;
+  transform: rotateY(90deg);
+}
+.book-carousel .book-cover-hinge::before,
+.book-carousel .book-cover-hinge::after {
+  left: 0;
+  width: 100%;
+  height: 1px;
+  content: "";
+}
+.book-carousel .book-cover-hinge::before {
+  top: -0.5px;
+  transform: rotateX(90deg);
+}
+.book-carousel .book-cover-hinge::after {
+  bottom: -0.5px;
+  transform: rotateX(-90deg);
 }
 .book-carousel .book-front::after {
   content: "";
@@ -301,6 +367,71 @@
   bottom: calc(-1 * var(--page-half-depth));
   box-shadow: 0 22px 28px rgba(0, 0, 0, 0.2);
   transform: rotateX(-90deg);
+}
+.book-carousel .book-page-leaf {
+  position: absolute;
+  inset: var(--page-inset);
+  display: block;
+  transform-origin: 0 50%;
+  transform-style: preserve-3d;
+  transform: translateZ(calc(var(--page-half-depth) + 0.1px)) rotateY(0deg);
+  transition: transform 300ms cubic-bezier(0.3, 0.05, 0.25, 1);
+}
+.book-carousel .book-leaf-front,
+.book-carousel .book-leaf-back {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 25px 19px 19px;
+  border: 1px solid #ded8c7;
+  color: #3e4e38;
+  background: #f9f5e8;
+  box-shadow: inset 5px 0 8px #4c523015;
+  backface-visibility: hidden;
+}
+.book-carousel .book-leaf-front {
+  transform: translateZ(0.08px);
+}
+.book-carousel .book-leaf-back {
+  transform: rotateY(180deg) translateZ(0.08px);
+}
+.book-carousel .book-leaf-eyebrow {
+  font: 0.37rem/1.7 var(--book-mono);
+  letter-spacing: 0.1em;
+}
+.book-carousel .book-leaf-title {
+  display: -webkit-box;
+  margin-top: 18px;
+  overflow: hidden;
+  font: 400 clamp(0.95rem, 1.8cqw, 1.35rem)/1.13 var(--book-serif);
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+.book-carousel .book-leaf-category {
+  margin-top: 9px;
+  font: 0.43rem/1.6 var(--book-display);
+}
+.book-carousel .book-leaf-rule {
+  width: 35px;
+  height: 1px;
+  margin-block: 17px;
+  background: #a4b396;
+}
+.book-carousel .book-leaf-tools {
+  display: -webkit-box;
+  overflow: hidden;
+  font: 0.42rem/1.7 var(--book-mono);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.book-carousel .book-leaf-signature {
+  margin-top: auto;
+  padding-top: 14px;
+  font: italic 0.7rem/1.4 var(--book-serif);
 }
 .book-carousel .book-cover-author {
   display: flex;
@@ -499,6 +630,14 @@
 }
 .book-carousel
   .book-stage:is([data-open="true"], [data-returning="true"])
+  .book-object {
+  transition: transform 620ms cubic-bezier(0.22, 0.7, 0.15, 1);
+}
+.book-carousel .book-stage[data-open="true"] .book-theatre-flow {
+  min-height: max(500px, calc(var(--book-height) * 1.85));
+}
+.book-carousel
+  .book-stage:is([data-open="true"], [data-returning="true"])
   .book-click {
   transition: transform 620ms cubic-bezier(0.22, 0.7, 0.15, 1);
 }
@@ -524,21 +663,37 @@
   .book-stage[data-open="true"]
   .book-orbit-item[data-selected="true"] {
   left: var(--open-book-left);
-  transform: translate3d(0, 0, 30px);
+  transform: translate3d(0, var(--open-book-offset-y), 30px);
 }
 .book-carousel
   .book-stage[data-open="true"]
   .book-orbit-item[data-selected="true"]
   .book-object {
-  transform: rotateY(-26deg) rotateZ(-2deg) scale(1.15);
+  transform: rotateX(3deg) rotateY(-6deg) rotateZ(-1deg) scale(1.28);
+}
+.book-carousel
+  .book-stage[data-open="true"]
+  .book-orbit-item[data-selected="true"]
+  .book-cover-hinge {
+  transform: translateZ(calc(var(--book-half-depth) - 0.5px))
+    rotateY(var(--open-cover-angle));
+  transition: transform 740ms 260ms cubic-bezier(0.22, 0.7, 0.15, 1);
+}
+.book-carousel
+  .book-stage[data-open="true"]
+  .book-orbit-item[data-selected="true"]
+  .book-page-leaf {
+  transform: translateZ(calc(var(--page-half-depth) + 0.1px))
+    rotateY(var(--open-leaf-angle));
+  transition: transform 650ms 420ms cubic-bezier(0.22, 0.7, 0.15, 1);
 }
 .book-carousel .book-details {
   position: relative;
   align-self: center;
   min-width: 0;
-  width: 48%;
+  width: 40%;
   flex-shrink: 0;
-  margin-left: 50%;
+  margin-left: 58%;
   padding: 34px 0 38px;
   outline: none;
   opacity: 0;
@@ -552,7 +707,7 @@
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
-  transition-delay: 160ms;
+  transition-delay: 480ms;
 }
 .book-carousel .book-details[hidden] {
   display: none;
@@ -669,7 +824,9 @@
 
 @container project-books (max-width: 760px) {
   .book-carousel .book-stage {
-    --open-book-left: 50%;
+    --open-book-left: calc(50% + var(--book-width) * 0.45);
+    --open-book-offset-y: calc(var(--book-height) * 0.16);
+    --open-cover-angle: -128deg;
     --book-width: clamp(166px, 28cqw, 210px);
     padding: 20px 22px;
   }
@@ -696,6 +853,10 @@
     min-height: 370px;
     padding-top: 370px;
   }
+  .book-carousel .book-stage[data-open="true"] .book-theatre-flow {
+    min-height: max(430px, calc(var(--book-height) * 1.65));
+    padding-top: max(430px, calc(var(--book-height) * 1.65));
+  }
   .book-carousel .book-scene {
     bottom: auto;
     height: 370px;
@@ -704,7 +865,7 @@
     .book-stage[data-open="true"]
     .book-orbit-item[data-selected="true"]
     .book-object {
-    transform: rotateY(-20deg) rotateZ(-2deg) scale(1.08);
+    transform: rotateX(2deg) rotateY(0deg) rotateZ(-1deg) scale(1.16);
   }
   .book-carousel .book-details {
     width: 100%;
@@ -744,6 +905,10 @@
 @container project-books (max-width: 480px) {
   .book-carousel .book-stage {
     --book-width: 166px;
+    --open-book-left: calc(50% + var(--book-width) * 0.11);
+    --open-book-offset-y: 24px;
+    --open-cover-angle: -95deg;
+    --open-leaf-angle: -8deg;
     padding-inline: 17px;
     border-radius: 12px;
   }
@@ -763,6 +928,34 @@
   .book-carousel .book-theatre-flow {
     min-height: 330px;
     padding-top: 330px;
+  }
+  .book-carousel .book-stage[data-open="true"] .book-theatre-flow {
+    min-height: 390px;
+    padding-top: 390px;
+  }
+  .book-carousel
+    .book-stage[data-open="true"]
+    .book-orbit-item[data-selected="true"]
+    .book-object {
+    transform: rotateX(2deg) rotateY(0deg) rotateZ(-1deg) scale(1.12);
+  }
+  .book-carousel .book-inside-cover {
+    padding: 18px 12px;
+    border-width: 5px;
+  }
+  .book-carousel .book-inside-title {
+    font-size: 1.1rem;
+  }
+  .book-carousel .book-leaf-front,
+  .book-carousel .book-leaf-back {
+    padding: 19px 13px 14px;
+  }
+  .book-carousel .book-leaf-title {
+    margin-top: 13px;
+    font-size: 0.95rem;
+  }
+  .book-carousel .book-leaf-rule {
+    margin-block: 12px;
   }
   .book-carousel .book-cover-author {
     font-size: 0.34rem;
@@ -790,8 +983,18 @@
 
 .book-carousel[data-reduced-motion="true"] .book-object,
 .book-carousel[data-reduced-motion="true"] .book-front,
+.book-carousel[data-reduced-motion="true"] .book-cover-hinge,
+.book-carousel[data-reduced-motion="true"] .book-page-leaf,
 .book-carousel[data-reduced-motion="true"] .book-details,
 .book-carousel[data-reduced-motion="true"] .book-orbit-item {
+  transition: none !important;
+}
+.book-carousel[aria-hidden="true"] .book-object,
+.book-carousel[aria-hidden="true"] .book-cover-hinge,
+.book-carousel[aria-hidden="true"] .book-page-leaf,
+.book-carousel .book-stage[data-suspended] .book-object,
+.book-carousel .book-stage[data-suspended] .book-cover-hinge,
+.book-carousel .book-stage[data-suspended] .book-page-leaf {
   transition: none !important;
 }
 .book-carousel[data-reduced-motion="true"] .book-details,
@@ -804,6 +1007,8 @@
 @media (prefers-reduced-motion: reduce) {
   .book-carousel .book-object,
   .book-carousel .book-front,
+  .book-carousel .book-cover-hinge,
+  .book-carousel .book-page-leaf,
   .book-carousel .book-details,
   .book-carousel .book-orbit-item {
     transition: none !important;

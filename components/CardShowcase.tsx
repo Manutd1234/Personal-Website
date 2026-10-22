@@ -251,7 +251,7 @@ function DeckTrack({
         data-deck-track
         data-at-start={view.atStart}
         data-at-end={view.atEnd}
-        aria-label={`${deck.label} cards`}
+        aria-label={`${deck.label} records`}
         onKeyDown={deckKeys}
       >
         {cards.map((card, index) => (
@@ -263,14 +263,22 @@ function DeckTrack({
             className="deck-slot min-h-[600px] w-[min(340px,calc(100vw_-_58px))] flex-shrink-0 sm:w-[420px]"
             data-deck-card
             data-index={index}
-            initial={{ opacity: 0, y: 30, rotate: index % 2 ? 2.5 : -2.5 }}
+            initial={
+              reduced
+                ? false
+                : { opacity: 0, y: 24, rotate: index % 2 ? 1.5 : -1.5 }
+            }
             animate={dealt ? { opacity: 1, y: 0, rotate: 0 } : undefined}
-            transition={{
-              type: "spring",
-              stiffness: 250,
-              damping: 26,
-              delay: Math.min(index, 5) * 0.06,
-            }}
+            transition={
+              reduced
+                ? { duration: 0 }
+                : {
+                    type: "spring",
+                    stiffness: 250,
+                    damping: 26,
+                    delay: Math.min(index, 5) * 0.06,
+                  }
+            }
             onFocusCapture={() => setFocusIndex(index)}
           >
             <TradingCard
@@ -287,7 +295,7 @@ function DeckTrack({
           <button
             type="button"
             className="deck-arrow"
-            aria-label="Previous card"
+            aria-label="Previous record"
             aria-controls={trackId}
             aria-disabled={view.atStart}
             onClick={() => {
@@ -311,7 +319,7 @@ function DeckTrack({
           <button
             type="button"
             className="deck-arrow"
-            aria-label="Next card"
+            aria-label="Next record"
             aria-controls={trackId}
             aria-disabled={view.atEnd}
             onClick={() => {
@@ -321,12 +329,18 @@ function DeckTrack({
             <ChevronRight size={18} aria-hidden="true" />
           </button>
         </div>
+        <p className="deck-position">
+          <span>
+            {view.nearest + 1} / {cards.length}
+          </span>
+          {cards[view.nearest]?.org}
+        </p>
         <p className="deck-hint">
           <span className="deck-hint-pointer">
-            Hover to tilt · click a card to flip · ← → to browse
+            Hover to tilt · click to read · ← → to browse
           </span>
           <span className="deck-hint-touch">
-            Swipe to browse · tap a card to flip
+            Swipe to browse · tap to read the story
           </span>
         </p>
       </div>
@@ -403,7 +417,7 @@ export default function CardShowcase() {
         <div
           className="deck-tabs"
           role="tablist"
-          aria-label="Career card decks"
+          aria-label="Experience categories"
         >
           {decks.map((item, index) => (
             <button
@@ -431,13 +445,12 @@ export default function CardShowcase() {
             </button>
           ))}
         </div>
-        <p className="deck-collector" data-complete={complete}>
+        <p className="deck-progress" data-complete={complete}>
           <span aria-hidden="true">
-            <span className="deck-collector-label">
-              {complete ? "★ Set complete" : "Collected:"}
+            <span className="deck-progress-label">
+              {complete ? "All explored" : "Explored"}
             </span>
-            <span className="deck-collector-count">
-              [{" "}
+            <span className="deck-progress-count">
               <motion.span
                 key={`${active}-${count}`}
                 initial={{ opacity: 0, y: -7 }}
@@ -445,15 +458,15 @@ export default function CardShowcase() {
               >
                 {count}
               </motion.span>{" "}
-              / {total} ]
+              / {total}
             </span>
           </span>
           <span className="sr-only">
-            {count} of {total} {deck.label} cards collected.
+            {count} of {total} {deck.label} records explored.
           </span>
         </p>
         <p className="sr-only" role="status">
-          {complete ? `${deck.label} set complete.` : ""}
+          {complete ? `All ${total} ${deck.label} records explored.` : ""}
         </p>
       </div>
       <div
@@ -477,7 +490,7 @@ export default function CardShowcase() {
               opacity: { duration: 0.18 },
             }}
           >
-            <h2 className="sr-only">{deck.label} cards</h2>
+            <h2 className="sr-only">{deck.label} records</h2>
             <DeckTrack
               deck={deck}
               dealt={dealt}
@@ -492,7 +505,7 @@ export default function CardShowcase() {
           {decks
             .filter((item) => item.id !== active)
             .map((item) => (
-              <section key={item.id} aria-label={`${item.label} cards`}>
+              <section key={item.id} aria-label={`${item.label} records`}>
                 <ul>
                   {item.cards.map((card) => (
                     <li key={card.id}>

@@ -1,5 +1,5 @@
-// Curated from the local, metadata-free portfolio photo copies.
-// Personal gym photos were selected and exported from Photos by the user workflow.
+// Real personal photographs selected from local files and the user's photo backup.
+// Public copies have metadata removed; source originals remain unchanged.
 export type LifePhoto = {
   id: string;
   src: string;
@@ -47,15 +47,14 @@ export const lifePhotos: readonly LifePhoto[] = [
     position: "center 35%",
   },
   {
-    id: "candid",
-    src: "images/life/orientation-portrait.webp",
-    thumb: "images/life/candid-thumb.webp",
-    alt: "Ian smiling beside a railing during orientation week",
-    caption: "Somewhere between activities.",
+    id: "friends-sports-field",
+    src: "images/life-new/friends-sports-field.webp",
+    thumb: "images/life-new/friends-sports-field-thumb.webp",
+    alt: "Friends posing together beside a netted sports field under a cloudy blue sky",
+    caption: "A day out with friends.",
     category: "People",
-    width: 1600,
-    height: 1200,
-    position: "center 40%",
+    width: 1280,
+    height: 960,
   },
   {
     id: "chicken-rice",
@@ -77,14 +76,14 @@ export const lifePhotos: readonly LifePhoto[] = [
     height: 1600,
   },
   {
-    id: "friends-sports-field",
-    src: "images/life-new/friends-sports-field.webp",
-    thumb: "images/life-new/friends-sports-field-thumb.webp",
-    alt: "A group posing beside a netted sports field under a cloudy blue sky",
-    caption: "A day out with friends.",
+    id: "brainhack-team",
+    src: "images/portfolio/brainhack-champion-team.webp",
+    thumb: "images/life/brainhack-team-thumb.webp",
+    alt: "Team Pandamonium on stage with the BrainHack TIL-AI Novice Champion sign",
+    caption: "A shared win at BrainHack.",
     category: "People",
-    width: 1280,
-    height: 960,
+    width: 1600,
+    height: 1067,
   },
   {
     id: "westminster",
@@ -116,14 +115,14 @@ export const lifePhotos: readonly LifePhoto[] = [
     height: 1600,
   },
   {
-    id: "beach-games",
-    src: "images/life/orientation-beach-games.webp",
-    thumb: "images/life/beach-games-thumb.webp",
-    alt: "Orientation friends playing a game on the beach",
-    caption: "A day out with the crew.",
-    category: "People",
+    id: "brainhack-at-work",
+    src: "images/portfolio/brainhack-at-work.webp",
+    thumb: "images/life/brainhack-table-thumb.webp",
+    alt: "Team Pandamonium working together around laptops at the BrainHack competition table",
+    caption: "Building together at BrainHack.",
+    category: "Learning",
     width: 1600,
-    height: 1200,
+    height: 1067,
   },
   {
     id: "travel-hill-view",
@@ -134,5 +133,36 @@ export const lifePhotos: readonly LifePhoto[] = [
     category: "Travel",
     width: 1600,
     height: 1089,
+  },
+  {
+    id: "prawn-noodles",
+    src: "images/life-new/food-prawn-noodles.webp",
+    thumb: "images/life-new/food-prawn-noodles-thumb.webp",
+    alt: "Prawn noodles with green vegetables in a white bowl at a restaurant dinner",
+    caption: "Prawn noodles at dinner.",
+    category: "Food",
+    width: 900,
+    height: 1600,
+    position: "center 60%",
+  },
+  {
+    id: "with-the-guys",
+    src: "images/life-new/friends-with-the-guys.webp",
+    thumb: "images/life-new/friends-with-the-guys-thumb.webp",
+    alt: "A group of guy friends posing outdoors while holding one friend across their arms",
+    caption: "With the guys.",
+    category: "People",
+    width: 1280,
+    height: 960,
+  },
+  {
+    id: "gym-cable-area",
+    src: "images/life-new/gym-cable-area.webp",
+    thumb: "images/life-new/gym-cable-area-thumb.webp",
+    alt: "A blue-floored gym area with cable machines, benches, weights, and mirrored walls",
+    caption: "A different corner of the gym.",
+    category: "Gym",
+    width: 1200,
+    height: 1600,
   },
 ];

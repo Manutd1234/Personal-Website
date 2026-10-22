@@ -1051,27 +1051,68 @@ export const certifications = [
     year: "May 2026",
     certificateKey: "claude101",
   },
-  { title: "Optimizing Code in Java", issuer: "DataCamp", year: "Mar 2026" },
+  {
+    title: "Optimizing Code in Java",
+    issuer: "DataCamp",
+    year: "Mar 2026",
+    certificateKey: "datacampOptimizingJava",
+    verificationUrl:
+      "https://www.datacamp.com/completed/statement-of-accomplishment/course/63e91bedf6cc981f084b817e894ed83ac08752b0",
+  },
   {
     title: "AI/BI for Data Analysts",
     issuer: "Databricks Academy",
     year: "Jan 2026",
     certificateKey: "databricksAiBi",
   },
-  { title: "Introduction to Docker", issuer: "DataCamp", year: "Jan 2026" },
+  {
+    title: "Introduction to Docker",
+    issuer: "DataCamp",
+    year: "Jan 2026",
+    certificateKey: "datacampDocker",
+    verificationUrl:
+      "https://www.datacamp.com/completed/statement-of-accomplishment/course/67146a65795262e93dc2b89db7af6a9914d3a7f2",
+  },
   {
     title: "AWS Cloud Practitioner (CLF-C02)",
     issuer: "DataCamp",
     detail: "Course",
     year: "Jan 2026",
+    certificateKey: "datacampAwsCloudPractitioner",
+    verificationUrl:
+      "https://www.datacamp.com/completed/statement-of-accomplishment/track/9a001955e97c506ce022e859b621878fa59d6d7b",
   },
-  { title: "GitHub Foundations", issuer: "DataCamp", year: "Jan 2026" },
-  { title: "Java Fundamentals", issuer: "DataCamp", year: "Jan 2026" },
-  { title: "SQL Fundamentals", issuer: "DataCamp", year: "Jan 2026" },
+  {
+    title: "GitHub Foundations",
+    issuer: "DataCamp",
+    year: "Jan 2026",
+    certificateKey: "datacampGithubFoundations",
+    verificationUrl:
+      "https://www.datacamp.com/completed/statement-of-accomplishment/track/4fc4e0aa33d0c27dd316663b8a832775a5de63ef",
+  },
+  {
+    title: "Java Fundamentals",
+    issuer: "DataCamp",
+    year: "Jan 2026",
+    certificateKey: "datacampJavaFundamentals",
+    verificationUrl:
+      "https://www.datacamp.com/completed/statement-of-accomplishment/track/294bf9b2ec760c7eecaaa7713d17496a6c385c9a",
+  },
+  {
+    title: "SQL Fundamentals",
+    issuer: "DataCamp",
+    year: "Jan 2026",
+    certificateKey: "datacampSqlFundamentals",
+    verificationUrl:
+      "https://www.datacamp.com/completed/statement-of-accomplishment/track/752d0cf782a0bbc62ff7e18a812a42538403581a",
+  },
   {
     title: "Machine Learning Fundamentals in Python",
     issuer: "DataCamp",
     year: "Jan 2026",
+    certificateKey: "datacampMachineLearning",
+    verificationUrl:
+      "https://www.datacamp.com/completed/statement-of-accomplishment/track/df7659f509b6102dd8bdaa75ce00a63c5814baf3",
   },
   {
     title: "Cisco Content Networking Specialist Certification",

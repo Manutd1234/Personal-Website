@@ -297,7 +297,7 @@ export default function Portfolio() {
                     </>
                   ) : tab.id === "skills" ? (
                     <>
-                      <SkillsPanel />
+                      <SkillsPanel active={active === "skills"} />
                       <ProjectEvidence
                         title="The toolkit, in action."
                         note="Actual project screens and outputs. Pick one to see the implementation and source."

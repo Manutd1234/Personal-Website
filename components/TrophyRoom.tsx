@@ -25,6 +25,7 @@ import {
 } from "react";
 import { achievementGroups, certifications } from "@/content/portfolio";
 import { certificateFiles, projectMedia } from "@/content/media";
+import { credentialProviders } from "@/content/credential-providers";
 import { asset } from "@/content/paths";
 import { trophies, type Trophy as TrophyRecord } from "@/content/trophies";
 import { useMotionPreference } from "./useMotionPreference";
@@ -37,6 +38,7 @@ type AwardRecord = {
   year?: string;
   certificateKey?: string;
   certificateKeys?: readonly string[];
+  verificationUrl?: string;
 };
 type CertificateFile = {
   src: string;
@@ -129,6 +131,7 @@ const slug = (text: string) =>
     .replace(/^-|-$/g, "");
 function representativePreview(record: AwardRecord): CertificateFile {
   const issuer = record.issuer;
+  const provider = credentialProviders[issuer];
   const issuerLogo = isSoftballAward(record)
     ? "ejc-softball"
     : /Eunoia Junior College/i.test(issuer)
@@ -148,17 +151,21 @@ function representativePreview(record: AwardRecord): CertificateFile {
         ? "network"
         : "course";
   return {
-    src: issuerLogo
-      ? `images/logos/${issuerLogo}.webp`
-      : `images/awards/representative-${subject}-emblem.svg`,
-    title: issuerLogo
-      ? `${issuer} — representative issuer emblem`
-      : `Representative ${subject} emblem`,
+    src:
+      provider?.src ??
+      (issuerLogo
+        ? `images/logos/${issuerLogo}.webp`
+        : `images/awards/representative-${subject}-emblem.svg`),
+    title:
+      issuerLogo || provider
+        ? `${issuer} — representative issuer emblem`
+        : `Representative ${subject} emblem`,
     kind: "Representative emblem",
     representative: true,
-    caption: issuerLogo
-      ? "Representative issuer emblem. A personal award photograph or certificate preview is not available for this record."
-      : "Representative subject emblem. A personal award photograph or certificate preview is not available for this record.",
+    caption:
+      issuerLogo || provider
+        ? "Representative issuer emblem. A personal award photograph or certificate preview is not available for this record."
+        : "Representative subject emblem. A personal award photograph or certificate preview is not available for this record.",
   };
 }
 const relatedProjectTitles: Readonly<Record<string, string>> = {
@@ -221,6 +228,7 @@ function AchievementCard({
     categories.find((category) => category.id === record.category)?.icon ??
     Award;
   const first = record.preview;
+  const provider = credentialProviders[record.issuer];
   function lean(event: PointerEvent<HTMLElement>) {
     if (reduced || event.pointerType !== "mouse") return;
     const box = event.currentTarget.getBoundingClientRect();
@@ -297,7 +305,21 @@ function AchievementCard({
           ) : null}
         </div>
         <h3>{record.title}</h3>
-        <p className="achievement-issuer">{record.issuer}</p>
+        <div className="achievement-issuer">
+          {provider ? (
+            <span className="achievement-provider-mark">
+              <img
+                src={asset(provider.src)}
+                alt={provider.alt}
+                width={100}
+                height={38}
+                loading="lazy"
+                decoding="async"
+              />
+            </span>
+          ) : null}
+          <p>{record.issuer}</p>
+        </div>
         {record.detail ? (
           <p
             className={`achievement-result${/Expired/i.test(record.detail) ? " is-expired" : ""}`}
@@ -329,9 +351,9 @@ function AchievementCard({
             type="button"
             aria-haspopup="dialog"
             onClick={(event) => onOpen(record, event.currentTarget)}
-            aria-label={`Open achievement card: ${record.title}`}
+            aria-label={`View achievement: ${record.title}`}
           >
-            Open card <ArrowUpRight size={15} aria-hidden="true" />
+            Read more <ArrowUpRight size={15} aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -482,11 +504,8 @@ export default function TrophyRoom() {
       <header className="trophy-collection-heading">
         <div>
           <p className="trophy-eyebrow">Earned, along the way</p>
-          <h2 id={`${prefix}-title`}>The achievement collection.</h2>
-          <p>
-            A little card collection of competitions, milestones, and things
-            I’ve learned.
-          </p>
+          <h2 id={`${prefix}-title`}>A few milestones.</h2>
+          <p>Team wins, things I’ve learned, and the work along the way.</p>
         </div>
         <span className="trophy-collection-count">
           <Award size={17} aria-hidden="true" />
@@ -560,7 +579,7 @@ export default function TrophyRoom() {
       ) : (
         <div className="trophy-empty" id={`${prefix}-cards`}>
           <Search size={27} aria-hidden="true" />
-          <h3>No matching cards yet.</h3>
+          <h3>No matching achievements.</h3>
           <p>Try another title, issuer, or year.</p>
           <button
             type="button"
@@ -608,7 +627,7 @@ export default function TrophyRoom() {
                 type="button"
                 ref={closeRef}
                 onClick={() => setSelected(null)}
-                aria-label="Close achievement card"
+                aria-label="Close achievement"
               >
                 <X size={21} aria-hidden="true" />
               </button>
@@ -635,6 +654,29 @@ export default function TrophyRoom() {
                 </div>
               ) : null}
             </dl>
+            {selected.verificationUrl ? (
+              <a
+                className="achievement-verification"
+                href={selected.verificationUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {credentialProviders[selected.issuer] ? (
+                  <span className="achievement-provider-mark">
+                    <img
+                      src={asset(credentialProviders[selected.issuer]!.src)}
+                      alt=""
+                      width={100}
+                      height={38}
+                      decoding="async"
+                    />
+                  </span>
+                ) : null}
+                Verify on {selected.issuer}
+                <ArrowUpRight size={16} aria-hidden="true" />
+                <span className="sr-only">, opens in a new tab</span>
+              </a>
+            ) : null}
             {
               <section
                 className="achievement-certificates"

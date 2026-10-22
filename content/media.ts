@@ -209,6 +209,83 @@ export const certificateFiles = {
     src: "certificates/databricks-ai-bi.webp",
     title: "Databricks Academy — AI/BI for Data Analysts",
   },
+  datacampOptimizingJava: {
+    src: "certificates/datacamp-optimizing-java-completion-record.webp",
+    title: "DataCamp — Optimizing Code in Java",
+    kind: "Completion record" as const,
+    caption:
+      "Screenshot of DataCamp’s public completion record naming Ian Wangsa. The linked record provides verification.",
+    source: {
+      label: "DataCamp — verified completion record",
+      url: "https://www.datacamp.com/completed/statement-of-accomplishment/course/63e91bedf6cc981f084b817e894ed83ac08752b0",
+    },
+  },
+  datacampDocker: {
+    src: "certificates/datacamp-docker-completion-record.webp",
+    title: "DataCamp — Introduction to Docker",
+    kind: "Completion record" as const,
+    caption:
+      "Screenshot of DataCamp’s public completion record naming Ian Wangsa. The linked record provides verification.",
+    source: {
+      label: "DataCamp — verified completion record",
+      url: "https://www.datacamp.com/completed/statement-of-accomplishment/course/67146a65795262e93dc2b89db7af6a9914d3a7f2",
+    },
+  },
+  datacampAwsCloudPractitioner: {
+    src: "certificates/datacamp-aws-cloud-practitioner-completion-record.webp",
+    title: "DataCamp — AWS Cloud Practitioner (CLF-C02)",
+    kind: "Completion record" as const,
+    caption:
+      "Screenshot of DataCamp’s public completion record naming Ian Wangsa. This records completion of DataCamp’s learning track; it does not certify an AWS exam result.",
+    source: {
+      label: "DataCamp — verified completion record",
+      url: "https://www.datacamp.com/completed/statement-of-accomplishment/track/9a001955e97c506ce022e859b621878fa59d6d7b",
+    },
+  },
+  datacampGithubFoundations: {
+    src: "certificates/datacamp-github-foundations-completion-record.webp",
+    title: "DataCamp — GitHub Foundations",
+    kind: "Completion record" as const,
+    caption:
+      "Screenshot of DataCamp’s public completion record naming Ian Wangsa. The linked record provides verification.",
+    source: {
+      label: "DataCamp — verified completion record",
+      url: "https://www.datacamp.com/completed/statement-of-accomplishment/track/4fc4e0aa33d0c27dd316663b8a832775a5de63ef",
+    },
+  },
+  datacampJavaFundamentals: {
+    src: "certificates/datacamp-java-fundamentals-completion-record.webp",
+    title: "DataCamp — Java Fundamentals",
+    kind: "Completion record" as const,
+    caption:
+      "Screenshot of DataCamp’s public completion record naming Ian Wangsa. The linked record provides verification.",
+    source: {
+      label: "DataCamp — verified completion record",
+      url: "https://www.datacamp.com/completed/statement-of-accomplishment/track/294bf9b2ec760c7eecaaa7713d17496a6c385c9a",
+    },
+  },
+  datacampSqlFundamentals: {
+    src: "certificates/datacamp-sql-fundamentals-completion-record.webp",
+    title: "DataCamp — SQL Fundamentals",
+    kind: "Completion record" as const,
+    caption:
+      "Screenshot of DataCamp’s public completion record naming Ian Wangsa. The linked record provides verification.",
+    source: {
+      label: "DataCamp — verified completion record",
+      url: "https://www.datacamp.com/completed/statement-of-accomplishment/track/752d0cf782a0bbc62ff7e18a812a42538403581a",
+    },
+  },
+  datacampMachineLearning: {
+    src: "certificates/datacamp-machine-learning-completion-record.webp",
+    title: "DataCamp — Machine Learning Fundamentals",
+    kind: "Completion record" as const,
+    caption:
+      "Screenshot of DataCamp’s public completion record naming Ian Wangsa. LinkedIn records the completed track as Machine Learning Fundamentals in Python; DataCamp currently displays Machine Learning Fundamentals.",
+    source: {
+      label: "DataCamp — verified completion record",
+      url: "https://www.datacamp.com/completed/statement-of-accomplishment/track/df7659f509b6102dd8bdaa75ce00a63c5814baf3",
+    },
+  },
   claude101: {
     src: "certificates/anthropic-claude-101.webp",
     title: "Anthropic — Claude 101",

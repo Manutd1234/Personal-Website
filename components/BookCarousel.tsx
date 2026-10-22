@@ -236,29 +236,50 @@ function Book({
         <span className="book-pages book-pages-top" />
         <span className="book-pages book-pages-bottom" />
       </span>
-      <span className="book-front">
-        <span className="book-cover-author">IAN WANGSA</span>
-        <span className="book-cover-title">{design.title}</span>
-        <span className="book-cover-subtitle">{design.subtitle}</span>
-        {media?.src ? (
-          <span className="book-cover-image">
-            <img
-              alt=""
-              decoding="async"
-              draggable={false}
-              height={400}
-              loading="lazy"
-              src={asset(media.src)}
-              width={640}
-            />
+      <span className="book-page-leaf">
+        <span className="book-leaf-front">
+          <span className="book-leaf-eyebrow">PROJECT NOTES</span>
+          <span className="book-leaf-title">{project.title}</span>
+          <span className="book-leaf-category">{project.category}</span>
+          <span className="book-leaf-rule" />
+          <span className="book-leaf-tools">
+            {project.tags.slice(0, 3).join(" / ")}
           </span>
-        ) : (
-          <span className="book-cover-mark">{design.mark}</span>
-        )}
-        <span className="book-cover-footer">
-          {project.category}
-          <span>→</span>
+          <span className="book-leaf-signature">Ian Wangsa</span>
         </span>
+        <span className="book-leaf-back" />
+      </span>
+      <span className="book-cover-hinge">
+        <span className="book-front">
+          <span className="book-cover-author">IAN WANGSA</span>
+          <span className="book-cover-title">{design.title}</span>
+          <span className="book-cover-subtitle">{design.subtitle}</span>
+          {media?.src ? (
+            <span className="book-cover-image">
+              <img
+                alt=""
+                decoding="async"
+                draggable={false}
+                height={400}
+                loading="lazy"
+                src={asset(media.src)}
+                width={640}
+              />
+            </span>
+          ) : (
+            <span className="book-cover-mark">{design.mark}</span>
+          )}
+          <span className="book-cover-footer">
+            {project.category}
+            <span>→</span>
+          </span>
+        </span>
+        <span className="book-inside-cover">
+          <span>IAN WANGSA</span>
+          <span className="book-inside-title">{design.title}</span>
+          <span>{project.category}</span>
+        </span>
+        <span className="book-cover-edge" />
       </span>
     </span>
   );
@@ -460,17 +481,20 @@ export default function BookCarousel({
       setReducedMotion(query.matches);
     };
     const pause = () => {
+      stageRef.current?.toggleAttribute("data-suspended", document.hidden);
       if (document.hidden) {
         stopAnimation();
         cancelGesture();
       }
     };
     sync();
+    pause();
     query.addEventListener("change", sync);
     document.addEventListener("visibilitychange", pause);
     return () => {
       stopAnimation();
       cancelGesture();
+      stageRef.current?.removeAttribute("data-suspended");
       query.removeEventListener("change", sync);
       document.removeEventListener("visibilitychange", pause);
     };

@@ -10,13 +10,16 @@ import {
 import {
   ArrowLeft,
   ArrowUpRight,
-  Brain,
+  BookOpen,
+  BriefcaseBusiness,
+  CalendarDays,
+  Compass,
   EyeOff,
-  Flame,
-  Leaf,
+  FileText,
+  HeartHandshake,
+  MapPin,
   Medal,
   RotateCcw,
-  Zap,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -29,24 +32,18 @@ import {
 import {
   cardTypes,
   type CardType,
-  type Rarity,
   type TradingCardData,
 } from "@/content/card-decks";
 import { certificateFiles } from "@/content/media";
 import { asset } from "@/content/paths";
 
-const MAX_TILT = 12;
+const MAX_TILT = 8;
 const typeIcons: Readonly<Record<CardType, LucideIcon>> = {
-  systems: Zap,
-  education: Brain,
-  leadership: Flame,
-  community: Leaf,
+  systems: BriefcaseBusiness,
+  education: BookOpen,
+  leadership: Compass,
+  community: HeartHandshake,
   sport: Medal,
-};
-const holoStrength: Readonly<Record<Rarity, number>> = {
-  "Rare Holo": 0.55,
-  Rare: 0.35,
-  Uncommon: 0.2,
 };
 const files: Readonly<Record<string, { src: string; title: string }>> =
   certificateFiles;
@@ -76,7 +73,6 @@ export default function TradingCard({
   const nameId = useId();
   const type = cardTypes[card.type];
   const TypeIcon = typeIcons[card.type];
-  const level = String(card.year % 100).padStart(2, "0");
 
   const tiltX = useMotionValue(0);
   const tiltY = useMotionValue(0);
@@ -86,14 +82,13 @@ export default function TradingCard({
   const rotateX = useSpring(tiltX, { stiffness: 220, damping: 22 });
   const rotateY = useSpring(tiltY, { stiffness: 220, damping: 22 });
   const glow = useSpring(hover, { stiffness: 170, damping: 24 });
-  const scale = useTransform(glow, [0, 1], [1, 1.025]);
-  const holoOpacity = useTransform(glow, (v) => v * holoStrength[card.rarity]);
+  const scale = useTransform(glow, [0, 1], [1, 1.015]);
+  const washOpacity = useTransform(glow, (v) => v * 0.18);
   const sheenX = useTransform(pointerX, (v) => 100 - v);
   const sheenY = useTransform(pointerY, (v) => 100 - v);
   const sheenPosition = useMotionTemplate`${sheenX}% ${sheenY}%`;
-  const holoPosition = useMotionTemplate`${pointerX}% ${pointerY}%`;
-  // The rainbow only shows in a soft spotlight around the pointer.
-  const holoMask = useMotionTemplate`radial-gradient(farthest-corner circle at ${pointerX}% ${pointerY}%, #000 0%, rgba(0,0,0,0.35) 32%, transparent 64%)`;
+  const washPosition = useMotionTemplate`${pointerX}% ${pointerY}%`;
+  const washMask = useMotionTemplate`radial-gradient(farthest-corner circle at ${pointerX}% ${pointerY}%, #000 0%, rgba(0,0,0,0.35) 32%, transparent 64%)`;
   const glare = useMotionTemplate`radial-gradient(circle at ${pointerX}% ${pointerY}%, rgba(255,255,255,0.55), rgba(255,255,255,0.08) 34%, transparent 62%)`;
 
   function track(event: PointerEvent<HTMLDivElement>) {
@@ -135,15 +130,11 @@ export default function TradingCard({
   const certificates = card.certificates.flatMap((key) =>
     files[key] ? [files[key]] : [],
   );
-  const rarityMark = card.rarity === "Uncommon" ? "◆" : "★";
-  const levelTitle = `LVL is the year this card entered the collection: ${card.year}`;
-
   return (
     <div
       ref={rootRef}
       className="tcg-card"
       data-type={card.type}
-      data-rarity={card.rarity.toLowerCase().replace(" ", "-")}
       data-flipped={flipped}
       onPointerMove={track}
       onPointerLeave={settle}
@@ -153,7 +144,11 @@ export default function TradingCard({
           className="tcg-flipper"
           initial={false}
           animate={{ rotateY: flipped ? 180 : 0 }}
-          transition={{ type: "spring", stiffness: 190, damping: 23 }}
+          transition={
+            reduced
+              ? { duration: 0 }
+              : { type: "spring", stiffness: 190, damping: 23 }
+          }
         >
           <article
             className="tcg-face tcg-front"
@@ -162,15 +157,15 @@ export default function TradingCard({
             onClick={flipFromFace}
           >
             <div className="tcg-inner">
-              {/* Holo layers paint beneath the content, so text keeps its contrast. */}
+              {/* The paper reflection stays beneath the readable content. */}
               <motion.span
-                className="tcg-holo"
+                className="tcg-paper-wash"
                 aria-hidden="true"
                 style={{
-                  opacity: holoOpacity,
-                  backgroundPosition: holoPosition,
-                  WebkitMaskImage: holoMask,
-                  maskImage: holoMask,
+                  opacity: washOpacity,
+                  backgroundPosition: washPosition,
+                  WebkitMaskImage: washMask,
+                  maskImage: washMask,
                 }}
               />
               <motion.span
@@ -184,16 +179,19 @@ export default function TradingCard({
                 style={{ opacity: glow, backgroundImage: glare }}
               />
               <header className="tcg-band tcg-header">
-                <span className="tcg-energy" title={`${type.label} card`}>
+                <span className="tcg-symbol" aria-hidden="true">
                   <TypeIcon size={14} strokeWidth={2.5} aria-hidden="true" />
-                  <span className="sr-only">{type.label} card.</span>
                 </span>
-                <p className="tcg-title">{card.title}</p>
-                <p className="tcg-level" title={levelTitle}>
-                  <span>LVL</span>
-                  {level}
-                </p>
+                <div className="tcg-heading">
+                  <p className="tcg-kicker">{type.label}</p>
+                  <p className="tcg-title">{card.title}</p>
+                </div>
               </header>
+              <p className="tcg-date-stamp">
+                <CalendarDays size={13} aria-hidden="true" />
+                <span className="sr-only">Dates: </span>
+                {card.dates}
+              </p>
 
               <div
                 className="tcg-picture"
@@ -222,7 +220,7 @@ export default function TradingCard({
               <div className="tcg-identity">
                 <h3 id={nameId}>{card.org}</h3>
                 <p>
-                  {card.location} · {card.dates}
+                  <MapPin size={12} aria-hidden="true" /> {card.location}
                 </p>
               </div>
 
@@ -238,8 +236,8 @@ export default function TradingCard({
               </ul>
 
               <footer className="tcg-band tcg-footer">
-                <p>
-                  {rarityMark} {card.rarity}
+                <p className="tcg-record-label">
+                  <FileText size={13} aria-hidden="true" /> Field notes
                 </p>
                 <button
                   type="button"
@@ -247,9 +245,9 @@ export default function TradingCard({
                   data-card-control
                   tabIndex={tabbable ? 0 : -1}
                   onClick={flip}
-                  aria-label={`Full record: flip the ${card.org} card`}
+                  aria-label={`Read the full story: ${card.org}`}
                 >
-                  Full record
+                  Read story
                   <RotateCcw size={13} strokeWidth={2.3} aria-hidden="true" />
                 </button>
               </footer>
@@ -258,20 +256,19 @@ export default function TradingCard({
 
           <section
             className="tcg-face tcg-back"
-            aria-label={`${card.org}: full record`}
+            aria-label={`${card.org}: story and full record`}
             inert={!flipped}
             onClick={flipFromFace}
           >
             <div className="tcg-inner">
               <header className="tcg-band tcg-header">
-                <span className="tcg-energy" aria-hidden="true">
+                <span className="tcg-symbol" aria-hidden="true">
                   <TypeIcon size={14} strokeWidth={2.5} />
                 </span>
-                <p className="tcg-title">Full record</p>
-                <p className="tcg-level" title={levelTitle}>
-                  <span>LVL</span>
-                  {level}
-                </p>
+                <div className="tcg-heading">
+                  <p className="tcg-kicker">{type.label}</p>
+                  <p className="tcg-title">Story & details</p>
+                </div>
               </header>
               <div className="tcg-back-identity">
                 <p className="tcg-back-org">{card.org}</p>
@@ -339,10 +336,10 @@ export default function TradingCard({
                   data-card-control
                   tabIndex={tabbable ? 0 : -1}
                   onClick={flip}
-                  aria-label={`Card front: flip the ${card.org} card back`}
+                  aria-label={`Return to ${card.org} highlights`}
                 >
                   <ArrowLeft size={13} strokeWidth={2.3} aria-hidden="true" />
-                  Card front
+                  Back to highlights
                 </button>
                 <p>{type.label}</p>
               </footer>
