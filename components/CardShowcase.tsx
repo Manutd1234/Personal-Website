@@ -534,10 +534,11 @@ function DeckTrack({
         <p className="deck-hint">
           <span className="deck-hint-pointer">
             {reduced ? "" : "Always rolling · hover to pause · "}
-            click to read · ← → to browse
+            click a card to turn it · ← → to browse
           </span>
           <span className="deck-hint-touch">
-            {reduced ? "" : "Always rolling · "}swipe to browse · tap to read
+            {reduced ? "" : "Always rolling · "}swipe to browse · tap a card to
+            turn it
           </span>
         </p>
       </div>

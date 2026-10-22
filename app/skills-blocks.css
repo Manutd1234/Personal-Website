@@ -8,42 +8,11 @@
   color: #234f37;
   box-shadow: 0 5px 0 #dceacb;
 }
-.skill-physics-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  gap: 20px;
-}
-.skill-physics-heading > div > p {
-  color: #64764d;
-  font: 500 10px/1.7 var(--font-mono);
-}
-.skill-physics-heading h3 {
-  margin-top: 7px;
-  color: #174b35;
-  font: 700 clamp(23px, 2.8vw, 31px)/1.2 var(--classic-display);
-  letter-spacing: -0.04em;
-}
-.skill-physics-heading > span {
-  flex-shrink: 0;
-  padding: 7px 10px;
-  border-radius: 8px;
-  background: #e4efbf;
-  color: #4f6639;
-  font: 500 10px/1.6 var(--font-mono);
-}
-.skill-physics-help {
-  max-width: 75ch;
-  min-height: 3.6em;
-  margin-top: 14px;
-  color: #526b4c;
-  font: 400 12px/1.8 var(--classic-display);
-}
 .skill-physics-toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
-  margin: 12px 0 17px;
+  margin: 0 0 17px;
 }
 .skill-physics-toolbar button {
   display: inline-flex;
@@ -96,6 +65,18 @@
   content: "Pick one up. See what happens.";
   pointer-events: none;
 }
+.skill-physics-world::after {
+  position: absolute;
+  right: 10px;
+  bottom: 7px;
+  left: 10px;
+  height: 1px;
+  border-radius: 50%;
+  background: #51794129;
+  box-shadow: 0 -3px 10px #3157290a;
+  content: "";
+  pointer-events: none;
+}
 .skill-physics-world.is-live {
   display: block;
   padding: 0;
@@ -113,13 +94,14 @@
   justify-content: center;
   padding: 7px 12px;
   border: 1px solid var(--pill-edge);
-  border-bottom-width: 3px;
+  border-bottom-width: 2px;
   border-radius: 999px;
   background: var(--pill-fill);
   color: var(--pill-ink);
   box-shadow:
     inset 0 1px 0 #ffffffb3,
-    0 2px 3px #24483014;
+    inset 0 -1px 1px #2448300b,
+    0 3px 5px #2448301a;
   font: 650 11px/1.3 var(--font-mono);
   text-align: center;
   white-space: nowrap;
@@ -140,6 +122,9 @@
   max-width: none;
   transform-origin: 50% 50%;
   will-change: transform;
+}
+.skill-physics-world.is-live[data-running="false"] > .skill-pill {
+  will-change: auto;
 }
 .skill-pill[data-tone="1"] {
   --pill-fill: #d5f1e5;
@@ -278,18 +263,9 @@
   color: #d8e6ca;
   box-shadow: 0 5px 0 #15271a;
 }
-.dark .skill-physics-heading h3 {
-  color: #d5eabd;
-}
-.dark .skill-physics-heading > div > p,
-.dark .skill-physics-help,
 .dark .skill-physics-keyboard,
 .dark .skill-physics-selection span {
   color: #a6bb93;
-}
-.dark .skill-physics-heading > span {
-  background: #3c512b;
-  color: #d3e5af;
 }
 .dark .skill-physics-toolbar button {
   border-color: #58734b;
@@ -337,13 +313,6 @@
   background: #293f27;
   color: #cde2ba;
 }
-@media (max-width: 850px) {
-  .skill-physics-heading {
-    flex-direction: column;
-    align-items: start;
-    gap: 12px;
-  }
-}
 @media (max-width: 620px) {
   .skill-physics {
     padding: 16px;
@@ -365,9 +334,6 @@
   .skill-physics {
     padding: 13px;
     border-radius: 14px;
-  }
-  .skill-physics-heading h3 {
-    font-size: 25px;
   }
   .skill-physics-toolbar button {
     flex: 1 1 auto;

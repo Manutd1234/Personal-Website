@@ -327,7 +327,8 @@
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
-.tcg-front {
+.tcg-front,
+.tcg-back {
   cursor: pointer;
 }
 .tcg-back {
@@ -441,6 +442,32 @@
   color: var(--tcg-ink);
   font-size: 12px;
   font-weight: 600;
+}
+.tcg-stealth-wordmark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  color: #f1f3e8;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.tcg-stealth-wordmark > svg {
+  flex: none;
+  color: #bed2b8;
+}
+.tcg-stealth-wordmark > span {
+  font: 750 clamp(25px, 3vw, 34px)/1 var(--classic-display);
+  letter-spacing: -0.065em;
+}
+.tcg-stealth-wordmark > span > span {
+  display: block;
+  margin-top: 7px;
+  padding-left: 2px;
+  color: #bed2b8;
+  font: 500 9px/1 var(--font-mono);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
 }
 .tcg-identity {
   flex: none;

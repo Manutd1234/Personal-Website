@@ -1,0 +1,213 @@
+/* Small pen-and-paper details around the interactive objects. */
+:root {
+  --classic-display: var(--portfolio-sans), "Helvetica Neue", Arial, sans-serif;
+  --classic-serif: var(--portfolio-serif), "Iowan Old Style", Georgia, serif;
+}
+
+body {
+  font-family: var(--classic-display);
+  font-optical-sizing: auto;
+}
+
+.classic-hero h1,
+.classic-section-header h1,
+.classic-contact-title,
+.contact-paper-title {
+  font-family: var(--classic-serif);
+  font-weight: 550;
+  letter-spacing: -0.055em;
+}
+
+.classic-hero h1 {
+  font-size: clamp(3.8rem, 7.5vw, 6.4rem);
+  line-height: 1.03;
+}
+
+.classic-hero h1 em,
+.classic-section-header h1 em,
+.classic-contact-title em,
+.contact-paper-title em {
+  font-weight: 400;
+  letter-spacing: -0.055em;
+}
+
+.classic-nav button,
+.classic-header-contact,
+.classic-primary,
+.classic-wordmark-text {
+  font-weight: 600;
+}
+
+.tcg-identity h3,
+.tcg-back-identity h3 {
+  font-family: var(--classic-serif);
+  font-weight: 550;
+  letter-spacing: -0.035em;
+}
+
+.tcg-card h4,
+.tcg-card strong {
+  font-weight: 650;
+}
+
+.classic-site {
+  background-image:
+    radial-gradient(ellipse at 100% 0, #a7c7910a, transparent 34%),
+    radial-gradient(ellipse at 0 62%, #e4c8860a, transparent 28%);
+}
+
+.classic-section-header h1 em,
+.classic-offduty .classic-contact-title em {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+}
+
+.classic-section-header h1 em::after,
+.classic-offduty .classic-contact-title em::after {
+  content: "";
+  position: absolute;
+  inset: auto -2% -0.12em 1%;
+  height: 0.17em;
+  pointer-events: none;
+  background: var(--classic-green);
+  opacity: 0.38;
+  transform-origin: left center;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 16' preserveAspectRatio='none'%3E%3Cpath d='M3 10C94 0 220 14 395 5M17 14C130 7 245 13 373 9' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E")
+    center / 100% 100% no-repeat;
+}
+
+.classic-kicker::before,
+.contact-paper-eyebrow::before {
+  width: 25px;
+  height: 7px;
+  border-radius: 0;
+  clip-path: polygon(
+    0 42%,
+    10% 16%,
+    38% 5%,
+    80% 12%,
+    100% 32%,
+    91% 69%,
+    53% 91%,
+    15% 100%,
+    3% 77%
+  );
+}
+
+.classic-portrait {
+  border-radius: 5px 8px 6px 4px;
+  padding: 10px 10px 6px;
+  box-shadow:
+    4px 5px 0 #dbe6c8,
+    0 16px 27px #244a2a17;
+}
+
+.classic-portrait-image {
+  border-radius: 2px;
+}
+
+.classic-portrait figcaption {
+  padding-block: 17px 13px;
+}
+
+.classic-tape {
+  clip-path: polygon(
+    1% 0,
+    99% 3%,
+    96% 16%,
+    100% 32%,
+    96% 52%,
+    99% 72%,
+    97% 100%,
+    0 96%,
+    3% 75%,
+    0 57%,
+    3% 35%,
+    0 15%
+  );
+  background-image: repeating-linear-gradient(
+    0deg,
+    #ffffff0d 0 1px,
+    transparent 1px 4px
+  );
+}
+
+.contact-paper {
+  border-radius: 14px 22px 16px 20px;
+  box-shadow:
+    2px 5px 0 #e1eccf,
+    0 16px 35px #244a2a06;
+}
+
+.classic-wordmark > span:first-child {
+  border-radius: 14px 11px 15px 10px;
+  transition:
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 260ms ease;
+}
+
+.classic-wordmark:is(:hover, :focus-visible) > span:first-child {
+  transform: rotate(2deg) translateY(-2px);
+  box-shadow: 2px 5px 0 #d4ecad;
+}
+
+.classic-socials a,
+.classic-about-copy > a,
+.contact-paper-bottom a {
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--classic-green) 34%,
+    transparent
+  );
+  text-decoration-thickness: 1px;
+}
+
+.classic-socials a:hover,
+.classic-about-copy > a:hover,
+.contact-paper-bottom a:hover {
+  text-decoration-line: underline;
+  text-underline-offset: 6px;
+}
+
+.dark .classic-portrait {
+  box-shadow:
+    4px 5px 0 #304731,
+    0 16px 27px #0003;
+}
+
+.dark .contact-paper {
+  box-shadow:
+    2px 5px 0 #263b26,
+    0 16px 35px #0002;
+}
+
+@media (max-width: 600px) {
+  .classic-nav button {
+    flex: 1 1 auto;
+    padding-inline: 7px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [role="tabpanel"]:not([hidden]) .classic-section-header h1 em::after {
+    animation: ink-underline 650ms 100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes ink-underline {
+    from {
+      transform: scaleX(0);
+      opacity: 0;
+    }
+    to {
+      transform: scaleX(1);
+      opacity: 0.38;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .classic-wordmark > span:first-child {
+    transition: none;
+  }
+}

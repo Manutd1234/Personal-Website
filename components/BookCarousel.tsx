@@ -206,6 +206,9 @@ function Book({
   index: number;
 }) {
   const design = coverFor(project, index);
+  const thickness = [30, 26, 34, 28, 32, 24, 34, 26, 28, 26, 32, 30][
+    DESIGN_INDEX[project.title] ?? index % COVER_DESIGNS.length
+  ];
   return (
     <span
       aria-hidden="true"
@@ -216,6 +219,7 @@ function Book({
           "--cover": design.color,
           "--cover-ink": design.ink,
           "--cover-font": design.font,
+          "--book-depth": `${thickness}px`,
         } as CSSProperties
       }
     >
@@ -236,6 +240,8 @@ function Book({
         <span className="book-pages book-pages-top" />
         <span className="book-pages book-pages-bottom" />
       </span>
+      <span className="book-under-leaf book-under-leaf-first" />
+      <span className="book-under-leaf book-under-leaf-second" />
       <span className="book-page-leaf">
         <span className="book-leaf-front">
           <span className="book-leaf-eyebrow">PROJECT NOTES</span>

@@ -3,6 +3,7 @@
 import {
   ArrowUpRight,
   Award,
+  BatteryFull,
   BookOpen,
   GraduationCap,
   HeartHandshake,
@@ -10,6 +11,7 @@ import {
   Medal,
   Search,
   Trophy,
+  Wifi,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -211,7 +213,7 @@ const hashFilters: Readonly<Record<string, CollectionFilter>> = {
   "#certificates": "certificates",
 };
 
-function AchievementDisplay({
+function AchievementApp({
   record,
   onOpen,
 }: {
@@ -222,75 +224,37 @@ function AchievementDisplay({
     categories.find((category) => category.id === record.category)?.icon ??
     Award;
   const first = record.preview;
-  const kind = previewKind(first);
-  const object = /patch/i.test(kind)
-    ? "patch"
-    : /medal|trophy/i.test(kind)
-      ? "award"
-      : first.representative
-        ? "emblem"
-        : "frame";
   const provider = credentialProviders[record.issuer];
   return (
-    <li className="trophy-cabinet-bay" data-category={record.category}>
+    <li className="award-app" data-category={record.category}>
       <button
         type="button"
-        className="cabinet-item"
+        className="award-app-button"
         aria-label={`View achievement: ${record.title}`}
         aria-haspopup="dialog"
         onClick={(event) => onOpen(record, event.currentTarget)}
       >
-        <span className="cabinet-display" data-object={object}>
-          <span className="cabinet-object">
-            <img
-              src={asset(first.src)}
-              alt={first.title}
-              loading="lazy"
-              decoding="async"
-            />
-          </span>
-          {record.certificates.length > 1 ? (
-            <span className="cabinet-evidence-count">
-              {record.certificates.length} previews
-            </span>
-          ) : null}
-          {first.representative ? (
-            <span className="cabinet-image-note">Representative image</span>
-          ) : null}
-        </span>
-        <span className="cabinet-nameplate">
-          <span className="cabinet-category">
-            <Icon size={13} aria-hidden="true" />
-            {record.categoryLabel}
-          </span>
-          <strong>{record.title}</strong>
-          <span className="cabinet-issuer">{record.issuer}</span>
-          {provider ? (
-            <span className="achievement-provider-mark">
-              <img
-                src={asset(provider.src)}
-                alt={provider.alt}
-                width={100}
-                height={38}
-                loading="lazy"
-                decoding="async"
-              />
-            </span>
-          ) : null}
-          {record.detail ? (
-            <span
-              className={`cabinet-result${/Expired/i.test(record.detail) ? " is-expired" : ""}`}
-            >
-              {record.detail}
-            </span>
-          ) : null}
-          <span className="cabinet-item-bottom">
-            <span>{record.year ?? kind}</span>
-            <span>
-              Look closer <ArrowUpRight size={14} aria-hidden="true" />
-            </span>
+        <span
+          className="award-app-icon"
+          data-emblem={Boolean(provider || first.representative)}
+        >
+          <img
+            src={asset(provider?.src ?? first.src)}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+          <span className="award-app-category-mark" aria-hidden="true">
+            <Icon size={13} />
           </span>
         </span>
+        <span className="award-app-label">{record.title}</span>
+        <span className="award-app-date">
+          {record.year ?? record.categoryLabel}
+        </span>
+        {/Expired/i.test(record.detail ?? "") ? (
+          <span className="award-app-expired">Expired</span>
+        ) : null}
       </button>
     </li>
   );
@@ -304,6 +268,7 @@ export default function TrophyRoom() {
   const reduced = useMotionPreference();
   const prefix = useId();
   const sectionRef = useRef<HTMLElement>(null);
+  const appsRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLButtonElement | null>(null);
@@ -332,6 +297,7 @@ export default function TrophyRoom() {
       if (next) {
         setFilter(next);
         setQuery("");
+        appsRef.current?.scrollTo({ top: 0, behavior: "instant" });
       }
     };
     const section = sectionRef.current;
@@ -445,106 +411,126 @@ export default function TrophyRoom() {
       data-suspended={!available || reduced}
     >
       <header className="trophy-collection-heading">
-        <div>
-          <p className="trophy-eyebrow">Earned, along the way</p>
-          <h2 id={`${prefix}-title`}>The trophy cabinet.</h2>
-          <p>
-            Team wins, things I’ve learned, and the work along the way. Open a
-            piece to see its story.
-          </p>
-        </div>
+        <h2 id={`${prefix}-title`} className="sr-only">
+          Awards and certificates
+        </h2>
+        <p>Open an award to see the certificate and story.</p>
         <span className="trophy-collection-count">
-          <Award size={17} aria-hidden="true" />
-          {collection.length} records
-          <span>{previewCount} award previews</span>
+          {collection.length} records · {previewCount} previews
         </span>
       </header>
-      <div className="trophy-browser">
-        <div
-          className="trophy-filters"
-          role="group"
-          aria-label="Choose an achievement category"
-        >
-          {([{ id: "all", label: "All" }, ...categories] as const).map(
-            (category) => (
-              <button
-                key={category.id}
-                type="button"
-                aria-pressed={filter === category.id}
-                aria-controls={`${prefix}-cards`}
-                onClick={() => setFilter(category.id)}
-              >
-                {category.label}
-                <span>
-                  {category.id === "all"
-                    ? matches.length
-                    : matches.filter(
-                        (record) => record.category === category.id,
-                      ).length}
-                </span>
-              </button>
-            ),
-          )}
-        </div>
-        <label className="trophy-search">
-          <Search size={17} aria-hidden="true" />
-          <span className="sr-only">Search all awards and credentials</span>
-          <input
-            type="search"
-            value={query}
-            placeholder="Find an award, issuer, or year…"
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setFilter("all");
-            }}
-          />
-        </label>
-      </div>
-      <p className="trophy-results" role="status">
-        {visible.length} {visible.length === 1 ? "record" : "records"}
-        {filter === "all"
-          ? " in the collection"
-          : ` · ${categories.find((category) => category.id === filter)?.label}`}
-        {search ? ` matching “${query.trim()}”` : ""}.
-      </p>
-      {visible.length ? (
-        <div className="trophy-cabinet" id={`${prefix}-cards`}>
-          <div className="trophy-cabinet-crown" aria-hidden="true">
+      <div className="award-tablet">
+        <span className="award-tablet-camera" aria-hidden="true" />
+        <div className="award-tablet-screen">
+          <div className="award-tablet-status" aria-hidden="true">
+            <span>Ian’s collection</span>
             <span>
-              <Award size={16} /> A few things I’m proud of
+              {collection.length} records <Wifi size={13} />
+              <BatteryFull size={17} />
             </span>
-            <span>Look closer ↗</span>
           </div>
-          <ul
-            className="trophy-cabinet-shelves"
-            aria-label="Awards and credentials on display"
-          >
-            {visible.map((record) => (
-              <AchievementDisplay
-                key={record.id}
-                record={record}
-                onOpen={open}
+          <div className="award-tablet-home-heading">
+            <div>
+              <p>Personal archive</p>
+              <h3>Awards & certificates.</h3>
+            </div>
+            <label className="trophy-search">
+              <Search size={17} aria-hidden="true" />
+              <span className="sr-only">Search all awards and credentials</span>
+              <input
+                type="search"
+                value={query}
+                placeholder="Search this collection…"
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setFilter("all");
+                  appsRef.current?.scrollTo({ top: 0, behavior: "instant" });
+                }}
               />
-            ))}
-          </ul>
-          <div className="trophy-cabinet-base" aria-hidden="true" />
-        </div>
-      ) : (
-        <div className="trophy-empty" id={`${prefix}-cards`}>
-          <Search size={27} aria-hidden="true" />
-          <h3>No matching achievements.</h3>
-          <p>Try another title, issuer, or year.</p>
-          <button
-            type="button"
-            onClick={() => {
-              setQuery("");
-              setFilter("all");
-            }}
+            </label>
+          </div>
+          <p className="trophy-results" role="status">
+            {visible.length} {visible.length === 1 ? "app" : "apps"}
+            {filter === "all"
+              ? " · all awards & credentials"
+              : ` · ${categories.find((category) => category.id === filter)?.label}`}
+            {search ? ` matching “${query.trim()}”` : ""}
+          </p>
+          <div
+            className="award-app-scroll"
+            ref={appsRef}
+            role="region"
+            tabIndex={0}
+            aria-label="Award apps. Scroll to see every record."
           >
-            Reset collection
-          </button>
+            {visible.length ? (
+              <ul
+                className="award-app-grid"
+                id={`${prefix}-cards`}
+                aria-label="Awards and credentials"
+              >
+                {visible.map((record) => (
+                  <AchievementApp
+                    key={record.id}
+                    record={record}
+                    onOpen={open}
+                  />
+                ))}
+              </ul>
+            ) : (
+              <div className="trophy-empty" id={`${prefix}-cards`}>
+                <Search size={27} aria-hidden="true" />
+                <h3>No matching achievements.</h3>
+                <p>Try another title, issuer, or year.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery("");
+                    setFilter("all");
+                  }}
+                >
+                  Reset collection
+                </button>
+              </div>
+            )}
+          </div>
+          <nav className="award-tablet-dock" aria-label="Filter the award apps">
+            {(
+              [{ id: "all", label: "All", icon: Award }, ...categories] as const
+            ).map((category) => {
+              const Icon = category.icon;
+              const count =
+                category.id === "all"
+                  ? matches.length
+                  : matches.filter((record) => record.category === category.id)
+                      .length;
+              return (
+                <button
+                  key={category.id}
+                  type="button"
+                  aria-pressed={filter === category.id}
+                  aria-controls={`${prefix}-cards`}
+                  aria-label={`${category.label}, ${count} records`}
+                  onClick={() => {
+                    setFilter(category.id);
+                    appsRef.current?.scrollTo({ top: 0, behavior: "instant" });
+                  }}
+                >
+                  <span>
+                    <Icon size={20} aria-hidden="true" />
+                  </span>
+                  <span>
+                    {category.label === "Academic & creative"
+                      ? "Academic"
+                      : category.label}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+          <div className="award-tablet-home-indicator" aria-hidden="true" />
         </div>
-      )}
+      </div>
       <dialog
         ref={dialogRef}
         className="achievement-dialog"

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 import "./globals.css";
 import "./classic-layout.css";
 import "./book-carousel.css";
@@ -11,6 +12,32 @@ import "./card-showcase.css";
 import "./role-intro.css";
 import "./tab-polish.css";
 import "./contact-panel.css";
+import "./handmade-details.css";
+
+const bodyFont = localFont({
+  src: "./fonts/dm-sans-latin.woff2",
+  variable: "--portfolio-sans",
+  weight: "400 700",
+  display: "swap",
+  fallback: ["Arial"],
+});
+const editorialFont = localFont({
+  src: [
+    {
+      path: "./fonts/fraunces-latin.woff2",
+      style: "normal",
+      weight: "400 700",
+    },
+    {
+      path: "./fonts/fraunces-italic-latin.woff2",
+      style: "italic",
+      weight: "400 600",
+    },
+  ],
+  variable: "--portfolio-serif",
+  display: "swap",
+  fallback: ["Georgia"],
+});
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 export const metadata: Metadata = {
@@ -45,7 +72,11 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${bodyFont.variable} ${editorialFont.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{

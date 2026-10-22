@@ -23,6 +23,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import {
+  useEffect,
   useId,
   useRef,
   useState,
@@ -38,6 +39,8 @@ import { certificateFiles } from "@/content/media";
 import { asset } from "@/content/paths";
 
 const MAX_TILT = 8;
+const CARD_CONTROLS =
+  'a, button, input, textarea, select, option, label, summary, [role="button"], [role="link"], [contenteditable]:not([contenteditable="false"]), [data-card-control]';
 const typeIcons: Readonly<Record<CardType, LucideIcon>> = {
   systems: BriefcaseBusiness,
   education: BookOpen,
@@ -72,6 +75,18 @@ export default function TradingCard({
   const rootRef = useRef<HTMLDivElement>(null);
   const frontButton = useRef<HTMLButtonElement>(null);
   const backButton = useRef<HTMLButtonElement>(null);
+  const focusFrame = useRef<number | null>(null);
+  const blockedClickUntil = useRef(0);
+  const gesture = useRef<{
+    pointer: number;
+    x: number;
+    y: number;
+    moved: boolean;
+    track: HTMLElement | null;
+    trackLeft: number;
+    body: HTMLElement | null;
+    bodyTop: number;
+  } | null>(null);
   const nameId = useId();
   const type = cardTypes[card.type];
   const TypeIcon = typeIcons[card.type];
@@ -93,7 +108,50 @@ export default function TradingCard({
   const washMask = useMotionTemplate`radial-gradient(farthest-corner circle at ${pointerX}% ${pointerY}%, #000 0%, rgba(0,0,0,0.35) 32%, transparent 64%)`;
   const glare = useMotionTemplate`radial-gradient(circle at ${pointerX}% ${pointerY}%, rgba(255,255,255,0.55), rgba(255,255,255,0.08) 34%, transparent 62%)`;
 
+  useEffect(
+    () => () => {
+      if (focusFrame.current !== null) cancelAnimationFrame(focusFrame.current);
+    },
+    [],
+  );
+
+  function beginGesture(event: PointerEvent<HTMLDivElement>) {
+    blockedClickUntil.current = 0;
+    gesture.current = null;
+    if (!event.isPrimary || event.button !== 0) return;
+    const target = event.target as Element;
+    if (target.closest(CARD_CONTROLS)) return;
+    const track = event.currentTarget.closest<HTMLElement>("[data-deck-track]");
+    const body = target.closest<HTMLElement>(".tcg-back-body");
+    gesture.current = {
+      pointer: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      moved: false,
+      track,
+      trackLeft: track?.scrollLeft ?? 0,
+      body,
+      bodyTop: body?.scrollTop ?? 0,
+    };
+  }
+  function endGesture(event: PointerEvent<HTMLDivElement>, cancelled = false) {
+    const current = gesture.current;
+    if (!current || current.pointer !== event.pointerId) return;
+    if (
+      cancelled ||
+      current.moved ||
+      Math.hypot(event.clientX - current.x, event.clientY - current.y) > 7 ||
+      Math.abs((current.track?.scrollLeft ?? 0) - current.trackLeft) > 2 ||
+      Math.abs((current.body?.scrollTop ?? 0) - current.bodyTop) > 2
+    )
+      blockedClickUntil.current = performance.now() + 500;
+    gesture.current = null;
+  }
   function track(event: PointerEvent<HTMLDivElement>) {
+    const current = gesture.current;
+    if (current?.pointer === event.pointerId)
+      current.moved ||=
+        Math.hypot(event.clientX - current.x, event.clientY - current.y) > 7;
     if (reduced || flipped || event.pointerType !== "mouse") return;
     // Measure the untransformed wrapper so the tilt never feeds back into itself.
     const box = event.currentTarget.getBoundingClientRect();
@@ -117,16 +175,29 @@ export default function TradingCard({
     onFlipChange?.(card.id, next);
     settle();
     // The face that held focus becomes inert, so hand focus to the other side.
+    if (focusFrame.current !== null) cancelAnimationFrame(focusFrame.current);
     if (hadFocus)
-      requestAnimationFrame(() =>
-        (next ? backButton : frontButton).current?.focus({
-          preventScroll: true,
-        }),
-      );
+      focusFrame.current = requestAnimationFrame(() => {
+        focusFrame.current = null;
+        const button = (next ? backButton : frontButton).current;
+        if (!button?.closest('[hidden], [inert], [aria-hidden="true"]'))
+          button?.focus({ preventScroll: true });
+      });
   }
   function flipFromFace(event: MouseEvent<HTMLElement>) {
-    if ((event.target as Element).closest("a, button, .tcg-back-body")) return;
-    if (window.getSelection()?.toString()) return;
+    if (
+      (event.target as Element).closest(CARD_CONTROLS) ||
+      performance.now() < blockedClickUntil.current ||
+      gesture.current?.moved
+    )
+      return;
+    const selection = window.getSelection();
+    if (
+      selection?.toString() &&
+      (rootRef.current?.contains(selection.anchorNode) ||
+        rootRef.current?.contains(selection.focusNode))
+    )
+      return;
     flip();
   }
 
@@ -139,8 +210,14 @@ export default function TradingCard({
       className="tcg-card"
       data-type={card.type}
       data-flipped={flipped}
+      onPointerDownCapture={beginGesture}
       onPointerMove={track}
-      onPointerLeave={settle}
+      onPointerUpCapture={(event) => endGesture(event)}
+      onPointerCancelCapture={(event) => endGesture(event, true)}
+      onPointerLeave={() => {
+        settle();
+        if (gesture.current) gesture.current.moved = true;
+      }}
     >
       <motion.div className="tcg-tilt" style={{ rotateX, rotateY, scale }}>
         <motion.div
@@ -198,7 +275,9 @@ export default function TradingCard({
 
               <div
                 className="tcg-picture"
-                data-tone={card.logo?.dark ? "dark" : "light"}
+                data-tone={
+                  (card.logo ? card.logo.dark : card.stealth) ? "dark" : "light"
+                }
               >
                 {card.logo ? (
                   <img
@@ -209,9 +288,15 @@ export default function TradingCard({
                     draggable={false}
                   />
                 ) : card.stealth ? (
-                  <span className="tcg-placeholder">
-                    <EyeOff size={30} strokeWidth={1.8} aria-hidden="true" />
-                    In stealth mode
+                  <span
+                    className="tcg-stealth-wordmark"
+                    role="img"
+                    aria-label="Stealth Startup — generic typographic mark; company name withheld"
+                  >
+                    <EyeOff size={32} strokeWidth={1.5} aria-hidden="true" />
+                    <span aria-hidden="true">
+                      stealth<span>startup</span>
+                    </span>
                   </span>
                 ) : (
                   <span className="tcg-placeholder">

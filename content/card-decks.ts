@@ -26,11 +26,18 @@ export type CardMove = { name: string; text: string };
 // Official logos, saved locally under public/images/logos from the source noted
 // above each entry. A logo drawn for dark backgrounds sets `dark` so its panel
 // switches colour. Student groups can use the identified parent organisation's
-// official mark. Stealth Startup has no public brand to show.
+// official mark. Stealth Startup uses its public LinkedIn listing’s logo.
 type Logo = { file: string; dark?: boolean; alt?: string };
 const logos: Readonly<Record<string, Logo>> = {
   // https://caerusgm.com/
   caerus: { file: "images/logos/caerus.webp" },
+  // Linked from Ian’s Product Engineer entry: https://www.linkedin.com/company/18583501/
+  // Canonical page: https://www.linkedin.com/company/stealth-startup-community/
+  // LinkedIn image D4D0BAQGUKsfjHB8RNQ, saved without redrawing or changing pixels.
+  "stealth-startup": {
+    file: "images/logos/stealth-startup.webp",
+    alt: "Stealth Startup LinkedIn logo",
+  },
   // https://www.ctes.com.sg/web/site/home
   ctes: { file: "images/logos/ctes.webp" },
   // https://commons.wikimedia.org/wiki/File:Accenture.svg
@@ -103,7 +110,7 @@ type CardDetails = {
   type: CardType;
   title: string;
   logo?: string;
-  // No public brand to show, so the picture panel says so instead.
+  // Keep the operating company private while using its public LinkedIn listing.
   stealth?: boolean;
   moves: readonly CardMove[];
   location?: string;
@@ -157,6 +164,7 @@ const details: Readonly<Record<string, CardDetails>> = {
   "Stealth Startup": {
     type: "systems",
     title: "Product Engineer Intern",
+    logo: "stealth-startup",
     stealth: true,
     moves: [
       move(
