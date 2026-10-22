@@ -3,6 +3,7 @@
 import {
   AnimatePresence,
   motion,
+  useIsPresent,
   useMotionTemplate,
   useMotionValue,
   useSpring,
@@ -148,7 +149,10 @@ const sheen: Variants = {
   rest: { x: "-130%", transition: { duration: 0 } },
   hover: { x: "330%", transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] } },
 };
-const sparks = Array.from({ length: 10 }, (_, index) => (index / 10) * 2 * Math.PI);
+const sparks = Array.from(
+  { length: 10 },
+  (_, index) => (index / 10) * 2 * Math.PI,
+);
 
 // Bell-like arpeggios pitched by tier, with gold ringing highest.
 const chimes: Readonly<Record<TrophyTier, readonly number[]>> = {
@@ -203,7 +207,7 @@ function Rarity({ stars }: { stars: Trophy["stars"] }) {
     <span className="inline-flex items-center gap-1.5">
       <span aria-hidden="true">
         {"★".repeat(stars)}
-        <span className="opacity-40">{"☆".repeat(5 - stars)}</span>
+        <span className="opacity-55">{"☆".repeat(5 - stars)}</span>
       </span>
       {rarity[stars]}
       <span className="sr-only">({stars} of 5 stars)</span>
@@ -264,12 +268,15 @@ function TrophyCard({
   tilt,
   onInspect,
   buttonRef,
+  ref,
 }: {
   trophy: Trophy;
   tilt: boolean;
   onInspect: (trophy: Trophy) => void;
   buttonRef: Ref<HTMLButtonElement>;
+  ref?: Ref<HTMLLIElement>;
 }) {
+  const present = useIsPresent();
   const leanX = useMotionValue(0);
   const leanY = useMotionValue(0);
   const rotateX = useSpring(leanX, { stiffness: 260, damping: 22 });
@@ -279,6 +286,8 @@ function TrophyCard({
   const glare = useMotionTemplate`radial-gradient(circle at ${glareX}% ${glareY}%, rgb(255 255 255 / 0.5), transparent 55%)`;
   const tier = tiers[trophy.tier];
 
+  // The list item tracks the pointer because it never moves; tracking the
+  // tilting card would let its edge slip out from under the pointer.
   function lean(event: PointerEvent<HTMLElement>) {
     if (!tilt || event.pointerType !== "mouse") return;
     const box = event.currentTarget.getBoundingClientRect();
@@ -300,81 +309,100 @@ function TrophyCard({
   }
 
   return (
-    <motion.article
-      layoutId={`trophy-${trophy.id}`}
-      variants={{ rest: { y: 0 }, hover: { y: -4 } }}
-      initial="rest"
+    // Filtered-out cards linger, invisible, until their layout settles; inert
+    // drops them from the tab order and lets clicks reach the cards beneath.
+    <motion.li
+      ref={ref}
+      inert={!present}
+      className="h-full"
+      variants={{ rest: { opacity: 1 }, hover: { opacity: 1 } }}
+      initial={{ opacity: 0 }}
       animate="rest"
       whileHover="hover"
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
       onPointerMove={lean}
       onPointerLeave={settle}
-      style={{ rotateX, rotateY, transformPerspective: 900, borderRadius: 12 }}
-      className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white/70 p-5 shadow-[0_1px_2px_rgb(0_0_0/0.05)] backdrop-blur-md transition-shadow duration-300 hover:shadow-[0_26px_50px_-30px_rgb(6_78_59/0.6)] dark:border-zinc-800 dark:bg-zinc-900/60"
     >
-      {tilt ? (
-        <motion.span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-10 opacity-0 mix-blend-soft-light transition-opacity duration-300 group-hover:opacity-100"
-          style={{ backgroundImage: glare }}
-        />
-      ) : null}
-      <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] font-semibold tracking-[0.12em] uppercase">
-        <span className={`rounded-full border px-2.5 py-1 ${tier.pill}`}>
-          <Rarity stars={trophy.stars} />
-        </span>
-        <span className="rounded-full bg-zinc-900 px-2.5 py-1 text-lime-200 dark:bg-lime-200 dark:text-zinc-900">
-          +{trophy.xp} XP
-        </span>
-      </div>
-      <div className="relative mt-4 grid h-36 place-items-center overflow-hidden rounded-lg border border-zinc-200/80 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/50">
-        <span aria-hidden="true" className="paper-grid absolute inset-0" />
-        <span
-          aria-hidden="true"
-          className={`absolute inset-0 bg-radial ${tier.spot} to-transparent to-70%`}
-        />
-        <span
-          aria-hidden="true"
-          className="absolute bottom-5 h-2.5 w-20 rounded-[50%] bg-zinc-900/20 blur-[3px] dark:bg-black/60"
-        />
-        <motion.div layoutId={`trophy-medal-${trophy.id}`}>
-          <motion.div
-            variants={{ rest: { y: 0, rotate: 0 }, hover: { y: -6, rotate: -5 } }}
-          >
-            <Medallion trophy={trophy} />
+      <motion.article
+        layoutId={`trophy-${trophy.id}`}
+        style={{
+          rotateX,
+          rotateY,
+          transformPerspective: 900,
+          borderRadius: 12,
+        }}
+        className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white/70 p-5 shadow-[0_1px_2px_rgb(0_0_0/0.05)] backdrop-blur-md transition-shadow duration-300 hover:shadow-[0_26px_50px_-30px_rgb(6_78_59/0.6)] dark:border-zinc-800 dark:bg-zinc-900/60"
+      >
+        {/* Below the text (-z-10 within the card) so the glare never washes it out. */}
+        {tilt ? (
+          <motion.span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 -z-10 opacity-0 mix-blend-soft-light transition-opacity duration-300 group-hover:opacity-100"
+            style={{ backgroundImage: glare }}
+          />
+        ) : null}
+        <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] font-semibold tracking-[0.12em] uppercase">
+          <span className={`rounded-full border px-2.5 py-1 ${tier.pill}`}>
+            <Rarity stars={trophy.stars} />
+          </span>
+          <span className="rounded-full bg-zinc-900 px-2.5 py-1 text-lime-200 dark:bg-lime-200 dark:text-zinc-900">
+            +{trophy.xp} XP
+          </span>
+        </div>
+        <div className="relative mt-4 grid h-36 place-items-center overflow-hidden rounded-lg border border-zinc-200/80 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/50">
+          <span aria-hidden="true" className="paper-grid absolute inset-0" />
+          <span
+            aria-hidden="true"
+            className={`absolute inset-0 bg-radial ${tier.spot} to-transparent to-70%`}
+          />
+          <span
+            aria-hidden="true"
+            className="absolute bottom-5 h-2.5 w-20 rounded-[50%] bg-zinc-900/20 blur-[3px] dark:bg-black/60"
+          />
+          <motion.div layoutId={`trophy-medal-${trophy.id}`}>
+            <motion.div
+              variants={{
+                rest: { y: 0, rotate: 0 },
+                hover: { y: -6, rotate: -5 },
+              }}
+            >
+              <Medallion trophy={trophy} />
+            </motion.div>
           </motion.div>
-        </motion.div>
-      </div>
-      <h3 className="mt-4 text-[17px] leading-snug font-semibold tracking-[-0.01em] text-zinc-900 dark:text-zinc-50">
-        {trophy.name}
-      </h3>
-      <p className="mt-1 text-[13px] leading-relaxed text-zinc-500 dark:text-zinc-400">
-        {trophy.issuer}
-        {trophy.year ? ` · ${trophy.year}` : null}
-      </p>
-      <p className="mt-3 flex">
-        <Placement trophy={trophy} />
-      </p>
-      <p className="mt-3 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
-        <span className="font-mono text-[10px] font-semibold tracking-[0.12em] text-zinc-500 uppercase dark:text-zinc-400">
-          {trophy.built ? "Built:" : "Record:"}
-        </span>{" "}
-        {trophy.built ?? trophy.record}
-      </p>
-      <div className="mt-auto pt-5">
-        {/* The ::after layer stretches this button over the card, so a click
+        </div>
+        <h3 className="mt-4 text-[17px] leading-snug font-semibold tracking-[-0.01em] text-zinc-900 dark:text-zinc-50">
+          {trophy.name}
+        </h3>
+        <p className="mt-1 text-[13px] leading-relaxed text-zinc-500 dark:text-zinc-400">
+          {trophy.issuer}
+          {trophy.year ? ` · ${trophy.year}` : null}
+        </p>
+        <p className="mt-3 flex">
+          <Placement trophy={trophy} />
+        </p>
+        <p className="mt-3 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
+          <span className="font-mono text-[10px] font-semibold tracking-[0.12em] text-zinc-500 uppercase dark:text-zinc-400">
+            {trophy.built ? "Built:" : "Record:"}
+          </span>{" "}
+          {trophy.built ?? trophy.record}
+        </p>
+        <div className="mt-auto pt-5">
+          {/* The ::after layer stretches this button over the card, so a click
             anywhere on the trophy inspects it. */}
-        <button
-          ref={buttonRef}
-          type="button"
-          aria-haspopup="dialog"
-          onClick={inspect}
-          className="flex min-h-11 w-full items-center justify-center rounded-lg border border-zinc-300 bg-zinc-50/80 px-3 font-mono text-[11px] font-semibold tracking-[0.1em] text-zinc-700 uppercase transition-colors group-hover:border-emerald-800 group-hover:bg-emerald-800 group-hover:text-white after:absolute after:inset-0 after:content-[''] dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-200 dark:group-hover:border-emerald-300 dark:group-hover:bg-emerald-300 dark:group-hover:text-emerald-950"
-        >
-          <span aria-hidden="true">[ Inspect Achievement ↳ ]</span>
-          <span className="sr-only">Inspect achievement: {trophy.name}</span>
-        </button>
-      </div>
-    </motion.article>
+          <button
+            ref={buttonRef}
+            type="button"
+            aria-haspopup="dialog"
+            onClick={inspect}
+            className="flex min-h-11 w-full items-center justify-center rounded-lg border border-zinc-300 bg-zinc-50/80 px-3 font-mono text-[11px] font-semibold tracking-[0.1em] text-zinc-700 uppercase transition-colors group-hover:border-emerald-800 group-hover:bg-emerald-800 group-hover:text-white after:absolute after:inset-0 after:content-[''] dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-200 dark:group-hover:border-emerald-300 dark:group-hover:bg-emerald-300 dark:group-hover:text-emerald-950"
+          >
+            <span aria-hidden="true">[ Inspect Achievement ↳ ]</span>
+            <span className="sr-only">Inspect achievement: {trophy.name}</span>
+          </button>
+        </div>
+      </motion.article>
+    </motion.li>
   );
 }
 
@@ -382,14 +410,18 @@ function TrophyDialog({
   trophy,
   reduced,
   onClose,
+  onLeave,
   onRemoved,
 }: {
   trophy: Trophy;
   reduced: boolean;
   onClose: () => void;
+  onLeave: () => void;
   onRemoved: (id: string) => void;
 }) {
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const pressedBackdrop = useRef(false);
   const prefix = useId();
   const tier = tiers[trophy.tier];
   const points = trophy.strategy ?? trophy.notes ?? [];
@@ -399,23 +431,40 @@ function TrophyDialog({
 
   // Open as a modal during commit, before Framer measures the shared layout.
   const show = useCallback((dialog: HTMLDialogElement | null) => {
+    dialogRef.current = dialog;
     if (!dialog || dialog.open) return;
     dialog.showModal();
     closeRef.current?.focus({ preventScroll: true });
   }, []);
 
   useEffect(() => {
-    const { body, documentElement: html } = document;
-    const previous = [body.style.overflow, html.style.overflow] as const;
+    // Lock <body> alone. Its overflow passes to the viewport, while locking
+    // <html> too would make <body> a scroller and unpin the sticky site header.
+    const { body } = document;
+    const previous = body.style.overflow;
     body.style.overflow = "hidden";
-    html.style.overflow = "hidden";
     return () => {
-      body.style.overflow = previous[0];
-      html.style.overflow = previous[1];
+      body.style.overflow = previous;
       // Runs after the dialog leaves the page, once its opener is focusable.
       onRemoved(trophy.id);
     };
   }, [onRemoved, trophy.id]);
+
+  useEffect(() => {
+    // Back or Forward hides the Awards tab around the open modal, leaving the
+    // page inert with nothing visible to dismiss. Leave at once: an exit
+    // animation can't finish inside a hidden tab.
+    const leave = () => {
+      dialogRef.current?.close();
+      onLeave();
+    };
+    window.addEventListener("hashchange", leave);
+    window.addEventListener("popstate", leave);
+    return () => {
+      window.removeEventListener("hashchange", leave);
+      window.removeEventListener("popstate", leave);
+    };
+  }, [onLeave]);
 
   function keys(event: KeyboardEvent<HTMLDialogElement>) {
     if (event.key !== "Escape") return;
@@ -426,6 +475,7 @@ function TrophyDialog({
   return (
     <dialog
       ref={show}
+      tabIndex={-1}
       aria-labelledby={`${prefix}-title`}
       onKeyDown={keys}
       onCancel={(event) => {
@@ -443,10 +493,16 @@ function TrophyDialog({
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
       />
+      {/* Closes only when the press starts on the backdrop too, so a text
+          selection dragged past the panel's edge doesn't dismiss it. */}
       <div
         className="relative flex min-h-full items-end justify-center p-3 sm:items-center sm:p-8"
+        onPointerDown={(event) => {
+          pressedBackdrop.current = event.target === event.currentTarget;
+        }}
         onClick={(event) => {
-          if (event.target === event.currentTarget) onClose();
+          if (pressedBackdrop.current && event.target === event.currentTarget)
+            onClose();
         }}
       >
         <motion.article
@@ -454,8 +510,21 @@ function TrophyDialog({
           initial="rest"
           animate="hover"
           style={{ borderRadius: 16 }}
-          className="relative w-full max-w-2xl overflow-hidden border border-zinc-200 bg-white text-zinc-900 shadow-[0_40px_80px_-30px_rgb(0_0_0/0.6)] dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50"
+          className="relative w-full max-w-2xl overflow-clip border border-zinc-200 bg-white text-zinc-900 shadow-[0_40px_80px_-30px_rgb(0_0_0/0.6)] dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50"
         >
+          {/* Sticky (overflow-clip above isn't a scroller), so a long dialog
+              on a phone keeps its close button in reach. */}
+          <div className="pointer-events-none sticky top-0 z-20 flex h-0 justify-end">
+            <button
+              ref={closeRef}
+              type="button"
+              onClick={onClose}
+              aria-label="Close achievement"
+              className="pointer-events-auto mt-3 mr-3 grid size-11 shrink-0 place-items-center rounded-full bg-white/80 text-zinc-600 backdrop-blur transition-colors hover:bg-zinc-200 hover:text-zinc-900 dark:bg-zinc-900/80 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+            >
+              <X aria-hidden="true" size={18} />
+            </button>
+          </div>
           <motion.header
             layout
             className="relative flex flex-col gap-5 border-b border-zinc-200 bg-zinc-50/90 p-5 sm:flex-row sm:items-center sm:p-6 dark:border-zinc-800 dark:bg-zinc-950/50"
@@ -479,7 +548,11 @@ function TrophyDialog({
                         opacity: [0, 1, 0],
                         scale: [0.6, 1.2, 0.4],
                       }}
-                      transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+                      transition={{
+                        duration: 0.8,
+                        delay: 0.2,
+                        ease: "easeOut",
+                      }}
                     />
                   ))}
               <motion.div layoutId={`trophy-medal-${trophy.id}`}>
@@ -487,7 +560,7 @@ function TrophyDialog({
               </motion.div>
             </div>
             <div className="relative min-w-0 sm:pr-10">
-              <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-emerald-700 uppercase dark:text-emerald-300">
+              <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-emerald-800 uppercase dark:text-emerald-300">
                 Achievement unlocked · +{trophy.xp} XP
               </p>
               <h2
@@ -496,7 +569,7 @@ function TrophyDialog({
               >
                 {trophy.title}
               </h2>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                 {trophy.issuer}
                 {trophy.year ? ` · ${trophy.year}` : null}
               </p>
@@ -509,21 +582,15 @@ function TrophyDialog({
                 </span>
               </div>
             </div>
-            <button
-              ref={closeRef}
-              type="button"
-              onClick={onClose}
-              aria-label="Close achievement"
-              className="absolute top-3 right-3 grid size-11 place-items-center rounded-full text-zinc-500 transition-colors hover:bg-zinc-200/70 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
-            >
-              <X aria-hidden="true" size={18} />
-            </button>
           </motion.header>
           <motion.div
             layout
             className="space-y-6 p-5 sm:p-6"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: { delay: 0.12, duration: 0.25 } }}
+            animate={{
+              opacity: 1,
+              transition: { delay: 0.12, duration: 0.25 },
+            }}
             exit={{ opacity: 0, transition: { duration: 0.1 } }}
           >
             {points.length ? (
@@ -532,7 +599,11 @@ function TrophyDialog({
                   id={`${prefix}-points`}
                   className="font-mono text-[11px] font-semibold tracking-[0.14em] text-zinc-500 uppercase dark:text-zinc-400"
                 >
-                  {trophy.strategy ? "The Winning Strategy" : "The Record"}
+                  {trophy.strategy
+                    ? trophy.place
+                      ? "The Winning Strategy"
+                      : "The Build"
+                    : "The Record"}
                 </h3>
                 <ul className="mt-3 space-y-3">
                   {points.map((point) => (
@@ -570,41 +641,53 @@ function TrophyDialog({
                 </ul>
               </section>
             ) : null}
-            <div className="flex flex-col gap-3 border-t border-zinc-200 pt-5 sm:flex-row sm:flex-wrap sm:items-center dark:border-zinc-800">
-              {trophy.source ? (
-                <a
-                  href={trophy.source.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex min-h-11 items-center justify-center rounded-lg bg-emerald-800 px-4 font-mono text-[12px] font-semibold tracking-[0.08em] text-white uppercase transition-colors hover:bg-emerald-900 dark:bg-emerald-300 dark:text-emerald-950 dark:hover:bg-emerald-200"
-                >
-                  <span aria-hidden="true">[ ↗︎&nbsp;</span>
-                  Explore Source Code
-                  <span aria-hidden="true">&nbsp;]</span>
-                  <span className="sr-only">, opens in a new tab</span>
-                </a>
-              ) : null}
-              {certificates.map((file) => (
-                <a
-                  key={file.src}
-                  href={asset(file.src)}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={`${file.title} — view certificate, opens in a new tab`}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-zinc-300 px-4 text-[13px] font-semibold text-zinc-700 transition-colors hover:border-emerald-700 hover:text-emerald-800 dark:border-zinc-700 dark:text-zinc-200 dark:hover:border-emerald-300 dark:hover:text-emerald-200"
-                >
-                  {certificates.length > 1
-                    ? `${file.title.match(/\b(?:19|20)\d{2}\b/)?.[0] ?? "View"} certificate`
-                    : "View certificate"}
-                  <ArrowUpRight aria-hidden="true" size={15} />
-                </a>
-              ))}
-              {trophy.source?.label ? (
-                <p className="font-mono text-[10px] tracking-[0.12em] text-zinc-500 uppercase sm:ml-auto dark:text-zinc-400">
-                  {trophy.source.label}
-                </p>
-              ) : null}
-            </div>
+            {trophy.source || certificates.length ? (
+              <div className="flex flex-col gap-3 border-t border-zinc-200 pt-5 sm:flex-row sm:flex-wrap sm:items-center dark:border-zinc-800">
+                {trophy.source ? (
+                  <a
+                    href={trophy.source.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-11 items-center justify-center rounded-lg bg-emerald-800 px-4 font-mono text-[12px] font-semibold tracking-[0.08em] text-white uppercase transition-colors hover:bg-emerald-900 dark:bg-emerald-300 dark:text-emerald-950 dark:hover:bg-emerald-200"
+                  >
+                    <span aria-hidden="true">[ ↗︎&nbsp;</span>
+                    Explore Source Code
+                    <span aria-hidden="true">&nbsp;]</span>
+                    <span className="sr-only">
+                      {trophy.source.label ? ` (${trophy.source.label})` : ""},
+                      opens in a new tab
+                    </span>
+                  </a>
+                ) : null}
+                {certificates.map((file) => {
+                  const label =
+                    certificates.length > 1
+                      ? `${file.title.match(/\b(?:19|20)\d{2}\b/)?.[0] ?? "View"} certificate`
+                      : "View certificate";
+                  return (
+                    <a
+                      key={file.src}
+                      href={asset(file.src)}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`${label}: ${file.title}, opens in a new tab`}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-zinc-300 px-4 text-[13px] font-semibold text-zinc-700 transition-colors hover:border-emerald-700 hover:text-emerald-800 dark:border-zinc-700 dark:text-zinc-200 dark:hover:border-emerald-300 dark:hover:text-emerald-200"
+                    >
+                      {label}
+                      <ArrowUpRight aria-hidden="true" size={15} />
+                    </a>
+                  );
+                })}
+                {trophy.source?.label ? (
+                  <p
+                    aria-hidden="true"
+                    className="font-mono text-[10px] tracking-[0.12em] text-zinc-500 uppercase sm:ml-auto dark:text-zinc-400"
+                  >
+                    {trophy.source.label}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </motion.div>
         </motion.article>
       </div>
@@ -618,6 +701,7 @@ function TrophyRoom() {
   const [sound, setSound] = useState(true);
   const reduced = useMotionPreference();
   const buttons = useRef(new Map<string, HTMLButtonElement>());
+  const sectionRef = useRef<HTMLElement>(null);
   const prefix = useId();
   const { unlocked, total, xp, rank } = trophyStats;
   const visible = trophies.filter(
@@ -627,11 +711,46 @@ function TrophyRoom() {
     (id: string) => buttons.current.get(id)?.focus({ preventScroll: true }),
     [],
   );
+  // A new key remounts the dialog's AnimatePresence, removing the dialog
+  // without waiting for an exit animation.
+  const [presence, setPresence] = useState(0);
+  const leaveDialog = useCallback(() => {
+    setActive(undefined);
+    setPresence((count) => count + 1);
+  }, []);
 
   useEffect(() => {
     try {
       setSound(localStorage.getItem(soundKey) !== "off");
     } catch {}
+  }, []);
+
+  // Links to the retired Competitions and Government sub-tabs pick the
+  // matching filter. It waits until the Awards tab is showing: Framer measures
+  // the cards on every filter change, and a hidden grid measures as zero-size.
+  useEffect(() => {
+    const hashFilters: Readonly<Record<string, FilterId>> = {
+      "#competitions": "all",
+      "#government": "national",
+    };
+    let frame = 0;
+    const sync = () => {
+      const next = hashFilters[window.location.hash.toLowerCase()];
+      cancelAnimationFrame(frame);
+      if (!next) return;
+      let attempts = 60;
+      const apply = () => {
+        if (sectionRef.current?.getClientRects().length) setFilter(next);
+        else if (--attempts > 0) frame = requestAnimationFrame(apply);
+      };
+      apply();
+    };
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("hashchange", sync);
+    };
   }, []);
 
   function inspect(trophy: Trophy) {
@@ -647,7 +766,7 @@ function TrophyRoom() {
   }
 
   return (
-    <section aria-labelledby={`${prefix}-title`}>
+    <section ref={sectionRef} aria-labelledby={`${prefix}-title`}>
       <header className="relative overflow-hidden rounded-xl border border-emerald-950 bg-[#0c1f18] px-4 py-3.5 font-mono text-[11px] tracking-[0.12em] text-emerald-100/75 uppercase shadow-[0_18px_40px_-28px_rgb(6_78_59/0.8)] sm:px-5">
         <span
           aria-hidden="true"
@@ -656,13 +775,16 @@ function TrophyRoom() {
         <div className="relative flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
           <h2 id={`${prefix}-title`} className="font-semibold text-lime-200">
             <span className="sr-only">Trophy Room: Hall of Fame</span>
-            <span aria-hidden="true" className="flex items-center gap-2">
-              <span>[</span>
-              <TrophyGlyph size={14} />
-              Trophy Room
+            <span
+              aria-hidden="true"
+              className="flex flex-wrap items-center gap-x-2 gap-y-1"
+            >
+              <span className="flex items-center gap-2">
+                [<TrophyGlyph size={14} />
+                Trophy Room
+              </span>
               <span className="text-lime-200/45">//</span>
-              Hall of Fame
-              <span>]</span>
+              <span>Hall of Fame&nbsp;]</span>
             </span>
           </h2>
           <dl className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-2.5">
@@ -695,54 +817,56 @@ function TrophyRoom() {
           />
         </div>
       </header>
-      <div
-        role="group"
-        aria-label="Filter trophies"
-        className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center"
-      >
-        {filters.map((item) => {
-          const selected = filter === item.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              aria-pressed={selected}
-              onClick={() => setFilter(item.id)}
-              className={`relative flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 py-2 font-mono text-[11px] font-semibold tracking-[0.04em] uppercase transition-colors sm:tracking-[0.08em] ${
-                selected
-                  ? "border-emerald-800 text-white dark:border-emerald-300 dark:text-emerald-950"
-                  : "border-zinc-200 bg-white/70 text-zinc-600 hover:border-emerald-700/50 hover:text-emerald-800 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-300 dark:hover:border-emerald-300/50 dark:hover:text-emerald-200"
-              }`}
-            >
-              {selected ? (
-                <motion.span
-                  layoutId={`${prefix}-filter`}
-                  className="absolute -inset-px bg-emerald-800 dark:bg-emerald-300"
-                  style={{ borderRadius: 8 }}
-                />
-              ) : null}
-              <span className="relative">
-                <span aria-hidden="true">[&nbsp;</span>
-                {item.label}
-                <span aria-hidden="true">&nbsp;]</span>
-              </span>
-              <span
-                className={`relative rounded px-1.5 py-0.5 text-[10px] ${
+      <div className="mt-3 flex flex-col gap-2 lg:flex-row lg:items-center">
+        <div
+          role="group"
+          aria-label="Filter trophies"
+          className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:flex lg:flex-wrap"
+        >
+          {filters.map((item) => {
+            const selected = filter === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => setFilter(item.id)}
+                className={`relative flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 py-2 font-mono text-[11px] font-semibold tracking-[0.04em] uppercase transition-colors sm:tracking-[0.08em] ${
                   selected
-                    ? "bg-lime-200 text-emerald-950"
-                    : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                    ? "border-emerald-800 text-white forced-colors:border-[Highlight] dark:border-emerald-300 dark:text-emerald-950"
+                    : "border-zinc-200 bg-white/70 text-zinc-600 hover:border-emerald-700/50 hover:text-emerald-800 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-300 dark:hover:border-emerald-300/50 dark:hover:text-emerald-200"
                 }`}
               >
-                {trophies.filter(item.matches).length}
-              </span>
-            </button>
-          );
-        })}
+                {selected ? (
+                  <motion.span
+                    layoutId={`${prefix}-filter`}
+                    className="absolute -inset-px bg-emerald-800 dark:bg-emerald-300"
+                    style={{ borderRadius: 8 }}
+                  />
+                ) : null}
+                <span className="relative">
+                  <span aria-hidden="true">[&nbsp;</span>
+                  {item.label}
+                  <span aria-hidden="true">&nbsp;]</span>
+                </span>
+                <span
+                  className={`relative rounded px-1.5 py-0.5 text-[10px] ${
+                    selected
+                      ? "bg-lime-200 text-emerald-950"
+                      : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                  }`}
+                >
+                  {trophies.filter(item.matches).length}
+                </span>
+              </button>
+            );
+          })}
+        </div>
         <button
           type="button"
           aria-pressed={sound}
           onClick={toggleSound}
-          className="col-span-2 flex min-h-11 items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-300 px-3 font-mono text-[11px] tracking-[0.08em] text-zinc-500 uppercase transition-colors hover:border-zinc-400 hover:text-zinc-800 sm:ml-auto dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-100"
+          className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-300 px-3 font-mono text-[11px] tracking-[0.08em] text-zinc-500 uppercase transition-colors hover:border-zinc-400 hover:text-zinc-800 sm:self-end lg:ml-auto lg:self-auto dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-100"
         >
           {sound ? (
             <Volume2 aria-hidden="true" size={15} />
@@ -768,37 +892,28 @@ function TrophyRoom() {
         <ul className="relative grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence mode="popLayout" initial={false}>
             {visible.map((trophy) => (
-              // Popped cards linger, invisible, until their layout settles, so
-              // they let clicks through to the cards reflowing beneath them.
-              <motion.li
+              <TrophyCard
                 key={trophy.id}
-                className="h-full"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1, pointerEvents: "auto" }}
-                exit={{ opacity: 0, pointerEvents: "none" }}
-                transition={{ duration: 0.2 }}
-              >
-                <TrophyCard
-                  trophy={trophy}
-                  tilt={!reduced}
-                  onInspect={inspect}
-                  buttonRef={(element) => {
-                    if (element) buttons.current.set(trophy.id, element);
-                    else buttons.current.delete(trophy.id);
-                  }}
-                />
-              </motion.li>
+                trophy={trophy}
+                tilt={!reduced}
+                onInspect={inspect}
+                buttonRef={(element) => {
+                  if (element) buttons.current.set(trophy.id, element);
+                  else buttons.current.delete(trophy.id);
+                }}
+              />
             ))}
           </AnimatePresence>
         </ul>
       </div>
-      <AnimatePresence>
+      <AnimatePresence key={presence}>
         {active ? (
           <TrophyDialog
             key={active.id}
             trophy={active}
             reduced={reduced}
             onClose={() => setActive(undefined)}
+            onLeave={leaveDialog}
             onRemoved={focusTrophy}
           />
         ) : null}

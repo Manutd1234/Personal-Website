@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { achievementGroups, certifications } from "@/content/portfolio";
 import { certificateFiles } from "@/content/media";
@@ -111,20 +111,39 @@ function AwardRecord({ record }: { record: CertificateRecord }) {
 function AwardsArchive() {
   const [filter, setFilter] = useState(awardSections[0].id);
   const prefix = useId();
+  const archiveRef = useRef<HTMLElement>(null);
   useEffect(() => {
+    let frame = 0;
     const syncHash = () => {
       const hash = window.location.hash.toLowerCase();
       const section = awardSections.find((item) => `#${item.id}` === hash);
-      if (section) setFilter(section.id);
+      if (!section) return;
+      setFilter(section.id);
+      // The archive sits below the Trophy Room. Once the Awards tab shows,
+      // wait one more frame for Portfolio's scroll-to-top, then reveal it.
+      cancelAnimationFrame(frame);
+      let attempts = 60;
+      const reveal = () => {
+        if (archiveRef.current?.getClientRects().length)
+          frame = requestAnimationFrame(() =>
+            archiveRef.current?.scrollIntoView({ block: "start" }),
+          );
+        else if (--attempts > 0) frame = requestAnimationFrame(reveal);
+      };
+      frame = requestAnimationFrame(reveal);
     };
     syncHash();
     window.addEventListener("hashchange", syncHash);
-    return () => window.removeEventListener("hashchange", syncHash);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("hashchange", syncHash);
+    };
   }, []);
   return (
     <div className="career-awards">
       <TrophyRoom />
       <section
+        ref={archiveRef}
         className="career-award-archive"
         aria-labelledby={`${prefix}-archive-title`}
       >
@@ -174,9 +193,7 @@ function AwardsArchive() {
                 </span>
                 <ChevronDown size={18} aria-hidden="true" />
               </summary>
-              <p className="career-group-description">
-                {section.description}
-              </p>
+              <p className="career-group-description">{section.description}</p>
               <div
                 className={`career-award-records${section.id === "certificates" ? " career-credential-records" : ""}`}
               >

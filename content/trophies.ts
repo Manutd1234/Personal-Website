@@ -1,11 +1,12 @@
-// Trophy Room records. Titles, issuers, results and certificates come from
-// achievementGroups in portfolio.ts; rarity and XP are a game layer on top.
-// Build strategies summarise each project's own README, and stacks and source
-// links reuse the project records, so nothing here adds unrecorded results.
+// Trophy Room records. Titles, issuers, years and certificates come from
+// achievementGroups in portfolio.ts, and placements restate each recorded
+// result for its badge; rarity and XP are a game layer on top. Build notes
+// summarise each project's README in team voice (they were team builds), and
+// stacks and source links reuse the project records.
 import { achievementGroups, projectArchive, projects } from "./portfolio";
 
 export type TrophyTier = "gold" | "silver" | "finalist" | "honor";
-export type TrophyIcon =
+type TrophyIcon =
   | "trophy"
   | "medal"
   | "award"
@@ -63,8 +64,8 @@ const competitionDetails: Readonly<Record<string, TrophyDetails>> = {
     project: "BrainHack TIL-AI",
     built: "Pandamonium (Multimodal AI)",
     strategy: [
-      "Ran speech, vision, retrieval, adversarial-noise and exploration models as five standalone Docker services for an air-gapped finals, where every scored task weighed inference speed alongside accuracy.",
-      "Paired NVIDIA Parakeet speech recognition and a YOLOv11 detector with BM25-first retrieval and a MaskablePPO explorer that falls back to BFS/A* search.",
+      "Team Pandamonium split the finals stack into five standalone Docker services (speech, vision, retrieval, adversarial noise and exploration) for an air-gapped run where every scored task weighed inference speed alongside accuracy.",
+      "The stack paired NVIDIA Parakeet speech recognition and a YOLOv11 detector with BM25-first retrieval and a MaskablePPO explorer that falls back to BFS/A* search.",
     ],
   },
   "Hack the Future AI Hackathon 2026": {
@@ -77,8 +78,8 @@ const competitionDetails: Readonly<Record<string, TrophyDetails>> = {
     project: "Agentic Fraud Investigation Crew",
     built: "Agentic Fraud Investigation Crew",
     strategy: [
-      "Chained four agents (triage, enrichment, adjudication and SAR drafting) to clear the 85–95% false-positive backlog, handing analysts a finished investigation instead of a raw alert.",
-      "Kept a human at the decision point: the SAR agent drafts but never files, and every escalation waits for approval through Teams and Power Automate.",
+      "The team chained four agents (triage, enrichment, adjudication and SAR drafting) to clear the 85–95% false-positive backlog, with a human approving every escalation through Teams and Power Automate.",
+      "My part: the synthetic, PII-free alert backlog the crew and its before/after scoreboard ran against, plus a five-rule risk-scoring engine (0–100 scores with plain-language reasons) wired into the operations dashboard.",
     ],
   },
   "SunnyHacks 2026": {
@@ -91,7 +92,7 @@ const competitionDetails: Readonly<Record<string, TrophyDetails>> = {
     notes: ["Placed 2nd at SunnyHacks in February 2026."],
   },
   "BügleRock Rockathon 2026": {
-    placement: "Top 5 Finalist",
+    placement: "Top 5 Finalist Team",
     tier: "finalist",
     icon: "award",
     stars: 3,
@@ -99,8 +100,8 @@ const competitionDetails: Readonly<Record<string, TrophyDetails>> = {
     project: "DealMachine",
     built: "DealMachine (Investment-banking AI)",
     strategy: [
-      "Split the platform into three Slack-connected modules: a Claude research analyst in Python, a Node.js and React document generator, and a Chart.js deal-pipeline dashboard.",
-      "Drafted engagement letters, teasers and information memoranda with Claude, then routed each draft through a Slack approval workflow.",
+      "The team split the platform into three Slack-connected modules: a Claude research analyst in Python, a Node.js and React document generator, and a Chart.js deal-pipeline dashboard.",
+      "Claude drafts engagement letters, teasers and information memoranda, and each draft is routed through a Slack approval workflow.",
     ],
   },
   "SignMeUp · The Merge Hackathon 2026": {
@@ -113,8 +114,8 @@ const competitionDetails: Readonly<Record<string, TrophyDetails>> = {
     project: "SignMeUp",
     built: "SignMeUp (Accessibility suite)",
     strategy: [
-      "Combined three assistive tools: a Gemini-powered wellness assistant, voice-first navigation with caregiver deviation alerts, and sign-language recognition.",
-      "Ran sign recognition entirely in the browser with MediaPipe and an LSTM, so users can train their own signs without sending video to the cloud.",
+      "The team combined three assistive tools: a Gemini-powered wellness assistant, voice-first navigation with caregiver deviation alerts, and sign-language recognition.",
+      "Sign recognition runs entirely in the browser with MediaPipe and an LSTM, so users can train their own signs without sending video to the cloud.",
     ],
   },
 };
@@ -165,6 +166,7 @@ const builds = [...projects, ...projectArchive];
 const slug = (title: string) =>
   title
     .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
@@ -178,7 +180,8 @@ function toTrophies(
   if (!group) throw new Error(`Trophy Room: missing group "${groupTitle}"`);
   return (group.items as readonly AwardRecord[]).map((record) => {
     const extra = details[record.title];
-    if (!extra) throw new Error(`Trophy Room: no details for "${record.title}"`);
+    if (!extra)
+      throw new Error(`Trophy Room: no details for "${record.title}"`);
     const { name, project: projectTitle, ...rest } = extra;
     const project = projectTitle
       ? builds.find((build) => build.title === projectTitle)
@@ -201,7 +204,9 @@ function toTrophies(
         rest.record ??
         (certificateKeys.length > 1
           ? `${certificateKeys.length} certificates on file`
-          : "Certificate on file"),
+          : certificateKeys.length
+            ? "Certificate on file"
+            : "On record"),
       stack: project?.tags ?? [],
       source: project
         ? { url: project.repository, label: project.repositoryLabel }
@@ -213,7 +218,11 @@ function toTrophies(
 // Competitions lead; within each kind, trophies run from most to least XP.
 export const trophies: readonly Trophy[] = [
   ...toTrophies("Technical competitions", "competition", competitionDetails),
-  ...toTrophies("Government awards & scholarships", "national", nationalDetails),
+  ...toTrophies(
+    "Government awards & scholarships",
+    "national",
+    nationalDetails,
+  ),
 ].sort(
   (a, b) =>
     Number(a.kind === "national") - Number(b.kind === "national") ||
