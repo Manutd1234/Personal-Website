@@ -49,7 +49,7 @@ content/card-decks.ts Trading-card layer (types, highlights, logos) over the car
 content/build-notes.ts Engineering case-study notes
 content/life-photos.ts Selected personal photo gallery
 content/paths.ts      Static-hosting asset path helper
-public/               Résumé, case study, photos, screenshots and certificates
+public/               Résumé, case study, photos, screenshots, certificates and organisation logos
 ```
 
 Professional details come from the supplied résumé and LinkedIn material. Repository URLs, original project screenshots, research output and team photographs are retained. Unverified running times, music preferences and personal anecdotes are not invented. Off-duty interactions use Ian’s existing hobbies.

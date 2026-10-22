@@ -23,14 +23,65 @@ export const cardTypes: Readonly<Record<CardType, { label: string }>> = {
 // Highlights condense real résumé bullets. Real results are marked **like this**.
 export type CardMove = { name: string; text: string };
 
-// Official logos, saved locally under public/images/logos. A logo drawn for
-// dark backgrounds sets `dark` so its panel switches colour.
+// Official logos, saved locally under public/images/logos from the source noted
+// above each entry. A logo drawn for dark backgrounds sets `dark` so its panel
+// switches colour. Cards without an entry show a placeholder: Stealth Startup
+// has no public brand, NUSSU VENtures has no current logo, and Eunoia Junior
+// College asks that its identity not be reproduced.
 type Logo = { file: string; dark?: boolean };
 const logos: Readonly<Record<string, Logo>> = {
-  // https://runnus.nussportsclub.org/ (2026 edition mark, drawn for dark backgrounds)
+  // https://caerusgm.com/
+  caerus: { file: "images/logos/caerus.webp" },
+  // https://www.ctes.com.sg/web/site/home
+  ctes: { file: "images/logos/ctes.webp" },
+  // https://commons.wikimedia.org/wiki/File:Accenture.svg
+  accenture: { file: "images/logos/accenture.webp" },
+  // https://www.da-strategies.com/
+  "d-a-strategies": { file: "images/logos/d-a-strategies.webp", dark: true },
+  // https://www.rsaf.gov.sg/about-us/vision-and-mission/
+  rsaf: { file: "images/logos/rsaf.webp" },
+  // https://en.wikipedia.org/wiki/File:Singapore_Army_logo.svg
+  "singapore-army": { file: "images/logos/singapore-army.webp" },
+  // https://en.wikipedia.org/wiki/File:NationalUniversityofSingapore.svg
+  nus: { file: "images/logos/nus.webp" },
+  // https://www.sst.edu.sg/about-sst/sst-identity/school-symbols/
+  sst: { file: "images/logos/sst.webp" },
+  // https://www.bukittimahpri.moe.edu.sg/school-info/our-vision-mission-and-motto
+  btps: { file: "images/logos/btps.webp" },
+  // https://nussif.com/
+  nussif: { file: "images/logos/nussif.webp" },
+  // https://linktr.ee/nusmedtech
+  pneurelief: { file: "images/logos/pneurelief.webp" },
+  // https://gdg.community.dev/gdg-on-campus-national-university-of-singapore-singapore-singapore/
+  "gdg-nus": { file: "images/logos/gdg-nus.webp" },
+  // https://fintechsociety.comp.nus.edu.sg/
+  "nus-fintech": { file: "images/logos/nus-fintech.webp" },
+  // https://nusgdg.org/
+  "nus-gamedev": { file: "images/logos/nus-gamedev.webp" },
+  // https://runnus.nussportsclub.org/
   runnus: { file: "images/logos/runnus.webp", dark: true },
-  // https://4s.org.sg/ (4S, formerly Sathya Sai Social Service, runs Tembusu Home)
+  // https://nusync.nus.edu.sg/NSSC/rsvp_boot?id=379717
+  sunnus: { file: "images/logos/sunnus.webp" },
+  // https://nusvcf.com/
+  "nus-vcf": { file: "images/logos/nus-vcf.webp" },
+  // https://nusync.nus.edu.sg/CSC/web_officers
+  "nus-csc": { file: "images/logos/nus-csc.webp" },
+  // https://nusrotaract.wixsite.com/rotaractclubofnus
+  "nus-rotaract": { file: "images/logos/nus-rotaract.webp" },
+  // https://youthcorps.nyc.gov.sg/
+  "youth-corps": { file: "images/logos/youth-corps.webp" },
+  // https://4s.org.sg/
   tembusu: { file: "images/logos/tembusu.webp" },
+  // https://care.sg/
+  "care-singapore": { file: "images/logos/care-singapore.webp" },
+  // https://www.minds.org.sg/
+  minds: { file: "images/logos/minds.webp" },
+  // https://willinghearts.org.sg/
+  "willing-hearts": { file: "images/logos/willing-hearts.webp" },
+  // https://www.ido.org.tw/
+  "dwen-an": { file: "images/logos/dwen-an.webp" },
+  // https://www.nparks.gov.sg/
+  nparks: { file: "images/logos/nparks.webp" },
 };
 
 type CardDetails = {
