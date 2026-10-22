@@ -116,16 +116,6 @@ export const lifePhotos: readonly LifePhoto[] = [
     height: 1067,
   },
   {
-    id: "notebook-evening",
-    category: "Learning",
-    alt: "Ian writing in an open notebook at his desk, with books stacked beside the monitor",
-    caption: "Putting pen to paper.",
-    src: "images/life-new/notebook-evening.webp",
-    thumb: "images/life-new/notebook-evening-thumb.webp",
-    width: 1086,
-    height: 724,
-  },
-  {
     id: "gym-mirror",
     src: "images/life-new/gym-mirror-bench.webp",
     thumb: "images/life-new/gym-mirror-bench-thumb.webp",
