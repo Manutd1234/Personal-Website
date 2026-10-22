@@ -355,7 +355,7 @@ function TrophyCard({
         <Placement trophy={trophy} />
       </p>
       <p className="mt-3 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
-        <span className="font-mono text-[10px] font-semibold tracking-[0.12em] text-zinc-400 uppercase dark:text-zinc-500">
+        <span className="font-mono text-[10px] font-semibold tracking-[0.12em] text-zinc-500 uppercase dark:text-zinc-400">
           {trophy.built ? "Built:" : "Record:"}
         </span>{" "}
         {trophy.built ?? trophy.record}
@@ -600,7 +600,7 @@ function TrophyDialog({
                 </a>
               ))}
               {trophy.source?.label ? (
-                <p className="font-mono text-[10px] tracking-[0.12em] text-zinc-400 uppercase sm:ml-auto dark:text-zinc-500">
+                <p className="font-mono text-[10px] tracking-[0.12em] text-zinc-500 uppercase sm:ml-auto dark:text-zinc-400">
                   {trophy.source.label}
                 </p>
               ) : null}
@@ -672,11 +672,11 @@ function TrophyRoom() {
                 {unlocked}/{total} ({Math.round((unlocked / total) * 100)}%)
               </dd>
             </div>
-            <div className="flex gap-1.5 before:text-emerald-100/35 sm:before:content-['·'_/_'']">
+            <div className="flex gap-1.5 sm:before:text-emerald-100/35 sm:before:content-['·'_/_'']">
               <dt>Total XP:</dt>
               <dd className="text-lime-200">{xp.toLocaleString("en-US")}</dd>
             </div>
-            <div className="flex gap-1.5 before:text-emerald-100/35 sm:before:content-['·'_/_'']">
+            <div className="flex gap-1.5 sm:before:text-emerald-100/35 sm:before:content-['·'_/_'']">
               <dt>Rank:</dt>
               <dd className="text-lime-200">{rank}</dd>
             </div>
@@ -722,15 +722,15 @@ function TrophyRoom() {
                 />
               ) : null}
               <span className="relative">
-                <span aria-hidden="true">[ </span>
+                <span aria-hidden="true">[&nbsp;</span>
                 {item.label}
-                <span aria-hidden="true"> ]</span>
+                <span aria-hidden="true">&nbsp;]</span>
               </span>
               <span
                 className={`relative rounded px-1.5 py-0.5 text-[10px] ${
                   selected
                     ? "bg-lime-200 text-emerald-950"
-                    : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                    : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
                 }`}
               >
                 {trophies.filter(item.matches).length}
