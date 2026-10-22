@@ -12,7 +12,8 @@ Live site: https://manutd1234.github.io/Personal-Website/
 - A draggable 3D bookshelf for five featured projects, with continuous spring momentum, keyboard navigation, smooth open/back transitions and direct project entry from the Workbench.
 - Seven more builds in a filterable card collection with uniform 16:10 previews, equal grid rows and private-access labels.
 - An interactive Profile workbench with larger real previews and Problem / Build / Proof walkthroughs for AlphaEngine, BrainHack and RE:DECIDE.
-- Original mint-and-cream role browser, tinted education/leadership/volunteering cards and colourful award categories, with all certificate links preserved.
+- Experience, Education, Leadership & CCAs and Volunteering as a trading-card showcase: 36 large, light cards with type-coloured foil frames, the organisation's official logo, two boxed highlights, 3D mouse tilt with a holo sheen, and flip-to-read backs that keep every original bullet and certificate link. A per-deck `COLLECTED` tally counts cards once they have stayed on screen, and decks browse by swipe, arrows, dots or ← → keys. Highlights condense real résumé bullets; LVL (the start year) and rarity are game flavour.
+- Colourful award categories, with all certificate links preserved.
 - Searchable skill category pills, spacious toolkit cards, spoken languages and grouped credentials; the physics playground stays available in a disclosure.
 - A rolling Polaroid diary with ten curated personal, study, food, travel and gym photographs, category filters, full-screen browsing and reduced-motion controls. The illustrative gym image carries source and license credits; personal photos use local, metadata-free copies.
 - Sticky five-tab navigation, clear project actions and filter counts, aligned award categories, copy-email feedback, light/dark themes and visible focus states.
@@ -44,6 +45,7 @@ app/                  App Router entry, layout, metadata and global styling
 components/           Interactive TypeScript sections and shared controls
 content/portfolio.ts  Verified career, project, skill and award records
 content/media.ts      Authentic screenshots, photos and certificate catalogue
+content/card-decks.ts Trading-card layer (types, highlights, logos) over the career records
 content/build-notes.ts Engineering case-study notes
 content/life-photos.ts Selected personal photo gallery
 content/paths.ts      Static-hosting asset path helper

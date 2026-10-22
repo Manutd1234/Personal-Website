@@ -7,6 +7,7 @@ import "./profile-builder.css";
 import "./life-gallery.css";
 import "./skills-classic.css";
 import "./career-classic.css";
+import "./card-showcase.css";
 import "./role-intro.css";
 import "./tab-polish.css";
 

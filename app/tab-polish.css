@@ -108,39 +108,19 @@ html {
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-.career-role-list button {
-  transition:
-    background 0.2s,
-    border-color 0.2s,
-    box-shadow 0.2s;
-}
-.career-role-list button[aria-selected="true"] {
-  border-left: 3px solid var(--career-green);
-}
-.career-role-arrow {
-  border-radius: 50%;
-}
 .career-award-filters {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 .career-award-filters button {
   min-width: 0;
   padding-inline: 10px;
 }
-.career-competition-card,
-.career-record-card,
 .skills-classic-card {
   transition:
     box-shadow 0.22s ease,
     transform 0.22s ease;
 }
-.career-competition-card:hover,
-.career-competition-card:focus-within {
-  transform: translateY(-3px);
-  box-shadow: 0 9px 22px #2854320c;
-}
-.career-record-card:focus-within,
 .skills-classic-card:hover {
   box-shadow: 0 7px 22px #2854320b;
 }
@@ -165,7 +145,7 @@ html {
 }
 @media (max-width: 960px) {
   .career-award-filters {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 @media (max-width: 700px) {
@@ -196,35 +176,11 @@ html {
   .classic-header-contact svg,
   .classic-primary svg,
   .classic-secondary svg,
-  .career-role-list button,
-  .career-competition-card,
-  .career-record-card,
   .skills-classic-card,
   .skills-classic-card li {
     transition: none;
     transform: none !important;
   }
-}
-.career-role-rail-heading > p {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.career-role-position {
-  flex-shrink: 0;
-  padding: 5px 8px;
-  border: 1px solid #b9d8bc;
-  border-radius: 999px;
-  background: #ffffff8c;
-  color: #49744e;
-  font: 500 9px/1.4 var(--font-mono);
-  letter-spacing: 0.03em;
-}
-.dark .career-role-position {
-  color: #b4d4aa;
-  border-color: #49664a;
-  background: #172b1d;
 }
 
 .book-carousel .book-current button {
