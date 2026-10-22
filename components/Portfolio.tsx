@@ -195,7 +195,13 @@ export default function Portfolio() {
         </header>
         <main id="main" className="classic-shell" tabIndex={-1}>
           {tabs.map((tab) => (
-            <section
+            <motion.section
+              initial={false}
+              animate={{
+                opacity: active === tab.id ? 1 : 0,
+                y: active === tab.id ? 0 : 6,
+              }}
+              transition={{ duration: 0.2 }}
               key={tab.id}
               id={`${tab.id}-panel`}
               role="tabpanel"
@@ -207,8 +213,8 @@ export default function Portfolio() {
                 <ProfilePanel openProjects={() => navigate("projects")} />
               ) : (
                 <>
-                  <header className="classic-section-header border-t border-zinc-200 pt-10 pb-6 dark:border-zinc-800">
-                    <p className="font-mono text-xs tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+                  <header className="classic-section-header">
+                    <p className="classic-kicker">
                       {sectionNumber[tab.id]} — {tab.title}
                     </p>
                     <h1>
@@ -241,7 +247,7 @@ export default function Portfolio() {
                     </p>
                   </header>
                   {tab.id === "projects" ? (
-                    <ProjectsPanel />
+                    <ProjectsPanel active={active === "projects"} />
                   ) : tab.id === "experience" ? (
                     <WorkPanel />
                   ) : tab.id === "skills" ? (
@@ -251,7 +257,7 @@ export default function Portfolio() {
                   )}
                 </>
               )}
-            </section>
+            </motion.section>
           ))}
           <section
             id="contact"

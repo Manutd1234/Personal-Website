@@ -1,15 +1,23 @@
 "use client";
+import { useMotionPreference } from "./useMotionPreference";
 import {
   AnimatePresence,
   motion,
   useMotionValue,
-  useReducedMotion,
   useSpring,
 } from "framer-motion";
 import { ArrowDownToLine, ArrowUpRight, Mail, RotateCw } from "lucide-react";
-import { useState, type PointerEvent } from "react";
+import {
+  useId,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+} from "react";
 import { Github, Linkedin } from "./BrandIcons";
-import { profile } from "@/content/portfolio";
+import { profile, projects } from "@/content/portfolio";
+import { projectMedia } from "@/content/media";
+import { buildNotes as projectNotes } from "@/content/build-notes";
 import { asset } from "@/content/paths";
 import OffDutyPanel from "./OffDutyPanel";
 const roles = [
@@ -18,13 +26,252 @@ const roles = [
   "a quant researcher",
   "a curious learner",
 ];
+
+const workbenchNotes = [
+  {
+    title: "AlphaEngine",
+    label: "AlphaEngine",
+    decision: "Recover the feed. Check the sequence.",
+  },
+  {
+    title: "BrainHack TIL-AI",
+    label: "BrainHack",
+    decision: "Package the services for an air-gapped evaluation.",
+  },
+  {
+    title: "CS2 Decision Coach",
+    label: "RE:DECIDE",
+    decision: "Ground the coaching in match evidence.",
+  },
+] as const;
+const buildNotes = workbenchNotes.flatMap((note) => {
+  const project = projects.find((item) => item.title === note.title);
+  return project ? [{ ...note, project, media: projectMedia[note.title] }] : [];
+});
+
+const noteSteps = ["Problem", "Build", "Proof"] as const;
+
+function Workbench({ openProjects }: { openProjects: () => void }) {
+  const [active, setActive] = useState(0);
+  const [step, setStep] = useState(1);
+  const prefix = useId();
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const stepRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const reduced = useMotionPreference();
+
+  function selectWithKeys(
+    event: KeyboardEvent<HTMLButtonElement>,
+    index: number,
+    kind: "project" | "step",
+  ) {
+    const count = kind === "project" ? buildNotes.length : noteSteps.length;
+    const next =
+      event.key === "ArrowRight"
+        ? (index + 1) % count
+        : event.key === "ArrowLeft"
+          ? (index + count - 1) % count
+          : event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? count - 1
+              : null;
+    if (next === null) return;
+    event.preventDefault();
+    if (kind === "project") setActive(next);
+    else setStep(next);
+    (kind === "project" ? tabRefs : stepRefs).current[next]?.focus({
+      preventScroll: true,
+    });
+  }
+
+  return (
+    <section className="builder-workbench" aria-labelledby={`${prefix}-title`}>
+      <header className="builder-workbench-heading">
+        <div>
+          <p className="classic-kicker">How I build</p>
+          <h2 id={`${prefix}-title`}>At the workbench.</h2>
+        </div>
+        <p>
+          Pick a project. Follow the decisions.
+          <br />
+          Then look under the hood.
+        </p>
+      </header>
+      <div className="builder-notebook">
+        <div
+          className="builder-note-tabs"
+          role="tablist"
+          aria-label="Project build notes"
+        >
+          {buildNotes.map((note, index) => (
+            <button
+              key={note.title}
+              type="button"
+              role="tab"
+              id={`${prefix}-tab-${index}`}
+              aria-controls={`${prefix}-note-${index}`}
+              aria-selected={active === index}
+              tabIndex={active === index ? 0 : -1}
+              onClick={() => setActive(index)}
+              onKeyDown={(event) => selectWithKeys(event, index, "project")}
+              ref={(element) => {
+                tabRefs.current[index] = element;
+              }}
+            >
+              <span className="builder-note-tab-number" aria-hidden="true">
+                0{index + 1}
+              </span>
+              {note.label}
+            </button>
+          ))}
+          <span className="builder-tab-aside" aria-hidden="true">
+            a peek behind the build ↙
+          </span>
+        </div>
+        <div className="builder-note-stage">
+          {buildNotes.map((note, index) => {
+            const detail = projectNotes[note.title];
+            const texts = [detail.question, detail.decision, detail.proof];
+            return (
+              <motion.div
+                key={note.title}
+                id={`${prefix}-note-${index}`}
+                role="tabpanel"
+                aria-labelledby={`${prefix}-tab-${index}`}
+                aria-hidden={active !== index}
+                inert={active !== index}
+                tabIndex={active === index ? 0 : -1}
+                className={`builder-note ${active === index ? "is-active" : ""}`}
+                initial={false}
+                animate={{
+                  opacity: active === index ? 1 : 0,
+                  y: active === index || reduced ? 0 : 6,
+                }}
+                transition={{ duration: reduced ? 0 : 0.2, ease: "easeOut" }}
+              >
+                <figure className="builder-note-media">
+                  <div className="builder-preview-bar">
+                    <span aria-hidden="true">● ● ●</span>
+                    <span>{note.media.kind}</span>
+                  </div>
+                  <a
+                    href={asset(note.media.src)}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`Open ${note.label} ${note.media.kind.toLowerCase()} in a new tab`}
+                  >
+                    <img
+                      src={asset(note.media.src)}
+                      alt={note.media.alt}
+                      width={960}
+                      height={600}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <span className="builder-image-open">
+                      <ArrowUpRight size={15} /> View full image
+                    </span>
+                  </a>
+                  <figcaption>{note.media.caption}</figcaption>
+                </figure>
+                <div className="builder-note-copy">
+                  <p className="builder-note-category">
+                    {note.project.category}
+                  </p>
+                  <h3>{detail.hook}</h3>
+                  <div
+                    className="builder-step-tabs"
+                    role="tablist"
+                    aria-label={`${note.label} walkthrough`}
+                  >
+                    {noteSteps.map((label, i) => (
+                      <button
+                        key={label}
+                        type="button"
+                        role="tab"
+                        id={`${prefix}-${index}-step-${i}`}
+                        aria-controls={`${prefix}-${index}-text-${i}`}
+                        aria-selected={step === i}
+                        tabIndex={step === i ? 0 : -1}
+                        onClick={() => setStep(i)}
+                        onKeyDown={(event) => selectWithKeys(event, i, "step")}
+                        ref={
+                          active === index
+                            ? (element) => {
+                                stepRefs.current[i] = element;
+                              }
+                            : undefined
+                        }
+                      >
+                        <span aria-hidden="true">0{i + 1}</span>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="builder-step-stage">
+                    {texts.map((text, i) => (
+                      <motion.p
+                        key={i}
+                        id={`${prefix}-${index}-text-${i}`}
+                        role="tabpanel"
+                        aria-labelledby={`${prefix}-${index}-step-${i}`}
+                        aria-hidden={step !== i}
+                        inert={step !== i}
+                        tabIndex={step === i ? 0 : -1}
+                        className={`builder-step-text ${step === i ? "is-active" : ""}`}
+                        initial={false}
+                        animate={{
+                          opacity: step === i ? 1 : 0,
+                          y: step === i || reduced ? 0 : 4,
+                        }}
+                        transition={{ duration: reduced ? 0 : 0.18 }}
+                      >
+                        {text}
+                      </motion.p>
+                    ))}
+                  </div>
+                  <ul
+                    className="builder-note-tags"
+                    aria-label={`${note.label} technologies`}
+                  >
+                    {note.project.tags.slice(0, 3).map((tag) => (
+                      <li key={tag}>{tag}</li>
+                    ))}
+                  </ul>
+                  <div className="builder-note-actions">
+                    <a
+                      href={note.project.repository}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <Github size={14} /> Explore the code
+                      <span className="sr-only">
+                        {" "}
+                        for {note.title}, opens in a new tab
+                      </span>
+                    </a>
+                    <button type="button" onClick={openProjects}>
+                      Open the bookshelf{" "}
+                      <ArrowUpRight size={15} aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function ProfilePanel({
   openProjects,
 }: {
   openProjects: () => void;
 }) {
   const [role, setRole] = useState(0);
-  const reduced = useReducedMotion();
+  const reduced = useMotionPreference();
   const x = useMotionValue(0),
     y = useMotionValue(0);
   const rotateX = useSpring(x, { stiffness: 180, damping: 24 }),
@@ -52,7 +299,13 @@ export default function ProfilePanel({
               <br />
               <em>Wangsa.</em>
             </h1>
-            <div className="classic-role">
+            <motion.div
+              className="classic-role"
+              initial={reduced ? false : { opacity: 0, y: 8 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
+              transition={{ duration: reduced ? 0 : 0.45, ease: "easeOut" }}
+            >
               <span>I’m</span>
               <button
                 onClick={() => setRole((i) => (i + 1) % roles.length)}
@@ -65,7 +318,11 @@ export default function ProfilePanel({
                     initial={{ y: reduced ? 0 : "110%", opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: reduced ? 0 : "-110%", opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    transition={
+                      reduced
+                        ? { duration: 0 }
+                        : { type: "spring", stiffness: 300, damping: 30 }
+                    }
                     aria-hidden="true"
                   >
                     {roles[role]}
@@ -76,7 +333,7 @@ export default function ProfilePanel({
               <span className="sr-only" aria-live="polite">
                 {roles[role]}
               </span>
-            </div>
+            </motion.div>
             <p className="classic-intro">{profile.introduction}</p>
             <div className="classic-actions">
               <button className="classic-primary" onClick={openProjects}>
@@ -164,7 +421,8 @@ export default function ProfilePanel({
           </a>
         </div>
       </section>
-      <details className="classic-hobbies">
+      <Workbench openProjects={openProjects} />
+      <details className="classic-hobbies" open>
         <summary>
           <span className="classic-disclosure-icon" aria-hidden="true">
             +

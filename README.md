@@ -9,9 +9,12 @@ Live site: https://manutd1234.github.io/Personal-Website/
 - TypeScript, React 19, Tailwind CSS 4, Framer Motion and Lucide icons.
 - Original large-name hero, taped real portrait, green navigation and painterly accents.
 - Interactive role roll, bounded Matter.js skill playground, keyboard nudges and reset.
-- Filtered project cards with uniform 16:10 previews, equal grid rows, all source links and private-access labels.
-- Expandable experience rows, education bullet lists, community/service archive and certificate links.
-- Gym, travel, good food and learning cards using the existing real photographs; the illustrative gym photograph retains its attribution.
+- A draggable 3D bookshelf for five featured projects, with keyboard navigation, animated open/close, engineering notes, authentic media and source links.
+- Seven more builds in a filterable card collection with uniform 16:10 previews, equal grid rows and private-access labels.
+- An interactive Profile workbench with larger real previews and Problem / Build / Proof walkthroughs for AlphaEngine, BrainHack and RE:DECIDE.
+- Original mint-and-cream role browser, tinted education/leadership/volunteering cards and colourful award categories, with all certificate links preserved.
+- Searchable skill category pills, spacious toolkit cards, spoken languages and grouped credentials; the physics playground stays available in a disclosure.
+- A continuously rolling personal photo gallery with category filters, full-screen browsing and reduced-motion/manual controls. Original drive photos are read-only; the site uses optimized, metadata-free copies.
 - Copy-email feedback, light/dark themes, visible focus states and reduced-motion support.
 
 ## Run locally
@@ -41,6 +44,8 @@ app/                  App Router entry, layout, metadata and global styling
 components/           Interactive TypeScript sections and shared controls
 content/portfolio.ts  Verified career, project, skill and award records
 content/media.ts      Authentic screenshots, photos and certificate catalogue
+content/build-notes.ts Engineering case-study notes
+content/life-photos.ts Selected personal photo gallery
 content/paths.ts      Static-hosting asset path helper
 public/               Résumé, case study, photos, screenshots and certificates
 ```

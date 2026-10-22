@@ -1,6 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./classic-layout.css";
+import "./book-carousel.css";
+import "./projects-library.css";
+import "./profile-builder.css";
+import "./life-gallery.css";
+import "./skills-classic.css";
+import "./career-classic.css";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 export const metadata: Metadata = {

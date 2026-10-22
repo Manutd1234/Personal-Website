@@ -1,26 +1,46 @@
 "use client";
 
-import { useId, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
-
-import { skillGroups, spokenLanguages } from "@/content/portfolio";
+import { useId, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { ArrowUpRight, Search } from "lucide-react";
+import {
+  certifications,
+  skillGroups,
+  spokenLanguages,
+} from "@/content/portfolio";
+import { certificateFiles } from "@/content/media";
+import { asset } from "@/content/paths";
+import { useMotionPreference } from "./useMotionPreference";
 import SkillsSandbox from "./SkillsSandbox";
 
 const TOTAL_SKILLS = skillGroups.reduce(
   (total, group) => total + group.items.length,
   0,
 );
+const credentialGroups = [
+  ...new Set(certifications.map((record) => record.issuer)),
+].map((issuer) => ({
+  issuer,
+  records: certifications.filter((record) => record.issuer === issuer),
+}));
+const files: Readonly<Record<string, { src: string; title: string }>> =
+  certificateFiles;
 
 export default function SkillsPanel() {
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
+  const [category, setCategory] = useState(skillGroups[0]?.label ?? "all");
+  const [playgroundOpen, setPlaygroundOpen] = useState(false);
   const searchId = useId();
   const categoryId = useId();
   const resultsId = useId();
-  const reducedMotion = useReducedMotion();
+  const languagesId = useId();
+  const credentialsId = useId();
+  const searchRef = useRef<HTMLInputElement>(null);
+  const reducedMotion = useMotionPreference();
   const query = search.trim().toLocaleLowerCase();
-  const matches = skillGroups.map((group) => ({
-    label: group.label,
+  const matches = skillGroups.map((group, index) => ({
+    ...group,
+    index,
     items:
       !query || group.label.toLocaleLowerCase().includes(query)
         ? group.items
@@ -34,164 +54,247 @@ export default function SkillsPanel() {
       group.items.length > 0,
   );
   const count = groups.reduce((total, group) => total + group.items.length, 0);
+  const filters = [
+    {
+      value: "all",
+      label: "All",
+      count: matches.reduce((total, group) => total + group.items.length, 0),
+    },
+    ...matches.map((group) => ({
+      value: group.label,
+      label: group.label,
+      count: group.items.length,
+    })),
+  ];
 
   function reset() {
     setSearch("");
     setCategory("all");
+    searchRef.current?.focus();
   }
 
   return (
-    <div className="space-y-4">
-      <SkillsSandbox />
-
-      <details className="group rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-5 py-4 text-sm font-medium text-zinc-900 outline-offset-4 focus-visible:outline-2 focus-visible:outline-emerald-600 dark:text-zinc-100 [&::-webkit-details-marker]:hidden">
-          <span>
-            Explore the full toolkit{" "}
-            <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
-              {TOTAL_SKILLS} skills · {skillGroups.length} areas
-            </span>
-          </span>
-          <span
-            aria-hidden="true"
-            className="text-lg font-normal text-emerald-600 transition-transform group-open:rotate-45 motion-reduce:transition-none"
-          >
-            +
-          </span>
-        </summary>
-        <div className="border-t border-zinc-100 px-4 pb-5 pt-4 sm:px-5 dark:border-zinc-800">
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_230px]">
-            <div className="min-w-0">
-              <label
-                className="mb-1.5 block text-[11px] font-medium text-zinc-500 dark:text-zinc-400"
-                htmlFor={searchId}
-              >
-                Find a skill
-              </label>
-              <input
-                aria-controls={resultsId}
-                autoComplete="off"
-                className="h-11 w-full min-w-0 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:ring-emerald-950"
-                id={searchId}
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  setCategory("all");
+    <div className="skills-classic">
+      <div className="skills-classic-workspace">
+        <div className="skills-classic-search">
+          <label htmlFor={searchId}>Find a skill</label>
+          <div className="skills-classic-search-field">
+            <Search size={18} aria-hidden="true" />
+            <input
+              ref={searchRef}
+              id={searchId}
+              type="search"
+              value={search}
+              autoComplete="off"
+              placeholder="Python, React, AWS…"
+              aria-controls={resultsId}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setCategory("all");
+              }}
+            />
+            {search ? (
+              <button
+                type="button"
+                aria-label="Clear skill search"
+                onClick={() => {
+                  setSearch("");
+                  searchRef.current?.focus();
                 }}
-                placeholder="Python, React, AWS…"
-                type="search"
-                value={search}
-              />
-            </div>
-            <div className="min-w-0">
-              <label
-                className="mb-1.5 block text-[11px] font-medium text-zinc-500 dark:text-zinc-400"
-                htmlFor={categoryId}
               >
-                Category
-              </label>
-              <select
-                aria-controls={resultsId}
-                className="h-11 w-full min-w-0 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-xs text-zinc-700 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:ring-emerald-950"
-                id={categoryId}
-                onChange={(event) => setCategory(event.target.value)}
-                value={category}
-              >
-                <option value="all">
-                  All categories (
-                  {matches.reduce(
-                    (total, group) => total + group.items.length,
-                    0,
-                  )}
-                  )
-                </option>
-                {matches.map((group) => (
-                  <option key={group.label} value={group.label}>
-                    {group.label} ({group.items.length})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="flex min-h-12 items-center justify-between gap-3">
-            <p
-              aria-live="polite"
-              className="text-[11px] text-zinc-500 dark:text-zinc-400"
-              role="status"
-            >
-              {count} {count === 1 ? "skill" : "skills"} in {groups.length}{" "}
-              {groups.length === 1 ? "category" : "categories"}
-            </p>
-            <button
-              className="min-h-11 shrink-0 px-1 text-[11px] font-medium text-emerald-700 outline-offset-4 hover:text-emerald-900 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-40 dark:text-emerald-300 dark:hover:text-emerald-100"
-              disabled={!search && category === "all"}
-              onClick={reset}
-              type="button"
-            >
-              Reset filters
-            </button>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2" id={resultsId}>
-            {groups.map((group) => (
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                className="min-w-0 rounded-xl border border-zinc-100 bg-zinc-50/70 p-4 dark:border-zinc-800 dark:bg-zinc-900/70"
-                initial={reducedMotion ? false : { opacity: 0, y: 5 }}
-                key={group.label}
-                transition={{ duration: reducedMotion ? 0 : 0.18 }}
-              >
-                <h3 className="text-xs font-semibold tracking-tight text-zinc-800 dark:text-zinc-200">
-                  {group.label}
-                </h3>
-                <ul className="mt-3 flex flex-wrap gap-1.5">
-                  {group.items.map((item) => (
-                    <li
-                      className="max-w-full break-words rounded-md border border-emerald-100 bg-white px-2 py-1.5 text-[11px] leading-relaxed text-emerald-800 dark:border-emerald-900 dark:bg-zinc-950 dark:text-emerald-300"
-                      key={item}
-                    >
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            ))}
-            {groups.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-zinc-200 p-6 text-center sm:col-span-2 dark:border-zinc-700">
-                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  No matching skills.
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-                  Try another term or select All categories.
-                </p>
-              </div>
+                ×
+              </button>
             ) : null}
           </div>
         </div>
-      </details>
-
-      <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950">
-        <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
-          Spoken languages
-        </h3>
-        <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {spokenLanguages.map((language) => (
-            <div className="min-w-0" key={language.title}>
-              <dt className="text-xs font-medium text-zinc-800 dark:text-zinc-200">
-                {language.title}
-              </dt>
-              <dd className="mt-1 text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
-                {language.level}
-              </dd>
-            </div>
+        <div
+          className="skills-classic-filters"
+          role="group"
+          aria-label="Filter skills by category"
+        >
+          {filters.map((filter) => (
+            <button
+              key={filter.value}
+              type="button"
+              aria-pressed={category === filter.value}
+              aria-controls={resultsId}
+              onClick={() => setCategory(filter.value)}
+            >
+              {filter.label}
+              <span>{filter.count}</span>
+            </button>
           ))}
-        </dl>
+        </div>
+        <div className="skills-classic-mobile-filter">
+          <label htmlFor={categoryId}>Browse a category</label>
+          <select
+            id={categoryId}
+            aria-controls={resultsId}
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+          >
+            {filters.map((filter) => (
+              <option key={filter.value} value={filter.value}>
+                {filter.label} ({filter.count})
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="skills-classic-result-bar">
+          <p role="status" aria-live="polite">
+            <strong>{count}</strong> {count === 1 ? "skill" : "skills"}
+            {category === "all"
+              ? ` across ${groups.length} ${groups.length === 1 ? "category" : "categories"}`
+              : " in this category"}
+          </p>
+          <button
+            type="button"
+            disabled={!search && category === "all"}
+            onClick={reset}
+          >
+            Reset filters <span aria-hidden="true">↗</span>
+          </button>
+        </div>
+        <div
+          className="skills-classic-grid"
+          id={resultsId}
+          data-single={groups.length === 1}
+        >
+          {groups.map((group) => (
+            <motion.article
+              key={group.label}
+              className="skills-classic-card"
+              data-tone={group.index % 4}
+              initial={reducedMotion ? false : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: reducedMotion ? 0 : 0.18 }}
+            >
+              <header>
+                <span className="skills-classic-number" aria-hidden="true">
+                  {String(group.index + 1).padStart(2, "0")}
+                </span>
+                <h3>{group.label}</h3>
+                <span className="skills-classic-count">
+                  {group.items.length}
+                </span>
+              </header>
+              <ul aria-label={group.label}>
+                {group.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </motion.article>
+          ))}
+          {!groups.length ? (
+            <div className="skills-classic-empty">
+              <h3>No matching skills here.</h3>
+              <p>Try another term or look across all categories.</p>
+              <button type="button" onClick={reset}>
+                Reset filters
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        <section
+          className="skills-classic-languages"
+          aria-labelledby={languagesId}
+        >
+          <div>
+            <p>Beyond programming</p>
+            <h2 id={languagesId}>Spoken languages</h2>
+          </div>
+          <dl>
+            {spokenLanguages.map((language) => (
+              <div key={language.title}>
+                <dt>{language.title}</dt>
+                <dd>{language.level}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <section
+          className="skills-classic-credentials"
+          aria-labelledby={credentialsId}
+        >
+          <header>
+            <div>
+              <p>Continued learning</p>
+              <h2 id={credentialsId}>Credentials</h2>
+            </div>
+            <a href="#achievements">
+              Awards & certificates{" "}
+              <ArrowUpRight size={16} aria-hidden="true" />
+            </a>
+          </header>
+          <div className="skills-classic-credential-grid">
+            {credentialGroups.map((group) => (
+              <section
+                key={group.issuer}
+                className="skills-classic-issuer"
+                aria-label={`${group.issuer} credentials`}
+              >
+                <h3>{group.issuer}</h3>
+                <ul>
+                  {group.records.map((record) => {
+                    const certificate =
+                      "certificateKey" in record && record.certificateKey
+                        ? files[record.certificateKey]
+                        : undefined;
+                    return (
+                      <li key={record.title}>
+                        <div>
+                          <h4>{record.title}</h4>
+                          <p>{record.year}</p>
+                        </div>
+                        {"detail" in record && record.detail ? (
+                          <p className="skills-classic-credential-detail">
+                            {record.detail}
+                          </p>
+                        ) : null}
+                        {certificate ? (
+                          <a
+                            href={asset(certificate.src)}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={`${certificate.title} — view certificate, opens in a new tab`}
+                          >
+                            View certificate{" "}
+                            <ArrowUpRight size={13} aria-hidden="true" />
+                          </a>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))}
+          </div>
+        </section>
       </div>
 
-      <a
-        className="inline-flex min-h-10 items-center gap-2 px-1 text-xs font-medium text-emerald-700 outline-offset-4 hover:text-emerald-900 focus-visible:outline-2 focus-visible:outline-emerald-600 dark:text-emerald-300 dark:hover:text-emerald-100"
-        href="#achievements"
+      <details
+        className="skills-classic-playground"
+        onToggle={(event) => setPlaygroundOpen(event.currentTarget.open)}
       >
-        Awards & credentials <span aria-hidden="true">↗</span>
-      </a>
+        <summary>
+          <span>
+            <strong>A little hands-on</strong>
+            <span>Try the interactive skill tags</span>
+          </span>
+          <span className="skills-classic-disclosure" aria-hidden="true">
+            +
+          </span>
+        </summary>
+        <div className="skills-classic-playground-content">
+          {playgroundOpen ? <SkillsSandbox /> : null}
+        </div>
+      </details>
+      <p className="skills-classic-note">
+        {TOTAL_SKILLS} tools and practices across projects, work, and
+        coursework.
+      </p>
     </div>
   );
 }

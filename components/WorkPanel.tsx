@@ -1,22 +1,8 @@
 "use client";
+import { useMotionPreference } from "./useMotionPreference";
 
-import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type PointerEvent,
-  type ReactNode,
-} from "react";
-import {
-  AnimatePresence,
-  motion,
-  useMotionTemplate,
-  useMotionValue,
-  useReducedMotion,
-} from "framer-motion";
-import { ArrowUpRight, ChevronDown } from "lucide-react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { ArrowUpRight, ChevronDown, Trophy } from "lucide-react";
 import {
   achievementGroups,
   certifications,
@@ -48,32 +34,16 @@ type ArchiveRecord = {
   bullets?: readonly string[];
   certificate?: CertificateRecord;
 };
-type TabId = "work" | "education" | "community";
-type CommunitySection = "leadership" | "volunteering";
+type TabId = "work" | "education" | "community" | "volunteering";
 
 const files: Readonly<Record<string, CertificateFile>> = certificateFiles;
 const educationRecords = [...education, ...earlierEducation];
-const awardCount = achievementGroups.reduce(
-  (count, group) => count + group.items.length,
-  0,
-);
 const tabs: readonly { id: TabId; label: string; count: number }[] = [
-  { id: "work", label: "Work", count: experience.length },
+  { id: "work", label: "Experience", count: experience.length },
   { id: "education", label: "Education", count: educationRecords.length },
-  {
-    id: "community",
-    label: "Community",
-    count: leadership.length + volunteering.length,
-  },
+  { id: "community", label: "Leadership & CCAs", count: leadership.length },
+  { id: "volunteering", label: "Volunteering", count: volunteering.length },
 ];
-const spring = {
-  type: "spring",
-  stiffness: 340,
-  damping: 34,
-  mass: 0.85,
-} as const;
-const focusRing =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-4 dark:focus-visible:ring-emerald-400 dark:focus-visible:ring-offset-zinc-950";
 
 const engineeringNotes: Readonly<Record<string, string>> = {
   "Caerus Global Management":
@@ -133,7 +103,7 @@ function CertificateLinks({ record }: { record: CertificateRecord }) {
   const links = keys.flatMap((key) => (files[key] ? [files[key]] : []));
   if (!links.length) return null;
   return (
-    <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2">
+    <div className="career-certificate-links">
       {links.map((file) => (
         <a
           key={file.src}
@@ -141,277 +111,191 @@ function CertificateLinks({ record }: { record: CertificateRecord }) {
           target="_blank"
           rel="noreferrer"
           aria-label={`${file.title} — view certificate, opens in a new tab`}
-          className={`inline-flex min-h-11 items-center gap-1.5 rounded-sm text-xs font-medium text-emerald-800 underline decoration-emerald-300 underline-offset-4 hover:decoration-current dark:text-emerald-300 ${focusRing}`}
         >
           {links.length > 1
             ? (file.title.match(/\b(?:19|20)\d{2}\b/)?.[0] ?? "Certificate")
             : "View certificate"}
-          <ArrowUpRight aria-hidden="true" size={13} />
+          <ArrowUpRight aria-hidden="true" size={15} />
         </a>
       ))}
     </div>
   );
 }
 
-function AnimatedBody({
-  open,
-  id,
-  labelledBy,
-  children,
+function Contributions({
+  bullets,
+  title,
 }: {
-  open: boolean;
-  id: string;
-  labelledBy: string;
-  children: ReactNode;
+  bullets?: readonly string[];
+  title: string;
 }) {
-  const reduceMotion = useReducedMotion();
+  if (!bullets?.length) return null;
   return (
-    <div
-      id={id}
-      role="region"
-      aria-labelledby={labelledBy}
-      aria-hidden={open ? undefined : true}
-      inert={!open}
-    >
-      <AnimatePresence initial={false}>
-        {open ? (
-          <motion.div
-            key={id}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={reduceMotion ? { duration: 0 } : spring}
-            className="overflow-hidden"
-          >
-            {children}
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-    </div>
+    <details className="career-contributions">
+      <summary aria-label={`Contributions at ${title}`}>
+        Contributions <span>{bullets.length}</span>
+        <ChevronDown aria-hidden="true" size={15} />
+      </summary>
+      <ul className="career-bullets">
+        {bullets.map((bullet) => (
+          <li key={bullet}>{bullet}</li>
+        ))}
+      </ul>
+    </details>
   );
 }
 
-function WorkRow({
-  record,
-  index,
-  open,
-  onToggle,
-  prefix,
-}: {
-  record: (typeof workRecords)[number];
-  index: number;
-  open: boolean;
-  onToggle: () => void;
-  prefix: string;
-}) {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const spotlightOpacity = useMotionValue(0);
-  const spotlight = useMotionTemplate`radial-gradient(260px circle at ${x}px ${y}px, rgba(16,185,129,0.09), transparent 76%)`;
-  const reduceMotion = useReducedMotion();
-  const id = `${prefix}-role-${index}`;
-  function moveSpotlight(event: PointerEvent<HTMLDivElement>) {
-    if (reduceMotion || event.pointerType === "touch") return;
-    const bounds = event.currentTarget.getBoundingClientRect();
-    x.set(event.clientX - bounds.left);
-    y.set(event.clientY - bounds.top);
-    spotlightOpacity.set(1);
+function ExperienceBrowser({ prefix }: { prefix: string }) {
+  const [selected, setSelected] = useState(0);
+  const roleRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const storyId = `${prefix}-role-story`;
+  function roleKeys(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    const next =
+      event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? workRecords.length - 1
+          : ["ArrowDown", "ArrowRight"].includes(event.key)
+            ? (index + 1) % workRecords.length
+            : ["ArrowUp", "ArrowLeft"].includes(event.key)
+              ? (index + workRecords.length - 1) % workRecords.length
+              : null;
+    if (next === null) return;
+    event.preventDefault();
+    setSelected(next);
+    roleRefs.current[next]?.focus({ preventScroll: true });
   }
   return (
-    <div
-      className="relative isolate"
-      onPointerMove={moveSpotlight}
-      onPointerLeave={() => spotlightOpacity.set(0)}
-    >
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 rounded-lg"
-        style={{ background: spotlight, opacity: spotlightOpacity }}
-      />
-      <button
-        type="button"
-        id={`${id}-button`}
-        aria-expanded={open}
-        aria-controls={`${id}-body`}
-        onClick={onToggle}
-        className={`grid min-h-16 w-full grid-cols-[100px_1fr_auto_24px] items-center gap-x-2 rounded-sm border-b border-zinc-100 py-4 text-left sm:grid-cols-[130px_1fr_auto_32px] sm:gap-x-5 dark:border-zinc-900 ${focusRing}`}
-      >
-        <span className="self-start pt-0.5 font-mono text-[10px] leading-5 text-zinc-500 sm:self-center sm:text-xs dark:text-zinc-400">
-          {record.dates}
-        </span>
-        <span className="min-w-0">
-          <span className="block text-sm font-medium leading-6 tracking-tight text-zinc-950 sm:text-base dark:text-zinc-50">
-            {record.company}
-          </span>
-          <span className="mt-1 block text-[11px] leading-5 text-zinc-500 sm:hidden dark:text-zinc-400">
-            {record.role}
-          </span>
-        </span>
-        <span className="hidden max-w-60 text-right text-xs leading-5 text-zinc-500 sm:block dark:text-zinc-400">
-          {record.role}
-        </span>
-        <motion.span
-          aria-hidden="true"
-          className="col-start-4 flex justify-end text-emerald-700 dark:text-emerald-400"
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={reduceMotion ? { duration: 0 } : spring}
+    <div className="career-role-browser">
+      <div className="career-role-rail">
+        <div className="career-role-rail-heading">
+          <span>Different teams, different lessons.</span>
+          <p>Explore a role</p>
+        </div>
+        <div
+          className="career-role-list"
+          role="tablist"
+          aria-label="Work experience roles"
+          aria-orientation="vertical"
         >
-          <ChevronDown size={17} />
-        </motion.span>
-      </button>
-      <AnimatedBody open={open} id={`${id}-body`} labelledBy={`${id}-button`}>
-        <div className="pb-7 pl-0 pt-5 sm:pl-[150px]">
-          <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-400">
-            {record.location}
-          </p>
-          <p className="max-w-2xl text-sm leading-7 text-zinc-600 dark:text-zinc-300">
-            {record.summary}
-          </p>
-          <ul className="mt-4 max-w-2xl space-y-2.5 pl-4 text-sm leading-7 text-zinc-600 marker:text-emerald-600 dark:text-zinc-300">
-            {record.highlights.map((highlight) => (
-              <li key={highlight} className="list-disc pl-1">
-                {highlight}
-              </li>
+          {workRecords.map((record, index) => (
+            <button
+              type="button"
+              role="tab"
+              key={`${record.company}-${record.dates}`}
+              id={`${prefix}-role-${index}-tab`}
+              aria-controls={`${storyId}-${index}`}
+              aria-selected={selected === index}
+              tabIndex={selected === index ? 0 : -1}
+              onClick={() => setSelected(index)}
+              onKeyDown={(event) => roleKeys(event, index)}
+              ref={(element) => {
+                roleRefs.current[index] = element;
+              }}
+            >
+              <span className="career-role-company">{record.company}</span>
+              <span className="career-role-title">{record.role}</span>
+              <time>{record.dates}</time>
+              <span className="career-role-arrow" aria-hidden="true">
+                ↗
+              </span>
+            </button>
+          ))}
+        </div>
+        <div className="career-role-picker">
+          <label htmlFor={`${prefix}-role-select`}>Choose a role</label>
+          <select
+            id={`${prefix}-role-select`}
+            aria-controls={`${storyId}-${selected}`}
+            value={selected}
+            onChange={(event) => setSelected(Number(event.target.value))}
+          >
+            {workRecords.map((record, index) => (
+              <option key={record.company} value={index}>
+                {record.company} · {record.dates}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="career-role-stage">
+        {workRecords.map((record, index) => (
+          <div
+            role="tabpanel"
+            tabIndex={0}
+            hidden={selected !== index}
+            id={`${storyId}-${index}`}
+            aria-labelledby={`${prefix}-role-${index}-tab`}
+            className="career-role-story"
+            key={record.company}
+          >
+            <article className="career-role-story-copy">
+              <div className="career-story-meta">
+                <span>{record.location}</span>
+                <time>{record.dates}</time>
+              </div>
+              <p className="career-story-role">{record.role}</p>
+              <h3>{record.company}</h3>
+              <p className="career-story-summary">{record.summary}</p>
+              <section
+                className="career-story-contributions"
+                aria-labelledby={`${prefix}-role-${index}-contributions`}
+              >
+                <h4 id={`${prefix}-role-${index}-contributions`}>
+                  What I worked on
+                </h4>
+                <ul className="career-bullets">
+                  {record.highlights.map((highlight) => (
+                    <li key={highlight}>{highlight}</li>
+                  ))}
+                </ul>
+              </section>
+              {record.technologies.length ? (
+                <ul
+                  className="career-technology-tags"
+                  aria-label={`${record.company} tools and practices`}
+                >
+                  {record.technologies.map((technology) => (
+                    <li key={technology}>{technology}</li>
+                  ))}
+                </ul>
+              ) : null}
+              {engineeringNotes[record.company] ? (
+                <aside className="career-engineering-note">
+                  <span>Engineering note</span>
+                  <p>{engineeringNotes[record.company]}</p>
+                </aside>
+              ) : null}
+            </article>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EducationCards() {
+  return (
+    <div className="career-education-grid">
+      {educationRecords.map((record) => (
+        <article className="career-record-card" key={record.school}>
+          <h3>{record.school}</h3>
+          <p className="career-record-role">{record.credential}</p>
+          <time>{record.dates}</time>
+          <ul className="career-bullets">
+            {record.bullets.map((bullet) => (
+              <li key={bullet}>{bullet}</li>
             ))}
           </ul>
-          <div
-            className="mt-5 flex flex-wrap gap-2"
-            aria-label="Tools and technical practices"
-          >
-            {record.technologies.map((technology) => (
-              <span
-                key={technology}
-                className="rounded-md bg-emerald-50 px-2 py-1 font-mono text-[10px] text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
-              >
-                {technology}
-              </span>
-            ))}
-          </div>
-          {engineeringNotes[record.company] ? (
-            <aside className="mt-6 max-w-2xl border-l-2 border-amber-300 pl-4 dark:border-amber-700">
-              <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">
-                Engineering note
-              </p>
-              <p className="mt-1.5 text-xs italic leading-6 text-zinc-600 dark:text-zinc-400">
-                {engineeringNotes[record.company]}
-              </p>
-            </aside>
-          ) : null}
-        </div>
-      </AnimatedBody>
-    </div>
-  );
-}
-
-function RecordRow({
-  record,
-  open,
-  onToggle,
-  prefix,
-}: {
-  record: ArchiveRecord;
-  open: boolean;
-  onToggle: () => void;
-  prefix: string;
-}) {
-  const id = `${prefix}-${record.id}`;
-  const reduceMotion = useReducedMotion();
-  return (
-    <div>
-      <button
-        type="button"
-        id={`${id}-button`}
-        aria-expanded={open}
-        aria-controls={`${id}-body`}
-        onClick={onToggle}
-        className={`grid min-h-16 w-full grid-cols-[86px_1fr_24px] items-center gap-x-3 rounded-sm border-b border-zinc-100 py-4 text-left sm:grid-cols-[130px_1fr_32px] sm:gap-x-5 dark:border-zinc-900 ${focusRing}`}
-      >
-        <span className="self-start pt-0.5 font-mono text-[10px] leading-5 text-zinc-500 sm:self-center sm:text-xs dark:text-zinc-400">
-          {record.date || "—"}
-        </span>
-        <span className="min-w-0">
-          <span className="block text-sm font-medium leading-6 tracking-tight text-zinc-950 sm:text-base dark:text-zinc-50">
-            {record.title}
-          </span>
-          <span className="mt-1 block text-[11px] leading-5 text-zinc-500 sm:text-xs dark:text-zinc-400">
-            {record.subtitle}
-          </span>
-        </span>
-        <motion.span
-          aria-hidden="true"
-          className="flex justify-end text-emerald-700 dark:text-emerald-400"
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={reduceMotion ? { duration: 0 } : spring}
-        >
-          <ChevronDown size={17} />
-        </motion.span>
-      </button>
-      <AnimatedBody open={open} id={`${id}-body`} labelledBy={`${id}-button`}>
-        <div className="pb-6 pl-0 pt-4 sm:pl-[150px]">
-          {record.summary ? (
-            <p className="max-w-2xl text-sm leading-7 text-zinc-600 dark:text-zinc-300">
-              {record.summary}
-            </p>
-          ) : null}
-          {record.bullets?.length ? (
-            <ul className="max-w-2xl space-y-2.5 pl-4 text-sm leading-7 text-zinc-600 marker:text-emerald-600 dark:text-zinc-300">
-              {record.bullets.map((bullet) => (
-                <li key={bullet} className="list-disc pl-1">
-                  {bullet}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          {record.certificate ? (
-            <CertificateLinks record={record.certificate} />
-          ) : null}
-        </div>
-      </AnimatedBody>
-    </div>
-  );
-}
-
-function RecordList({
-  records,
-  prefix,
-  firstOpen = false,
-}: {
-  records: readonly ArchiveRecord[];
-  prefix: string;
-  firstOpen?: boolean;
-}) {
-  const [openId, setOpenId] = useState<string | null>(
-    firstOpen ? (records[0]?.id ?? null) : null,
-  );
-  return (
-    <div>
-      {records.map((record) => (
-        <RecordRow
-          key={record.id}
-          record={record}
-          prefix={prefix}
-          open={openId === record.id}
-          onToggle={() =>
-            setOpenId((current) => (current === record.id ? null : record.id))
-          }
-        />
+        </article>
       ))}
     </div>
   );
 }
 
-const schoolRecords: readonly ArchiveRecord[] = educationRecords.map(
-  (record, index) => ({
-    id: String(index),
-    title: record.school,
-    subtitle: record.credential,
-    date: record.dates,
-    bullets: record.bullets,
-  }),
-);
 const leadershipRecords: readonly ArchiveRecord[] = leadership.map(
   (record, index) => ({
-    id: String(index),
+    id: `leadership-${index}`,
     title: record.title,
     subtitle: record.role,
     date: record.dates,
@@ -421,7 +305,7 @@ const leadershipRecords: readonly ArchiveRecord[] = leadership.map(
 );
 const volunteeringRecords: readonly ArchiveRecord[] = volunteering.map(
   (record, index) => ({
-    id: String(index),
+    id: `volunteering-${index}`,
     title: record.title,
     subtitle: record.role,
     date: record.dates,
@@ -429,126 +313,189 @@ const volunteeringRecords: readonly ArchiveRecord[] = volunteering.map(
     bullets: "highlights" in record ? record.highlights : undefined,
   }),
 );
-const awardSections = [
-  ...achievementGroups.map((group, index) => ({
-    id: `awards-${index}`,
-    title: group.title,
-    records: group.items as readonly CertificateRecord[],
-  })),
-  {
-    id: "credentials",
-    title: "Credentials",
-    records: certifications as readonly CertificateRecord[],
-  },
-];
-const awardFilterLabels = [
-  "Competitions",
-  "Government",
-  "Academic & sport",
-  "Service",
-  "Credentials",
-];
 
-function CommunityArchive({
-  prefix,
-  section,
-  onSectionChange,
-}: {
-  prefix: string;
-  section: CommunitySection;
-  onSectionChange: (section: CommunitySection) => void;
-}) {
+function CommunityCards({ records }: { records: readonly ArchiveRecord[] }) {
   return (
-    <div>
-      <div
-        role="group"
-        aria-label="Community records"
-        className="mb-3 flex flex-wrap gap-2"
-      >
-        {(["leadership", "volunteering"] as const).map((id) => (
-          <button
-            key={id}
-            type="button"
-            aria-pressed={section === id}
-            onClick={() => onSectionChange(id)}
-            className={`min-h-11 rounded-full border px-3.5 py-2 text-xs transition-colors motion-reduce:transition-none ${section === id ? "border-emerald-700 bg-emerald-700 text-white dark:border-emerald-400 dark:bg-emerald-400 dark:text-zinc-950" : "border-zinc-200 text-zinc-600 hover:border-emerald-500 dark:border-zinc-800 dark:text-zinc-300"} ${focusRing}`}
-          >
-            {id === "leadership"
-              ? `Leadership & CCAs · ${leadership.length}`
-              : `Volunteering · ${volunteering.length}`}
-          </button>
-        ))}
-      </div>
-      <div hidden={section !== "leadership"}>
-        <RecordList
-          records={leadershipRecords}
-          prefix={`${prefix}-leadership`}
-        />
-      </div>
-      <div hidden={section !== "volunteering"}>
-        <RecordList
-          records={volunteeringRecords}
-          prefix={`${prefix}-volunteering`}
-        />
-      </div>
+    <div className="career-community-grid">
+      {records.map((record) => (
+        <article className="career-record-card" key={record.id}>
+          <h3>{record.title}</h3>
+          <p className="career-record-role">{record.subtitle}</p>
+          <time>{record.date}</time>
+          <p className="career-record-summary">{record.summary}</p>
+          <Contributions bullets={record.bullets} title={record.title} />
+        </article>
+      ))}
     </div>
   );
 }
 
-function AwardsArchive({ prefix }: { prefix: string }) {
-  const [filter, setFilter] = useState(awardSections[0].id);
-  const selectedSections =
-    filter === "all"
-      ? awardSections
-      : awardSections.filter((section) => section.id === filter);
-  const records: ArchiveRecord[] = selectedSections.flatMap((section) =>
-    section.records.map((record, index) => ({
-      id: `${section.id}-${index}`,
-      title: record.title,
-      subtitle: record.issuer,
-      date: record.year ?? "",
-      summary: record.detail,
-      certificate: record,
-    })),
+const technicalAwards = achievementGroups.find(
+  (group) => group.title === "Technical competitions",
+)!;
+const governmentAwards = achievementGroups.find(
+  (group) => group.title === "Government awards & scholarships",
+)!;
+const schoolAwards = achievementGroups.find(
+  (group) => group.title === "Academic & sporting awards",
+)!;
+const serviceAwards = achievementGroups.find(
+  (group) => group.title === "Service & leadership",
+)!;
+const isSport = (record: CertificateRecord) =>
+  /Softball|Colours Award|Sports Day|School athletics|SwimSafer/i.test(
+    record.title,
   );
+const awardSections = [
+  {
+    id: "competitions",
+    label: "Competitions",
+    title: technicalAwards.title,
+    description: technicalAwards.description,
+    records: technicalAwards.items as readonly CertificateRecord[],
+  },
+  {
+    id: "academic",
+    label: "Academic",
+    title: "Academic & creative awards",
+    description: schoolAwards.description,
+    records: schoolAwards.items.filter(
+      (record) => !isSport(record),
+    ) as readonly CertificateRecord[],
+  },
+  {
+    id: "government",
+    label: "Government",
+    title: governmentAwards.title,
+    description: governmentAwards.description,
+    records: governmentAwards.items as readonly CertificateRecord[],
+  },
+  {
+    id: "sport",
+    label: "Sport",
+    title: "Sporting awards",
+    description: "Team results, athletics, and swimming milestones.",
+    records: schoolAwards.items.filter(isSport) as readonly CertificateRecord[],
+  },
+  {
+    id: "service",
+    label: "Service",
+    title: serviceAwards.title,
+    description: serviceAwards.description,
+    records: serviceAwards.items as readonly CertificateRecord[],
+  },
+  {
+    id: "certificates",
+    label: "Certificates",
+    title: "Credentials & certificates",
+    description:
+      "Courses and credentials, with their original issuers and dates.",
+    records: certifications as readonly CertificateRecord[],
+  },
+];
+
+function AwardRecord({ record }: { record: CertificateRecord }) {
   return (
-    <div>
-      <p className="mb-4 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
-        {awardCount} award records · {certifications.length} credentials and
-        course certificates.
-      </p>
+    <article className="career-award-record">
+      <div className="career-award-heading">
+        <h4>{record.title}</h4>
+        {record.year ? <time>{record.year}</time> : null}
+      </div>
+      <p className="career-award-issuer">{record.issuer}</p>
+      {record.detail ? (
+        <p className="career-award-detail">{record.detail}</p>
+      ) : null}
+      <CertificateLinks record={record} />
+    </article>
+  );
+}
+
+function AwardsArchive() {
+  const [filter, setFilter] = useState("competitions");
+  const technical = awardSections[0];
+  return (
+    <div className="career-awards">
       <div
         role="group"
         aria-label="Filter awards and credentials"
-        className="mb-3 flex flex-wrap gap-2"
+        className="career-award-filters"
       >
-        <button
-          type="button"
-          aria-pressed={filter === "all"}
-          onClick={() => setFilter("all")}
-          className={`min-h-11 rounded-full border px-3 py-2 text-xs ${filter === "all" ? "border-emerald-700 bg-emerald-700 text-white dark:border-emerald-400 dark:bg-emerald-400 dark:text-zinc-950" : "border-zinc-200 text-zinc-600 dark:border-zinc-800 dark:text-zinc-300"} ${focusRing}`}
-        >
-          All
-        </button>
-        {awardSections.map((section, index) => (
+        {awardSections.map((section) => (
           <button
-            key={section.id}
             type="button"
+            key={section.id}
             aria-pressed={filter === section.id}
             onClick={() => setFilter(section.id)}
-            className={`min-h-11 rounded-full border px-3 py-2 text-xs ${filter === section.id ? "border-emerald-700 bg-emerald-700 text-white dark:border-emerald-400 dark:bg-emerald-400 dark:text-zinc-950" : "border-zinc-200 text-zinc-600 hover:border-emerald-500 dark:border-zinc-800 dark:text-zinc-300"} ${focusRing}`}
           >
-            {awardFilterLabels[index]}{" "}
-            <span className="ml-1 opacity-70">{section.records.length}</span>
+            {section.label} <span>{section.records.length}</span>
           </button>
         ))}
       </div>
       <p className="sr-only" role="status">
-        Showing {records.length}{" "}
-        {filter === "credentials" ? "credential" : "award and credential"}{" "}
+        Showing{" "}
+        {awardSections.find((section) => section.id === filter)?.records
+          .length ?? 0}{" "}
         records.
       </p>
-      <RecordList key={filter} records={records} prefix={`${prefix}-awards`} />
+      <section
+        className="career-competition-section"
+        hidden={filter !== technical.id}
+        aria-labelledby="career-competition-title"
+      >
+        <header className="career-award-section-heading">
+          <h3 id="career-competition-title">{technical.title}</h3>
+          <p>{technical.description}</p>
+        </header>
+        <div className="career-competition-grid">
+          {technical.records.map((record, index) => (
+            <article
+              className="career-competition-card"
+              data-tone={index % 3}
+              key={record.title}
+            >
+              <div className="career-competition-meta">
+                <span className="career-trophy">
+                  <Trophy size={21} aria-hidden="true" />
+                </span>
+                <time>{record.year}</time>
+              </div>
+              <p className="career-competition-result">{record.detail}</p>
+              <h4>{record.title}</h4>
+              <p className="career-award-issuer">{record.issuer}</p>
+              <CertificateLinks record={record} />
+            </article>
+          ))}
+        </div>
+      </section>
+      <div className="career-award-groups">
+        {awardSections.slice(1).map((section) => (
+          <details
+            className="career-award-group"
+            key={`${filter}-${section.id}`}
+            hidden={filter !== section.id}
+            open={filter === section.id}
+          >
+            <summary>
+              <span>{section.title}</span>
+              <span className="career-group-count">
+                {section.records.length} records
+              </span>
+              <ChevronDown size={18} aria-hidden="true" />
+            </summary>
+            <p className="career-group-description">{section.description}</p>
+            <div
+              className={`career-award-records${section.id === "certificates" ? " career-credential-records" : ""}`}
+            >
+              {section.records.map((record) => (
+                <AwardRecord
+                  key={`${record.title}-${record.year ?? record.issuer}`}
+                  record={record}
+                />
+              ))}
+            </div>
+          </details>
+        ))}
+      </div>
     </div>
   );
 }
@@ -559,118 +506,96 @@ export default function WorkPanel({
   awardsOnly?: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("work");
-  const [communitySection, setCommunitySection] =
-    useState<CommunitySection>("leadership");
-  const [openWork, setOpenWork] = useState<number | null>(0);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const prefix = useId();
+  const reducedMotion = useMotionPreference();
   useEffect(() => {
     if (awardsOnly) return;
-    function syncHash() {
+    const syncHash = () => {
       const hash = window.location.hash.toLowerCase();
       if (hash === "#education") setActiveTab("education");
-      else if (
-        hash === "#community" ||
-        hash === "#leadership" ||
-        hash === "#volunteering"
-      ) {
+      else if (hash === "#volunteering") setActiveTab("volunteering");
+      else if (hash === "#community" || hash === "#leadership")
         setActiveTab("community");
-        setCommunitySection(
-          hash === "#volunteering" ? "volunteering" : "leadership",
-        );
-      }
-    }
+    };
     syncHash();
     window.addEventListener("hashchange", syncHash);
     return () => window.removeEventListener("hashchange", syncHash);
   }, [awardsOnly]);
-  function handleTabKeys(
-    event: KeyboardEvent<HTMLButtonElement>,
-    index: number,
-  ) {
-    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-    event.preventDefault();
+  function tabKeys(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const next =
       event.key === "Home"
         ? 0
         : event.key === "End"
           ? tabs.length - 1
-          : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) %
-            tabs.length;
+          : event.key === "ArrowRight"
+            ? (index + 1) % tabs.length
+            : event.key === "ArrowLeft"
+              ? (index + tabs.length - 1) % tabs.length
+              : null;
+    if (next === null) return;
+    event.preventDefault();
     setActiveTab(tabs[next].id);
     tabRefs.current[next]?.focus({ preventScroll: true });
   }
-  if (awardsOnly) return <AwardsArchive prefix={prefix} />;
   return (
-    <div className="min-w-0">
-      <div
-        role="tablist"
-        aria-label="Career archive"
-        className="mb-6 grid grid-cols-2 gap-2 sm:inline-flex sm:flex-wrap sm:gap-1.5"
-      >
-        {tabs.map((tab, index) => (
-          <button
-            key={tab.id}
-            type="button"
-            id={`${prefix}-${tab.id}-tab`}
-            role="tab"
-            aria-selected={activeTab === tab.id}
-            aria-controls={`${prefix}-${tab.id}-panel`}
-            tabIndex={activeTab === tab.id ? 0 : -1}
-            onClick={() => setActiveTab(tab.id)}
-            onKeyDown={(event) => handleTabKeys(event, index)}
-            ref={(element) => {
-              tabRefs.current[index] = element;
-            }}
-            className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors motion-reduce:transition-none sm:px-4 ${activeTab === tab.id ? "bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200" : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"} ${focusRing}`}
+    <div className="career-classic" data-reduced-motion={reducedMotion}>
+      {awardsOnly ? (
+        <AwardsArchive />
+      ) : (
+        <div className="career-archive-shell">
+          <div
+            className="career-main-tabs"
+            role="tablist"
+            aria-label="Career archive"
           >
-            {tab.label}
-            <span className="font-mono text-[9px] opacity-60">{tab.count}</span>
-          </button>
-        ))}
-      </div>
-      {tabs.map((tab) => (
-        <div
-          key={tab.id}
-          id={`${prefix}-${tab.id}-panel`}
-          role="tabpanel"
-          aria-labelledby={`${prefix}-${tab.id}-tab`}
-          hidden={activeTab !== tab.id}
-          tabIndex={0}
-          className={`min-w-0 rounded-sm ${focusRing}`}
-        >
-          {tab.id === "work" ? (
-            <div>
-              {workRecords.map((record, index) => (
-                <WorkRow
-                  key={`${record.company}-${record.dates}`}
-                  record={record}
-                  index={index}
-                  prefix={prefix}
-                  open={openWork === index}
-                  onToggle={() =>
-                    setOpenWork((current) => (current === index ? null : index))
+            {tabs.map((tab, index) => (
+              <button
+                type="button"
+                key={tab.id}
+                id={`${prefix}-${tab.id}-tab`}
+                role="tab"
+                aria-controls={`${prefix}-${tab.id}-panel`}
+                aria-selected={activeTab === tab.id}
+                tabIndex={activeTab === tab.id ? 0 : -1}
+                onClick={() => setActiveTab(tab.id)}
+                onKeyDown={(event) => tabKeys(event, index)}
+                ref={(element) => {
+                  tabRefs.current[index] = element;
+                }}
+              >
+                {tab.label}
+                <span>{tab.count}</span>
+              </button>
+            ))}
+          </div>
+          {tabs.map((tab) => (
+            <div
+              className={`career-archive-panel${tab.id === "work" ? " career-work-panel" : ""}`}
+              key={tab.id}
+              id={`${prefix}-${tab.id}-panel`}
+              role="tabpanel"
+              aria-labelledby={`${prefix}-${tab.id}-tab`}
+              hidden={activeTab !== tab.id}
+              tabIndex={0}
+            >
+              {tab.id === "work" ? (
+                <ExperienceBrowser prefix={prefix} />
+              ) : tab.id === "education" ? (
+                <EducationCards />
+              ) : (
+                <CommunityCards
+                  records={
+                    tab.id === "community"
+                      ? leadershipRecords
+                      : volunteeringRecords
                   }
                 />
-              ))}
+              )}
             </div>
-          ) : null}
-          {tab.id === "education" ? (
-            <RecordList
-              records={schoolRecords}
-              prefix={`${prefix}-education`}
-              firstOpen
-            />
-          ) : null}
-          {tab.id === "community" ? (
-            <CommunityArchive
-              prefix={prefix}
-              section={communitySection}
-              onSectionChange={setCommunitySection}
-            />
-          ) : null}
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }

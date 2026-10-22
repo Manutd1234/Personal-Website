@@ -1,13 +1,11 @@
 "use client";
+import { useMotionPreference } from "./useMotionPreference";
 
 import Image from "next/image";
-import {
-  AnimatePresence,
-  LayoutGroup,
-  motion,
-  useReducedMotion,
-} from "framer-motion";
-import { useId, useState } from "react";
+import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
+import { useId, useRef, useState, type KeyboardEvent } from "react";
+import BookCarousel from "./BookCarousel";
+import { buildNotes } from "@/content/build-notes";
 import { projects, projectArchive } from "@/content/portfolio";
 import { projectMedia, teamMoments } from "@/content/media";
 import { asset } from "@/content/paths";
@@ -63,7 +61,7 @@ const projectGroups: Readonly<
   PneuRelief: "full-stack",
 };
 
-const allProjects: readonly Project[] = [...projects, ...projectArchive];
+const archiveProjects: readonly Project[] = projectArchive;
 const mediaByTitle: Readonly<Record<string, ProjectMedia | undefined>> =
   projectMedia;
 const isReport = (url: string) => /\.pdf(?:$|[?#])/i.test(url);
@@ -256,12 +254,12 @@ function ProjectPreview({ project }: { project: Project }) {
   );
 }
 
-export default function ProjectsPanel() {
+function MoreProjects() {
   const [filter, setFilter] = useState<Filter>("all");
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useMotionPreference();
   const groupId = useId();
   const gridId = `${groupId}-projects`;
-  const filteredProjects = allProjects.filter(
+  const filteredProjects = archiveProjects.filter(
     (project) => filter === "all" || projectGroups[project.title] === filter,
   );
   return (
@@ -366,42 +364,185 @@ export default function ProjectsPanel() {
           ))}
         </AnimatePresence>
       </div>
-      <details className="group/photos mt-8 rounded-xl border border-emerald-950/10 bg-stone-50/70 p-4 sm:p-5 dark:border-white/10 dark:bg-stone-900">
-        <summary className="flex min-h-9 w-fit cursor-pointer items-center gap-2 rounded-sm text-sm font-semibold text-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700 dark:text-emerald-200">
-          Hackathon photos{" "}
-          <span
-            aria-hidden="true"
-            className="inline-block text-base group-open/photos:rotate-45"
-          >
-            +
-          </span>
-        </summary>
-        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {teamMoments.map((moment) => (
-            <figure key={moment.src}>
-              <a
-                aria-label={`Open photo: ${moment.title}`}
-                className="group/photo relative block aspect-[16/10] overflow-hidden rounded-lg border border-emerald-950/10 bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700 dark:border-white/10 dark:bg-stone-950"
-                href={asset(moment.src)}
-                rel="noreferrer"
-                target="_blank"
-              >
-                <Image
-                  alt={moment.alt}
-                  className="object-contain transition-transform duration-300 motion-safe:group-hover/photo:scale-105 motion-reduce:transition-none"
-                  fill
-                  sizes="(min-width: 640px) 50vw, 100vw"
-                  src={asset(moment.src)}
-                  unoptimized
-                />
-              </a>
-              <figcaption className="pt-2 text-xs leading-relaxed text-stone-600 dark:text-stone-400">
-                {moment.caption}
-              </figcaption>
-            </figure>
+    </div>
+  );
+}
+
+function TeamPhotos() {
+  return (
+    <details className="group/photos mt-8 rounded-xl border border-emerald-950/10 bg-stone-50/70 p-4 sm:p-5 dark:border-white/10 dark:bg-stone-900">
+      <summary className="flex min-h-9 w-fit cursor-pointer items-center gap-2 rounded-sm text-sm font-semibold text-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700 dark:text-emerald-200">
+        Hackathon photos{" "}
+        <span
+          aria-hidden="true"
+          className="inline-block text-base group-open/photos:rotate-45"
+        >
+          +
+        </span>
+      </summary>
+      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {teamMoments.map((moment) => (
+          <figure key={moment.src}>
+            <a
+              aria-label={`Open photo: ${moment.title}`}
+              className="group/photo relative block aspect-[16/10] overflow-hidden rounded-lg border border-emerald-950/10 bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700 dark:border-white/10 dark:bg-stone-950"
+              href={asset(moment.src)}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <Image
+                alt={moment.alt}
+                className="object-contain transition-transform duration-300 motion-safe:group-hover/photo:scale-105 motion-reduce:transition-none"
+                fill
+                sizes="(min-width: 640px) 50vw, 100vw"
+                src={asset(moment.src)}
+                unoptimized
+              />
+            </a>
+            <figcaption className="pt-2 text-xs leading-relaxed text-stone-600 dark:text-stone-400">
+              {moment.caption}
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+    </details>
+  );
+}
+
+function FeaturedBookDetails({
+  project,
+  media,
+}: {
+  project: Project;
+  media?: ProjectMedia;
+}) {
+  const note = buildNotes[project.title];
+  return (
+    <div className="book-case-study">
+      <p className="book-detail-category">{project.category}</p>
+      <h3>{project.title}</h3>
+      <p className="book-detail-description">{project.description}</p>
+      {note ? (
+        <dl className="book-build-notes">
+          <div>
+            <dt>The challenge</dt>
+            <dd>{note.question}</dd>
+          </div>
+          <div>
+            <dt>Inside the build</dt>
+            <dd>{note.decision}</dd>
+          </div>
+          <div className="book-proof">
+            <dt>Proof of work</dt>
+            <dd>{note.proof}</dd>
+          </div>
+        </dl>
+      ) : project.outcome ? (
+        <p className="book-detail-outcome">{project.outcome}</p>
+      ) : null}
+      <ul
+        className="book-detail-tags"
+        aria-label={`${project.title} technologies`}
+      >
+        {project.tags.map((tag) => (
+          <li key={tag}>{tag}</li>
+        ))}
+      </ul>
+      <ProjectSources project={project} />
+      {media ? (
+        <div className="book-original">
+          <a href={asset(media.src)} target="_blank" rel="noreferrer">
+            View {media.kind.toLowerCase()} <span aria-hidden="true">↗︎</span>
+          </a>
+          <p>{media.caption}</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+const collections = [
+  { id: "books", label: "The bookshelf", count: projects.length },
+  { id: "more", label: "More builds", count: projectArchive.length },
+] as const;
+type Collection = (typeof collections)[number]["id"];
+export default function ProjectsPanel({ active = true }: { active?: boolean }) {
+  const [collection, setCollection] = useState<Collection>("books");
+  const collectionId = useId();
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  function navigateCollection(
+    event: KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const next = event.key === "Home" ? 0 : event.key === "End" ? 1 : 1 - index;
+    setCollection(collections[next].id);
+    tabRefs.current[next]?.focus({ preventScroll: true });
+  }
+  return (
+    <div className="project-library">
+      <div className="project-shelf-toolbar">
+        <div
+          role="tablist"
+          aria-label="Project collections"
+          className="project-shelf-tabs"
+        >
+          {collections.map((item, index) => (
+            <button
+              type="button"
+              key={item.id}
+              role="tab"
+              id={`${collectionId}-${item.id}-tab`}
+              aria-selected={collection === item.id}
+              aria-controls={`${collectionId}-${item.id}-panel`}
+              tabIndex={collection === item.id ? 0 : -1}
+              ref={(el) => {
+                tabRefs.current[index] = el;
+              }}
+              onKeyDown={(event) => navigateCollection(event, index)}
+              onClick={() => setCollection(item.id)}
+            >
+              {item.label}
+              <span>{item.count}</span>
+            </button>
           ))}
         </div>
-      </details>
+        <a
+          className="project-all-source"
+          href="https://github.com/Manutd1234"
+          target="_blank"
+          rel="noreferrer"
+        >
+          All repositories ↗︎
+        </a>
+      </div>
+      <div
+        role="tabpanel"
+        id={`${collectionId}-books-panel`}
+        aria-labelledby={`${collectionId}-books-tab`}
+        hidden={collection !== "books"}
+        tabIndex={0}
+      >
+        <BookCarousel
+          projects={projects}
+          media={mediaByTitle}
+          active={active && collection === "books"}
+          renderDetails={(project, media) => (
+            <FeaturedBookDetails project={project} media={media} />
+          )}
+        />
+      </div>
+      <div
+        role="tabpanel"
+        id={`${collectionId}-more-panel`}
+        aria-labelledby={`${collectionId}-more-tab`}
+        hidden={collection !== "more"}
+        tabIndex={0}
+      >
+        <MoreProjects />
+      </div>
+      <TeamPhotos />
     </div>
   );
 }

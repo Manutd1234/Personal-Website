@@ -1,297 +1,538 @@
 "use client";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useMotionPreference } from "./useMotionPreference";
+
+import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import {
-  ArrowRight,
-  BookOpen,
-  Dumbbell,
-  MapPin,
-  RotateCw,
-  Utensils,
-} from "lucide-react";
-import { useState } from "react";
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
+} from "react";
+import { lifePhotos, type LifePhoto } from "@/content/life-photos";
 import { asset } from "@/content/paths";
 
-const places = [
-  {
-    src: "images/hobbies/travel-alpine.webp",
-    alt: "Ian travelling in an alpine landscape",
-    name: "Somewhere in the Alps",
-    note: "A change of scenery, and a camera roll to prove it.",
-  },
-  {
-    src: "images/ian-westminster-960.webp",
-    alt: "Ian standing in front of Westminster Abbey",
-    name: "Westminster, London",
-    note: "Taking the long way round, whenever there’s time.",
-  },
+type GalleryFilter = "All" | LifePhoto["category"];
+const categoryOrder: readonly LifePhoto["category"][] = [
+  "Travel",
+  "People",
+  "Food",
+  "Learning",
+  "Gym",
 ];
-const lessons = [
-  {
-    question: "What makes a useful AI tool?",
-    answer:
-      "Ground the answer in evidence. In RE:DECIDE, coaching starts with native match telemetry.",
-  },
-  {
-    question: "What happens after the happy path?",
-    answer:
-      "Recovery matters. AlphaEngine reconstructs feeds with sequence checks and feed recovery.",
-  },
-  {
-    question: "What keeps learning interesting?",
-    answer:
-      "A real problem, people to learn with, and a prototype you can put in their hands.",
-  },
+const filters: readonly GalleryFilter[] = [
+  "All",
+  ...categoryOrder.filter((category) =>
+    lifePhotos.some((photo) => photo.category === category),
+  ),
 ];
-const frame =
-  "flex h-full min-w-0 flex-col rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900/50";
-const iconBox =
-  "flex size-8 items-center justify-center rounded-lg border border-zinc-200 bg-white text-emerald-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-emerald-300";
-export default function OffDutyPanel() {
-  const [place, setPlace] = useState(0);
-  const [gymMode, setGymMode] = useState<"Recharge" | "Refocus">("Recharge");
-  const [foodMode, setFoodMode] = useState<"Old favourite" | "New places">(
-    "Old favourite",
-  );
-  const [lesson, setLesson] = useState(0);
-  const [flipped, setFlipped] = useState(false);
-  const reduced = useReducedMotion();
-  return (
-    <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">
-      <article className={frame}>
-        <div className="flex items-center gap-3">
-          <span className={iconBox}>
-            <Dumbbell className="size-4" />
-          </span>
-          <h2 className="text-sm font-semibold">Gym</h2>
-          <span className="ml-auto font-mono text-[9px] text-zinc-400">
-            01 / RESET
-          </span>
-        </div>
-        <div className="relative mt-4 aspect-[16/10] overflow-hidden rounded-lg">
-          <img
-            src={asset("images/hobbies/gym-nenad-stojkovic.webp")}
-            width={1600}
-            height={1067}
-            alt="Strength-training equipment in a gym"
-            loading="lazy"
-            className="h-full w-full object-cover"
-          />
-          <span className="absolute right-2 bottom-2 rounded bg-black/50 px-2 py-1 font-mono text-[8px] text-white">
-            Illustrative photo
-          </span>
-        </div>
-        <p className="mt-4 min-h-14 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-          Time away from the laptop, getting stronger and clearing my head.
-        </p>
-        <div
-          className="mt-4 flex items-center gap-1 rounded-lg border border-zinc-200 p-1 dark:border-zinc-800"
-          aria-label="Gym mindset"
-        >
-          {(["Recharge", "Refocus"] as const).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              aria-pressed={gymMode === mode}
-              onClick={() => setGymMode(mode)}
-              className={`min-h-10 flex-1 rounded-md text-xs ${gymMode === mode ? "bg-white text-emerald-700 shadow-xs dark:bg-zinc-800 dark:text-emerald-300" : "text-zinc-500"}`}
-            >
-              {mode}
-            </button>
-          ))}
-        </div>
-        <p
-          className="mt-3 min-h-10 text-xs leading-5 text-zinc-500"
-          aria-live="polite"
-        >
-          {gymMode === "Recharge"
-            ? "A break from the screen. A fresh start after."
-            : "One thing at a time. The next rep, then the next problem."}
-        </p>
-        <p className="mt-auto pt-3 text-[9px] leading-4 text-zinc-400">
-          Photo:{" "}
-          <a
-            href="https://commons.wikimedia.org/wiki/File:Design_and_equipment_in_modern_gym.jpg"
-            target="_blank"
-            rel="noreferrer"
-            className="underline"
-          >
-            Nenad Stojković / Wikimedia
-          </a>{" "}
-          ·{" "}
-          <a
-            href="https://creativecommons.org/licenses/by/2.0/"
-            target="_blank"
-            rel="noreferrer"
-            className="underline"
-          >
-            CC BY 2.0
-          </a>{" "}
-          · resized.
-        </p>
-      </article>
-      <article className={frame}>
-        <div className="flex items-center gap-3">
-          <span className={iconBox}>
-            <MapPin className="size-4" />
-          </span>
-          <h2 className="text-sm font-semibold">Travel</h2>
-          <span className="ml-auto font-mono text-[9px] text-zinc-400">
-            02 / WANDER
-          </span>
-        </div>
-        <div className="relative mt-4 aspect-[16/10] overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
-          <AnimatePresence initial={false}>
-            <motion.img
-              key={place}
-              src={asset(places[place].src)}
-              width={1200}
-              height={1600}
-              alt={places[place].alt}
-              loading="lazy"
-              initial={{ opacity: 0, scale: reduced ? 1 : 1.03 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="absolute inset-0 h-full w-full object-cover object-[center_55%]"
-            />
-          </AnimatePresence>
-        </div>
-        <p className="mt-4 min-h-14 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-          Exploring somewhere new, taking photos, and enjoying a change of
-          scenery.
-        </p>
-        <button
-          className="mt-4 flex min-h-12 items-center justify-between gap-2 rounded-lg border border-zinc-200 px-3 text-xs hover:border-emerald-400 dark:border-zinc-800"
-          onClick={() => setPlace((i) => (i + 1) % places.length)}
-          aria-label="Show next travel photo"
-        >
-          <span aria-live="polite">{places[place].name}</span>
-          <ArrowRight className="size-3.5" />
-        </button>
-        <p
-          className="mt-3 min-h-10 text-xs leading-5 text-zinc-500"
-          aria-live="polite"
-        >
-          {places[place].note}
-        </p>
-        <p className="mt-auto pt-3 font-mono text-[9px] text-zinc-400">
-          FROM MY CAMERA ROLL · {String(place + 1).padStart(2, "0")} / 02
-        </p>
-      </article>
-      <article className={frame}>
-        <div className="flex items-center gap-3">
-          <span className={iconBox}>
-            <Utensils className="size-4" />
-          </span>
-          <h2 className="text-sm font-semibold">Good food</h2>
-          <span className="ml-auto font-mono text-[9px] text-zinc-400">
-            03 / REFUEL
-          </span>
-        </div>
-        <div className="mt-4 aspect-[16/10] overflow-hidden rounded-lg">
-          <img
-            src={asset("images/hobbies/food-chicken-rice.webp")}
-            width={1130}
-            height={1600}
-            alt="A plate of roast chicken rice with chilli"
-            loading="lazy"
-            className="h-full w-full object-cover object-[center_57%] transition-transform duration-300 hover:scale-105"
-          />
-        </div>
-        <p className="mt-4 min-h-14 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-          Trying new places to eat, with plenty of room for old favourites like
-          chicken rice.
-        </p>
-        <div
-          className="mt-4 flex items-center gap-1 rounded-lg border border-zinc-200 p-1 dark:border-zinc-800"
-          aria-label="Food mood"
-        >
-          {(["Old favourite", "New places"] as const).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setFoodMode(mode)}
-              aria-pressed={foodMode === mode}
-              className={`min-h-10 flex-1 rounded-md text-xs ${foodMode === mode ? "bg-white text-emerald-700 shadow-xs dark:bg-zinc-800 dark:text-emerald-300" : "text-zinc-500"}`}
-            >
-              {mode}
-            </button>
-          ))}
-        </div>
-        <p
-          className="mt-3 min-h-10 text-xs leading-5 text-zinc-500"
-          aria-live="polite"
-        >
-          {foodMode === "Old favourite"
-            ? "Some meals don’t need reinventing. Chicken rice is one of them."
-            : "The next good find is a pretty good reason to head out."}
-        </p>
-        <p className="mt-auto pt-3 font-mono text-[9px] text-zinc-400">
-          ALWAYS ROOM FOR GOOD FOOD
-        </p>
-      </article>
-      <article className={frame}>
-        <div className="flex items-center gap-3">
-          <span className={iconBox}>
-            <BookOpen className="size-4" />
-          </span>
-          <h2 className="text-sm font-semibold">Learning</h2>
-          <span className="ml-auto font-mono text-[9px] text-zinc-400">
-            04 / REPEAT
-          </span>
-        </div>
-        <div className="mt-4 aspect-[16/10] overflow-hidden rounded-lg">
-          <img
-            src={asset("images/hobbies/learning-sap-workshop.webp")}
-            width={1600}
-            height={1067}
-            alt="Participants at a SAP S.C.A.L.E workshop"
-            loading="lazy"
-            className="h-full w-full object-cover"
-          />
-        </div>
-        <p className="mt-4 min-h-14 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-          Picking up new ideas through workshops, side projects, and
-          conversations.
-        </p>
-        <button
-          onClick={() => setFlipped((value) => !value)}
-          className="relative mt-4 min-h-28 overflow-hidden rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-left text-xs leading-5 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200"
-          aria-label={
-            flipped ? "Show learning question" : "Reveal learning note"
+const rotations = [-2.1, 1.5, -0.8, 2.2, -1.4, 0.7] as const;
+
+function PhotoTile({
+  photo,
+  index,
+  duplicate,
+  filler = false,
+  onOpen,
+}: {
+  photo: LifePhoto;
+  index: number;
+  duplicate: boolean;
+  filler?: boolean;
+  onOpen: (photo: LifePhoto, opener: HTMLButtonElement) => void;
+}) {
+  const contents = (
+    <>
+      <span className="life-photo-image">
+        <img
+          src={asset(photo.thumb ?? photo.src)}
+          alt={duplicate ? "" : photo.alt}
+          width={photo.width}
+          height={photo.height}
+          loading="lazy"
+          decoding="async"
+          style={
+            photo.position ? { objectPosition: photo.position } : undefined
           }
+        />
+        <span className="life-photo-open" aria-hidden="true">
+          ↗
+        </span>
+      </span>
+      <span className="life-photo-caption">{photo.caption || photo.alt}</span>
+      <span className="life-photo-category">{photo.category}</span>
+    </>
+  );
+  return (
+    <div
+      className={`life-photo-tile${filler ? " is-filler" : ""}`}
+      data-photo-id={photo.id}
+      aria-hidden={duplicate ? true : undefined}
+      inert={duplicate}
+      style={
+        {
+          "--photo-turn": `${rotations[index % rotations.length]}deg`,
+        } as CSSProperties
+      }
+    >
+      {duplicate ? (
+        <div className="life-photo-card">{contents}</div>
+      ) : (
+        <button
+          type="button"
+          className="life-photo-card"
+          aria-label={`Open photo: ${photo.caption || photo.alt}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpen(photo, event.currentTarget);
+          }}
         >
-          <span className="mb-1 block font-mono text-[8px] uppercase tracking-wider opacity-60">
-            {flipped ? "A note from building" : "A question to keep"} · tap to
-            flip
-          </span>
-          <AnimatePresence initial={false} mode="wait">
-            <motion.span
-              key={`${lesson}-${flipped}`}
-              initial={{ opacity: 0, y: reduced ? 0 : 3 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="block"
-              transition={{ duration: 0.12 }}
-            >
-              {flipped ? lessons[lesson].answer : lessons[lesson].question}
-            </motion.span>
-          </AnimatePresence>
+          {contents}
         </button>
-        <div className="mt-auto flex items-center justify-between pt-3">
-          <span className="font-mono text-[9px] text-zinc-400">
-            SAP S.C.A.L.E WORKSHOP
-          </span>
-          <button
-            onClick={() => {
-              setLesson((i) => (i + 1) % lessons.length);
-              setFlipped(false);
-            }}
-            className="flex min-h-10 items-center gap-1.5 text-[10px] text-zinc-500 hover:text-emerald-700"
-          >
-            Next note <RotateCw className="size-3" />
-          </button>
+      )}
+    </div>
+  );
+}
+
+export default function OffDutyPanel() {
+  const [filter, setFilter] = useState<GalleryFilter>("All");
+  const [autoRoll, setAutoRoll] = useState(true);
+  const [inView, setInView] = useState(false);
+  const [documentVisible, setDocumentVisible] = useState(false);
+  const [disclosureOpen, setDisclosureOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const galleryRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
+  const reducedMotion = useMotionPreference();
+  const prefix = useId();
+
+  const photos = useMemo(
+    () =>
+      filter === "All"
+        ? lifePhotos
+        : lifePhotos.filter((photo) => photo.category === filter),
+    [filter],
+  );
+  const rows = useMemo(() => {
+    const split = Math.ceil(photos.length / 2);
+    const groups =
+      photos.length < 6
+        ? [photos]
+        : [photos.slice(0, split), photos.slice(split)];
+    return groups
+      .filter((row) => row.length > 0)
+      .map((row, index) => ({
+        photos: row,
+        tiles: Array.from(
+          { length: Math.max(6, row.length) },
+          (_, tile) => row[tile % row.length],
+        ),
+        secondsPerPhoto: index === 0 ? 8 : 9,
+      }));
+  }, [photos]);
+  const selectedIndex = photos.findIndex((photo) => photo.id === selectedId);
+  const selectedPhoto = photos[selectedIndex];
+  const lightboxOpen = selectedPhoto !== undefined;
+  const canAutoRoll = !reducedMotion && photos.length > 1;
+  const staticMode = !canAutoRoll || !autoRoll || focused;
+  const rolling =
+    !staticMode &&
+    inView &&
+    documentVisible &&
+    disclosureOpen &&
+    !hovered &&
+    !lightboxOpen;
+
+  useEffect(() => {
+    const gallery = galleryRef.current;
+    if (!gallery) return;
+    const disclosure = gallery.closest("details");
+    const panel = gallery.closest<HTMLElement>('[role="tabpanel"]');
+    const closeForNavigation = () => setSelectedId(null);
+    const panelObserver = new MutationObserver(() => {
+      if (
+        panel?.hidden ||
+        panel?.getAttribute("aria-hidden") === "true" ||
+        panel?.inert
+      ) {
+        setSelectedId(null);
+        setFocused(false);
+      }
+    });
+    if (panel)
+      panelObserver.observe(panel, {
+        attributes: true,
+        attributeFilter: ["hidden", "aria-hidden", "inert"],
+      });
+    const syncVisibility = () =>
+      setDocumentVisible(document.visibilityState === "visible");
+    const syncDisclosure = () =>
+      setDisclosureOpen(!disclosure || disclosure.open);
+    const observer =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver(
+            ([entry]) => {
+              setInView(entry.isIntersecting && entry.intersectionRatio > 0);
+            },
+            { threshold: [0, 0.05] },
+          );
+    if (observer) observer.observe(gallery);
+    else setInView(true);
+    syncVisibility();
+    syncDisclosure();
+    document.addEventListener("visibilitychange", syncVisibility);
+    disclosure?.addEventListener("toggle", syncDisclosure);
+    window.addEventListener("hashchange", closeForNavigation);
+    return () => {
+      observer?.disconnect();
+      panelObserver.disconnect();
+      window.removeEventListener("hashchange", closeForNavigation);
+      document.removeEventListener("visibilitychange", syncVisibility);
+      disclosure?.removeEventListener("toggle", syncDisclosure);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!staticMode)
+      galleryRef.current
+        ?.querySelectorAll<HTMLElement>(".life-marquee-row")
+        .forEach((row) => {
+          row.scrollLeft = 0;
+        });
+  }, [staticMode]);
+
+  useEffect(() => {
+    if (!disclosureOpen) setSelectedId(null);
+  }, [disclosureOpen]);
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const body = document.body;
+    const html = document.documentElement;
+    const previous = {
+      bodyOverflow: body.style.overflow,
+      htmlOverflow: html.style.overflow,
+      paddingRight: body.style.paddingRight,
+    };
+    const scrollbar = Math.max(0, window.innerWidth - html.clientWidth);
+    const stableGutter = window
+      .getComputedStyle(html)
+      .getPropertyValue("scrollbar-gutter")
+      .includes("stable");
+    if (scrollbar > 0 && !stableGutter)
+      body.style.paddingRight = `${parseFloat(window.getComputedStyle(body).paddingRight) + scrollbar}px`;
+    body.style.overflow = "hidden";
+    html.style.overflow = "hidden";
+    if (!dialog.open) dialog.showModal();
+    closeRef.current?.focus({ preventScroll: true });
+    return () => {
+      if (dialog.open) dialog.close();
+      body.style.overflow = previous.bodyOverflow;
+      html.style.overflow = previous.htmlOverflow;
+      body.style.paddingRight = previous.paddingRight;
+      if (
+        openerRef.current?.isConnected &&
+        openerRef.current.getClientRects().length > 0 &&
+        !openerRef.current.closest('[hidden], [inert], [aria-hidden="true"]')
+      ) {
+        openerRef.current.focus({ preventScroll: true });
+        setFocused(true);
+        const opener = openerRef.current;
+        requestAnimationFrame(() => {
+          if (
+            opener.isConnected &&
+            opener.getClientRects().length > 0 &&
+            opener.matches(".life-photo-card")
+          )
+            opener.scrollIntoView({
+              block: "nearest",
+              inline: "nearest",
+              behavior: "instant",
+            });
+        });
+      }
+    };
+  }, [lightboxOpen]);
+
+  function openPhoto(photo: LifePhoto, opener: HTMLElement | null) {
+    openerRef.current = opener ?? galleryRef.current;
+    setSelectedId(photo.id);
+  }
+
+  // Cloned sequences stay inert for assistive technology. Pointer clicks are
+  // resolved at their non-inert parent, using the visible frame's coordinates.
+  function openVisibleFrame(event: MouseEvent<HTMLDivElement>) {
+    if (event.target instanceof Element && event.target.closest("button"))
+      return;
+    const frame = [
+      ...event.currentTarget.querySelectorAll<HTMLElement>("[data-photo-id]"),
+    ].find((node) => {
+      const box = node.getBoundingClientRect();
+      return (
+        event.clientX >= box.left &&
+        event.clientX <= box.right &&
+        event.clientY >= box.top &&
+        event.clientY <= box.bottom
+      );
+    });
+    const photo = photos.find((item) => item.id === frame?.dataset.photoId);
+    if (!photo) return;
+    const original = [
+      ...(galleryRef.current?.querySelectorAll<HTMLElement>(
+        "[data-photo-id]",
+      ) ?? []),
+    ]
+      .find(
+        (node) =>
+          node.dataset.photoId === photo.id && !node.hasAttribute("inert"),
+      )
+      ?.querySelector<HTMLButtonElement>("button");
+    openPhoto(photo, original ?? null);
+  }
+
+  function movePhoto(offset: number) {
+    if (photos.length < 2) return;
+    setSelectedId((current) => {
+      const index = photos.findIndex((photo) => photo.id === current);
+      return photos[(index + offset + photos.length) % photos.length].id;
+    });
+  }
+
+  function lightboxKeys(event: KeyboardEvent<HTMLDialogElement>) {
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      movePhoto(event.key === "ArrowRight" ? 1 : -1);
+    } else if (event.key === "Tab") {
+      const targets = [
+        ...event.currentTarget.querySelectorAll<HTMLButtonElement>(
+          "button:not(:disabled)",
+        ),
+      ];
+      const first = targets[0],
+        last = targets[targets.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    }
+  }
+
+  if (!lifePhotos.length)
+    return (
+      <div ref={galleryRef} className="life-gallery-empty">
+        Photos will appear here once they’re added.
+      </div>
+    );
+
+  return (
+    <div
+      ref={galleryRef}
+      className="life-gallery"
+      tabIndex={-1}
+      data-static={staticMode}
+      data-rolling={rolling}
+      onPointerEnter={(event) => {
+        if (event.pointerType === "mouse") setHovered(true);
+      }}
+      onPointerLeave={(event) => {
+        if (event.pointerType === "mouse") setHovered(false);
+      }}
+      onFocusCapture={(event) =>
+        setFocused(
+          event.target instanceof HTMLElement &&
+            event.target.matches(":focus-visible"),
+        )
+      }
+      onBlurCapture={(event) => {
+        if (
+          !(event.relatedTarget instanceof Node) ||
+          !event.currentTarget.contains(event.relatedTarget)
+        )
+          setFocused(false);
+      }}
+    >
+      <div className="life-gallery-heading">
+        <div>
+          <p className="life-gallery-eyebrow">From my camera roll</p>
+          <h3>Life in pictures.</h3>
         </div>
-      </article>
+        <button
+          type="button"
+          className="life-roll-toggle"
+          role="switch"
+          aria-checked={autoRoll && canAutoRoll}
+          aria-describedby={!canAutoRoll ? `${prefix}-motion-note` : undefined}
+          disabled={!canAutoRoll}
+          onClick={() => setAutoRoll((value) => !value)}
+        >
+          Auto-roll{" "}
+          <span aria-hidden="true" className="life-roll-switch">
+            <span />
+          </span>
+          <span className="life-roll-state">
+            {autoRoll && canAutoRoll ? "On" : "Off"}
+          </span>
+        </button>
+      </div>
+      <div
+        className="life-gallery-filters"
+        role="group"
+        aria-label="Filter personal photos"
+      >
+        {filters.map((category) => (
+          <button
+            key={category}
+            type="button"
+            aria-pressed={filter === category}
+            onClick={() => setFilter(category)}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
+      <p className="life-gallery-help" id={`${prefix}-motion-note`}>
+        Open a photo to look closer. With Auto-roll off, scroll to browse at
+        your own pace.
+      </p>
+      <div
+        className="life-gallery-marquees"
+        aria-label={`${filter === "All" ? "Personal" : filter} photos`}
+      >
+        {rows.map((row, rowIndex) => (
+          <div key={`${filter}-${rowIndex}`} className="life-marquee-row">
+            <div
+              className={`life-marquee-track${rowIndex === 1 ? " is-reversed" : ""}`}
+              style={{
+                animationDuration: `${row.tiles.length * row.secondsPerPhoto}s`,
+              }}
+              onClick={openVisibleFrame}
+            >
+              <div className="life-marquee-sequence">
+                {row.tiles.map((photo, index) => (
+                  <PhotoTile
+                    key={`${photo.id}-${index}`}
+                    photo={photo}
+                    index={index + rowIndex * 2}
+                    duplicate={index >= row.photos.length}
+                    filler={index >= row.photos.length}
+                    onOpen={openPhoto}
+                  />
+                ))}
+              </div>
+              <div
+                className="life-marquee-sequence life-gallery-copy"
+                aria-hidden="true"
+                inert
+              >
+                {row.tiles.map((photo, index) => (
+                  <PhotoTile
+                    key={`${photo.id}-${index}`}
+                    photo={photo}
+                    index={index + rowIndex * 2}
+                    duplicate
+                    onOpen={openPhoto}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <span className="sr-only" role="status">
+        Showing {photos.length}{" "}
+        {filter === "All" ? "personal" : filter.toLowerCase()} photos.
+      </span>
+
+      <dialog
+        ref={dialogRef}
+        className="life-lightbox"
+        aria-labelledby={`${prefix}-caption`}
+        aria-describedby={`${prefix}-photo-meta`}
+        onKeyDown={lightboxKeys}
+        onCancel={(event) => {
+          event.preventDefault();
+          setSelectedId(null);
+        }}
+        onClose={() => setSelectedId(null)}
+        onClick={(event) => {
+          if (event.target !== event.currentTarget) return;
+          const box = event.currentTarget.getBoundingClientRect();
+          if (
+            event.clientX < box.left ||
+            event.clientX > box.right ||
+            event.clientY < box.top ||
+            event.clientY > box.bottom
+          )
+            setSelectedId(null);
+        }}
+      >
+        {selectedPhoto ? (
+          <>
+            <header className="life-lightbox-heading">
+              <p id={`${prefix}-photo-meta`}>
+                {selectedPhoto.category}
+                <span aria-hidden="true"> · </span>
+                <span aria-live="polite">
+                  {selectedIndex + 1} / {photos.length}
+                </span>
+              </p>
+              <button
+                ref={closeRef}
+                type="button"
+                onClick={() => setSelectedId(null)}
+                aria-label="Close photo"
+              >
+                <X size={21} aria-hidden="true" />
+              </button>
+            </header>
+            <div className="life-lightbox-image">
+              <img
+                src={asset(selectedPhoto.src)}
+                alt={selectedPhoto.alt}
+                width={selectedPhoto.width}
+                height={selectedPhoto.height}
+                decoding="async"
+              />
+            </div>
+            <footer className="life-lightbox-footer">
+              <h3 id={`${prefix}-caption`} aria-live="polite">
+                {selectedPhoto.caption || selectedPhoto.alt}
+              </h3>
+              <div className="life-lightbox-navigation">
+                <button
+                  type="button"
+                  onClick={() => movePhoto(-1)}
+                  disabled={photos.length < 2}
+                  aria-label="Previous photo"
+                >
+                  <ArrowLeft size={20} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => movePhoto(1)}
+                  disabled={photos.length < 2}
+                  aria-label="Next photo"
+                >
+                  <ArrowRight size={20} aria-hidden="true" />
+                </button>
+              </div>
+            </footer>
+          </>
+        ) : null}
+      </dialog>
     </div>
   );
 }
