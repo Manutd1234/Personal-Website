@@ -21,6 +21,7 @@ type Project = {
   category: string;
   description: string;
   outcome?: string;
+  highlights?: readonly string[];
   tags: readonly string[];
   repository?: string;
   repositoryLabel?: string;
@@ -355,6 +356,18 @@ function MoreProjects() {
                     {project.outcome}
                   </p>
                 ) : null}
+                {project.highlights?.length ? (
+                  <ul className="mt-4 space-y-2 text-xs leading-relaxed text-stone-600 dark:text-stone-400">
+                    {project.highlights.map((point) => (
+                      <li
+                        className="relative pl-4 before:absolute before:top-[0.6em] before:left-0 before:size-1.5 before:rounded-full before:bg-emerald-500/60"
+                        key={point}
+                      >
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
                 <div className="mt-auto space-y-4 pt-5">
                   <ul
                     aria-label={`${project.title} technologies`}
@@ -434,6 +447,16 @@ function FeaturedBookDetails({
       <p className="book-detail-category">{project.category}</p>
       <h3>{project.title}</h3>
       <p className="book-detail-description">{project.description}</p>
+      {project.highlights?.length ? (
+        <div className="book-highlights">
+          <h4>Highlights</h4>
+          <ul>
+            {project.highlights.map((point) => (
+              <li key={point}>{point}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {note ? (
         <dl className="book-build-notes">
           <div>

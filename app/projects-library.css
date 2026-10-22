@@ -50,6 +50,39 @@
 .book-case-study .book-detail-description {
   margin-bottom: 22px;
 }
+.book-highlights {
+  margin-bottom: 24px;
+}
+.book-highlights h4 {
+  margin-bottom: 10px;
+  font: 650 9px/1.7 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--book-lime);
+}
+.book-highlights ul {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.book-highlights li {
+  position: relative;
+  padding-left: 16px;
+  font: 400 12px/1.75 var(--classic-display);
+  color: var(--book-cream);
+}
+.book-highlights li::before {
+  content: "";
+  position: absolute;
+  top: 0.72em;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--book-lime);
+}
 .book-build-notes {
   display: grid;
   gap: 18px;
@@ -116,7 +149,8 @@
   .book-build-notes {
     gap: 17px;
   }
-  .book-build-notes dd {
+  .book-build-notes dd,
+  .book-highlights li {
     font-size: 13px;
   }
 }

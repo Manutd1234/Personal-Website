@@ -25,7 +25,7 @@
   font: italic 400 1em/1.4 var(--classic-serif);
 }
 
-/* Every full phrase contributes to sizing; the rolling word cannot shift it. */
+/* Every full phrase contributes to sizing; the typed word cannot shift it. */
 .role-intro-measure {
   grid-area: 1 / 1;
   padding-right: 0.5em;
@@ -33,12 +33,13 @@
   white-space: nowrap;
 }
 
+/* `pre` keeps a trailing space mid-type, so the caret steps over it. */
 .role-intro-word {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
-  white-space: nowrap;
+  white-space: pre;
 }
 
 .role-intro-caret {
@@ -52,7 +53,7 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .role-intro[data-running="true"] .role-intro-caret {
+  .role-intro[data-running="true"][data-holding="true"] .role-intro-caret {
     animation: role-intro-caret 1.05s steps(1) infinite;
   }
 

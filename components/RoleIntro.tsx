@@ -1,6 +1,5 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { useMotionPreference } from "./useMotionPreference";
 
@@ -11,8 +10,34 @@ const roles = [
   "a curious learner",
 ] as const;
 
+const TYPE_MS = 75;
+const DELETE_MS = 40;
+const HOLD_MS = 1900;
+const GAP_MS = 320;
+
+type Frame = { role: number; letters: number; deleting: boolean };
+
+const resting: Frame = { role: 0, letters: roles[0].length, deleting: false };
+
+// One keystroke forward: type to the end, hold, backspace to empty, then
+// start typing the next phrase.
+function advance(current: Frame): Frame {
+  if (!current.deleting)
+    return current.letters < roles[current.role].length
+      ? { ...current, letters: current.letters + 1 }
+      : { ...current, deleting: true };
+  return current.letters > 0
+    ? { ...current, letters: current.letters - 1 }
+    : { role: (current.role + 1) % roles.length, letters: 0, deleting: false };
+}
+
+function delayFor({ role, letters, deleting }: Frame) {
+  if (deleting) return letters > 0 ? DELETE_MS : GAP_MS;
+  return letters < roles[role].length ? TYPE_MS : HOLD_MS;
+}
+
 export default function RoleIntro() {
-  const [frame, setFrame] = useState({ role: 0, letters: roles[0].length });
+  const [frame, setFrame] = useState<Frame>(resting);
   const [inView, setInView] = useState(false);
   const [visible, setVisible] = useState(false);
   const [panelVisible, setPanelVisible] = useState(false);
@@ -54,32 +79,26 @@ export default function RoleIntro() {
   }, []);
 
   useEffect(() => {
-    if (reducedMotion)
-      setFrame((current) =>
-        current.role === 0 && current.letters === roles[0].length
-          ? current
-          : { role: 0, letters: roles[0].length },
-      );
+    if (reducedMotion) setFrame(resting);
   }, [reducedMotion]);
 
   useEffect(() => {
     if (!running) return;
-    const typing = frame.letters < roles[frame.role].length;
-    const timer = window.setTimeout(
-      () => {
-        setFrame((current) =>
-          typing
-            ? { ...current, letters: current.letters + 1 }
-            : { role: (current.role + 1) % roles.length, letters: 1 },
-        );
-      },
-      typing ? 75 : 1900,
-    );
+    const timer = window.setTimeout(() => setFrame(advance), delayFor(frame));
     return () => window.clearTimeout(timer);
-  }, [running, frame.role, frame.letters]);
+  }, [running, frame]);
+
+  // The caret holds steady while keys are moving and blinks only at rest.
+  const holding =
+    !frame.deleting && frame.letters === roles[frame.role].length;
 
   return (
-    <div className="role-intro" ref={rootRef} data-running={running}>
+    <div
+      className="role-intro"
+      ref={rootRef}
+      data-running={running}
+      data-holding={holding}
+    >
       <span className="role-intro-label" aria-hidden="true">
         I’m
       </span>
@@ -89,23 +108,10 @@ export default function RoleIntro() {
             {text}
           </span>
         ))}
-        <AnimatePresence initial={false} mode="popLayout">
-          <motion.span
-            className="role-intro-word"
-            key={frame.role}
-            initial={reducedMotion ? false : { y: "105%", opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: reducedMotion ? 0 : "-105%", opacity: 0 }}
-            transition={
-              reducedMotion
-                ? { duration: 0 }
-                : { type: "spring", stiffness: 280, damping: 28 }
-            }
-          >
-            {roles[frame.role].slice(0, frame.letters)}
-            <span className="role-intro-caret" />
-          </motion.span>
-        </AnimatePresence>
+        <span className="role-intro-word">
+          {roles[frame.role].slice(0, frame.letters)}
+          <span className="role-intro-caret" />
+        </span>
       </span>
       <span className="sr-only">
         I’m a software builder, an AI enthusiast, a quant researcher, and a

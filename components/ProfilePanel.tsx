@@ -14,7 +14,6 @@ import { profile, projects } from "@/content/portfolio";
 import { projectMedia } from "@/content/media";
 import { buildNotes as projectNotes } from "@/content/build-notes";
 import { asset } from "@/content/paths";
-import OffDutyPanel from "./OffDutyPanel";
 import RoleIntro from "./RoleIntro";
 
 const workbenchNotes = [
@@ -269,7 +268,6 @@ export default function ProfilePanel({
   openProjects: (projectTitle?: string) => void;
 }) {
   const reduced = useMotionPreference();
-  const hobbiesRef = useRef<HTMLDetailsElement>(null);
   const x = useMotionValue(0),
     y = useMotionValue(0);
   const rotateX = useSpring(x, { stiffness: 180, damping: 24 }),
@@ -328,13 +326,7 @@ export default function ProfilePanel({
                 <Mail size={19} />
                 Email
               </a>
-              <a
-                href="#life-in-pictures"
-                className="classic-photo-shortcut"
-                onClick={() => {
-                  if (hobbiesRef.current) hobbiesRef.current.open = true;
-                }}
-              >
+              <a href="#life-in-pictures" className="classic-photo-shortcut">
                 Life in pictures <ArrowDown size={15} aria-hidden="true" />
               </a>
             </div>
@@ -398,25 +390,6 @@ export default function ProfilePanel({
         </div>
       </section>
       <Workbench openProjects={openProjects} />
-      <details
-        className="classic-hobbies"
-        id="life-in-pictures"
-        ref={hobbiesRef}
-        open
-      >
-        <summary>
-          <span className="classic-disclosure-icon" aria-hidden="true">
-            +
-          </span>
-          Beyond the code
-          <span className="classic-disclosure-note">
-            Gym, travel, good food & learning
-          </span>
-        </summary>
-        <div className="pt-6">
-          <OffDutyPanel />
-        </div>
-      </details>
     </>
   );
 }

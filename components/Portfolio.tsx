@@ -7,6 +7,7 @@ import WorkPanel from "./WorkPanel";
 import ProjectsPanel from "./ProjectsPanel";
 import ProfilePanel from "./ProfilePanel";
 import ContactPanel from "./ContactPanel";
+import OffDutyPanel from "./OffDutyPanel";
 
 const tabs = [
   {
@@ -82,7 +83,7 @@ export default function Portfolio() {
   useEffect(() => {
     const sync = () => {
       const hash = window.location.hash.slice(1);
-      if (["main", "contact"].includes(hash)) return;
+      if (["main", "life-in-pictures", "contact"].includes(hash)) return;
       setActive(aliases[hash] ?? "profile");
       if (aliases[hash])
         requestAnimationFrame(() =>
@@ -282,13 +283,32 @@ export default function Portfolio() {
             </motion.section>
           ))}
           <section
+            id="life-in-pictures"
+            className="classic-contact classic-offduty"
+            aria-labelledby="offduty-title"
+          >
+            <header className="border-t border-zinc-200 pt-10 pb-6 dark:border-zinc-800">
+              <p className="font-mono text-xs tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+                06 — Beyond the code
+              </p>
+              <h2 id="offduty-title" className="classic-contact-title">
+                Off the <em>clock.</em>
+              </h2>
+              <p className="classic-section-note">
+                Gym, travel, good food &amp; learning — the life around the
+                code.
+              </p>
+            </header>
+            <OffDutyPanel />
+          </section>
+          <section
             id="contact"
             className="classic-contact"
             aria-labelledby="contact-title"
           >
             <header className="border-t border-zinc-200 pt-10 pb-6 dark:border-zinc-800">
               <p className="font-mono text-xs tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
-                06 — SAY HI
+                07 — SAY HI
               </p>
               <h2 id="contact-title" className="classic-contact-title">
                 Let’s talk.

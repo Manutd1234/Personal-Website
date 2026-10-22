@@ -411,39 +411,6 @@ main.classic-shell {
   font-size: 12px;
   font-weight: 600;
 }
-.classic-hobbies {
-  margin-top: 32px;
-  border-top: 1px solid #b8d9b9;
-  border-bottom: 1px solid #b8d9b9;
-  padding-bottom: 12px;
-}
-.classic-hobbies > summary {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  min-height: 76px;
-  font: 750 17px var(--classic-display);
-}
-.classic-disclosure-icon {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: #dcf2c3;
-  color: #007f5b;
-  font: 500 24px var(--classic-display);
-  transition: transform 0.2s;
-}
-.classic-hobbies[open] .classic-disclosure-icon {
-  transform: rotate(45deg);
-}
-.classic-disclosure-note {
-  margin-left: auto;
-  font: 400 12px var(--classic-display);
-  color: var(--classic-muted);
-}
 .classic-section-header {
   margin-top: 48px;
 }
@@ -644,13 +611,6 @@ main.classic-shell {
   }
   .classic-about-copy {
     font-size: 15px;
-  }
-  .classic-disclosure-note {
-    display: none;
-  }
-  .classic-hobbies > summary {
-    font-size: 16px;
-    gap: 14px;
   }
   .classic-section-header {
     margin-top: 24px;

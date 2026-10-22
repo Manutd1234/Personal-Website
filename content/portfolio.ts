@@ -50,6 +50,12 @@ export const projects = [
       "A quantitative research and execution workspace for Binance, Bybit, and Hyperliquid market data, pre-trade risk checks, and operator telemetry.",
     outcome:
       "Reconstructs L2 order books with sequence checks and feed recovery, and aligns feeds on a 100 ms analysis grid.",
+    highlights: [
+      "Streamed Binance, Bybit and Hyperliquid L2 data over WebSockets with aiohttp/orjson into compressed Parquet.",
+      "Rebuilt order books on a 100 ms grid using snapshot–delta reconciliation, sequence checks and feed recovery.",
+      "Built a FastAPI pre-trade gateway with 17 risk gates, matched bit-for-bit by a pybind11 C++ core across 20 parity scenarios.",
+      "Deployed it with Docker and Supabase PostgreSQL (row-level security, order logs), plus Telegram order and P&L alerts.",
+    ],
     tags: ["Python", "C++", "FastAPI", "WebSockets", "PostgreSQL"],
     repository: "https://github.com/Manutd1234/AlphaEngine",
     repositoryVisibility: "public",
@@ -65,6 +71,12 @@ export const projects = [
       "Team Pandamonium’s five Dockerised AI services for the DSTA TIL-AI finals: speech, vision, retrieval, adversarial noise, and autonomous navigation.",
     outcome:
       "Combined NVIDIA Parakeet speech recognition, YOLOv11 detection, BM25-first retrieval, and a MaskablePPO navigation agent for an air-gapped evaluation.",
+    highlights: [
+      "Fine-tuned NVIDIA Parakeet TDT speech recognition with a custom decoder, FP16 inference, sorted batching and phrase correction.",
+      "Tuned YOLOv11 detection for aircraft, vehicles and vessels, and built PGD adversarial noise within SSIM/RMSE budgets.",
+      "Built BM25-first retrieval with optional neural reranking and quantized LLM generation for question answering.",
+      "Trained a MaskablePPO navigation agent with action masking and reward shaping, falling back to BFS/A* pathing.",
+    ],
     tags: ["PyTorch", "FastAPI", "YOLOv11", "NeMo", "Docker"],
     repository: "https://github.com/Manutd1234/BrainHack_V2",
     repositoryLabel: "Finals source code",
@@ -76,9 +88,15 @@ export const projects = [
     title: "Delta1 Research",
     category: "Systematic trading",
     description:
-      "A strategy research environment for testing predictive signals, execution assumptions, and portfolio behaviour.",
+      "A long/short trend and carry strategy across 59 global futures, built for an NUS Investment Society quant research case.",
     outcome:
       "Uses walk-forward validation, execution costs, and reproducible research artifacts to evaluate signals.",
+    highlights: [
+      "Blended 12-month trend with basis-momentum carry, sized each position by its volatility and targeted 7% annual risk.",
+      "Backtested 1990–2014 net of spread, slippage, fees, impact and roll costs: Sharpe 1.59, 13.2% CAGR, −11.8% max drawdown.",
+      "Validated with a 20-fold anchored walk-forward: Sharpe 1.42 across 5,218 out-of-sample sessions.",
+      "Had the highest Sharpe of 13 paths replicated on the same panel, and reported a 0.42 CSCV overfitting probability.",
+    ],
     tags: ["Python", "pandas", "NumPy", "SciPy", "statsmodels"],
     repository: "https://github.com/Manutd1234/Delta1_Trading_Strategy",
     repositoryVisibility: "public",
@@ -92,6 +110,11 @@ export const projects = [
       "A Counter-Strike 2 coaching platform that turns native match telemetry into moment-specific tactical feedback.",
     outcome:
       "Parses .dem files, detects first-contact decisions, and grounds LightGBM and LLM coaching in match evidence.",
+    highlights: [
+      "Parsed CS2 .dem telemetry with Awpy, picked decision moments after contact and scored them with LightGBM signals.",
+      "Kept later match information out of coaching prompts; the LLM picks evidence IDs and the backend renders the facts.",
+      "Built the Next.js/TypeScript radar, timeline and player-selection UI over a FastAPI/Pydantic backend.",
+    ],
     tags: ["Next.js", "FastAPI", "AWPy", "LightGBM", "Pydantic"],
     repository:
       "https://github.com/Manutd1234/ReDecide-Garena-AI-Build-Challenge",
@@ -106,6 +129,11 @@ export const projects = [
       "A Microsoft-native multi-agent workflow for financial-crime alert triage, evidence enrichment, adjudication, and suspicious activity report drafting.",
     outcome:
       "Produces explainable evidence packs and keeps consequential decisions with a human reviewer through Teams and Power Automate approval workflows.",
+    highlights: [
+      "The team’s four agents handle triage, enrichment, adjudication and SAR drafting; a human signs off every escalation.",
+      "Generated the synthetic, PII-free sample alert backlog that the crew and its before/after scoreboard ran against.",
+      "Wrote a five-rule risk-scoring engine (0–100 scores with plain-language reasons) and wired it into the operations dashboard.",
+    ],
     tags: ["Azure AI", "RAG", "Cosmos DB", "Power Automate", "Power BI"],
     repository: "https://github.com/sudharsank/oneBrainCell-FraudCrew",
     repositoryLabel: "Public team starter",
@@ -128,6 +156,11 @@ export const projectArchive = [
     group: "AI",
     description:
       "An offline-first study platform with an encrypted document vault, grounded AI tutoring, quizzes, flashcards, XP, study streaks, and optional cloud sync.",
+    highlights: [
+      "Indexed PDF and slide chunks with MiniLM in Web Workers for semantic retrieval inside the browser.",
+      "Encrypted workspaces with Argon2id key derivation and AES-GCM, with optional account-scoped Supabase sync.",
+      "Integrated DeepSeek with SSE streaming and tool calling for grounded tutoring and bounded lesson and quiz generation.",
+    ],
     tags: ["React", "TypeScript", "FastAPI", "DeepSeek", "Supabase"],
     repository: "https://github.com/Manutd1234/Obital-26",
     repositoryVisibility: "public",
@@ -138,6 +171,11 @@ export const projectArchive = [
     group: "Quant",
     description:
       "IBKR NAV collectors, competition leaderboards, automated portfolio reports, and dashboards for historical and Monte Carlo VaR/ES.",
+    highlights: [
+      "Added Python/ib_insync NAV collectors and Streamlit dashboards for IBKR paper portfolios, with systemd-scheduled SQLite snapshots.",
+      "Computed historical and 50,000-path Monte Carlo VaR/ES alongside exposure and drawdown metrics in Python/NumPy.",
+      "Built a FastAPI/React research platform on BTC breakout cycles, 13F sector rotation and congressional trading.",
+    ],
     tags: ["Python", "IBKR", "React", "Streamlit", "SQLite"],
     repository: "https://github.com/Manutd1234/Infrastructure_Projects",
     repositoryLabel: "Public infrastructure",
@@ -176,6 +214,10 @@ export const projectArchive = [
     group: "Product",
     description:
       "A cast-pressure monitoring app with BLE device connections, sensor notifications, and a mobile interface backed by FastAPI.",
+    highlights: [
+      "Implement BLE GATT notifications with react-native-ble-plx and decode Base64/CSV sensor data in TypeScript.",
+      "Handle device commands, Android permissions and BLE reconnection in the React Native/Expo app.",
+    ],
     tags: ["React Native", "Expo", "BLE", "FastAPI", "TypeScript"],
     repository: "https://github.com/PneuReliefApp/frontend",
     repositoryLabel: "Frontend (private)",
@@ -194,6 +236,11 @@ export const projectArchive = [
     group: "AI",
     description:
       "An accessibility suite combining on-device gesture recognition, wellness assistance, and voice-first navigation for independent living.",
+    highlights: [
+      "Sign interpreter: MediaPipe and LSTM gesture recognition, trained on each user's own signs and run entirely in the browser.",
+      "Aurora assistant: Gemini conversation with real-time detection of emotions, hydration events and falls.",
+      "PathGuardian: voice-first navigation for seniors with a caregiver live map and route-deviation alerts.",
+    ],
     tags: ["React", "TypeScript", "MediaPipe", "Gemini"],
     repository: "https://github.com/Asdao/Signmeup",
     repositoryLabel: "Team source code",
@@ -205,6 +252,11 @@ export const projectArchive = [
     group: "AI",
     description:
       "An AI productivity platform combining academic guidance, task breakdowns, Pomodoro sessions, habit tracking, and progress analytics.",
+    highlights: [
+      "Built the app in Next.js 14 and TypeScript with Supabase Auth (Google, GitHub, email) and Zustand state.",
+      "Added an AI coach on FastAPI, LangChain and OpenAI gpt-4o-mini that answers progress questions and drafts study plans.",
+      "Built 25/50/90-minute focus sessions, habit tracking and an XP shop, with Chart.js weekly and subject analytics.",
+    ],
     tags: ["Next.js", "LangChain", "FastAPI", "React"],
     repository: "https://github.com/Manutd1234/Nexus-AI-Helper",
     repositoryVisibility: "public",
@@ -215,6 +267,11 @@ export const projectArchive = [
     group: "AI",
     description:
       "Investment-banking workflow tools for market research, information memorandum and NDA drafting, and a live deal dashboard.",
+    highlights: [
+      "Supersearch: a Python Slack analyst using Claude for live news, financial data, statistical forecasts and document drafts.",
+      "Doc Generator: a Node.js/TypeScript/React service drafting engagement letters, teasers and IMs, with Slack approval routing.",
+      "Deal Dashboard: a Vite/Chart.js pipeline view with a Kanban board, analytics and CRM/Slack integration hooks.",
+    ],
     tags: ["Python", "React", "PostgreSQL", "Claude", "Chart.js"],
     repository: "https://github.com/Manutd1234/Rockathon-2026-",
     repositoryVisibility: "public",
@@ -225,6 +282,11 @@ export const projectArchive = [
     group: "Strategy",
     description:
       "A five-year case study proposing a Greater Jakarta launch for Coke Zero and Ades, with a US$10 million budget, staged investment, and an illustrative scenario model.",
+    highlights: [
+      "Recommended a US$1.4m Greater Jakarta pilot: Coke Zero with meals and Ades for water on the go.",
+      "Tied the remaining US$8.6m to measured paid repeat and portfolio contribution before any wider expansion.",
+      "Structured the case with the CALP framework and grounded demand in Indonesia’s Ministry of Health SKI 2023 survey.",
+    ],
     tags: ["Market research", "Financial modelling", "Growth strategy"],
     repository: `${assetBase}/Coca-Cola_Indonesia_Growth_Strategy.pdf`,
     repositoryLabel: "Read case study",
@@ -414,8 +476,11 @@ export const leadership = [
     description:
       "Build portfolio analytics and infrastructure for student investment research.",
     highlights: [
-      "IBKR NAV collectors, risk dashboards, Monte Carlo VaR/ES, and automated portfolio reports.",
-      "Competition leaderboards, market benchmarks, and single-worker EC2 failover tooling.",
+      "Added ib_insync NAV collectors and Streamlit dashboards for IBKR paper portfolios, with systemd-scheduled snapshots.",
+      "Computed historical and 50,000-path Monte Carlo VaR/ES, exposure and drawdown in Python/NumPy.",
+      "Supported competition leaderboards with SPY/QQQ benchmarks and Sharpe, Sortino and Calmar ratios.",
+      "Contributed single-worker EC2 failover with Terraform, IB Gateway and DynamoDB leases with fencing tokens.",
+      "Contributed stress dashboards for 19 crises and eight macro factors, with Greeks, payoff bounds and VaR/ES.",
     ],
   },
   {
@@ -423,9 +488,10 @@ export const leadership = [
     role: "Software Engineer",
     dates: "Aug 2026 — Present",
     description:
-      "Develop a mobile cast-pressure monitoring system with React Native/Expo and FastAPI.",
+      "Develop a mobile cast-pressure monitoring system with React Native/Expo, FastAPI and Supabase/SQLite.",
     highlights: [
-      "Implement BLE sensor notifications, device commands, permissions, and reconnection flows.",
+      "Implement BLE GATT notifications and Base64/CSV sensor decoding in TypeScript with react-native-ble-plx.",
+      "Manage device commands, Android permissions and BLE reconnection in React Native/TypeScript.",
     ],
   },
   {
@@ -435,7 +501,9 @@ export const leadership = [
     description:
       "Build volunteer workflows and software for non-profit partner Caring For Life.",
     highlights: [
-      "Contribute React/TypeScript interfaces, FastAPI APIs, Firebase authentication, and PostgreSQL persistence.",
+      "Build the volunteer workflows in React/TypeScript/Vite with TanStack Query.",
+      "Contribute FastAPI/Pydantic APIs with Firebase Auth and SQLModel/PostgreSQL persistence.",
+      "Validate typed REST clients with Pytest and Vitest regression tests across frontend and backend.",
     ],
   },
   {
@@ -445,8 +513,10 @@ export const leadership = [
     description:
       "Research financial machine learning through reproducible modelling and evaluation.",
     highlights: [
-      "Trained credit-risk models across six datasets with stratified splits and cross-validation.",
-      "Achieved 0.952 held-out ROC-AUC on HMEQ with validation-only model and threshold selection.",
+      "Trained scikit-learn credit-risk models on six datasets with logistic regression, ensembles, SVMs and MLPs.",
+      "Built Pipeline/ColumnTransformer preprocessing with stratified 60/20/20 splits and cross-validation.",
+      "Achieved 0.952 held-out HMEQ ROC-AUC with gradient boosting, validation-only model and threshold selection, and calibration checks.",
+      "Built k-means, PCA, GMM and Isolation Forest pipelines as reproducible Jupyter experiments.",
     ],
   },
   {
@@ -455,7 +525,8 @@ export const leadership = [
     dates: "Jan 2026 — Present",
     description: "Build a 2D murder mystery game in Unity and C#.",
     highlights: [
-      "Develop procedural board rendering and central state updates that synchronise gameplay and visuals.",
+      "Built procedural 2D board rendering in Unity/C#.",
+      "Centralised Unity/C# state updates so board rendering and gameplay stay in sync.",
     ],
   },
   {
