@@ -41,7 +41,11 @@ const buildNotes = workbenchNotes.flatMap((note) => {
 
 const noteSteps = ["Problem", "Build", "Proof"] as const;
 
-function Workbench({ openProjects }: { openProjects: () => void }) {
+function Workbench({
+  openProjects,
+}: {
+  openProjects: (projectTitle?: string) => void;
+}) {
   const [active, setActive] = useState(0);
   const [step, setStep] = useState(1);
   const prefix = useId();
@@ -240,7 +244,11 @@ function Workbench({ openProjects }: { openProjects: () => void }) {
                         for {note.title}, opens in a new tab
                       </span>
                     </a>
-                    <button type="button" onClick={openProjects}>
+                    <button
+                      type="button"
+                      onClick={() => openProjects(note.title)}
+                      aria-label={`Open the bookshelf: ${note.title} book details`}
+                    >
                       Open the bookshelf{" "}
                       <ArrowUpRight size={15} aria-hidden="true" />
                     </button>
@@ -258,7 +266,7 @@ function Workbench({ openProjects }: { openProjects: () => void }) {
 export default function ProfilePanel({
   openProjects,
 }: {
-  openProjects: () => void;
+  openProjects: (projectTitle?: string) => void;
 }) {
   const reduced = useMotionPreference();
   const hobbiesRef = useRef<HTMLDetailsElement>(null);
@@ -292,7 +300,10 @@ export default function ProfilePanel({
             <RoleIntro />
             <p className="classic-intro">{profile.introduction}</p>
             <div className="classic-actions">
-              <button className="classic-primary" onClick={openProjects}>
+              <button
+                className="classic-primary"
+                onClick={() => openProjects()}
+              >
                 View projects <ArrowUpRight size={19} />
               </button>
               <a

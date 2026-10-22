@@ -74,6 +74,10 @@ const sectionNumber = {
 export default function Portfolio() {
   const [active, setActive] = useState<TabId>("profile");
   const [dark, setDark] = useState(false);
+  const [projectRequest, setProjectRequest] = useState<{
+    title: string;
+    id: number;
+  }>();
   const navRefs = useRef<(HTMLButtonElement | null)[]>([]);
   useEffect(() => {
     const sync = () => {
@@ -98,6 +102,15 @@ export default function Portfolio() {
       else window.history.pushState(null, "", hash);
     }
     window.scrollTo({ top: 0, behavior: "instant" });
+  }
+  function openProjects(projectTitle?: string) {
+    if (projectTitle) {
+      setProjectRequest((previous) => ({
+        title: projectTitle,
+        id: (previous?.id ?? 0) + 1,
+      }));
+    }
+    navigate("projects");
   }
   function navKeys(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const next =
@@ -216,7 +229,7 @@ export default function Portfolio() {
               tabIndex={0}
             >
               {tab.id === "profile" ? (
-                <ProfilePanel openProjects={() => navigate("projects")} />
+                <ProfilePanel openProjects={openProjects} />
               ) : (
                 <>
                   <header className="classic-section-header">
@@ -253,7 +266,10 @@ export default function Portfolio() {
                     </p>
                   </header>
                   {tab.id === "projects" ? (
-                    <ProjectsPanel active={active === "projects"} />
+                    <ProjectsPanel
+                      active={active === "projects"}
+                      requestedProject={projectRequest}
+                    />
                   ) : tab.id === "experience" ? (
                     <WorkPanel />
                   ) : tab.id === "skills" ? (

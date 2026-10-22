@@ -87,12 +87,20 @@
   font: 0.55rem/1.6 var(--book-mono);
 }
 .book-carousel .book-theatre {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  position: relative;
+  min-height: 430px;
+  overflow: clip;
+}
+.book-carousel .book-theatre-flow {
+  position: relative;
+  display: flex;
+  min-height: 430px;
+  align-items: center;
+  pointer-events: none;
 }
 .book-carousel .book-scene {
-  grid-area: 1 / 1;
-  position: relative;
+  position: absolute;
+  inset: 0;
   min-width: 0;
   min-height: 430px;
   perspective: 1000px;
@@ -118,6 +126,7 @@
   margin-left: calc(var(--book-width) / -2);
   transform: translate3d(var(--orbit-x), var(--orbit-y), var(--orbit-z));
   transform-style: preserve-3d;
+  will-change: transform;
 }
 .book-carousel .book-click {
   display: block;
@@ -422,11 +431,14 @@
 .book-carousel .book-close:hover {
   border-color: var(--book-lime);
 }
-.book-carousel .book-stage[data-open="true"] .book-orbit-item {
+.book-carousel
+  .book-stage:is([data-open="true"], [data-returning="true"])
+  .book-orbit-item {
   transition:
-    transform 700ms cubic-bezier(0.22, 0.7, 0.15, 1),
-    left 700ms cubic-bezier(0.22, 0.7, 0.15, 1),
-    opacity 350ms;
+    transform 620ms cubic-bezier(0.22, 0.7, 0.15, 1),
+    left 620ms cubic-bezier(0.22, 0.7, 0.15, 1),
+    opacity 320ms,
+    visibility 0s;
 }
 .book-carousel
   .book-stage[data-open="true"]
@@ -453,15 +465,26 @@
   transform: rotateY(-26deg) rotateZ(-2deg) scale(1.15);
 }
 .book-carousel .book-details {
-  grid-area: 1 / 1;
   position: relative;
   align-self: center;
   min-width: 0;
   width: 48%;
+  flex-shrink: 0;
   margin-left: 50%;
   padding: 34px 0 38px;
   outline: none;
-  animation: book-details-in 650ms cubic-bezier(0.2, 0.7, 0.2, 1) 200ms both;
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+  transition:
+    opacity 220ms ease,
+    transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.book-carousel .book-stage[data-open="true"] .book-details {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  transition-delay: 160ms;
 }
 .book-carousel .book-details[hidden] {
   display: none;
@@ -565,55 +588,19 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
-.book-carousel .book-stage[data-returning="true"] .book-orbit-item {
-  animation: books-return 650ms cubic-bezier(0.22, 0.7, 0.15, 1) both;
-}
-.book-carousel
-  .book-stage[data-returning="true"]
-  .book-orbit-item[data-return-book="true"] {
-  animation-name: selected-book-return;
-}
-
-@keyframes book-details-in {
-  from {
-    opacity: 0;
-    transform: translateY(22px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-@keyframes books-return {
-  from {
-    opacity: 0;
-    transform: translate3d(var(--orbit-x), 100px, var(--orbit-z));
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(var(--orbit-x), var(--orbit-y), var(--orbit-z));
-  }
-}
-@keyframes selected-book-return {
-  from {
-    left: var(--open-book-left);
-    transform: translate3d(0, 0, 30px);
-  }
-  to {
-    left: 50%;
-    transform: translate3d(var(--orbit-x), var(--orbit-y), var(--orbit-z));
-  }
-}
-
 @media (hover: hover) and (pointer: fine) {
   .book-carousel:not([data-reduced-motion="true"])
-    .book-stage:not([data-dragging="true"]):not([data-open="true"])
+    .book-stage:not([data-dragging="true"]):not([data-open="true"]):not(
+      [data-rotating="true"]
+    ):not([data-returning="true"])
     .book-click:hover
     .book-object {
     transform: translateY(-18px) rotateY(-15deg) rotateZ(0);
   }
   .book-carousel:not([data-reduced-motion="true"])
-    .book-stage:not([data-dragging="true"]):not([data-open="true"])
+    .book-stage:not([data-dragging="true"]):not([data-open="true"]):not(
+      [data-rotating="true"]
+    ):not([data-returning="true"])
     .book-click:hover
     .book-front {
     transform: translateZ(18px) rotateY(-12deg);
@@ -642,7 +629,16 @@
     perspective: 800px;
   }
   .book-carousel .book-theatre {
+    min-height: 370px;
+  }
+  .book-carousel .book-theatre-flow {
     display: block;
+    min-height: 370px;
+    padding-top: 370px;
+  }
+  .book-carousel .book-scene {
+    bottom: auto;
+    height: 370px;
   }
   .book-carousel
     .book-stage[data-open="true"]
@@ -699,6 +695,14 @@
   }
   .book-carousel .book-scene {
     min-height: 330px;
+    height: 330px;
+  }
+  .book-carousel .book-theatre {
+    min-height: 330px;
+  }
+  .book-carousel .book-theatre-flow {
+    min-height: 330px;
+    padding-top: 330px;
   }
   .book-carousel .book-cover-edition {
     font-size: 0.34rem;
@@ -726,6 +730,7 @@
 
 .book-carousel[data-reduced-motion="true"] .book-object,
 .book-carousel[data-reduced-motion="true"] .book-front,
+.book-carousel[data-reduced-motion="true"] .book-details,
 .book-carousel[data-reduced-motion="true"] .book-orbit-item {
   transition: none !important;
 }
@@ -739,6 +744,7 @@
 @media (prefers-reduced-motion: reduce) {
   .book-carousel .book-object,
   .book-carousel .book-front,
+  .book-carousel .book-details,
   .book-carousel .book-orbit-item {
     transition: none !important;
   }

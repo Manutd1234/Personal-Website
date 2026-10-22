@@ -31,21 +31,25 @@ const filters: readonly GalleryFilter[] = [
 ];
 const mod = (value: number, length: number) =>
   ((value % length) + length) % length;
+const rollingPhoto = {
+  enter: (direction: number) => ({ y: `${direction * 100}%`, opacity: 0.7 }),
+  present: { y: "0%", opacity: 1 },
+  leave: (direction: number) => ({ y: `${direction * -100}%`, opacity: 0.7 }),
+};
+const slideDuration = 3800;
 
 export default function OffDutyPanel() {
   const [filter, setFilter] = useState<GalleryFilter>("All");
   const [index, setIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
   const [autoPlay, setAutoPlay] = useState(true);
   const [inView, setInView] = useState(false);
   const [documentVisible, setDocumentVisible] = useState(false);
   const [parentVisible, setParentVisible] = useState(false);
-  const [hovered, setHovered] = useState(false);
   const [keyboardFocused, setKeyboardFocused] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const galleryRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const stripRef = useRef<HTMLDivElement>(null);
-  const thumbRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
@@ -73,7 +77,6 @@ export default function OffDutyPanel() {
     inView &&
     documentVisible &&
     parentVisible &&
-    !hovered &&
     !keyboardFocused &&
     !lightboxOpen;
 
@@ -93,7 +96,6 @@ export default function OffDutyPanel() {
       restoreAfterCloseRef.current = false;
       setLightboxOpen(false);
       setKeyboardFocused(false);
-      setHovered(false);
       swipeRef.current = null;
     };
     const syncVisibility = () => {
@@ -147,25 +149,12 @@ export default function OffDutyPanel() {
 
   useEffect(() => {
     if (!playing) return undefined;
-    const timer = window.setTimeout(
-      () => setIndex((current) => mod(current + 1, photos.length)),
-      4500,
-    );
+    const timer = window.setTimeout(() => {
+      setDirection(1);
+      setIndex((current) => mod(current + 1, photos.length));
+    }, slideDuration);
     return () => window.clearTimeout(timer);
   }, [playing, currentIndex, photos.length, filter]);
-
-  useEffect(() => {
-    const strip = stripRef.current;
-    const selected = thumbRefs.current[currentIndex];
-    if (!strip || !selected || !parentVisible) return;
-    strip.scrollTo({
-      left: Math.max(
-        0,
-        selected.offsetLeft - (strip.clientWidth - selected.offsetWidth) / 2,
-      ),
-      behavior: reducedMotion ? "instant" : "smooth",
-    });
-  }, [currentIndex, filter, parentVisible, reducedMotion]);
 
   useEffect(() => {
     if (!parentVisible || photos.length < 2) return;
@@ -224,16 +213,17 @@ export default function OffDutyPanel() {
   }, [lightboxOpen]);
 
   function move(offset: number) {
-    if (photos.length > 1)
+    if (photos.length > 1) {
+      setDirection(offset < 0 ? -1 : 1);
       setIndex((current) => mod(current + offset, photos.length));
+    }
   }
 
-  function choose(next: number, focusThumbnail = false) {
+  function choose(next: number) {
     if (!photos.length) return;
     const selected = mod(next, photos.length);
+    setDirection(selected < currentIndex ? -1 : 1);
     setIndex(selected);
-    if (focusThumbnail)
-      thumbRefs.current[selected]?.focus({ preventScroll: true });
   }
 
   function openPhoto(opener: HTMLElement) {
@@ -257,25 +247,6 @@ export default function OffDutyPanel() {
       event.preventDefault();
       choose(event.key === "Home" ? 0 : photos.length - 1);
     }
-  }
-
-  function thumbnailKeys(
-    event: KeyboardEvent<HTMLButtonElement>,
-    position: number,
-  ) {
-    const next =
-      event.key === "ArrowRight"
-        ? position + 1
-        : event.key === "ArrowLeft"
-          ? position - 1
-          : event.key === "Home"
-            ? 0
-            : event.key === "End"
-              ? photos.length - 1
-              : null;
-    if (next === null) return;
-    event.preventDefault();
-    choose(next, true);
   }
 
   function startSwipe(event: PointerEvent<HTMLButtonElement>) {
@@ -314,8 +285,8 @@ export default function OffDutyPanel() {
       choose(event.key === "Home" ? 0 : photos.length - 1);
     } else if (event.key === "Tab") {
       const targets = [
-        ...event.currentTarget.querySelectorAll<HTMLButtonElement>(
-          "button:not(:disabled)",
+        ...event.currentTarget.querySelectorAll<HTMLElement>(
+          "button:not(:disabled), a[href]",
         ),
       ];
       const first = targets[0];
@@ -342,12 +313,6 @@ export default function OffDutyPanel() {
       className="life-gallery"
       ref={galleryRef}
       onKeyDown={galleryKeys}
-      onPointerEnter={(event) => {
-        if (event.pointerType === "mouse") setHovered(true);
-      }}
-      onPointerLeave={(event) => {
-        if (event.pointerType === "mouse") setHovered(false);
-      }}
       onFocusCapture={(event) =>
         setKeyboardFocused(
           event.target instanceof HTMLElement &&
@@ -398,6 +363,7 @@ export default function OffDutyPanel() {
             onClick={() => {
               setFilter(category);
               setIndex(0);
+              setDirection(1);
             }}
           >
             {category}
@@ -406,8 +372,8 @@ export default function OffDutyPanel() {
       </div>
       <p className="life-gallery-help" id={`${prefix}-motion-note`}>
         {reducedMotion
-          ? "Choose a photo below. Automatic switching is off for reduced motion."
-          : "A new memory every few seconds. Tap the photo to look closer, or swipe to browse."}
+          ? "Use the arrows to browse. Automatic rolling is off for reduced motion."
+          : "A rolling camera diary. Tap a frame to look closer, or swipe to browse."}
       </p>
       <div className="life-polaroid-stage" ref={stageRef}>
         <div className="life-polaroid-stack">
@@ -434,22 +400,24 @@ export default function OffDutyPanel() {
             }}
           >
             <span className="life-photo-image" aria-hidden="true">
-              <AnimatePresence initial={false}>
+              <AnimatePresence initial={false} custom={direction}>
                 <motion.span
                   className="life-photo-slide"
                   key={photo.id}
-                  initial={
-                    reducedMotion
-                      ? false
-                      : { opacity: 0, rotate: 0.8, scale: 1.01 }
-                  }
-                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                  exit={{ opacity: 0, rotate: reducedMotion ? 0 : -0.6 }}
+                  custom={direction}
+                  variants={rollingPhoto}
+                  initial={reducedMotion ? false : "enter"}
+                  animate="present"
+                  exit={reducedMotion ? undefined : "leave"}
                   transition={{
-                    duration: reducedMotion ? 0 : 0.5,
-                    ease: [0.2, 0.7, 0.2, 1],
+                    duration: reducedMotion ? 0 : 0.7,
+                    ease: [0.22, 0.8, 0.2, 1],
                   }}
                 >
+                  <span
+                    className="life-photo-backdrop"
+                    style={{ backgroundImage: `url("${asset(photo.src)}")` }}
+                  />
                   <img
                     src={asset(photo.src)}
                     alt=""
@@ -472,8 +440,38 @@ export default function OffDutyPanel() {
                 {String(photos.length).padStart(2, "0")}
               </span>
             </span>
+            <span className="life-photo-progress" aria-hidden="true">
+              {playing ? (
+                <motion.span
+                  key={`${filter}-${photo.id}`}
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{
+                    duration: slideDuration / 1000,
+                    ease: "linear",
+                  }}
+                />
+              ) : null}
+            </span>
           </button>
         </div>
+        <p className="life-photo-credit">
+          {photo.credit ? (
+            <>
+              <a href={photo.credit.url} target="_blank" rel="noreferrer">
+                {photo.credit.label} ↗
+              </a>
+              {" · "}
+              <a
+                href={photo.credit.licenseUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                CC BY 2.0
+              </a>
+            </>
+          ) : null}
+        </p>
       </div>
       <div
         className="life-slideshow-controls"
@@ -498,38 +496,6 @@ export default function OffDutyPanel() {
         >
           <ArrowRight size={19} aria-hidden="true" />
         </button>
-      </div>
-      <div
-        className="life-thumbnail-strip"
-        ref={stripRef}
-        role="group"
-        aria-label="Choose a personal photo"
-      >
-        {photos.map((item, position) => (
-          <button
-            key={item.id}
-            type="button"
-            className="life-thumbnail"
-            aria-label={`Show photo ${position + 1}: ${item.caption || item.alt}`}
-            aria-current={currentIndex === position ? "true" : undefined}
-            tabIndex={currentIndex === position ? 0 : -1}
-            ref={(element) => {
-              thumbRefs.current[position] = element;
-            }}
-            onClick={() => choose(position)}
-            onKeyDown={(event) => thumbnailKeys(event, position)}
-          >
-            <img
-              src={asset(item.thumb ?? item.src)}
-              alt=""
-              width={item.width}
-              height={item.height}
-              loading="lazy"
-              decoding="async"
-              draggable={false}
-            />
-          </button>
-        ))}
       </div>
       <span
         className="sr-only"
@@ -594,9 +560,26 @@ export default function OffDutyPanel() {
               />
             </div>
             <footer className="life-lightbox-footer">
-              <h3 id={`${prefix}-lightbox-caption`} aria-live="polite">
-                {photo.caption || photo.alt}
-              </h3>
+              <div>
+                <h3 id={`${prefix}-lightbox-caption`} aria-live="polite">
+                  {photo.caption || photo.alt}
+                </h3>
+                {photo.credit ? (
+                  <p className="life-lightbox-credit">
+                    <a href={photo.credit.url} target="_blank" rel="noreferrer">
+                      {photo.credit.label} ↗
+                    </a>
+                    {" · "}
+                    <a
+                      href={photo.credit.licenseUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      CC BY 2.0
+                    </a>
+                  </p>
+                ) : null}
+              </div>
               <div className="life-lightbox-navigation">
                 <button
                   type="button"

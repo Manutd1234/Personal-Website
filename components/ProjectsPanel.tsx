@@ -3,7 +3,7 @@ import { useMotionPreference } from "./useMotionPreference";
 
 import Image from "next/image";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
-import { useId, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import BookCarousel from "./BookCarousel";
 import { buildNotes } from "@/content/build-notes";
 import { projects, projectArchive } from "@/content/portfolio";
@@ -478,10 +478,27 @@ const collections = [
   { id: "more", label: "More builds", count: projectArchive.length },
 ] as const;
 type Collection = (typeof collections)[number]["id"];
-export default function ProjectsPanel({ active = true }: { active?: boolean }) {
+export default function ProjectsPanel({
+  active = true,
+  requestedProject,
+}: {
+  active?: boolean;
+  requestedProject?: { title: string; id: number };
+}) {
   const [collection, setCollection] = useState<Collection>("books");
+  const handledRequestRef = useRef<number | null>(null);
   const collectionId = useId();
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  useEffect(() => {
+    if (
+      !active ||
+      !requestedProject ||
+      handledRequestRef.current === requestedProject.id
+    )
+      return;
+    handledRequestRef.current = requestedProject.id;
+    setCollection("books");
+  }, [active, requestedProject]);
   function navigateCollection(
     event: KeyboardEvent<HTMLButtonElement>,
     index: number,
@@ -540,6 +557,8 @@ export default function ProjectsPanel({ active = true }: { active?: boolean }) {
           projects={projects}
           media={mediaByTitle}
           active={active && collection === "books"}
+          requestedProject={requestedProject?.title}
+          requestKey={requestedProject?.id}
           renderDetails={(project, media) => (
             <FeaturedBookDetails project={project} media={media} />
           )}

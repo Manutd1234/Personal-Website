@@ -107,7 +107,7 @@
 }
 .life-polaroid-stack {
   position: relative;
-  width: min(100%, 660px);
+  width: min(100%, 600px);
   margin-inline: auto;
 }
 .life-polaroid-back {
@@ -174,6 +174,16 @@
   inset: 0;
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
+  background: #e7ebdf;
+}
+.life-photo-backdrop {
+  position: absolute;
+  inset: -12%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(24px);
+  opacity: 0.24;
 }
 .life-photo-slide img {
   display: block;
@@ -186,6 +196,7 @@
   max-height: 100%;
   object-fit: contain;
   pointer-events: none;
+  z-index: 1;
 }
 .life-photo-open {
   display: grid;
@@ -226,6 +237,41 @@
   min-width: 47px;
   text-align: right;
 }
+.life-photo-progress {
+  display: block;
+  position: absolute;
+  right: 15px;
+  bottom: 5px;
+  left: 15px;
+  height: 2px;
+  overflow: hidden;
+  background: #b7caa630;
+}
+.life-photo-progress > span {
+  display: block;
+  height: 100%;
+  background: #6a9d72;
+  transform-origin: left;
+}
+.life-photo-credit {
+  max-width: 600px;
+  height: 2.8em;
+  margin: 13px auto -10px;
+  color: var(--classic-muted);
+  font: 400 9px/1.4 var(--font-mono);
+  text-align: center;
+}
+.life-photo-credit a,
+.life-lightbox-credit {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.life-lightbox-credit {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--classic-muted);
+  font: 400 9px/1.5 var(--font-mono);
+}
 .life-slideshow-controls {
   display: flex;
   align-items: center;
@@ -265,57 +311,10 @@
   color: var(--classic-muted);
   font: 400 9px/1.6 var(--font-mono);
 }
-.life-thumbnail-strip {
-  display: flex;
-  position: relative;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  gap: 8px;
-  margin-top: 12px;
-  padding: 7px 4px 10px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scrollbar-color: #a0b88f transparent;
-  scrollbar-width: thin;
-}
-.life-thumbnail {
-  display: grid;
-  flex: 0 0 58px;
-  width: 58px;
-  height: 52px;
-  min-height: 44px;
-  padding: 3px 3px 7px;
-  overflow: hidden;
-  border: 1px solid #c6d4bb;
-  border-radius: 3px;
-  background: #fffef6;
-  opacity: 0.65;
-  transition:
-    opacity 0.18s,
-    border-color 0.18s,
-    background 0.18s;
-}
-.life-thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background: #e7ecdf;
-  pointer-events: none;
-}
-.life-thumbnail:hover,
-.life-thumbnail[aria-current="true"] {
-  border-color: #16815a;
-  background: #ecf5df;
-  opacity: 1;
-}
 .life-gallery :is(button, [tabindex]):focus-visible,
 .life-lightbox button:focus-visible {
   outline: 2px solid var(--classic-green);
   outline-offset: 4px;
-}
-.life-thumbnail-strip .life-thumbnail:focus-visible {
-  outline-offset: 2px;
 }
 .life-lightbox {
   position: fixed;
@@ -458,16 +457,8 @@
 .dark .life-slideshow-controls > p {
   color: #c4d9ae;
 }
-.dark .life-thumbnail {
-  border-color: #4b6340;
-  background: #293e29;
-}
-.dark .life-thumbnail img {
-  background: #1b2d1d;
-}
-.dark .life-thumbnail[aria-current="true"] {
-  border-color: #98d5a4;
-  background: #375232;
+.dark .life-photo-slide {
+  background: #18291d;
 }
 .dark .life-lightbox {
   border-color: #526c44;
@@ -540,11 +531,6 @@
   }
   .life-slideshow-controls > p > span {
     font-size: 8px;
-  }
-  .life-thumbnail {
-    flex-basis: 52px;
-    width: 52px;
-    height: 48px;
   }
   .life-lightbox {
     width: calc(100% - 20px);

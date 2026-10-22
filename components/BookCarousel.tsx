@@ -49,6 +49,8 @@ type BookCarouselProps = {
     index: number,
   ) => ReactNode;
   active?: boolean;
+  requestedProject?: string;
+  requestKey?: number;
 };
 
 const COVER_DESIGNS = [
@@ -171,35 +173,50 @@ export default function BookCarousel({
   media,
   renderDetails,
   active = true,
+  requestedProject,
+  requestKey,
 }: BookCarouselProps) {
   const count = projects.length;
   const step = count ? 360 / count : 360;
-  const [rotation, setRotation] = useState(0);
+  const [currentState, setCurrent] = useState(0);
   const [opened, setOpened] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
   const [returning, setReturning] = useState(false);
-  const [radius, setRadius] = useState(340);
+  const radius = 340;
   const [reducedMotion, setReducedMotion] = useState(true);
   const activeRef = useRef(active);
   const angleRef = useRef(0);
+  const targetAngleRef = useRef(0);
+  const velocityRef = useRef(0);
+  const currentRef = useRef(0);
+  const radiusRef = useRef(radius);
   const animationRef = useRef<number | null>(null);
   const gestureRef = useRef<Gesture | null>(null);
   const stageRef = useRef<HTMLElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
+  const theatreRef = useRef<HTMLDivElement>(null);
+  const flowRef = useRef<HTMLDivElement>(null);
+  const resizeTheatreRef = useRef<() => void>(() => {});
   const detailRef = useRef<HTMLDivElement>(null);
+  const orbitRefs = useRef<Array<HTMLDivElement | null>>([]);
   const bookRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const returnFocusRef = useRef(false);
   const lastOpenedRef = useRef(0);
+  const lastRequestRef = useRef<string | null>(null);
   const uniqueId = useId();
-  const current = count ? mod(Math.round(-rotation / step), count) : 0;
+  const current = count ? mod(currentState, count) : 0;
   const isOpen = opened !== null && opened < count;
-  const openedProject = isOpen ? projects[opened] : undefined;
+  const detailIndex = opened ?? (returning ? lastOpenedRef.current : null);
+  const openedProject =
+    detailIndex !== null ? projects[detailIndex] : undefined;
   activeRef.current = active;
 
   const stopAnimation = useCallback(() => {
     if (animationRef.current !== null)
       cancelAnimationFrame(animationRef.current);
     animationRef.current = null;
+    velocityRef.current = 0;
+    stageRef.current?.removeAttribute("data-rotating");
   }, []);
 
   const cancelGesture = useCallback(() => {
@@ -220,55 +237,101 @@ export default function BookCarousel({
     );
   }, []);
 
-  function updateAngle(angle: number) {
-    angleRef.current = angle;
-    setRotation(angle);
-  }
+  const updateAngle = useCallback(
+    (angle: number) => {
+      angleRef.current = angle;
+      orbitRefs.current.forEach((node, index) => {
+        if (!node) return;
+        const theta = ((index * step + angle) * Math.PI) / 180;
+        node.style.setProperty(
+          "--orbit-x",
+          `${Math.sin(theta) * radiusRef.current}px`,
+        );
+        node.style.setProperty("--orbit-y", `${(Math.cos(theta) - 1) * 26}px`);
+        node.style.setProperty(
+          "--orbit-z",
+          `${Math.cos(theta) * radiusRef.current - radiusRef.current}px`,
+        );
+      });
+      const front = count ? mod(Math.round(-angle / step), count) : 0;
+      if (front !== currentRef.current) {
+        currentRef.current = front;
+        setCurrent(front);
+      }
+    },
+    [count, step],
+  );
 
-  function rotateTo(target: number, focusBook = false) {
+  function rotateTo(target: number, focusBook = false, onSettled?: () => void) {
     if (!count || !canInteract()) return;
+    let velocity = velocityRef.current;
     stopAnimation();
     setReturning(false);
-    const from = angleRef.current;
+    targetAngleRef.current = target;
+    let position = angleRef.current;
     const focus = () =>
       bookRefs.current[mod(Math.round(-target / step), count)]?.focus({
         preventScroll: true,
       });
-    if (reducedMotion || Math.abs(target - from) < 0.01) {
+    const finish = () => {
       updateAngle(target);
+      velocityRef.current = 0;
+      stageRef.current?.removeAttribute("data-rotating");
       if (focusBook) focus();
+      onSettled?.();
+    };
+    if (
+      reducedMotion ||
+      (Math.abs(target - position) < 0.01 && Math.abs(velocity) < 0.1)
+    ) {
+      finish();
       return;
     }
-    const start = performance.now();
-    const duration = Math.min(900, 480 + Math.abs(target - from) * 1.2);
+    let previous = performance.now();
+    stageRef.current?.setAttribute("data-rotating", "true");
+    const start = previous;
     function frame(now: number) {
       animationRef.current = null;
-      if (!canInteract()) return;
-      const progress = Math.min(1, (now - start) / duration);
-      updateAngle(from + (target - from) * (1 - Math.pow(1 - progress, 3)));
-      if (progress < 1) animationRef.current = requestAnimationFrame(frame);
-      else if (focusBook) focus();
+      if (!canInteract()) {
+        velocityRef.current = 0;
+        stageRef.current?.removeAttribute("data-rotating");
+        return;
+      }
+      const dt = Math.min(0.04, Math.max(0.001, (now - previous) / 1000));
+      previous = now;
+      // Exact critically damped spring: preserve velocity when a new command
+      // arrives, without restarting an ease-out curve at zero speed.
+      const omega = 12;
+      const distance = position - target;
+      const coupling = velocity + omega * distance;
+      const decay = Math.exp(-omega * dt);
+      position = target + (distance + coupling * dt) * decay;
+      velocity = (velocity - omega * coupling * dt) * decay;
+      velocityRef.current = velocity;
+      updateAngle(position);
+      if (
+        (Math.abs(position - target) < 0.015 && Math.abs(velocity) < 0.12) ||
+        now - start > 2200
+      )
+        finish();
+      else animationRef.current = requestAnimationFrame(frame);
     }
     animationRef.current = requestAnimationFrame(frame);
   }
 
   function browse(direction: number, focusBook = false) {
-    rotateTo(
-      Math.round(angleRef.current / step) * step - direction * step,
-      focusBook,
-    );
+    if (returning) return;
+    const destination =
+      animationRef.current !== null
+        ? targetAngleRef.current
+        : Math.round(angleRef.current / step) * step;
+    rotateTo(destination - direction * step, focusBook);
   }
 
-  function choose(index: number, focusBook = false) {
+  function choose(index: number, focusBook = false, onSettled?: () => void) {
     if (!count) return;
-    const present = mod(Math.round(-angleRef.current / step), count);
-    let distance = index - present;
-    if (distance > count / 2) distance -= count;
-    if (distance < -count / 2) distance += count;
-    rotateTo(
-      Math.round(angleRef.current / step) * step - distance * step,
-      focusBook,
-    );
+    const distance = mod(-index * step - angleRef.current + 180, 360) - 180;
+    rotateTo(angleRef.current + distance, focusBook, onSettled);
   }
 
   function openBook(index: number) {
@@ -316,8 +379,13 @@ export default function BookCarousel({
     const stage = stageRef.current;
     if (!stage) return undefined;
     const resize = new ResizeObserver(([entry]) => {
-      if (entry?.contentRect.width > 0)
-        setRadius(Math.max(172, Math.min(360, entry.contentRect.width * 0.34)));
+      if (entry?.contentRect.width > 0) {
+        radiusRef.current = Math.max(
+          172,
+          Math.min(360, entry.contentRect.width * 0.34),
+        );
+        updateAngle(angleRef.current);
+      }
     });
     const visibility = new MutationObserver(() => {
       if (!canInteract()) {
@@ -340,16 +408,59 @@ export default function BookCarousel({
       resize.disconnect();
       visibility.disconnect();
     };
-  }, [cancelGesture, canInteract, stopAnimation]);
+  }, [cancelGesture, canInteract, stopAnimation, updateAngle]);
+
+  useEffect(() => {
+    const theatre = theatreRef.current;
+    const flow = flowRef.current;
+    if (!theatre || !flow) return;
+    let animation: Animation | null = null;
+    let measured = false;
+    const resize = () => {
+      const next = Math.ceil(
+        stageRef.current?.dataset.open === "true"
+          ? flow.getBoundingClientRect().height
+          : parseFloat(getComputedStyle(flow).minHeight),
+      );
+      if (!next) return;
+      const from = theatre.getBoundingClientRect().height;
+      animation?.cancel();
+      theatre.style.height = `${next}px`;
+      if (measured && !reducedMotion && Math.abs(next - from) > 1) {
+        animation = theatre.animate(
+          [{ height: `${from}px` }, { height: `${next}px` }],
+          {
+            duration: 560,
+            easing: "cubic-bezier(.22,.7,.15,1)",
+          },
+        );
+      }
+      measured = true;
+    };
+    const observer = new ResizeObserver(resize);
+    resizeTheatreRef.current = resize;
+    observer.observe(flow);
+    resize();
+    return () => {
+      observer.disconnect();
+      animation?.cancel();
+      theatre.style.height = "";
+      resizeTheatreRef.current = () => {};
+    };
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    resizeTheatreRef.current();
+  }, [isOpen]);
 
   useEffect(() => {
     if (!canInteract()) return;
     if (opened !== null) detailRef.current?.focus({ preventScroll: true });
-    else if (returnFocusRef.current) {
+    else if (returnFocusRef.current && !returning) {
       returnFocusRef.current = false;
       bookRefs.current[lastOpenedRef.current]?.focus({ preventScroll: true });
     }
-  }, [opened, canInteract]);
+  }, [opened, returning, canInteract]);
 
   useEffect(() => {
     if (!active) {
@@ -363,18 +474,40 @@ export default function BookCarousel({
     cancelGesture();
     setOpened(null);
     setReturning(false);
-    angleRef.current = 0;
-    setRotation(0);
-  }, [count, cancelGesture, stopAnimation]);
+    targetAngleRef.current = 0;
+    updateAngle(0);
+  }, [count, cancelGesture, stopAnimation, updateAngle]);
 
   useEffect(() => {
     if (!returning) return undefined;
-    const timeout = window.setTimeout(() => setReturning(false), 700);
+    const timeout = window.setTimeout(() => setReturning(false), 660);
     return () => window.clearTimeout(timeout);
   }, [returning]);
 
+  useEffect(() => {
+    if (!active || !requestedProject || !canInteract()) return;
+    const request = `${requestedProject}:${requestKey ?? 0}`;
+    if (lastRequestRef.current === request) return;
+    const index = projects.findIndex(
+      (project) => project.title === requestedProject,
+    );
+    if (index < 0) return;
+    lastRequestRef.current = request;
+    setOpened(null);
+    setReturning(false);
+    choose(index, false, () => openBook(index));
+    // A request is an event; later renders must not restart its spring.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, requestedProject, requestKey]);
+
   function onPointerDown(event: PointerEvent<HTMLDivElement>) {
-    if (!canInteract() || isOpen || !event.isPrimary || event.button !== 0)
+    if (
+      !canInteract() ||
+      isOpen ||
+      returning ||
+      !event.isPrimary ||
+      event.button !== 0
+    )
       return;
     stopAnimation();
     cancelGesture();
@@ -421,13 +554,17 @@ export default function BookCarousel({
       return;
     }
     if (!gesture.moved && Math.abs(dx) < 7) return;
-    gesture.moved = true;
-    setDragging(true);
+    if (!gesture.moved) {
+      gesture.moved = true;
+      setDragging(true);
+    }
     const now = performance.now();
-    const multiplier = radius < 230 ? 0.38 : 0.25;
-    gesture.velocity =
+    const multiplier = radiusRef.current < 230 ? 0.38 : 0.25;
+    const sample =
       ((event.clientX - gesture.lastX) / Math.max(8, now - gesture.time)) *
       multiplier;
+    const smoothing = 1 - Math.exp(-(now - gesture.time) / 40);
+    gesture.velocity += (sample - gesture.velocity) * smoothing;
     gesture.lastX = event.clientX;
     gesture.time = now;
     updateAngle(gesture.startAngle + dx * multiplier);
@@ -446,11 +583,11 @@ export default function BookCarousel({
       performance.now() - gesture.time < 100
         ? Math.max(-0.8, Math.min(0.8, gesture.velocity))
         : 0;
-    rotateTo(
-      Math.round(
-        (angleRef.current + (reducedMotion ? 0 : velocity * 170)) / step,
-      ) * step,
-    );
+    velocityRef.current = velocity * 1000;
+    const momentum = reducedMotion
+      ? 0
+      : Math.max(-step * 2.2, Math.min(step * 2.2, velocity * 180));
+    rotateTo(Math.round((angleRef.current + momentum) / step) * step);
   }
 
   function onPointerCancel(event: PointerEvent<HTMLDivElement>) {
@@ -462,6 +599,7 @@ export default function BookCarousel({
   function onKeys(event: KeyboardEvent<HTMLElement>) {
     if (
       !canInteract() ||
+      returning ||
       !(event.target instanceof Element) ||
       event.target.closest('dialog, [role="dialog"]')
     )
@@ -535,7 +673,7 @@ export default function BookCarousel({
             </span>
           )}
         </div>
-        <div className="book-theatre">
+        <div className="book-theatre" ref={theatreRef}>
           <div
             aria-label="Project books. Drag to rotate, or use arrow keys, Home and End. Press Enter to open the front book."
             aria-roledescription="carousel"
@@ -550,7 +688,9 @@ export default function BookCarousel({
             tabIndex={isOpen ? -1 : 0}
           >
             {projects.map((project, index) => {
-              const theta = ((index * step + rotation) * Math.PI) / 180;
+              // Stable SSR seed; updateAngle owns these CSS variables after
+              // mount, so a label update cannot rewind the animated pose.
+              const theta = (index * step * Math.PI) / 180;
               const x = Math.sin(theta) * radius;
               const z = Math.cos(theta) * radius - radius;
               const y = (Math.cos(theta) - 1) * 26;
@@ -561,6 +701,9 @@ export default function BookCarousel({
                   data-return-book={index === lastOpenedRef.current}
                   data-selected={selected}
                   key={project.title}
+                  ref={(node) => {
+                    orbitRefs.current[index] = node;
+                  }}
                   style={
                     {
                       "--orbit-x": `${x.toFixed(3)}px`,
@@ -577,14 +720,16 @@ export default function BookCarousel({
                     aria-label={`Open ${project.title} project details`}
                     className="book-click"
                     data-book-index={index}
-                    disabled={isOpen || !active}
+                    disabled={isOpen || returning || !active}
                     onClick={(event) => {
                       if (event.detail === 0 && !isOpen) openBook(index);
                     }}
                     ref={(element) => {
                       bookRefs.current[index] = element;
                     }}
-                    tabIndex={!isOpen && current === index ? 0 : -1}
+                    tabIndex={
+                      !isOpen && !returning && current === index ? 0 : -1
+                    }
                     type="button"
                   >
                     <Book
@@ -597,22 +742,30 @@ export default function BookCarousel({
               );
             })}
           </div>
-          <div
-            aria-label={
-              openedProject
-                ? `${openedProject.title} project details`
-                : "Project details"
-            }
-            className="book-details"
-            hidden={!isOpen}
-            id={`${uniqueId}-details`}
-            ref={detailRef}
-            role="region"
-            tabIndex={-1}
-          >
-            {openedProject && opened !== null
-              ? renderDetails(openedProject, media[openedProject.title], opened)
-              : null}
+          <div className="book-theatre-flow" ref={flowRef}>
+            <div
+              aria-label={
+                openedProject
+                  ? `${openedProject.title} project details`
+                  : "Project details"
+              }
+              className="book-details"
+              hidden={!isOpen && !returning}
+              aria-hidden={!isOpen ? true : undefined}
+              inert={!isOpen}
+              id={`${uniqueId}-details`}
+              ref={detailRef}
+              role="region"
+              tabIndex={-1}
+            >
+              {openedProject && detailIndex !== null
+                ? renderDetails(
+                    openedProject,
+                    media[openedProject.title],
+                    detailIndex,
+                  )
+                : null}
+            </div>
           </div>
         </div>
         {!isOpen ? (
@@ -620,7 +773,7 @@ export default function BookCarousel({
             <button
               aria-label="Rotate to previous book"
               className="book-arrow"
-              disabled={count < 2}
+              disabled={count < 2 || returning}
               onClick={() => browse(-1)}
               type="button"
             >
@@ -632,6 +785,7 @@ export default function BookCarousel({
                 {String(count).padStart(2, "0")}
               </span>
               <button
+                disabled={returning}
                 onClick={() => openBook(current)}
                 type="button"
                 aria-label={`Open project: ${projects[current].title}`}
@@ -645,7 +799,7 @@ export default function BookCarousel({
             <button
               aria-label="Rotate to next book"
               className="book-arrow"
-              disabled={count < 2}
+              disabled={count < 2 || returning}
               onClick={() => browse(1)}
               type="button"
             >
@@ -658,6 +812,7 @@ export default function BookCarousel({
             {projects.map((project, index) => (
               <button
                 aria-current={current === index ? "true" : undefined}
+                disabled={returning}
                 aria-label={`Bring ${project.title} to the front`}
                 key={project.title}
                 onClick={() => choose(index)}
