@@ -1,52 +1,48 @@
 # Ian Abiel Wangsa — Personal Portfolio
 
-A clean, responsive editorial portfolio for Ian Abiel Wangsa, built around selected work in quantitative systems,
-applied AI, and full-stack engineering.
+A Next.js 15 App Router portfolio with Ian’s original green, five-tab layout: Profile, Projects, Experience, Skills and Awards.
 
 Live site: https://manutd1234.github.io/Personal-Website/
 
-## What is included
+## Stack and interactions
 
-- A warm neutral interface with compact editorial layouts and focused project storytelling.
-- Five featured projects with authentic dashboard screens, research output, and team photographs, plus a broader project archive.
-- Complete experience, education, leadership, skills, and certification sections sourced from the latest supplied résumé.
-- Direct links to Ian's GitHub, LinkedIn, email, live AlphaEngine workspace, and downloadable résumé.
-- Responsive desktop and mobile layouts with keyboard-accessible tabs, visible focus states, scroll progress, and reduced-motion support.
-- Real event photography, an image viewer, filterable projects, and links to achievement certificate scans.
-- Optimized WebP photographs and a relative Vite asset base suitable for repository-hosted deployments.
+- TypeScript, React 19, Tailwind CSS 4, Framer Motion and Lucide icons.
+- Original large-name hero, taped real portrait, green navigation and painterly accents.
+- Interactive role roll, bounded Matter.js skill playground, keyboard nudges and reset.
+- Filtered project cards with uniform 16:10 previews, equal grid rows, all source links and private-access labels.
+- Expandable experience rows, education bullet lists, community/service archive and certificate links.
+- Gym, travel, good food and learning cards using the existing real photographs; the illustrative gym photograph retains its attribution.
+- Copy-email feedback, light/dark themes, visible focus states and reduced-motion support.
 
 ## Run locally
 
-```bash
+```sh
 npm ci
 npm run dev
 ```
 
-Vite prints the local development URL in the terminal.
+The development site serves at http://127.0.0.1:3000. The scripts call Node entrypoints directly because this checkout’s parent path contains a colon.
 
-## Production check
+## Production checks
 
-```bash
-npm run check
-npm run preview
+```sh
+npm run typecheck
+NEXT_PUBLIC_BASE_PATH=/Personal-Website npm run build
 ```
 
-`npm run check` creates the optimized production bundle in `dist/`. The preview command serves that exact bundle
-for a final browser review.
+The production static export is generated in `out/`. GitHub Actions builds with `/Personal-Website` as the base path and deploys `out/` to the existing GitHub Pages site. Images are pre-optimized WebP assets, with explicit dimensions or reserved aspect ratios. There are no runtime server or external API requirements.
 
-## Project structure
+For a standalone root-hosted preview, run `npm run build` without the base-path variable, then `npm run preview` and open http://127.0.0.1:8766.
+
+## Source
 
 ```text
-public/                 Static résumé, favicon, and optimized photographs
-src/components/         Accessible page sections and reusable icons
-src/data/portfolio.js   Career, project, skill, and award content
-src/data/media.js       Authentic project media and certificate catalogue
-src/App.jsx             Page composition
-src/styles.css          Responsive visual system
+app/                  App Router entry, layout, metadata and global styling
+components/           Interactive TypeScript sections and shared controls
+content/portfolio.ts  Verified career, project, skill and award records
+content/media.ts      Authentic screenshots, photos and certificate catalogue
+content/paths.ts      Static-hosting asset path helper
+public/               Résumé, case study, photos, screenshots and certificates
 ```
 
-## Content notes
-
-Professional details were assembled from Ian's supplied résumé and the LinkedIn profile URL provided for this
-project. Repository links and project descriptions were checked against Ian's public GitHub projects. The original
-photographs remain outside the repository; only web-optimized derivatives are committed.
+Professional details come from the supplied résumé and LinkedIn material. Repository URLs, original project screenshots, research output and team photographs are retained. Unverified running times, music preferences and personal anecdotes are not invented. Off-duty interactions use Ian’s existing hobbies.

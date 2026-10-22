@@ -226,3 +226,8 @@ __marimo__/
 
 # Local review files; never part of the public portfolio.
 /tmp/
+
+# Next.js generated output
+.next/
+out/
+*.tsbuildinfo
