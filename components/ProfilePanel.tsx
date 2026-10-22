@@ -111,9 +111,6 @@ function Workbench({
                 tabRefs.current[index] = element;
               }}
             >
-              <span className="builder-note-tab-number" aria-hidden="true">
-                0{index + 1}
-              </span>
               {note.label}
             </button>
           ))}
@@ -196,7 +193,6 @@ function Workbench({
                             : undefined
                         }
                       >
-                        <span aria-hidden="true">0{i + 1}</span>
                         {label}
                       </button>
                     ))}

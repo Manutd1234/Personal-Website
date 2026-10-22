@@ -1,7 +1,6 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
-import { motion } from "framer-motion";
 import { ArrowUpRight, ChevronDown, Search } from "lucide-react";
 import {
   certifications,
@@ -10,7 +9,6 @@ import {
 } from "@/content/portfolio";
 import { certificateFiles } from "@/content/media";
 import { asset } from "@/content/paths";
-import { useMotionPreference } from "./useMotionPreference";
 import SkillsSandbox from "./SkillsSandbox";
 
 const TOTAL_SKILLS = skillGroups.reduce(
@@ -28,18 +26,13 @@ const files: Readonly<Record<string, { src: string; title: string }>> =
 
 export default function SkillsPanel() {
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState(skillGroups[0]?.label ?? "all");
-  const [playgroundOpen, setPlaygroundOpen] = useState(false);
+  const [category, setCategory] = useState("all");
   const searchId = useId();
   const categoryId = useId();
   const resultsId = useId();
   const languagesId = useId();
   const credentialsId = useId();
-  const playgroundId = useId();
   const searchRef = useRef<HTMLInputElement>(null);
-  const playgroundRef = useRef<HTMLDetailsElement>(null);
-  const playgroundSummaryRef = useRef<HTMLElement>(null);
-  const reducedMotion = useMotionPreference();
   const query = search.trim().toLocaleLowerCase();
   const matches = skillGroups.map((group, index) => ({
     ...group,
@@ -76,31 +69,9 @@ export default function SkillsPanel() {
     searchRef.current?.focus();
   }
 
-  function openPlayground() {
-    const playground = playgroundRef.current;
-    if (!playground) return;
-    playground.open = true;
-    setPlaygroundOpen(true);
-    playgroundSummaryRef.current?.focus({ preventScroll: true });
-    playground.scrollIntoView({
-      behavior: reducedMotion ? "instant" : "smooth",
-      block: "start",
-    });
-  }
-
   return (
     <div className="skills-classic">
       <div className="skills-classic-workspace">
-        <div className="skills-classic-quick-action">
-          <button
-            type="button"
-            aria-controls={playgroundId}
-            aria-expanded={playgroundOpen}
-            onClick={openPlayground}
-          >
-            Try the skill playground <span aria-hidden="true">↓</span>
-          </button>
-        </div>
         <div className="skills-classic-search">
           <label htmlFor={searchId}>Find a skill</label>
           <div className="skills-classic-search-field">
@@ -135,7 +106,7 @@ export default function SkillsPanel() {
         <div
           className="skills-classic-filters"
           role="group"
-          aria-label="Filter skills by category"
+          aria-label="Highlight skills by category"
         >
           {filters.map((filter) => (
             <button
@@ -151,7 +122,7 @@ export default function SkillsPanel() {
           ))}
         </div>
         <div className="skills-classic-mobile-filter">
-          <label htmlFor={categoryId}>Browse a category</label>
+          <label htmlFor={categoryId}>Light up a category</label>
           <select
             id={categoryId}
             aria-controls={resultsId}
@@ -167,10 +138,11 @@ export default function SkillsPanel() {
         </div>
         <div className="skills-classic-result-bar">
           <p role="status" aria-live="polite">
-            <strong>{count}</strong> {count === 1 ? "skill" : "skills"}
-            {category === "all"
+            <strong>{count}</strong> of {TOTAL_SKILLS} blocks lit up
+            {category === "all" && count > 0
               ? ` across ${groups.length} ${groups.length === 1 ? "category" : "categories"}`
-              : " in this category"}
+              : ""}
+            {!count ? ". No matches; every skill stays on the board." : "."}
           </p>
           <button
             type="button"
@@ -180,46 +152,7 @@ export default function SkillsPanel() {
             Reset filters <span aria-hidden="true">↗</span>
           </button>
         </div>
-        <div
-          className="skills-classic-grid"
-          id={resultsId}
-          data-single={groups.length === 1}
-        >
-          {groups.map((group) => (
-            <motion.article
-              key={group.label}
-              className="skills-classic-card"
-              data-tone={group.index % 4}
-              initial={reducedMotion ? false : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: reducedMotion ? 0 : 0.18 }}
-            >
-              <header>
-                <span className="skills-classic-number" aria-hidden="true">
-                  {String(group.index + 1).padStart(2, "0")}
-                </span>
-                <h3>{group.label}</h3>
-                <span className="skills-classic-count">
-                  {group.items.length}
-                </span>
-              </header>
-              <ul aria-label={group.label}>
-                {group.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </motion.article>
-          ))}
-          {!groups.length ? (
-            <div className="skills-classic-empty">
-              <h3>No matching skills here.</h3>
-              <p>Try another term or look across all categories.</p>
-              <button type="button" onClick={reset}>
-                Reset filters
-              </button>
-            </div>
-          ) : null}
-        </div>
+        <SkillsSandbox id={resultsId} category={category} search={search} />
 
         <section
           className="skills-classic-languages"
@@ -301,25 +234,6 @@ export default function SkillsPanel() {
         </section>
       </div>
 
-      <details
-        className="skills-classic-playground"
-        id={playgroundId}
-        ref={playgroundRef}
-        onToggle={(event) => setPlaygroundOpen(event.currentTarget.open)}
-      >
-        <summary ref={playgroundSummaryRef}>
-          <span>
-            <strong>A little hands-on</strong>
-            <span>Try the interactive skill tags</span>
-          </span>
-          <span className="skills-classic-disclosure" aria-hidden="true">
-            +
-          </span>
-        </summary>
-        <div className="skills-classic-playground-content">
-          {playgroundOpen ? <SkillsSandbox /> : null}
-        </div>
-      </details>
       <p className="skills-classic-note">
         {TOTAL_SKILLS} tools and practices across projects, work, and
         coursework.

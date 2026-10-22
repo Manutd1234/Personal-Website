@@ -730,7 +730,11 @@
     border-radius: 10px;
     background: #fff;
     color: #315d44;
-    font: 500 12px var(--classic-display);
+    font: 500 16px var(--classic-display);
+  }
+
+  .skills-classic-search-field input {
+    font-size: 16px;
   }
 
   .skills-classic-search {

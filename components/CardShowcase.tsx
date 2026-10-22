@@ -22,7 +22,6 @@ type TrackView = {
   atEnd: boolean;
 };
 
-const pad = (value: number) => String(value).padStart(2, "0");
 const emptyCollection: Collection = {
   work: [],
   education: [],
@@ -150,6 +149,9 @@ function DeckTrack({
         atStart: track.scrollLeft <= 2,
         atEnd: track.scrollLeft + track.clientWidth >= track.scrollWidth - 2,
       };
+      // Enter the card currently in view after pointer browsing; keep an
+      // existing keyboard focus stable while the track settles around it.
+      if (!track.contains(document.activeElement)) setFocusIndex(next.nearest);
       setView((previous) =>
         previous.nearest === next.nearest &&
         previous.visible.join() === next.visible.join() &&
@@ -273,7 +275,6 @@ function DeckTrack({
           >
             <TradingCard
               card={card}
-              total={cards.length}
               reduced={reduced}
               tabbable={index === focusIndex}
             />
@@ -442,9 +443,9 @@ export default function CardShowcase() {
                 initial={{ opacity: 0, y: -7 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                {pad(count)}
+                {count}
               </motion.span>{" "}
-              / {pad(total)} ]
+              / {total} ]
             </span>
           </span>
           <span className="sr-only">

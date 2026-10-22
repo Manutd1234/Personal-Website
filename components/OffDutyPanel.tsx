@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,15 +14,10 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type KeyboardEvent,
-} from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { lifePhotos, type LifePhoto } from "@/content/life-photos";
 import { asset } from "@/content/paths";
+import { useMotionPreference } from "./useMotionPreference";
 
 type Hobby = LifePhoto["category"];
 const hobbyIcons: Record<Hobby, LucideIcon> = {
@@ -38,20 +33,27 @@ const hobbies = (Object.keys(hobbyIcons) as Hobby[])
     count: lifePhotos.filter((photo) => photo.category === hobby).length,
   }))
   .filter(({ count }) => count > 0);
-const credits = lifePhotos.flatMap(({ id, category, credit }) =>
-  credit ? [{ id, category, ...credit }] : [],
-);
 const mod = (value: number, length: number) =>
   ((value % length) + length) % length;
 
 // The first deal is fixed so the static export and first client render agree;
 // shuffles after that are random.
-type Deal = { order: number[]; tilts: number[]; round: number };
+type Deal = {
+  order: number[];
+  frameOrder: number[];
+  tilts: number[];
+  round: number;
+  cycle: number;
+};
 const restingTilts = [-4, 3, -2.5, 4.5, -3.5, 2, -5, 3.5, -1.5, 4];
 const firstDeal: Deal = {
   order: lifePhotos.map((_, index) => index),
-  tilts: lifePhotos.map((_, index) => restingTilts[index % restingTilts.length]),
+  frameOrder: lifePhotos.map((_, index) => index),
+  tilts: lifePhotos.map(
+    (_, index) => restingTilts[index % restingTilts.length],
+  ),
   round: 0,
+  cycle: 0,
 };
 
 function reshuffle(current: Deal): Deal {
@@ -62,8 +64,10 @@ function reshuffle(current: Deal): Deal {
   }
   return {
     order,
+    frameOrder: order,
     tilts: order.map(() => Math.round((Math.random() * 11 - 5.5) * 10) / 10),
     round: current.round + 1,
+    cycle: 0,
   };
 }
 
@@ -81,6 +85,44 @@ function useCanDrag() {
   return canDrag;
 }
 
+function LightboxPhoto({ photo }: { photo: LifePhoto }) {
+  const [ready, setReady] = useState(false);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const present = useIsPresent();
+  useEffect(() => {
+    const image = imageRef.current;
+    if (image?.complete && image.naturalWidth > 0) setReady(true);
+  }, []);
+  return (
+    <span
+      className="life-lightbox-progressive"
+      data-ready={ready}
+      aria-hidden={!present ? true : undefined}
+    >
+      <img
+        className="life-lightbox-preview"
+        src={asset(photo.thumb ?? photo.src)}
+        alt=""
+        aria-hidden="true"
+        width={photo.width}
+        height={photo.height}
+        decoding="async"
+      />
+      <img
+        className="life-lightbox-full"
+        ref={imageRef}
+        src={asset(photo.src)}
+        alt={photo.alt}
+        width={photo.width}
+        height={photo.height}
+        decoding="async"
+        onLoad={() => setReady(true)}
+        onError={() => setReady(false)}
+      />
+    </span>
+  );
+}
+
 export default function OffDutyPanel() {
   const [deal, setDeal] = useState(firstDeal);
   const [spotlight, setSpotlight] = useState<Hobby | null>(null);
@@ -88,22 +130,124 @@ export default function OffDutyPanel() {
   const [focusSlot, setFocusSlot] = useState(0);
   const [openId, setOpenId] = useState<string | null>(null);
   const [status, setStatus] = useState("");
+  const [autoPlay, setAutoPlay] = useState(true);
+  const [inView, setInView] = useState(false);
+  const [pageVisible, setPageVisible] = useState(false);
+  const [panelVisible, setPanelVisible] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
   const wallRef = useRef<HTMLUListElement>(null);
   const cardRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const suppressClickUntilRef = useRef(0);
+  const cycleCursorRef = useRef(0);
   const canDrag = useCanDrag();
+  const reducedMotion = useMotionPreference();
   const prefix = useId();
 
   const deck = deal.order.map((index) => lifePhotos[index]);
   const pool = spotlight
     ? deck.filter((photo) => photo.category === spotlight)
     : deck;
+  // Auto-play changes the pictures in the slots, never their physical frames.
+  // This also preserves a card's dragged position until a manual shuffle.
+  const frameDeck = deal.frameOrder.map((index) => lifePhotos[index]);
+  const frames = spotlight
+    ? frameDeck.filter((photo) => photo.category === spotlight)
+    : frameDeck;
   const openIndex = pool.findIndex((photo) => photo.id === openId);
   const shown = openIndex >= 0 ? pool[openIndex] : null;
   const lightboxOpen = openId !== null;
+  const credits = pool.flatMap(({ id, category, credit }) =>
+    credit ? [{ id, category, ...credit }] : [],
+  );
+  const previousSrc =
+    openIndex >= 0 ? pool[mod(openIndex - 1, pool.length)]?.src : undefined;
+  const nextSrc =
+    openIndex >= 0 ? pool[mod(openIndex + 1, pool.length)]?.src : undefined;
+  const autoPlayAvailable = !reducedMotion && pool.length > 1;
+  const canAutoCycle =
+    autoPlay &&
+    autoPlayAvailable &&
+    inView &&
+    pageVisible &&
+    panelVisible &&
+    !hovered &&
+    !focused &&
+    !dragging &&
+    !lightboxOpen;
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const panel = root.closest<HTMLElement>('[role="tabpanel"]');
+    const syncVisibility = () => {
+      setPageVisible(document.visibilityState === "visible");
+      setPanelVisible(!root.closest("[hidden], [inert], [aria-hidden='true']"));
+    };
+    syncVisibility();
+    const intersection = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { threshold: 0.05 },
+    );
+    intersection.observe(root);
+    const mutation = new MutationObserver(syncVisibility);
+    if (panel)
+      mutation.observe(panel, {
+        attributes: true,
+        attributeFilter: ["hidden", "inert", "aria-hidden"],
+      });
+    document.addEventListener("visibilitychange", syncVisibility);
+    return () => {
+      intersection.disconnect();
+      mutation.disconnect();
+      document.removeEventListener("visibilitychange", syncVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!canAutoCycle) return;
+    const timer = window.setTimeout(() => {
+      const root = rootRef.current;
+      if (
+        document.visibilityState !== "visible" ||
+        !root ||
+        root.closest("[hidden], [inert], [aria-hidden='true']")
+      )
+        return;
+      const cursor = cycleCursorRef.current++;
+      setDeal((current) => {
+        const matchingSlots = current.order.flatMap((index, slot) =>
+          !spotlight || lifePhotos[index].category === spotlight ? [slot] : [],
+        );
+        if (matchingSlots.length < 2) return current;
+        const first = matchingSlots[cursor % matchingSlots.length];
+        const second = matchingSlots[(cursor + 1) % matchingSlots.length];
+        const order = [...current.order];
+        [order[first], order[second]] = [order[second], order[first]];
+        return { ...current, order, cycle: current.cycle + 1 };
+      });
+    }, 7000);
+    return () => window.clearTimeout(timer);
+  }, [canAutoCycle, deal.cycle, deal.round, spotlight]);
+
+  useEffect(() => {
+    wallRef.current?.scrollTo({ left: 0, behavior: "instant" });
+  }, [spotlight, deal.round]);
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    [...new Set([previousSrc, nextSrc])].forEach((src) => {
+      if (src) {
+        const image = new Image();
+        image.src = asset(src);
+      }
+    });
+  }, [lightboxOpen, previousSrc, nextSrc]);
 
   useEffect(() => {
     const close = () => setOpenId(null);
@@ -149,31 +293,22 @@ export default function OffDutyPanel() {
   }, [lightboxOpen]);
 
   function spotlightHobby(hobby: Hobby | null) {
+    cycleCursorRef.current = 0;
     setSpotlight(hobby);
+    setFocusSlot(0);
+    setTopId(null);
     const matches = hobby
       ? deck.filter((photo) => photo.category === hobby).length
       : deck.length;
     setStatus(
       hobby
-        ? `Spotlighting ${matches} ${hobby.toLowerCase()} photo${matches === 1 ? "" : "s"}.`
+        ? `Showing ${matches} ${hobby.toLowerCase()} photo${matches === 1 ? "" : "s"}.`
         : `Showing all ${matches} photos.`,
     );
-    // On the swipeable strip, bring the first match into view.
-    const wall = wallRef.current;
-    const slot = hobby ? deck.findIndex((photo) => photo.category === hobby) : 0;
-    const card = cardRefs.current[slot]?.parentElement;
-    if (!wall || !card || wall.scrollWidth <= wall.clientWidth) return;
-    const wallBox = wall.getBoundingClientRect();
-    const cardBox = card.getBoundingClientRect();
-    wall.scrollBy({
-      left: cardBox.left - wallBox.left - (wallBox.width - cardBox.width) / 2,
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        ? "instant"
-        : "smooth",
-    });
   }
 
   function shuffle() {
+    cycleCursorRef.current = 0;
     setDeal(reshuffle);
     setTopId(null);
     setFocusSlot(0);
@@ -181,7 +316,6 @@ export default function OffDutyPanel() {
   }
 
   function openPhoto(photo: LifePhoto, opener: HTMLElement) {
-    if (spotlight && photo.category !== spotlight) setSpotlight(null);
     openerRef.current = opener;
     setOpenId(photo.id);
   }
@@ -192,6 +326,7 @@ export default function OffDutyPanel() {
   }
 
   function wallKeys(event: KeyboardEvent<HTMLUListElement>) {
+    if (!pool.length) return;
     const next =
       event.key === "ArrowRight" || event.key === "ArrowDown"
         ? focusSlot + 1
@@ -200,11 +335,11 @@ export default function OffDutyPanel() {
           : event.key === "Home"
             ? 0
             : event.key === "End"
-              ? deck.length - 1
+              ? pool.length - 1
               : null;
     if (next === null) return;
     event.preventDefault();
-    const slot = mod(next, deck.length);
+    const slot = mod(next, pool.length);
     setFocusSlot(slot);
     cardRefs.current[slot]?.focus();
   }
@@ -242,12 +377,28 @@ export default function OffDutyPanel() {
     );
 
   return (
-    <div className="offduty">
+    <div
+      className="offduty"
+      ref={rootRef}
+      onPointerEnter={(event) => {
+        if (event.pointerType === "mouse") setHovered(true);
+      }}
+      onPointerLeave={(event) => {
+        if (event.pointerType === "mouse") setHovered(false);
+      }}
+      onFocusCapture={(event) =>
+        setFocused(event.target.matches(":focus-visible"))
+      }
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget))
+          setFocused(false);
+      }}
+    >
       <div className="offduty-toolbar">
         <div
           className="offduty-hobbies"
           role="group"
-          aria-label="Spotlight a hobby"
+          aria-label="Filter photos by hobby"
         >
           <button
             type="button"
@@ -281,10 +432,35 @@ export default function OffDutyPanel() {
             );
           })}
         </div>
-        <button type="button" className="offduty-shuffle" onClick={shuffle}>
-          <Shuffle size={15} aria-hidden="true" /> Shuffle
-        </button>
+        <div className="offduty-actions">
+          <button
+            type="button"
+            className="offduty-autoplay"
+            role="switch"
+            aria-checked={autoPlay && autoPlayAvailable}
+            aria-label="Auto-play photos"
+            aria-describedby={`${prefix}-autoplay-help`}
+            disabled={!autoPlayAvailable}
+            onClick={() => setAutoPlay((current) => !current)}
+          >
+            <span className="offduty-switch" aria-hidden="true" />
+            Auto-play
+            <span className="offduty-autoplay-state" aria-hidden="true">
+              {autoPlay && autoPlayAvailable ? "On" : "Off"}
+            </span>
+          </button>
+          <button type="button" className="offduty-shuffle" onClick={shuffle}>
+            <Shuffle size={15} aria-hidden="true" /> Shuffle
+          </button>
+        </div>
       </div>
+      <span className="sr-only" id={`${prefix}-autoplay-help`}>
+        {reducedMotion
+          ? "Automatic photo changes are off because reduced motion is enabled."
+          : pool.length < 2
+            ? "Automatic photo changes need at least two photos."
+            : "Changes two photos every seven seconds while the board is visible and idle. Stops while you interact with the board."}
+      </span>
       <p className="offduty-help" id={`${prefix}-help`}>
         <span className="offduty-help-fine">
           Pick a hobby, drag the photos around, or click one for a closer look.
@@ -301,14 +477,18 @@ export default function OffDutyPanel() {
         aria-describedby={`${prefix}-help`}
         onKeyDown={wallKeys}
       >
-        {deck.map((photo, slot) => {
+        {pool.map((photo, slot) => {
           const Icon = hobbyIcons[photo.category];
-          const dim = spotlight !== null && photo.category !== spotlight;
-          const lit = spotlight !== null && !dim;
-          const tilt = deal.tilts[slot];
+          const frame = frames[slot];
+          const tilt =
+            deal.tilts[frameDeck.findIndex((item) => item.id === frame.id)];
+          const frameRatio = Math.max(
+            4 / 5,
+            Math.min(4 / 3, frame.width / frame.height),
+          );
           return (
             <motion.li
-              key={`${deal.round}-${photo.id}`}
+              key={`${deal.round}-${spotlight ?? "all"}-${slot}`}
               className="offduty-polaroid"
               data-top={topId === photo.id}
               drag={canDrag}
@@ -319,16 +499,18 @@ export default function OffDutyPanel() {
               // framer-motion reports the drag end after the release click, so
               // block clicks from the moment a drag starts.
               onDragStart={() => {
+                setDragging(true);
                 suppressClickUntilRef.current = Infinity;
               }}
               onDragEnd={() => {
+                setDragging(false);
                 suppressClickUntilRef.current = performance.now() + 150;
               }}
             >
               <motion.button
+                key={photo.id}
                 type="button"
                 className="offduty-card"
-                data-dim={dim}
                 ref={(element) => {
                   cardRefs.current[slot] = element;
                 }}
@@ -344,31 +526,44 @@ export default function OffDutyPanel() {
                 }}
                 aria-label={`${photo.category}: ${photo.caption} Open photo.`}
                 initial={
-                  deal.round === 0
+                  reducedMotion
                     ? false
-                    : { opacity: 0, y: -70, rotate: tilt * 4, scale: 0.8 }
+                    : deal.cycle > 0
+                      ? { opacity: 0, rotate: tilt }
+                      : deal.round === 0
+                        ? false
+                        : { opacity: 0, y: -70, rotate: tilt * 4, scale: 0.8 }
                 }
                 animate={{
-                  opacity: dim ? 0.32 : 1,
-                  y: lit ? -6 : 0,
-                  rotate: lit ? tilt / 3 : tilt,
-                  scale: dim ? 0.9 : lit ? 1.04 : 1,
-                  transition: {
-                    type: "spring",
-                    stiffness: 240,
-                    damping: 18,
-                    delay: deal.round && !spotlight ? slot * 0.04 : 0,
-                  },
+                  opacity: 1,
+                  y: 0,
+                  rotate: tilt,
+                  scale: 1,
+                  transition: reducedMotion
+                    ? { duration: 0 }
+                    : deal.cycle > 0
+                      ? { duration: 0.32, ease: "easeOut" }
+                      : {
+                          type: "spring",
+                          stiffness: 240,
+                          damping: 18,
+                          delay: deal.round && !spotlight ? slot * 0.04 : 0,
+                        },
                 }}
                 whileHover={
-                  canDrag ? { rotate: 0, scale: 1.06, y: -8 } : undefined
+                  canDrag && !reducedMotion
+                    ? { rotate: 0, scale: 1.06, y: -8 }
+                    : undefined
                 }
                 whileTap={{ scale: 0.97 }}
               >
                 {slot % 3 === 0 ? (
                   <span className="offduty-tape" aria-hidden="true" />
                 ) : null}
-                <span className="offduty-photo">
+                <span
+                  className="offduty-photo"
+                  style={{ aspectRatio: frameRatio }}
+                >
                   <img
                     src={asset(photo.thumb ?? photo.src)}
                     alt=""
@@ -377,7 +572,10 @@ export default function OffDutyPanel() {
                     loading="lazy"
                     decoding="async"
                     draggable={false}
-                    style={{ objectPosition: photo.position }}
+                    style={{
+                      objectPosition: photo.position,
+                      objectFit: photo.id === frame.id ? "cover" : "contain",
+                    }}
                   />
                 </span>
                 <span className="offduty-caption">{photo.caption}</span>
@@ -456,19 +654,31 @@ export default function OffDutyPanel() {
               </button>
             </header>
             <div className="life-lightbox-image">
-              <img
-                src={asset(shown.src)}
-                alt={shown.alt}
-                width={shown.width}
-                height={shown.height}
-                decoding="async"
-              />
+              <AnimatePresence initial={false}>
+                <motion.div
+                  className="life-lightbox-slide"
+                  key={shown.id}
+                  initial={{ opacity: reducedMotion ? 1 : 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: reducedMotion ? 0 : 0.18 }}
+                >
+                  <LightboxPhoto photo={shown} />
+                </motion.div>
+              </AnimatePresence>
             </div>
             <footer className="life-lightbox-footer">
               <div>
-                <h3 id={`${prefix}-lightbox-caption`} aria-live="polite">
+                <motion.h3
+                  key={shown.id}
+                  id={`${prefix}-lightbox-caption`}
+                  aria-live="polite"
+                  initial={reducedMotion ? false : { opacity: 0, y: 2 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: reducedMotion ? 0 : 0.16 }}
+                >
                   {shown.caption || shown.alt}
-                </h3>
+                </motion.h3>
                 {shown.credit ? (
                   <p className="life-lightbox-credit">
                     <a href={shown.credit.url} target="_blank" rel="noreferrer">

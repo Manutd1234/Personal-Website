@@ -63,6 +63,27 @@ export const teamMoments = [
 ];
 
 export const certificateFiles = {
+  esisScholarship2020: {
+    src: "certificates/esis-scholarship-2020-letter.webp",
+    title: "Edusave Scholarships for Independent Schools — AY2020 award letter",
+    kind: "Award letter" as const,
+  },
+  coloursAward2022: {
+    src: "certificates/colours-award-softball-2022.webp",
+    title: "Singapore Schools Sports Council — Colours Award, Softball, 2022",
+  },
+  sstBusinessPitch2018: {
+    src: "certificates/sst-best-business-pitch-2018-trophy.webp",
+    title:
+      "SST Changemakers Innofest 2018 — Best Business Pitch Award trophy photo",
+    kind: "Trophy photo" as const,
+  },
+  sstActiveElderly2018: {
+    src: "certificates/sst-active-elderly-2018-trophy.webp",
+    title:
+      "SST Changemakers Innofest 2018 — Active Elderly Award, 2nd place trophy photo",
+    kind: "Trophy photo" as const,
+  },
   hackFutureFirstPlace: {
     src: "certificates/hack-the-future-first-place.webp",
     title: "Hack the Future AI Hackathon 2026 — 1st Place",

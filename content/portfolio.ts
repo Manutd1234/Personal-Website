@@ -867,6 +867,7 @@ export const achievementGroups = [
           "Ministry of Education · School of Science and Technology, Singapore",
         detail: "Academic year 2020; letter issued 5 April 2021",
         year: "2020",
+        certificateKey: "esisScholarship2020",
       },
       {
         title: "CCC–CDC Education Merit Award",
@@ -917,6 +918,7 @@ export const achievementGroups = [
         issuer: "Singapore Schools Sports Council",
         detail: "Sporting excellence in softball",
         year: "23 Sep 2022",
+        certificateKey: "coloursAward2022",
       },
       {
         title: "Top GCE O-Level Performer",
@@ -929,12 +931,14 @@ export const achievementGroups = [
         issuer: "SST Changemakers Innofest",
         detail: "Active Elderly · Individual Strand",
         year: "2018",
+        certificateKey: "sstBusinessPitch2018",
       },
       {
         title: "Active Elderly Award",
         issuer: "SST Changemakers Innofest",
         detail: "2nd place · Individual Strand",
         year: "2018",
+        certificateKey: "sstActiveElderly2018",
       },
       {
         title: "Sports Day · Athletics",

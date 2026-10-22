@@ -66,12 +66,6 @@ const aliases: Record<string, TabId> = {
   sport: "awards",
   service: "awards",
 };
-const sectionNumber = {
-  projects: "02",
-  experience: "03",
-  skills: "04",
-  awards: "05",
-};
 export default function Portfolio() {
   const [active, setActive] = useState<TabId>("profile");
   const [dark, setDark] = useState(false);
@@ -230,13 +224,32 @@ export default function Portfolio() {
               tabIndex={0}
             >
               {tab.id === "profile" ? (
-                <ProfilePanel openProjects={openProjects} />
+                <>
+                  <ProfilePanel openProjects={openProjects} />
+                  <section
+                    id="life-in-pictures"
+                    className="classic-contact classic-offduty"
+                    aria-labelledby="offduty-title"
+                  >
+                    <header className="border-t border-zinc-200 pt-10 pb-6 dark:border-zinc-800">
+                      <p className="font-mono text-xs tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
+                        Beyond the code
+                      </p>
+                      <h2 id="offduty-title" className="classic-contact-title">
+                        Off the <em>clock.</em>
+                      </h2>
+                      <p className="classic-section-note">
+                        Gym, travel, good food, friends &amp; learning — the
+                        life around the code.
+                      </p>
+                    </header>
+                    <OffDutyPanel />
+                  </section>
+                </>
               ) : (
                 <>
                   <header className="classic-section-header">
-                    <p className="classic-kicker">
-                      {sectionNumber[tab.id]} — {tab.title}
-                    </p>
+                    <p className="classic-kicker">{tab.title}</p>
                     <h1>
                       {tab.id === "projects" ? (
                         <>
@@ -283,32 +296,13 @@ export default function Portfolio() {
             </motion.section>
           ))}
           <section
-            id="life-in-pictures"
-            className="classic-contact classic-offduty"
-            aria-labelledby="offduty-title"
-          >
-            <header className="border-t border-zinc-200 pt-10 pb-6 dark:border-zinc-800">
-              <p className="font-mono text-xs tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
-                06 — Beyond the code
-              </p>
-              <h2 id="offduty-title" className="classic-contact-title">
-                Off the <em>clock.</em>
-              </h2>
-              <p className="classic-section-note">
-                Gym, travel, good food &amp; learning — the life around the
-                code.
-              </p>
-            </header>
-            <OffDutyPanel />
-          </section>
-          <section
             id="contact"
             className="classic-contact"
             aria-labelledby="contact-title"
           >
             <header className="border-t border-zinc-200 pt-10 pb-6 dark:border-zinc-800">
               <p className="font-mono text-xs tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
-                07 — SAY HI
+                SAY HI
               </p>
               <h2 id="contact-title" className="classic-contact-title">
                 Let’s talk.

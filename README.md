@@ -8,14 +8,13 @@ Live site: https://manutd1234.github.io/Personal-Website/
 
 - TypeScript, React 19, Tailwind CSS 4, Framer Motion and Lucide icons.
 - Original large-name hero, taped real portrait, green navigation and painterly accents.
-- Automatic typing and rolling hero roles with reduced-motion support; a bounded Matter.js skill playground with keyboard nudges and reset.
-- A draggable 3D bookshelf for five featured projects, with continuous spring momentum, keyboard navigation, smooth open/back transitions and direct project entry from the Workbench.
-- Seven more builds in a filterable card collection with uniform 16:10 previews, equal grid rows and private-access labels.
+- Automatic typing and rolling hero roles with reduced-motion support.
+- One draggable 3D carousel for all twelve projects, with individual cover colours and typography, spring momentum, keyboard navigation, smooth open/back transitions, a named project picker and direct entry from the Workbench. BrainHack and Hack the Future photos live inside their relevant books; source links and private-access labels remain available.
 - An interactive Profile workbench with larger real previews and Problem / Build / Proof walkthroughs for AlphaEngine, BrainHack and RE:DECIDE.
 - Experience, Education, Leadership & CCAs and Volunteering as a trading-card showcase: 36 large, light cards with type-coloured foil frames (silver for cards before 2021), the organisation's official logo where one can be shown, one or two boxed highlights, 3D mouse tilt with a holo sheen, and flip-to-read backs that keep every original bullet and add certificate links where they exist. A per-deck `COLLECTED` tally counts cards once they have stayed on screen, and decks browse by swipe, arrows, dots or ← → keys. Highlights condense real résumé bullets; LVL (the start year) and rarity are game flavour.
-- Colourful award categories, with all certificate links preserved.
-- Searchable skill category pills, spacious toolkit cards, spoken languages and grouped credentials; the physics playground stays available in a disclosure.
-- A rolling Polaroid diary with ten curated personal, study, food, travel and gym photographs, category filters, full-screen browsing and reduced-motion controls. The illustrative gym image carries source and license credits; personal photos use local, metadata-free copies.
+- A collectible award-card collection with 37 verified records and 25 real award-document or trophy previews. Category/search controls, full-size previews, multi-year documents, project notes and credential-status labels remain available.
+- A falling-block skill board with all 79 skills, eight category highlights, search, drag/tap/keyboard sorting, replay and reset. Filters highlight matching blocks without removing the rest. Spoken languages and grouped credentials remain below the board.
+- A Profile-only Polaroid photo board with twelve curated personal, learning, food, travel, friends and gym photographs, category filters and full-screen browsing. Pictures cycle every seven seconds in fixed frames while visible and idle; interaction, hidden panels and reduced motion stop the timer. The gym and food selections include copies exported through Photos. All public personal-photo copies have metadata removed; original files remain unchanged.
 - Sticky five-tab navigation, clear project actions and filter counts, aligned award categories, copy-email feedback, light/dark themes and visible focus states.
 
 ## Run locally

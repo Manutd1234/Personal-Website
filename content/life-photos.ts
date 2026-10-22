@@ -1,5 +1,5 @@
 // Curated from the local, metadata-free portfolio photo copies.
-// The gym photograph is illustrative and attributed below.
+// Personal gym photos were selected and exported from Photos by the user workflow.
 export type LifePhoto = {
   id: string;
   src: string;
@@ -36,18 +36,15 @@ export const lifePhotos: readonly LifePhoto[] = [
     height: 1067,
   },
   {
-    id: "gym",
-    src: "images/hobbies/gym-nenad-stojkovic.webp",
-    alt: "Illustrative photograph of a modern gym interior with strength-training equipment",
-    caption: "Time away from the screen. Illustrative gym photo.",
+    id: "gym-mirror",
+    src: "images/life-new/gym-mirror-bench.webp",
+    thumb: "images/life-new/gym-mirror-bench-thumb.webp",
+    alt: "Mirror portrait seated on a gym bench, surrounded by training equipment",
+    caption: "Time away from the screen.",
     category: "Gym",
-    width: 1600,
-    height: 1067,
-    credit: {
-      label: "Nenad Stojković / Wikimedia Commons · resized to WebP",
-      url: "https://commons.wikimedia.org/wiki/File:Design_and_equipment_in_modern_gym.jpg",
-      licenseUrl: "https://creativecommons.org/licenses/by/2.0/",
-    },
+    width: 900,
+    height: 1600,
+    position: "center 35%",
   },
   {
     id: "candid",
@@ -70,14 +67,24 @@ export const lifePhotos: readonly LifePhoto[] = [
     height: 1600,
   },
   {
-    id: "brainhack-team",
-    src: "images/portfolio/brainhack-champion-team.webp",
-    thumb: "images/life/brainhack-team-thumb.webp",
-    alt: "Team Pandamonium holding the BrainHack Novice Champion sign",
-    caption: "A shared win at BrainHack.",
+    id: "food-dish-lime-chilli",
+    src: "images/life-new/food-dish-lime-chilli.webp",
+    thumb: "images/life-new/food-dish-lime-chilli-thumb.webp",
+    alt: "A plated dish with sauce, lime halves, and a side of chilli",
+    caption: "A good meal is always worth a photo.",
+    category: "Food",
+    width: 900,
+    height: 1600,
+  },
+  {
+    id: "friends-sports-field",
+    src: "images/life-new/friends-sports-field.webp",
+    thumb: "images/life-new/friends-sports-field-thumb.webp",
+    alt: "A group posing beside a netted sports field under a cloudy blue sky",
+    caption: "A day out with friends.",
     category: "People",
-    width: 1600,
-    height: 1067,
+    width: 1280,
+    height: 960,
   },
   {
     id: "westminster",
@@ -89,14 +96,24 @@ export const lifePhotos: readonly LifePhoto[] = [
     height: 2134,
   },
   {
-    id: "brainhack-table",
-    src: "images/portfolio/brainhack-at-work.webp",
-    thumb: "images/life/brainhack-table-thumb.webp",
-    alt: "Team Pandamonium working together around their laptops at BrainHack",
-    caption: "Learning by building, together.",
+    id: "orientation-paper-activity",
+    src: "images/life-new/orientation-paper-activity.webp",
+    thumb: "images/life-new/orientation-paper-activity-thumb.webp",
+    alt: "An orientation group gathered around a classroom table with colourful paper shapes",
+    caption: "An orientation group activity.",
     category: "Learning",
     width: 1600,
-    height: 1067,
+    height: 1200,
+  },
+  {
+    id: "gym-strength-floor",
+    src: "images/life-new/gym-strength-floor.webp",
+    thumb: "images/life-new/gym-strength-floor-thumb.webp",
+    alt: "A gym floor with weight machines, squat racks, and training equipment",
+    caption: "Back on the gym floor.",
+    category: "Gym",
+    width: 1200,
+    height: 1600,
   },
   {
     id: "beach-games",

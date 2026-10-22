@@ -50,7 +50,6 @@ const holoStrength: Readonly<Record<Rarity, number>> = {
 };
 const files: Readonly<Record<string, { src: string; title: string }>> =
   certificateFiles;
-const serial = (value: number) => String(value).padStart(3, "0");
 
 // Real results in highlight text are marked **like this** and drawn in the type colour.
 function Emphasis({ text }: { text: string }) {
@@ -63,12 +62,10 @@ function Emphasis({ text }: { text: string }) {
 
 export default function TradingCard({
   card,
-  total,
   reduced,
   tabbable,
 }: {
   card: TradingCardData;
-  total: number;
   reduced: boolean;
   tabbable: boolean;
 }) {
@@ -243,9 +240,6 @@ export default function TradingCard({
               <footer className="tcg-band tcg-footer">
                 <p>
                   {rarityMark} {card.rarity}
-                  <span aria-hidden="true"> · </span>
-                  <span className="sr-only">, card </span>
-                  No. {serial(card.number)}/{serial(total)}
                 </p>
                 <button
                   type="button"
@@ -350,9 +344,7 @@ export default function TradingCard({
                   <ArrowLeft size={13} strokeWidth={2.3} aria-hidden="true" />
                   Card front
                 </button>
-                <p>
-                  No. {serial(card.number)}/{serial(total)}
-                </p>
+                <p>{type.label}</p>
               </footer>
             </div>
           </section>

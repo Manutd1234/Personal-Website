@@ -22,6 +22,7 @@ export type Project = {
   category: string;
   description: string;
   outcome?: string;
+  highlights?: readonly string[];
   tags: readonly string[];
   number?: string;
   repository?: string;
@@ -59,30 +60,108 @@ const COVER_DESIGNS = [
     subtitle: "Markets, data & execution",
     color: "#007c59",
     ink: "#fff8dc",
+    font: '"SFMono-Regular", Consolas, monospace',
+    layout: "terminal",
+    mark: "α",
   },
   {
     title: "BrainHack",
     subtitle: "TIL-AI · Novice Champions",
     color: "#f4d875",
     ink: "#183e31",
+    font: '"Arial Black", "Helvetica Neue", sans-serif',
+    layout: "poster",
+    mark: "AI",
   },
   {
     title: "Delta1",
     subtitle: "Notes on systematic trading",
-    color: "#4b9c80",
+    color: "#24484b",
     ink: "#fffbed",
+    font: "Baskerville, Georgia, serif",
+    layout: "journal",
+    mark: "Δ",
   },
   {
-    title: "RE:DECIDE",
+    title: "RE:\nDECIDE",
     subtitle: "A closer look at the game",
-    color: "#b6e6b9",
-    ink: "#173e2f",
+    color: "#a1b9dc",
+    ink: "#1e314e",
+    font: 'Impact, "Arial Narrow", sans-serif',
+    layout: "field",
+    mark: ".dem",
   },
   {
-    title: "FraudCrew",
+    title: "Fraud\nCrew",
     subtitle: "AI with a human in the loop",
-    color: "#225b43",
+    color: "#b76e53",
     ink: "#f7edbc",
+    font: 'Georgia, "Times New Roman", serif',
+    layout: "dossier",
+    mark: "human / AI",
+  },
+  {
+    title: "Obital",
+    subtitle: "An offline-first study space",
+    color: "#c6b8e3",
+    ink: "#3d2c5c",
+    font: "Baskerville, Georgia, serif",
+    layout: "orbit",
+    mark: "○",
+  },
+  {
+    title: "Portfolio\n& Risk",
+    subtitle: "NUSSIF · Investment infrastructure",
+    color: "#415a82",
+    ink: "#eef2d7",
+    font: '"Palatino Linotype", Palatino, Georgia, serif',
+    layout: "ledger",
+    mark: "VaR / ES",
+  },
+  {
+    title: "PneuRelief",
+    subtitle: "Cast-pressure monitoring",
+    color: "#e8b4bb",
+    ink: "#632c43",
+    font: '"Avenir Next", "Trebuchet MS", sans-serif',
+    layout: "clinical",
+    mark: "BLE",
+  },
+  {
+    title: "Sign\nMe Up",
+    subtitle: "Tools for independent living",
+    color: "#dca24b",
+    ink: "#46321c",
+    font: 'Georgia, "Times New Roman", serif',
+    layout: "gesture",
+    mark: "hello.",
+  },
+  {
+    title: "Nexus",
+    subtitle: "An academic coach & focus space",
+    color: "#95c6c3",
+    ink: "#174d51",
+    font: '"Trebuchet MS", "Avenir Next", sans-serif',
+    layout: "notebook",
+    mark: "learn / focus",
+  },
+  {
+    title: "Deal\nMachine",
+    subtitle: "Research. Documents. Deals.",
+    color: "#684568",
+    ink: "#f6e1a5",
+    font: "Baskerville, Georgia, serif",
+    layout: "deal",
+    mark: "↗",
+  },
+  {
+    title: "Coca-Cola",
+    subtitle: "Indonesia growth strategy",
+    color: "#b84b49",
+    ink: "#fff4db",
+    font: '"Helvetica Neue", Arial, sans-serif',
+    layout: "strategy",
+    mark: "Jakarta",
   },
 ] as const;
 const DESIGN_INDEX: Readonly<Record<string, number | undefined>> = {
@@ -91,6 +170,13 @@ const DESIGN_INDEX: Readonly<Record<string, number | undefined>> = {
   "Delta1 Research": 2,
   "CS2 Decision Coach": 3,
   "Agentic Fraud Investigation Crew": 4,
+  Obital: 5,
+  "NUSSIF Portfolio & Risk Tools": 6,
+  PneuRelief: 7,
+  SignMeUp: 8,
+  "Nexus Academic Coach": 9,
+  DealMachine: 10,
+  "Coca-Cola Indonesia growth strategy": 11,
 };
 const mod = (value: number, length: number) =>
   ((value % length) + length) % length;
@@ -124,14 +210,19 @@ function Book({
     <span
       aria-hidden="true"
       className="book-object"
+      data-cover-layout={design.layout}
       style={
-        { "--cover": design.color, "--cover-ink": design.ink } as CSSProperties
+        {
+          "--cover": design.color,
+          "--cover-ink": design.ink,
+          "--cover-font": design.font,
+        } as CSSProperties
       }
     >
       <span className="book-back">
         <span>IAN WANGSA</span>
         <span>{design.title}</span>
-        <small>PROJECT NOTES / {String(index + 1).padStart(2, "0")}</small>
+        <small>{project.category}</small>
       </span>
       <span className="book-spine">
         <b>{design.title}</b>
@@ -141,9 +232,7 @@ function Book({
       <span className="book-pages book-pages-top" />
       <span className="book-pages book-pages-bottom" />
       <span className="book-front">
-        <span className="book-cover-edition">
-          IAN WANGSA <span>VOL. {String(index + 1).padStart(2, "0")}</span>
-        </span>
+        <span className="book-cover-author">IAN WANGSA</span>
         <span className="book-cover-title">{design.title}</span>
         <span className="book-cover-subtitle">{design.subtitle}</span>
         {media?.src ? (
@@ -158,7 +247,9 @@ function Book({
               width={640}
             />
           </span>
-        ) : null}
+        ) : (
+          <span className="book-cover-mark">{design.mark}</span>
+        )}
         <span className="book-cover-footer">
           {project.category}
           <span>→</span>
@@ -247,6 +338,7 @@ export default function BookCarousel({
           "--orbit-x",
           `${Math.sin(theta) * radiusRef.current}px`,
         );
+        node.style.setProperty("--orbit-turn", `${Math.sin(theta) * 12}deg`);
         node.style.setProperty("--orbit-y", `${(Math.cos(theta) - 1) * 26}px`);
         node.style.setProperty(
           "--orbit-z",
@@ -380,7 +472,13 @@ export default function BookCarousel({
     if (!stage) return undefined;
     const resize = new ResizeObserver(([entry]) => {
       if (entry?.contentRect.width > 0) {
+        const bookWidth =
+          parseFloat(getComputedStyle(orbitRefs.current[0] ?? stage).width) ||
+          170;
+        const spacingRadius =
+          count > 2 ? (bookWidth / (2 * Math.sin(Math.PI / count))) * 1.02 : 0;
         radiusRef.current = Math.max(
+          spacingRadius,
           172,
           Math.min(360, entry.contentRect.width * 0.34),
         );
@@ -408,7 +506,7 @@ export default function BookCarousel({
       resize.disconnect();
       visibility.disconnect();
     };
-  }, [cancelGesture, canInteract, stopAnimation, updateAngle]);
+  }, [cancelGesture, canInteract, count, stopAnimation, updateAngle]);
 
   useEffect(() => {
     const theatre = theatreRef.current;
@@ -659,8 +757,7 @@ export default function BookCarousel({
       >
         <div className="book-stage-header">
           <span className="book-library-label">
-            THE PROJECT LIBRARY{" "}
-            <span>{String(count).padStart(2, "0")} VOLUMES</span>
+            THE PROJECT LIBRARY <span>Research, apps & team builds</span>
           </span>
           {isOpen ? (
             <button className="book-close" onClick={closeBook} type="button">
@@ -709,6 +806,7 @@ export default function BookCarousel({
                       "--orbit-x": `${x.toFixed(3)}px`,
                       "--orbit-y": `${y.toFixed(3)}px`,
                       "--orbit-z": `${z.toFixed(3)}px`,
+                      "--orbit-turn": `${Math.sin(theta) * 12}deg`,
                       "--book-order": index,
                     } as CSSProperties
                   }
@@ -780,10 +878,6 @@ export default function BookCarousel({
               ←
             </button>
             <div className="book-current">
-              <span>
-                {String(current + 1).padStart(2, "0")} /{" "}
-                {String(count).padStart(2, "0")}
-              </span>
               <button
                 disabled={returning}
                 onClick={() => openBook(current)}
@@ -808,25 +902,20 @@ export default function BookCarousel({
           </div>
         ) : null}
         {!isOpen ? (
-          <div aria-label="Choose a project book" className="book-index">
-            {projects.map((project, index) => (
-              <button
-                aria-current={current === index ? "true" : undefined}
-                disabled={returning}
-                aria-label={`Bring ${project.title} to the front`}
-                key={project.title}
-                onClick={() => choose(index)}
-                type="button"
-              >
-                <span aria-hidden="true">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <span className="book-index-title">
-                  {coverFor(project, index).title}
-                </span>
-              </button>
-            ))}
-          </div>
+          <label className="book-project-picker">
+            <span>Find a project</span>
+            <select
+              value={current}
+              disabled={returning}
+              onChange={(event) => choose(Number(event.target.value))}
+            >
+              {projects.map((project, index) => (
+                <option key={project.title} value={index}>
+                  {project.title}
+                </option>
+              ))}
+            </select>
+          </label>
         ) : null}
         <span className="book-screenreader-status" role="status">
           {!isOpen && !dragging
