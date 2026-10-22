@@ -574,7 +574,10 @@ export default function OffDutyPanel() {
                     draggable={false}
                     style={{
                       objectPosition: photo.position,
-                      objectFit: photo.id === frame.id ? "cover" : "contain",
+                      objectFit:
+                        photo.category === "People" || photo.id !== frame.id
+                          ? "contain"
+                          : "cover",
                     }}
                   />
                 </span>

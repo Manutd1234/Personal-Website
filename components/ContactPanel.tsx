@@ -1,5 +1,6 @@
 "use client";
-import { Check, Copy } from "lucide-react";
+
+import { ArrowUpRight, Check, Copy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { profile } from "@/content/portfolio";
 
@@ -7,13 +8,31 @@ export default function ContactPanel() {
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">(
     "idle",
   );
+  const panel = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(
-    () => () => {
+
+  useEffect(() => {
+    const node = panel.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        node.dataset.visible = String(entry.isIntersecting);
+      },
+      { threshold: 0.15 },
+    );
+    const onVisibility = () => {
+      node.dataset.documentVisible = String(!document.hidden);
+    };
+    onVisibility();
+    observer.observe(node);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
       if (timer.current) clearTimeout(timer.current);
-    },
-    [],
-  );
+    };
+  }, []);
+
   async function copy() {
     try {
       await navigator.clipboard.writeText(profile.email);
@@ -24,64 +43,91 @@ export default function ContactPanel() {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setCopyState("idle"), 2000);
   }
+
   return (
-    <div className="pb-3">
-      <div className="flex flex-wrap items-center justify-between gap-5">
-        <p className="max-w-sm text-sm leading-7 text-zinc-500 dark:text-zinc-400">
-          For opportunities, projects, or a conversation.
-        </p>
-        <div className="flex flex-wrap items-center gap-3">
-          <a
-            href={`mailto:${profile.email}`}
-            className="break-all text-base font-medium tracking-tight text-emerald-800 underline decoration-emerald-200 underline-offset-8 hover:decoration-emerald-600 dark:text-emerald-300"
-          >
-            {profile.email}
-          </a>
-          <button
-            onClick={copy}
-            className="inline-flex min-h-11 min-w-[128px] items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-4 text-xs hover:border-emerald-400 dark:border-zinc-700 dark:bg-zinc-900"
-            aria-label="Copy email address"
-          >
-            {copyState === "copied" ? (
-              <Check className="size-3.5 text-emerald-600" />
-            ) : (
-              <Copy className="size-3.5" />
-            )}
-            <span aria-live="polite">
-              {copyState === "copied"
-                ? "Copied!"
-                : copyState === "error"
-                  ? "Try email link"
-                  : "Copy email"}
+    <div className="contact-paper" ref={panel}>
+      <div className="contact-paper-body">
+        <div className="contact-paper-intro">
+          <p className="contact-paper-eyebrow">A good place to start</p>
+          <h2 id="contact-title" className="contact-paper-title">
+            Let’s talk.
+            <br />
+            <em>And build.</em>
+          </h2>
+          <p className="contact-paper-invitation">
+            <span className="sr-only">
+              Bring a new idea, a tricky problem, or a project in progress.
             </span>
-          </button>
+            <span aria-hidden="true" className="contact-paper-rolling-line">
+              Bring
+              <span className="contact-paper-rolling-window">
+                <span className="contact-paper-rolling-track">
+                  <span>a new idea.</span>
+                  <span>a tricky problem.</span>
+                  <span>a project in progress.</span>
+                  <span>a new idea.</span>
+                </span>
+              </span>
+            </span>
+          </p>
+        </div>
+        <div className="contact-paper-actions">
+          <div className="contact-paper-note" aria-hidden="true">
+            <span>It starts with a hello.</span>
+            <svg viewBox="0 0 105 55" fill="none">
+              <path
+                d="M4 6c29-7 77 5 78 36M71 33l12 12 14-13"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <a className="contact-paper-email" href={`mailto:${profile.email}`}>
+            <span>{profile.email}</span>
+            <ArrowUpRight aria-hidden="true" size={23} strokeWidth={1.6} />
+          </a>
+          <div className="contact-paper-secondary">
+            <span>Opportunities, projects, or just a conversation.</span>
+            <button
+              type="button"
+              onClick={copy}
+              className="contact-paper-copy"
+              aria-label="Copy email address"
+            >
+              {copyState === "copied" ? (
+                <Check aria-hidden="true" size={15} />
+              ) : (
+                <Copy aria-hidden="true" size={15} />
+              )}
+              <span aria-live="polite">
+                {copyState === "copied"
+                  ? "Copied!"
+                  : copyState === "error"
+                    ? "Try email link"
+                    : "Copy email"}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
-      <div className="mt-5 flex flex-wrap gap-7 font-mono text-xs">
-        <a
-          className="muted-link inline-flex min-h-11 items-center"
-          href={profile.github}
-          target="_blank"
-          rel="noreferrer"
-        >
-          github ↗︎
-        </a>
-        <a
-          className="muted-link inline-flex min-h-11 items-center"
-          href={profile.linkedin}
-          target="_blank"
-          rel="noreferrer"
-        >
-          linkedin ↗︎
-        </a>
-        <a
-          className="muted-link inline-flex min-h-11 items-center"
-          href={profile.resumeUrl}
-          target="_blank"
-          rel="noreferrer"
-        >
-          resume ↗︎
-        </a>
+      <div className="contact-paper-bottom">
+        <p className="contact-paper-signoff">See you on the next build.</p>
+        <nav aria-label="Contact and professional links">
+          <a href={profile.github} target="_blank" rel="noreferrer">
+            github <span aria-hidden="true">↗︎</span>
+            <span className="sr-only"> (opens in a new tab)</span>
+          </a>
+          <a href={profile.linkedin} target="_blank" rel="noreferrer">
+            linkedin <span aria-hidden="true">↗︎</span>
+            <span className="sr-only"> (opens in a new tab)</span>
+          </a>
+          <a href={profile.resumeUrl} target="_blank" rel="noreferrer">
+            resume <span aria-hidden="true">↗︎</span>
+            <span className="sr-only"> (opens in a new tab)</span>
+          </a>
+        </nav>
       </div>
     </div>
   );

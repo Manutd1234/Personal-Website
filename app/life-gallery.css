@@ -1,4 +1,4 @@
-/* Beyond the code: a photo board shared by every tab. */
+/* Beyond the code: the Profile photo board. */
 .classic-offduty .classic-contact-title em {
   color: var(--classic-green);
   font: italic 400 1.05em var(--classic-serif);
@@ -195,7 +195,7 @@
 .offduty-wall {
   display: grid;
   position: relative;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 165px), 1fr));
   gap: 34px 24px;
   margin-top: 16px;
   padding: 38px 30px 32px;

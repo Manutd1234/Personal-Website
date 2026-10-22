@@ -45,8 +45,7 @@
   gap: 7px;
   margin: 12px 0 17px;
 }
-.skill-physics-toolbar button,
-.skill-physics-picker > button {
+.skill-physics-toolbar button {
   display: inline-flex;
   min-height: 44px;
   justify-content: center;
@@ -59,36 +58,12 @@
   color: #3a6546;
   font: 600 11px/1.5 var(--classic-display);
 }
-.skill-physics-toolbar button:hover:not(:disabled),
-.skill-physics-picker > button:hover {
+.skill-physics-toolbar button:hover:not(:disabled) {
   border-color: #6f9b62;
   background: #e7f2cf;
 }
 .skill-physics-toolbar button:disabled {
   opacity: 0.45;
-}
-.skill-physics-picker {
-  display: flex;
-  min-width: 0;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 18px;
-}
-.skill-physics-picker > label {
-  flex-shrink: 0;
-  color: #4c684a;
-  font: 600 11px/1.5 var(--classic-display);
-}
-.skill-physics-picker select {
-  min-width: 0;
-  min-height: 44px;
-  flex: 1;
-  padding: 9px 10px;
-  border: 1px solid #adc5a5;
-  border-radius: 9px;
-  background: #fffef6;
-  color: #254e35;
-  font: 500 13px/1.5 var(--classic-display);
 }
 .skill-physics-world {
   position: relative;
@@ -308,7 +283,6 @@
 }
 .dark .skill-physics-heading > div > p,
 .dark .skill-physics-help,
-.dark .skill-physics-picker > label,
 .dark .skill-physics-keyboard,
 .dark .skill-physics-selection span {
   color: #a6bb93;
@@ -317,21 +291,14 @@
   background: #3c512b;
   color: #d3e5af;
 }
-.dark .skill-physics-toolbar button,
-.dark .skill-physics-picker > button {
+.dark .skill-physics-toolbar button {
   border-color: #58734b;
   background: #2c4329;
   color: #cde7b6;
 }
-.dark .skill-physics-toolbar button:hover:not(:disabled),
-.dark .skill-physics-picker > button:hover {
+.dark .skill-physics-toolbar button:hover:not(:disabled) {
   border-color: #97bb76;
   background: #3b542e;
-}
-.dark .skill-physics-picker select {
-  border-color: #58734b;
-  background: #203522;
-  color: #d4e6bd;
 }
 .dark .skill-physics-world {
   border-color: #4e6f40;
@@ -381,16 +348,6 @@
   .skill-physics {
     padding: 16px;
   }
-  .skill-physics-picker {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .skill-physics-picker > label {
-    flex-basis: 100%;
-  }
-  .skill-physics-picker select {
-    font-size: 16px;
-  }
   .skill-physics-list > div {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -414,9 +371,6 @@
   }
   .skill-physics-toolbar button {
     flex: 1 1 auto;
-  }
-  .skill-physics-picker > button {
-    padding-inline: 9px;
   }
   .skill-physics-world {
     padding-inline: 9px;

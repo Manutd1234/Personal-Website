@@ -10,6 +10,7 @@ import "./career-classic.css";
 import "./card-showcase.css";
 import "./role-intro.css";
 import "./tab-polish.css";
+import "./contact-panel.css";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 export const metadata: Metadata = {

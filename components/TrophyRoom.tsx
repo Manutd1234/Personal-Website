@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import {
   ArrowUpRight,
   Award,
@@ -21,7 +20,6 @@ import {
   useRef,
   useState,
   type KeyboardEvent,
-  type PointerEvent,
 } from "react";
 import { achievementGroups, certifications } from "@/content/portfolio";
 import { certificateFiles, projectMedia } from "@/content/media";
@@ -213,99 +211,60 @@ const hashFilters: Readonly<Record<string, CollectionFilter>> = {
   "#certificates": "certificates",
 };
 
-function AchievementCard({
+function AchievementDisplay({
   record,
-  reduced,
   onOpen,
-  buttonRef,
 }: {
   record: Achievement;
-  reduced: boolean;
   onOpen: (record: Achievement, opener: HTMLButtonElement) => void;
-  buttonRef: (element: HTMLButtonElement | null) => void;
 }) {
   const Icon =
     categories.find((category) => category.id === record.category)?.icon ??
     Award;
   const first = record.preview;
+  const kind = previewKind(first);
+  const object = /patch/i.test(kind)
+    ? "patch"
+    : /medal|trophy/i.test(kind)
+      ? "award"
+      : first.representative
+        ? "emblem"
+        : "frame";
   const provider = credentialProviders[record.issuer];
-  function lean(event: PointerEvent<HTMLElement>) {
-    if (reduced || event.pointerType !== "mouse") return;
-    const box = event.currentTarget.getBoundingClientRect();
-    const x = (event.clientX - box.left) / box.width;
-    const y = (event.clientY - box.top) / box.height;
-    event.currentTarget.style.setProperty(
-      "--card-lean-x",
-      `${(0.5 - y) * 4}deg`,
-    );
-    event.currentTarget.style.setProperty(
-      "--card-lean-y",
-      `${(x - 0.5) * 5}deg`,
-    );
-    event.currentTarget.style.setProperty("--card-light-x", `${x * 100}%`);
-    event.currentTarget.style.setProperty("--card-light-y", `${y * 100}%`);
-  }
-  function settle(event: PointerEvent<HTMLElement>) {
-    event.currentTarget.style.setProperty("--card-lean-x", "0deg");
-    event.currentTarget.style.setProperty("--card-lean-y", "0deg");
-  }
   return (
-    <motion.article
-      className="achievement-card"
-      data-category={record.category}
-      onPointerMove={lean}
-      onPointerLeave={settle}
-      initial={reduced ? false : { opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: reduced ? 0 : 0.2 }}
-    >
-      <div className="achievement-card-inner">
-        <div className="achievement-card-type">
-          <span>
-            {isSoftballAward(record) ? (
-              <img
-                src={asset("images/logos/ejc-softball.webp")}
-                alt="Eunoia softball logo"
-                width={24}
-                height={24}
-                style={{
-                  width: 24,
-                  height: 24,
-                  objectFit: "contain",
-                  flexShrink: 0,
-                }}
-              />
-            ) : (
-              <Icon size={14} aria-hidden="true" />
-            )}
-            {record.categoryLabel}
-          </span>
-          {record.year ? <span>{record.year}</span> : null}
-        </div>
-        <div
-          className={`achievement-art has-certificate${first.kind === "Representative emblem" ? " is-emblem" : ""}`}
-        >
-          {
+    <li className="trophy-cabinet-bay" data-category={record.category}>
+      <button
+        type="button"
+        className="cabinet-item"
+        aria-label={`View achievement: ${record.title}`}
+        aria-haspopup="dialog"
+        onClick={(event) => onOpen(record, event.currentTarget)}
+      >
+        <span className="cabinet-display" data-object={object}>
+          <span className="cabinet-object">
             <img
               src={asset(first.src)}
               alt={first.title}
               loading="lazy"
               decoding="async"
             />
-          }
-          {first.representative ? (
-            <span className="achievement-preview-label">
-              Representative image
-            </span>
-          ) : null}
+          </span>
           {record.certificates.length > 1 ? (
-            <span className="achievement-scan-count">
+            <span className="cabinet-evidence-count">
               {record.certificates.length} previews
             </span>
           ) : null}
-        </div>
-        <h3>{record.title}</h3>
-        <div className="achievement-issuer">
+          {first.representative ? (
+            <span className="cabinet-image-note">Representative image</span>
+          ) : null}
+        </span>
+        <span className="cabinet-nameplate">
+          <span className="cabinet-category">
+            <Icon size={13} aria-hidden="true" />
+            {record.categoryLabel}
+          </span>
+          <strong>{record.title}</strong>
+          <span className="cabinet-issuer">{record.issuer}</span>
           {provider ? (
             <span className="achievement-provider-mark">
               <img
@@ -318,60 +277,36 @@ function AchievementCard({
               />
             </span>
           ) : null}
-          <p>{record.issuer}</p>
-        </div>
-        {record.detail ? (
-          <p
-            className={`achievement-result${/Expired/i.test(record.detail) ? " is-expired" : ""}`}
-          >
-            {record.detail}
-          </p>
-        ) : null}
-        {record.certificates.length > 1 ? (
-          <div className="achievement-mini-scans" aria-label="Award previews">
-            {record.certificates.slice(1).map((file) => (
-              <img
-                key={file.src}
-                src={asset(file.src)}
-                alt={file.title}
-                loading="lazy"
-                decoding="async"
-              />
-            ))}
-          </div>
-        ) : null}
-        <div className="achievement-card-footer">
-          <span>
-            {first.representative
-              ? previewKind(first)
-              : `${previewKind(first)} on file`}
+          {record.detail ? (
+            <span
+              className={`cabinet-result${/Expired/i.test(record.detail) ? " is-expired" : ""}`}
+            >
+              {record.detail}
+            </span>
+          ) : null}
+          <span className="cabinet-item-bottom">
+            <span>{record.year ?? kind}</span>
+            <span>
+              Look closer <ArrowUpRight size={14} aria-hidden="true" />
+            </span>
           </span>
-          <button
-            ref={buttonRef}
-            type="button"
-            aria-haspopup="dialog"
-            onClick={(event) => onOpen(record, event.currentTarget)}
-            aria-label={`View achievement: ${record.title}`}
-          >
-            Read more <ArrowUpRight size={15} aria-hidden="true" />
-          </button>
-        </div>
-      </div>
-    </motion.article>
+        </span>
+      </button>
+    </li>
   );
 }
 
 export default function TrophyRoom() {
-  const [filter, setFilter] = useState<CollectionFilter>("competitions");
+  const [filter, setFilter] = useState<CollectionFilter>("all");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Achievement | null>(null);
+  const [available, setAvailable] = useState(false);
   const reduced = useMotionPreference();
   const prefix = useId();
   const sectionRef = useRef<HTMLElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLButtonElement | null>(null);
-  const buttonsRef = useRef(new Map<string, HTMLButtonElement>());
   const mountedRef = useRef(false);
   const restoreRef = useRef(true);
   const search = query.trim().toLowerCase();
@@ -401,7 +336,11 @@ export default function TrophyRoom() {
     };
     const section = sectionRef.current;
     const syncVisibility = () => {
-      if (section?.closest('[hidden], [inert], [aria-hidden="true"]')) {
+      const hidden = Boolean(
+        section?.closest('[hidden], [inert], [aria-hidden="true"]'),
+      );
+      setAvailable(!hidden && !document.hidden);
+      if (hidden) {
         restoreRef.current = false;
         setSelected(null);
       }
@@ -417,11 +356,14 @@ export default function TrophyRoom() {
         attributeFilter: ["hidden", "inert", "aria-hidden"],
       });
     syncHash();
+    syncVisibility();
     window.addEventListener("hashchange", syncHash);
+    document.addEventListener("visibilitychange", syncVisibility);
     return () => {
       mountedRef.current = false;
       observer.disconnect();
       window.removeEventListener("hashchange", syncHash);
+      document.removeEventListener("visibilitychange", syncVisibility);
     };
   }, []);
 
@@ -500,12 +442,16 @@ export default function TrophyRoom() {
       className="trophy-collection"
       ref={sectionRef}
       aria-labelledby={`${prefix}-title`}
+      data-suspended={!available || reduced}
     >
       <header className="trophy-collection-heading">
         <div>
           <p className="trophy-eyebrow">Earned, along the way</p>
-          <h2 id={`${prefix}-title`}>A few milestones.</h2>
-          <p>Team wins, things I’ve learned, and the work along the way.</p>
+          <h2 id={`${prefix}-title`}>The trophy cabinet.</h2>
+          <p>
+            Team wins, things I’ve learned, and the work along the way. Open a
+            piece to see its story.
+          </p>
         </div>
         <span className="trophy-collection-count">
           <Award size={17} aria-hidden="true" />
@@ -562,19 +508,26 @@ export default function TrophyRoom() {
         {search ? ` matching “${query.trim()}”` : ""}.
       </p>
       {visible.length ? (
-        <div className="trophy-card-grid" id={`${prefix}-cards`}>
-          {visible.map((record) => (
-            <AchievementCard
-              key={record.id}
-              record={record}
-              reduced={reduced}
-              onOpen={open}
-              buttonRef={(button) => {
-                if (button) buttonsRef.current.set(record.id, button);
-                else buttonsRef.current.delete(record.id);
-              }}
-            />
-          ))}
+        <div className="trophy-cabinet" id={`${prefix}-cards`}>
+          <div className="trophy-cabinet-crown" aria-hidden="true">
+            <span>
+              <Award size={16} /> A few things I’m proud of
+            </span>
+            <span>Look closer ↗</span>
+          </div>
+          <ul
+            className="trophy-cabinet-shelves"
+            aria-label="Awards and credentials on display"
+          >
+            {visible.map((record) => (
+              <AchievementDisplay
+                key={record.id}
+                record={record}
+                onOpen={open}
+              />
+            ))}
+          </ul>
+          <div className="trophy-cabinet-base" aria-hidden="true" />
         </div>
       ) : (
         <div className="trophy-empty" id={`${prefix}-cards`}>

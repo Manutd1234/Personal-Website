@@ -934,22 +934,6 @@ export default function BookCarousel({
             </button>
           </div>
         ) : null}
-        {!isOpen ? (
-          <label className="book-project-picker">
-            <span>Find a project</span>
-            <select
-              value={current}
-              disabled={returning}
-              onChange={(event) => choose(Number(event.target.value))}
-            >
-              {projects.map((project, index) => (
-                <option key={project.title} value={index}>
-                  {project.title}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
         <span className="book-screenreader-status" role="status">
           {!isOpen && !dragging
             ? `Front book: ${projects[current].title}. ${current + 1} of ${count}.`

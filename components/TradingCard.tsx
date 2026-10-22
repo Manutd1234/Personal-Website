@@ -61,10 +61,12 @@ export default function TradingCard({
   card,
   reduced,
   tabbable,
+  onFlipChange,
 }: {
   card: TradingCardData;
   reduced: boolean;
   tabbable: boolean;
+  onFlipChange?: (id: string, flipped: boolean) => void;
 }) {
   const [flipped, setFlipped] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -112,6 +114,7 @@ export default function TradingCard({
     const next = !flipped;
     const hadFocus = rootRef.current?.contains(document.activeElement);
     setFlipped(next);
+    onFlipChange?.(card.id, next);
     settle();
     // The face that held focus becomes inert, so hand focus to the other side.
     if (hadFocus)
@@ -228,9 +231,11 @@ export default function TradingCard({
                 {card.moves.map((move) => (
                   <li key={move.name} className="tcg-move">
                     <p className="tcg-move-name">{move.name}</p>
-                    <p className="tcg-move-text">
-                      <Emphasis text={move.text} />
-                    </p>
+                    <ul className="tcg-move-points">
+                      <li className="tcg-move-text">
+                        <Emphasis text={move.text} />
+                      </li>
+                    </ul>
                   </li>
                 ))}
               </ul>
@@ -282,11 +287,9 @@ export default function TradingCard({
                 tabIndex={tabbable ? 0 : -1}
                 aria-label={`${card.org} details`}
               >
-                {card.summary ? (
-                  <p className="tcg-back-summary">{card.summary}</p>
-                ) : null}
-                {card.bullets.length ? (
-                  <ul className="tcg-back-list">
+                {card.summary || card.bullets.length ? (
+                  <ul className="tcg-back-list" aria-label="What I did">
+                    {card.summary ? <li>{card.summary}</li> : null}
                     {card.bullets.map((bullet) => (
                       <li key={bullet}>{bullet}</li>
                     ))}

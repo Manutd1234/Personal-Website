@@ -105,6 +105,9 @@
 .deck-view {
   position: relative;
 }
+.deck-track-group {
+  position: relative;
+}
 .deck-track {
   --fade-start: 0px;
   --fade-end: 28px;
@@ -134,6 +137,11 @@
 }
 .deck-track[data-at-end="true"] {
   --fade-end: 0px;
+}
+.deck-track[data-continuous="true"] {
+  /* Pausing mid-card keeps the exact frame under the visitor's pointer.
+     Arrow controls still choose precise positions; touch can browse freely. */
+  scroll-snap-type: none;
 }
 .deck-slot {
   position: relative;
@@ -480,8 +488,16 @@
   font-weight: 750;
   line-height: 1.4;
 }
-.tcg-move-text {
+.tcg-move-points {
   margin: 4px 0 0;
+  padding-left: 17px;
+  list-style: disc;
+}
+.tcg-move-points li::marker {
+  color: var(--tcg-mark);
+}
+.tcg-move-text {
+  margin: 0;
   color: #465243;
   font-size: 14px;
   line-height: 1.55;
@@ -603,12 +619,6 @@
   overscroll-behavior: contain;
   scrollbar-color: var(--tcg-line) transparent;
   scrollbar-width: thin;
-}
-.tcg-back-summary {
-  margin: 0 0 12px;
-  color: #394b38;
-  font-size: 14px;
-  line-height: 1.65;
 }
 .tcg-back-list {
   display: grid;

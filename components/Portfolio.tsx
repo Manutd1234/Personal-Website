@@ -8,7 +8,6 @@ import ProjectsPanel from "./ProjectsPanel";
 import ProfilePanel from "./ProfilePanel";
 import ContactPanel from "./ContactPanel";
 import OffDutyPanel from "./OffDutyPanel";
-import ProjectEvidence from "./ProjectEvidence";
 
 const tabs = [
   {
@@ -249,66 +248,44 @@ export default function Portfolio() {
                 </>
               ) : (
                 <>
-                  <header className="classic-section-header">
-                    <p className="classic-kicker">{tab.title}</p>
-                    <h1>
-                      {tab.id === "projects" ? (
-                        <>
-                          Selected <em>projects.</em>
-                        </>
-                      ) : tab.id === "experience" ? (
-                        <>
-                          Where I’ve been <em>building.</em>
-                        </>
-                      ) : tab.id === "skills" ? (
-                        <>
-                          Skills &amp; <em>languages.</em>
-                        </>
-                      ) : (
-                        <>
-                          Awards &amp; <em>certificates.</em>
-                        </>
-                      )}
-                    </h1>
-                    <p className="classic-section-note">
-                      {tab.id === "projects"
-                        ? "Research tools, competition builds, and things I’ve worked on."
-                        : tab.id === "experience"
+                  {tab.id === "projects" ? (
+                    <h1 className="sr-only">Project library</h1>
+                  ) : (
+                    <header className="classic-section-header">
+                      <p className="classic-kicker">{tab.title}</p>
+                      <h1>
+                        {tab.id === "experience" ? (
+                          <>
+                            Where I’ve been <em>building.</em>
+                          </>
+                        ) : tab.id === "skills" ? (
+                          <>
+                            Skills &amp; <em>languages.</em>
+                          </>
+                        ) : (
+                          <>
+                            Awards &amp; <em>certificates.</em>
+                          </>
+                        )}
+                      </h1>
+                      <p className="classic-section-note">
+                        {tab.id === "experience"
                           ? "Work, study, and the communities I contribute to."
                           : tab.id === "skills"
                             ? "A hands-on toolkit, with a few things to try."
                             : "Team wins, school milestones, service, and continued learning."}
-                    </p>
-                  </header>
+                      </p>
+                    </header>
+                  )}
                   {tab.id === "projects" ? (
                     <ProjectsPanel
                       active={active === "projects"}
                       requestedProject={projectRequest}
                     />
                   ) : tab.id === "experience" ? (
-                    <>
-                      <WorkPanel />
-                      <ProjectEvidence
-                        title="From the student teams."
-                        note="A closer look at the software behind my NUSSIF and MedTech roles."
-                        titles={["NUSSIF Portfolio & Risk Tools", "PneuRelief"]}
-                        onOpen={openProjects}
-                      />
-                    </>
+                    <WorkPanel active={active === "experience"} />
                   ) : tab.id === "skills" ? (
-                    <>
-                      <SkillsPanel active={active === "skills"} />
-                      <ProjectEvidence
-                        title="The toolkit, in action."
-                        note="Actual project screens and outputs. Pick one to see the implementation and source."
-                        titles={[
-                          "AlphaEngine",
-                          "Obital",
-                          "Nexus Academic Coach",
-                        ]}
-                        onOpen={openProjects}
-                      />
-                    </>
+                    <SkillsPanel active={active === "skills"} />
                   ) : (
                     <WorkPanel awardsOnly />
                   )}
@@ -321,14 +298,6 @@ export default function Portfolio() {
             className="classic-contact"
             aria-labelledby="contact-title"
           >
-            <header className="border-t border-zinc-200 pt-10 pb-6 dark:border-zinc-800">
-              <p className="font-mono text-xs tracking-wider text-zinc-400 uppercase dark:text-zinc-500">
-                SAY HI
-              </p>
-              <h2 id="contact-title" className="classic-contact-title">
-                Let’s talk.
-              </h2>
-            </header>
             <ContactPanel />
           </section>
         </main>

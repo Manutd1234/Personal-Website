@@ -6,7 +6,7 @@ import type {
   Body as PhysicsBody,
   Constraint as PhysicsConstraint,
 } from "matter-js";
-import { ArrowDown, ChevronDown, Hand, List, RotateCcw } from "lucide-react";
+import { ArrowDown, ChevronDown, List, RotateCcw } from "lucide-react";
 import { skillGroups } from "@/content/portfolio";
 import { useMotionPreference } from "./useMotionPreference";
 import {
@@ -604,7 +604,7 @@ export default function SkillsSandbox({
       </header>
       <p className="skill-physics-help" id={`${prefix}-instructions`}>
         {still
-          ? "A settled view of every skill. Use the picker or arrow keys to browse, or open the full list below."
+          ? "A settled view of every skill. Use arrow keys to browse, or open the full list below."
           : "Let them fall. Drag and fling a pill, or tap to grab it before dragging on touch. The filters above light up matches."}
       </p>
       <div className="skill-physics-toolbar">
@@ -643,37 +643,6 @@ export default function SkillsSandbox({
             Find a highlighted skill <ArrowDown size={14} aria-hidden="true" />
           </button>
         ) : null}
-      </div>
-      <div className="skill-physics-picker">
-        <label htmlFor={`${prefix}-picker`}>Choose a pill</label>
-        <select
-          id={`${prefix}-picker`}
-          value={selected}
-          onChange={(event) => {
-            const next = Number(event.target.value);
-            setSelected(next);
-            setGrabbed(null);
-            controllerRef.current?.reveal(next);
-          }}
-        >
-          {skillGroups.map((group) => (
-            <optgroup key={group.label} label={group.label}>
-              {skills.flatMap((skill, index) =>
-                skill.category === group.label
-                  ? [
-                      <option key={skill.id} value={index}>
-                        {skill.label}
-                      </option>,
-                    ]
-                  : [],
-              )}
-            </optgroup>
-          ))}
-        </select>
-        <button type="button" onClick={() => focusPill(selected)}>
-          <Hand size={14} aria-hidden="true" />
-          Focus pill
-        </button>
       </div>
       <div
         className="skill-physics-world"
@@ -730,7 +699,7 @@ export default function SkillsSandbox({
       <p className="skill-physics-keyboard" id={`${prefix}-keyboard`}>
         {still
           ? "Arrow keys browse skills. Page Up / Page Down choose the previous or next pill."
-          : "Keyboard: choose a pill, then use arrow keys to move it; Shift moves further. Page Up / Page Down switch pills. Esc releases."}
+          : "Keyboard: Tab into the board, then use arrow keys to move a pill; Shift moves further. Page Up / Page Down switch pills. Esc releases."}
       </p>
       <p className="skill-physics-selection">
         <strong>{selectedSkill.label}</strong>

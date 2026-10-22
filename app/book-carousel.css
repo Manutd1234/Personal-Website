@@ -1161,28 +1161,6 @@
 .book-carousel [data-cover-layout="strategy"] .book-cover-mark {
   font: italic 400 clamp(1.9rem, 4cqw, 2.8rem)/1.2 var(--book-serif);
 }
-.book-carousel .book-project-picker {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 24px;
-  padding-top: 18px;
-  border-top: 1px solid #245b3326;
-  color: var(--book-muted);
-  font: 500 10px/1.6 var(--book-display);
-}
-.book-carousel .book-project-picker select {
-  min-width: 0;
-  min-height: 44px;
-  max-width: 350px;
-  padding: 8px 30px 8px 12px;
-  border: 1px solid #95b495;
-  border-radius: 9px;
-  background: #f5faed;
-  color: #254d35;
-  font: 600 11px/1.5 var(--book-display);
-}
 .book-carousel .book-project-photo {
   margin-top: 28px;
   padding-top: 22px;
@@ -1249,26 +1227,10 @@
   text-decoration: underline;
   text-underline-offset: 4px;
 }
-.dark .book-carousel .book-project-picker {
-  border-color: #a5c59d33;
-}
-.dark .book-carousel .book-project-picker select {
-  border-color: #57734d;
-  background: #193e30;
-  color: #e1eed4;
-}
 .dark .book-carousel .book-project-photo {
   border-color: #a5c59d33;
 }
 @container project-books (max-width: 480px) {
-  .book-carousel .book-project-picker {
-    display: grid;
-    gap: 7px;
-  }
-  .book-carousel .book-project-picker select {
-    width: 100%;
-    max-width: none;
-  }
   .book-carousel .book-team-photos > div {
     grid-template-columns: minmax(0, 1fr);
   }
