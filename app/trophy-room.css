@@ -279,7 +279,7 @@
   pointer-events: none;
   content: "";
 }
-.award-app-icon:not([data-provider])::after {
+.award-app-icon:not([data-provider]):not([data-evidence])::after {
   position: absolute;
   inset: 15px;
   border: 1px solid #ffffff42;
@@ -301,7 +301,29 @@
 .award-app-icon[data-provider="Anthropic"] {
   background: linear-gradient(145deg, #fffdf6, #eee6d7);
 }
-.award-app-icon > img {
+.award-app-preview {
+  display: grid;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  place-items: center;
+}
+.award-app-icon[data-evidence] {
+  padding: 7px;
+  background: linear-gradient(145deg, #fffdf7, #dedbcc);
+}
+.award-app-icon[data-evidence] .award-app-preview {
+  overflow: hidden;
+  border: 1px solid #bdb9a955;
+  border-radius: 14px;
+  background: #f8f7f0;
+  box-shadow:
+    0 1px 4px #273b2b21 inset,
+    0 1px 0 #fff;
+}
+.award-app-preview > img {
   display: block;
   position: relative;
   z-index: 1;
@@ -737,7 +759,13 @@
   .award-app-icon::before {
     border-radius: 15px;
   }
-  .award-app-icon:not([data-provider])::after {
+  .award-app-icon[data-evidence] {
+    padding: 6px;
+  }
+  .award-app-icon[data-evidence] .award-app-preview {
+    border-radius: 12px;
+  }
+  .award-app-icon:not([data-provider]):not([data-evidence])::after {
     inset: 12px;
   }
   .award-app-glyph {

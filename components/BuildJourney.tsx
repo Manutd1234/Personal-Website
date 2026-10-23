@@ -13,50 +13,59 @@ import {
   RotateCcw,
   Send,
 } from "lucide-react";
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+} from "react";
 import { useMotionPreference } from "./useMotionPreference";
 import { useVisiblePlayback } from "./useVisiblePlayback";
 
+const STEP_DURATION_MS = 4000;
+
 const steps = [
   {
-    title: "Find the question",
-    short: "Question",
+    title: "Define what must hold",
+    short: "Define",
     icon: Lightbulb,
-    note: "What would actually help?",
-    body: "Start with the person and the problem. Write down what matters, what is missing, and what a useful answer would look like.",
-    margin: "A good question earns its space.",
+    note: "The useful behaviour. The hard constraints.",
+    body: "I start with inputs, failure modes, and invariants—the things the system must always preserve. A feed gap, for example, needs an explicit recovery path.",
+    margin: "AlphaEngine: sequence checks and feed recovery.",
   },
   {
-    title: "Make it visible",
-    short: "Sketch",
+    title: "Draw the boundaries",
+    short: "Model",
     icon: Pencil,
-    note: "Before the code, a rough sketch.",
-    body: "Map the moving parts. Trace the data, sketch the interface, and decide what the smallest useful version needs to do.",
-    margin: "Boxes. Arrows. A few crossed-out ideas.",
+    note: "Types, contracts, and a place for the data.",
+    body: "Sketch the request path before wiring it up. Define the API contract, validation, permissions, and data model so each part has a clear job.",
+    margin: "GDG: typed REST clients, Pydantic, and PostgreSQL.",
   },
   {
-    title: "Build a small version",
+    title: "Build one complete path",
     short: "Build",
     icon: Code2,
-    note: "One working path, end to end.",
-    body: "Connect the pieces early. Get a real input through the system before adding the extras, then make the code easier to change.",
-    margin: "Something real to try.",
+    note: "A small vertical slice, end to end.",
+    body: "Get a real action from the interface through the API to storage. Keep the change small enough to review; handle loading and failure alongside success.",
+    margin: "CTES: React portals, Express APIs, database migrations.",
   },
   {
-    title: "Try to break it",
-    short: "Test",
+    title: "Test the awkward cases",
+    short: "Verify",
     icon: FlaskConical,
-    note: "What happens at the edges?",
-    body: "Check the assumptions against actual results. Test the awkward inputs, look at the failures, and measure what improved.",
-    margin: "The interesting bits are often in the failures.",
+    note: "The browser passing is only half the story.",
+    body: "Check access boundaries and invalid inputs, then verify the resulting data. Turn failures into regression tests so the same bug has a harder time returning.",
+    margin: "Stealth startup: Playwright flows and SQL assertions.",
   },
   {
-    title: "Refine, then repeat",
+    title: "Measure, then refine",
     short: "Refine",
     icon: Send,
-    note: "Make it useful. Make it clear.",
-    body: "Trim what gets in the way, polish the details, and put it in someone’s hands. Their feedback becomes the next question.",
-    margin: "There is always another draft.",
+    note: "A baseline, a change, a reproducible result.",
+    body: "Inspect the bottleneck and compare against a baseline. Keep the runs reproducible, automate checks in CI, and use the evidence to decide what to change next.",
+    margin: "Delta1: walk-forward validation with execution costs.",
   },
 ] as const;
 
@@ -64,46 +73,51 @@ function ProcessSketch({ stage }: { stage: number }) {
   return (
     <div className="journey-sketch" data-stage={stage} aria-hidden="true">
       <div className="journey-sheet-label">
-        <span>FIELD NOTES</span>
+        <span>ENGINEERING SKETCHES</span>
         <span>0{stage + 1} / 05</span>
       </div>
       {stage === 0 ? (
         <div className="sketch-question">
-          <span className="sketch-pencil">who is this for?</span>
-          <strong>
-            What if
-            <br />
-            we could…
-          </strong>
+          <span className="sketch-pencil">start with an invariant</span>
+          <strong>No silent gaps.</strong>
           <span className="sketch-underline" />
-          <div className="sketch-check">
-            <Check size={16} /> a useful starting point
-          </div>
+          <dl className="sketch-contract">
+            <div>
+              <dt>input</dt>
+              <dd>ordered market updates</dd>
+            </div>
+            <div>
+              <dt>check</dt>
+              <dd>sequence continuity</dd>
+            </div>
+            <div>
+              <dt>on gap</dt>
+              <dd>recover from a snapshot</dd>
+            </div>
+          </dl>
         </div>
       ) : null}
       {stage === 1 ? (
         <div className="sketch-map">
-          <span className="sketch-pencil">follow the idea</span>
+          <span className="sketch-pencil">trace the request</span>
           <div>
-            <span>input</span>
-            <b>→</b>
             <span>
-              make sense
-              <br />
-              of it
+              Client<small>TypeScript</small>
             </span>
             <b>→</b>
             <span>
-              something
-              <br />
-              useful
+              API<small>Pydantic</small>
+            </span>
+            <b>→</b>
+            <span>
+              Store<small>PostgreSQL</small>
             </span>
           </div>
           <svg viewBox="0 0 360 60">
             <path d="M292 5 Q320 46 170 44 Q45 45 52 6" />
             <path d="M44 17 L52 6 L63 17" />
           </svg>
-          <small>leave room to change your mind</small>
+          <small>typed response · explicit errors · auth boundaries</small>
         </div>
       ) : null}
       {stage === 2 ? (
@@ -112,34 +126,35 @@ function ProcessSketch({ stage }: { stage: number }) {
             <i />
             <i />
             <i />
-            <span>first-draft.ts</span>
+            <span>vertical-slice.ts</span>
           </div>
           <pre>
-            <span>// a small, working version</span>
+            <span>// implementation sketch</span>
             {"\n"}
-            <b>const</b> input = read();{"\n"}
-            <b>const</b> result = build(input);{"\n\n"}show(result);<em>▍</em>
+            <b>const</b> data = parse(input);{"\n"}
+            <b>const</b> row = <b>await</b> save(data);{"\n\n"}
+            <b>return</b> toResponse(row);<em>▍</em>
           </pre>
           <span className="sketch-check">
-            <Check size={16} /> one complete path
+            <Check size={16} /> UI → API → database
           </span>
         </div>
       ) : null}
       {stage === 3 ? (
         <div className="sketch-tests">
-          <span className="sketch-pencil">does it hold up?</span>
-          {["the ordinary case", "the missing input", "the unexpected bit"].map(
-            (label, i) => (
-              <div key={label} style={{ animationDelay: `${i * 180}ms` }}>
-                <Check size={18} />
-                <span>{label}</span>
-                <small>checked</small>
-              </div>
-            ),
-          )}
-          <svg viewBox="0 0 320 60">
-            <path d="M7 49 L55 39 L89 44 L138 25 L174 29 L222 17 L263 20 L312 5" />
-          </svg>
+          <span className="sketch-pencil">a regression checklist</span>
+          {[
+            ["auth & permissions", "browser"],
+            ["invalid request", "schema"],
+            ["persisted state", "SQL"],
+          ].map(([label, method], i) => (
+            <div key={label} style={{ animationDelay: `${i * 180}ms` }}>
+              <Check size={18} />
+              <span>{label}</span>
+              <small>{method}</small>
+            </div>
+          ))}
+          <span className="sketch-test-note">unit → integration → end to end</span>
         </div>
       ) : null}
       {stage === 4 ? (
@@ -149,14 +164,21 @@ function ProcessSketch({ stage }: { stage: number }) {
               <i />
               <i />
               <i />
-              <span>the next draft</span>
+              <span>review-notes.md</span>
             </div>
-            <span className="sketch-browser-title">Made to be used.</span>
-            <div className="sketch-browser-line" />
-            <div className="sketch-browser-line short" />
-            <span className="sketch-browser-button">Give it a try ↗</span>
+            <span className="sketch-browser-title">Baseline ↔ change</span>
+            <div className="sketch-review-row">
+              <span>same inputs</span>
+              <span>same assumptions</span>
+            </div>
+            <div className="sketch-ci">
+              <span>lint</span><b>→</b><span>test</span><b>→</b><span>build</span>
+            </div>
+            <span className="sketch-review-note">
+              keep the run · inspect the diff
+            </span>
           </div>
-          <span className="sketch-pencil">listen · adjust · repeat ↺</span>
+          <span className="sketch-pencil">measure · refine · repeat ↺</span>
         </div>
       ) : null}
       <span className="journey-sheet-corner" />
@@ -181,7 +203,7 @@ export default function BuildJourney({
     if (!running) return;
     const timer = window.setTimeout(
       () => setActive((value) => (value + 1) % steps.length),
-      6500,
+      STEP_DURATION_MS,
     );
     return () => window.clearTimeout(timer);
   }, [running, active]);
@@ -212,11 +234,14 @@ export default function BuildJourney({
       ref={ref}
       aria-labelledby={`${prefix}-title`}
       data-running={running}
+      style={
+        { "--journey-step-duration": `${STEP_DURATION_MS}ms` } as CSSProperties
+      }
     >
       <header className="builder-workbench-heading">
         <div>
-          <p className="classic-kicker">How I think</p>
-          <h2 id={`${prefix}-title`}>From a question to a working thing.</h2>
+          <p className="classic-kicker">At the workbench</p>
+          <h2 id={`${prefix}-title`}>How I build software.</h2>
         </div>
         <button
           className="journey-play"
@@ -311,10 +336,10 @@ export default function BuildJourney({
         </div>
         <footer className="journey-footer">
           <span>
-            <RotateCcw size={15} /> A process I keep coming back to.
+            <RotateCcw size={15} /> Small changes. Evidence at each step.
           </span>
           <button type="button" onClick={() => openProjects()}>
-            See what came out of it <ArrowUpRight size={16} />
+            Explore the projects <ArrowUpRight size={16} />
           </button>
         </footer>
       </div>

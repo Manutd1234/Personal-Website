@@ -13,10 +13,14 @@
   --book-lime: #006d49;
   --book-width: clamp(170px, 21cqw, 238px);
   --book-height: calc(var(--book-width) * 1.42);
-  --open-book-left: 30%;
+  --open-column-share: 0.54;
+  --open-book-scale: 1.12;
+  --open-book-left: calc(
+    28% + var(--book-width) * var(--open-book-scale) * 0.46
+  );
   --open-book-offset-y: calc(var(--book-height) * 0.22);
-  --open-cover-angle: -48deg;
-  --open-leaf-angle: -9deg;
+  --open-cover-angle: -156deg;
+  --open-leaf-angle: -10deg;
   position: relative;
   overflow: hidden;
   padding: 28px 34px 24px;
@@ -198,7 +202,8 @@
   inset: 0;
   display: block;
   overflow: visible;
-  transform: translateZ(calc(var(--book-half-depth) - 1px)) rotateY(0deg);
+  transform: translateZ(calc(var(--book-half-depth) - 1px))
+    rotateY(var(--preview-cover-angle, 0deg));
   transform-origin: 0 50%;
   transform-style: preserve-3d;
   transition: transform 480ms 90ms cubic-bezier(0.3, 0.05, 0.25, 1);
@@ -485,8 +490,10 @@
   display: block;
   transform-origin: 0 50%;
   transform-style: preserve-3d;
-  transform: translateZ(calc(var(--page-half-depth) + 0.6px)) rotateY(0deg);
-  transition: transform 340ms cubic-bezier(0.3, 0.05, 0.25, 1);
+  transform: translateZ(calc(var(--page-half-depth) + 0.6px))
+    rotateY(var(--preview-leaf-angle, 0deg));
+  transition: transform 480ms var(--preview-page-delay, 0ms)
+    cubic-bezier(0.22, 0.7, 0.15, 1);
 }
 .book-carousel .book-under-leaf {
   position: absolute;
@@ -495,8 +502,10 @@
   border: 1px solid #d5cdb8;
   background: linear-gradient(90deg, #c8c0aa, #f7f2e3 9%, #f7f2e3 96%, #e3dcc9);
   transform-origin: 0 50%;
-  transform: translateZ(calc(var(--page-half-depth) + 0.2px));
-  transition: transform 380ms cubic-bezier(0.22, 0.7, 0.15, 1);
+  transform: translateZ(calc(var(--page-half-depth) + 0.2px))
+    rotateY(var(--preview-under-first-angle, 0deg));
+  transition: transform 420ms var(--preview-under-delay, 0ms)
+    cubic-bezier(0.22, 0.7, 0.15, 1);
   backface-visibility: hidden;
 }
 .book-carousel .book-stage[data-open="true"] .book-under-leaf-first {
@@ -521,7 +530,8 @@
   backface-visibility: hidden;
 }
 .book-carousel .book-under-leaf-second {
-  transform: translateZ(calc(var(--page-half-depth) + 0.4px));
+  transform: translateZ(calc(var(--page-half-depth) + 0.4px))
+    rotateY(var(--preview-under-second-angle, 0deg));
 }
 .book-carousel .book-leaf-front {
   background: linear-gradient(90deg, #ddd4bf, #f8f3e5 8%, #fcf8ec 75%, #f0e9d7);
@@ -567,6 +577,12 @@
   padding-top: 14px;
   font: italic 0.7rem/1.4 var(--book-serif);
 }
+.book-carousel .book-hover-surface {
+  position: absolute;
+  inset: 0;
+  transform: translateZ(calc(var(--book-half-depth) - 1px));
+  pointer-events: none;
+}
 .book-carousel .book-hit-corner {
   position: absolute;
   width: 1px;
@@ -574,19 +590,35 @@
   visibility: hidden;
   pointer-events: none;
 }
-.book-carousel .book-hit-corner[data-book-hit-corner="nw"] {
+.book-carousel
+  .book-hit-corner:is(
+    [data-book-hit-corner="nw"],
+    [data-book-hover-corner="nw"]
+  ) {
   top: 0;
   left: 0;
 }
-.book-carousel .book-hit-corner[data-book-hit-corner="ne"] {
+.book-carousel
+  .book-hit-corner:is(
+    [data-book-hit-corner="ne"],
+    [data-book-hover-corner="ne"]
+  ) {
   top: 0;
   right: 0;
 }
-.book-carousel .book-hit-corner[data-book-hit-corner="se"] {
+.book-carousel
+  .book-hit-corner:is(
+    [data-book-hit-corner="se"],
+    [data-book-hover-corner="se"]
+  ) {
   right: 0;
   bottom: 0;
 }
-.book-carousel .book-hit-corner[data-book-hit-corner="sw"] {
+.book-carousel
+  .book-hit-corner:is(
+    [data-book-hit-corner="sw"],
+    [data-book-hover-corner="sw"]
+  ) {
   bottom: 0;
   left: 0;
 }
@@ -849,7 +881,8 @@
   .book-stage[data-open="true"]
   .book-orbit-item[data-selected="true"]
   .book-object {
-  transform: rotateX(3deg) rotateY(-6deg) rotateZ(-1deg) scale(1.28);
+  transform: rotateX(3deg) rotateY(-3deg) rotateZ(-1deg)
+    scale(var(--open-book-scale));
 }
 .book-carousel
   .book-stage[data-open="true"]
@@ -991,22 +1024,30 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+/* A quiet invitation to open: the bound body stays still while the cover
+   and three leaves separate. Stable picking prevents hover from flickering. */
 @media (hover: hover) and (pointer: fine) {
   .book-carousel:not([data-reduced-motion="true"])
     .book-stage:not([data-dragging="true"]):not([data-open="true"]):not(
       [data-rotating="true"]
-    ):not([data-returning="true"])
-    .book-click:hover
-    .book-object {
-    transform: translateY(-10px) rotateX(3deg) rotateY(-35deg) rotateZ(-0.5deg);
+    ):not([data-returning="true"]):not([data-suspended])
+    .book-click:is([data-hovered="true"], :focus-visible) {
+    --preview-cover-angle: -24deg;
+    --preview-leaf-angle: -7deg;
+    --preview-under-first-angle: -2deg;
+    --preview-under-second-angle: -4deg;
+    --preview-page-delay: 140ms;
+    --preview-under-delay: 100ms;
   }
 }
 
 @container project-books (max-width: 760px) {
   .book-carousel .book-stage {
-    --open-book-left: 50%;
+    --open-column-share: 1;
+    --open-book-left: calc(
+      50% + var(--book-width) * var(--open-book-scale) * 0.46
+    );
     --open-book-offset-y: calc(var(--book-height) * 0.16);
-    --open-cover-angle: -46deg;
     --book-width: clamp(166px, 28cqw, 210px);
     padding: 20px 22px;
   }
@@ -1045,7 +1086,8 @@
     .book-stage[data-open="true"]
     .book-orbit-item[data-selected="true"]
     .book-object {
-    transform: rotateX(2deg) rotateY(0deg) rotateZ(-1deg) scale(1.16);
+    transform: rotateX(2deg) rotateY(0deg) rotateZ(-1deg)
+      scale(var(--open-book-scale));
   }
   .book-carousel .book-details {
     width: 100%;
@@ -1085,10 +1127,7 @@
 @container project-books (max-width: 480px) {
   .book-carousel .book-stage {
     --book-width: 166px;
-    --open-book-left: 50%;
     --open-book-offset-y: 24px;
-    --open-cover-angle: -44deg;
-    --open-leaf-angle: -8deg;
     padding-inline: 17px;
     border-radius: 12px;
   }
@@ -1117,7 +1156,8 @@
     .book-stage[data-open="true"]
     .book-orbit-item[data-selected="true"]
     .book-object {
-    transform: rotateX(2deg) rotateY(0deg) rotateZ(-1deg) scale(1.12);
+    transform: rotateX(2deg) rotateY(0deg) rotateZ(-1deg)
+      scale(var(--open-book-scale));
   }
   .book-carousel .book-inside-cover {
     padding: 18px 12px;

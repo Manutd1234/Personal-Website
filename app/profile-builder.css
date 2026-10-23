@@ -1,4 +1,4 @@
-/* A small moving notebook: one idea, five drafts. */
+/* Engineering notes: constraints, contracts, implementation, tests, review. */
 .builder-workbench {
   margin-top: 54px;
 }
@@ -120,7 +120,7 @@
   button[aria-selected="true"]
   .journey-step-track
   i {
-  animation: journey-progress 6.5s linear both;
+  animation: journey-progress var(--journey-step-duration, 4s) linear both;
 }
 .journey-stage {
   display: grid;
@@ -139,6 +139,7 @@
   flex-direction: column;
   justify-content: space-between;
   aspect-ratio: 1.35;
+  min-height: 300px;
   padding: 24px 27px;
   border: 1px solid #dedbcb;
   border-radius: 3px 6px 5px 2px;
@@ -204,6 +205,23 @@
   font: 400 11px var(--classic-display);
   color: #65755d;
 }
+.sketch-contract {
+  display: grid;
+  gap: 9px;
+  margin-top: 21px;
+  font: 400 10px/1.5 var(--font-mono);
+}
+.sketch-contract > div {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 9px;
+}
+.sketch-contract dt {
+  color: #9a6c4d;
+}
+.sketch-contract dd {
+  margin: 0;
+}
 .sketch-map {
   margin: auto 0;
   padding-top: 25px;
@@ -244,6 +262,10 @@
   font-size: 10px;
   color: #71806a;
 }
+.sketch-map > div small {
+  margin-top: 5px;
+  font: 400 8px/1.4 var(--font-mono);
+}
 .sketch-code {
   margin: auto 0;
   padding-top: 24px;
@@ -274,6 +296,8 @@
   margin-top: 20px;
   color: #435b4a;
   font: 400 clamp(10px, 1.5vw, 14px)/2 var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .sketch-code pre span {
   color: #87917c;
@@ -302,6 +326,7 @@
   font-size: 12px;
 }
 .sketch-tests > div svg {
+  flex: none;
   color: #698758;
 }
 .sketch-tests small {
@@ -309,12 +334,11 @@
   color: #839174;
   font: 400 9px var(--font-mono);
 }
-.sketch-tests > svg {
-  width: 100%;
-  height: 48px;
-  fill: none;
-  stroke: #87a16c;
-  stroke-width: 2;
+.sketch-test-note {
+  display: block;
+  margin-top: 22px;
+  font: 400 9px/1.5 var(--font-mono);
+  color: #71806a;
 }
 .sketch-finish {
   margin: auto 0;
@@ -332,25 +356,41 @@
   padding: 20px 0 12px;
   font: 400 23px var(--classic-serif);
 }
-.sketch-browser-line {
-  width: 93%;
-  height: 5px;
-  margin-bottom: 8px;
-  border-radius: 3px;
-  background: #dbe1d1;
+.sketch-review-row {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed #c8d1bb;
+  color: #71806a;
+  font: 400 9px/1.5 var(--font-mono);
 }
-.sketch-browser-line.short {
-  width: 66%;
+.sketch-ci {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 18px;
+  font: 400 10px var(--font-mono);
 }
-.sketch-browser-button {
+.sketch-ci > span {
+  flex: 1;
+  padding: 7px 4px;
+  border: 1px solid #b6c5a9;
+  border-radius: 4px;
+  background: #eaf0df;
+  text-align: center;
+}
+.sketch-ci b {
+  font-weight: 400;
+  color: #7d9070;
+}
+.sketch-review-note {
   display: block;
-  width: fit-content;
-  margin-top: 16px;
-  padding: 9px 12px;
-  border-radius: 5px;
-  background: #41694d;
-  color: #fffdf4;
-  font-size: 9px;
+  margin-top: 14px;
+  color: #71806a;
+  font: 400 9px/1.5 var(--font-mono);
 }
 .sketch-finish > .sketch-pencil {
   text-align: right;
@@ -505,9 +545,12 @@
     padding: 28px 24px;
   }
   .journey-sketch {
+    width: 100%;
+    min-width: 0;
     max-width: 440px;
+    min-height: 290px;
     margin-inline: auto;
-    aspect-ratio: 1.4;
+    aspect-ratio: auto;
   }
   .journey-copy h3 {
     font-size: 28px;
@@ -537,6 +580,21 @@
   }
 }
 @media (max-width: 600px) {
+  .journey-sketch {
+    padding: 22px 20px;
+  }
+  .sketch-question {
+    padding-inline: 0;
+  }
+  .sketch-question strong {
+    font-size: 30px;
+  }
+  .sketch-contract {
+    font-size: 9px;
+  }
+  .sketch-code pre {
+    font-size: clamp(9px, 2.55vw, 12px);
+  }
   .sketch-map > div {
     gap: 5px;
   }
@@ -556,6 +614,24 @@
   .sketch-map svg {
     height: 36px;
   }
+  .sketch-tests > div {
+    gap: 7px;
+    font-size: 10px;
+  }
+  .sketch-tests small,
+  .sketch-test-note {
+    font-size: 8px;
+  }
+  .sketch-browser {
+    padding: 12px;
+  }
+  .sketch-browser-title {
+    font-size: 20px;
+  }
+  .sketch-review-row,
+  .sketch-review-note {
+    font-size: 8px;
+  }
 }
 @media (prefers-reduced-motion: no-preference) {
   .build-journey[data-running="true"] .sketch-map > div span {
@@ -570,16 +646,14 @@
   .build-journey[data-running="true"] .sketch-code pre {
     animation: journey-code 1.5s steps(24) both;
   }
-  .build-journey[data-running="true"] .sketch-tests > svg path {
-    stroke-dasharray: 340;
-    animation: journey-line 1.6s 0.4s both;
+  .build-journey[data-running="true"] .sketch-ci > span {
+    animation: journey-check 0.5s both;
   }
-  .build-journey[data-running="true"] .sketch-browser-line {
-    animation: journey-progress 0.6s both;
-    transform-origin: left;
+  .build-journey[data-running="true"] .sketch-ci > span:nth-of-type(2) {
+    animation-delay: 0.18s;
   }
-  .build-journey[data-running="true"] .sketch-browser-line.short {
-    animation-delay: 0.15s;
+  .build-journey[data-running="true"] .sketch-ci > span:nth-of-type(3) {
+    animation-delay: 0.36s;
   }
 }
 @keyframes journey-code {
@@ -588,13 +662,5 @@
   }
   to {
     clip-path: inset(0);
-  }
-}
-@keyframes journey-line {
-  from {
-    stroke-dashoffset: 340;
-  }
-  to {
-    stroke-dashoffset: 0;
   }
 }

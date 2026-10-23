@@ -25,7 +25,7 @@ const hobbyIcons: Record<Hobby, LucideIcon> = {
   People: Users,
   Food: UtensilsCrossed,
   Learning: BookOpen,
-  Gym: Dumbbell,
+  Fitness: Dumbbell,
 };
 const hobbies = (Object.keys(hobbyIcons) as Hobby[])
   .map((hobby) => ({
@@ -82,7 +82,6 @@ export default function OffDutyPanel() {
   const [status, setStatus] = useState("");
   const [autoPlay, setAutoPlay] = useState(true);
   const [interacting, setInteracting] = useState(false);
-  const [hovered, setHovered] = useState(false);
   const { ref: rootRef, visible } = useVisiblePlayback<HTMLDivElement>();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -100,18 +99,13 @@ export default function OffDutyPanel() {
   const lightboxOpen = openId !== null;
   const autoPlayAvailable = !reducedMotion && pool.length > 1;
   const running =
-    autoPlay &&
-    autoPlayAvailable &&
-    visible &&
-    !interacting &&
-    !hovered &&
-    !lightboxOpen;
+    autoPlay && autoPlayAvailable && visible && !interacting && !lightboxOpen;
   const Icon = current ? hobbyIcons[current.category] : Sparkles;
   useEffect(() => {
     if (!running) return;
     const timer = window.setTimeout(
       () => setCursor((value) => (value + 1) % pool.length),
-      6500,
+      3800,
     );
     return () => window.clearTimeout(timer);
   }, [running, cursor, pool.length, spotlight, order]);
@@ -171,8 +165,9 @@ export default function OffDutyPanel() {
     setStatus(hobby ? `${hobby} photos.` : "All photos.");
   }
   function browse(offset: number) {
-    setCursor((value) => mod(value + offset, pool.length));
-    setAutoPlay(false);
+    const next = mod(cursor + offset, pool.length);
+    setCursor(next);
+    setStatus(`${pool[next].category}: ${pool[next].caption}`);
   }
   function move(offset: number) {
     if (openIndex < 0) return;
@@ -301,13 +296,7 @@ export default function OffDutyPanel() {
           </span>
           <span className="life-portrait-handnote">Life, in between.</span>
         </div>
-        <div
-          className="life-portrait-frame"
-          onPointerEnter={(event) => {
-            if (event.pointerType === "mouse") setHovered(true);
-          }}
-          onPointerLeave={() => setHovered(false)}
-        >
+        <div className="life-portrait-frame">
           <span className="offduty-tape" aria-hidden="true" />
           <button
             type="button"
@@ -373,12 +362,7 @@ export default function OffDutyPanel() {
                 <Maximize2 size={15} />
               </span>
             </span>
-            <span
-              className="life-portrait-caption"
-              aria-live={autoPlay ? "off" : "polite"}
-            >
-              {current.caption}
-            </span>
+            <span className="life-portrait-caption">{current.caption}</span>
           </button>
           <motion.span
             key={current.category}
@@ -390,44 +374,6 @@ export default function OffDutyPanel() {
           >
             <Icon size={28} />
           </motion.span>
-        </div>
-        <div className="life-portrait-side">
-          <span
-            className={`life-portrait-category is-${current.category.toLowerCase()}`}
-          >
-            <Icon size={17} />
-            {current.category}
-          </span>
-          <span className="life-portrait-count">
-            {String(mod(cursor, pool.length) + 1).padStart(2, "0")} <i>/</i>{" "}
-            {String(pool.length).padStart(2, "0")}
-          </span>
-          <div className="life-portrait-nav">
-            <button
-              type="button"
-              onClick={() => browse(-1)}
-              aria-label="Previous portrait"
-              disabled={pool.length < 2}
-            >
-              <ArrowLeft size={19} />
-            </button>
-            <button
-              type="button"
-              onClick={() => browse(1)}
-              aria-label="Next portrait"
-              disabled={pool.length < 2}
-            >
-              <ArrowRight size={19} />
-            </button>
-          </div>
-          <span className="life-portrait-progress" aria-hidden="true">
-            <i key={`${current.id}-${running}`} />
-          </span>
-          <small>
-            {reducedMotion
-              ? "Take your time. Browse at your own pace."
-              : "A little window into life outside work."}
-          </small>
         </div>
       </div>
       <span className="sr-only" role="status">
@@ -461,13 +407,7 @@ export default function OffDutyPanel() {
         {shown ? (
           <>
             <header className="life-lightbox-heading">
-              <p id={`${prefix}-photo-meta`}>
-                {shown.category}
-                <span aria-hidden="true"> · </span>
-                <span aria-live="polite">
-                  {openIndex + 1} / {pool.length}
-                </span>
-              </p>
+              <p id={`${prefix}-photo-meta`}>{shown.category}</p>
               <button
                 ref={closeRef}
                 type="button"
@@ -477,6 +417,9 @@ export default function OffDutyPanel() {
                 <X size={21} aria-hidden="true" />
               </button>
             </header>
+            <span className="sr-only" role="status">
+              {shown.category}: {shown.caption}
+            </span>
             <div className="life-lightbox-image">
               <AnimatePresence initial={false}>
                 <motion.div
@@ -496,7 +439,6 @@ export default function OffDutyPanel() {
                 <motion.h3
                   key={shown.id}
                   id={`${prefix}-lightbox-caption`}
-                  aria-live="polite"
                   initial={reducedMotion ? false : { opacity: 0, y: 2 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: reducedMotion ? 0 : 0.16 }}

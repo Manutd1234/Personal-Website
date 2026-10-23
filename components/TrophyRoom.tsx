@@ -226,7 +226,7 @@ const hashFilters: Readonly<Record<string, CollectionFilter>> = {
   "#certificates": "certificates",
 };
 
-// App icons describe the subject; the actual award documents stay in the detail view.
+// Subject marks are a fallback when no personal award photo or evidence is available.
 const achievementIconRules: readonly (readonly [RegExp, LucideIcon])[] = [
   [/marksmanship/i, Crosshair],
   [/IPPT/i, Dumbbell],
@@ -272,6 +272,11 @@ function AchievementApp({
     record.category === "certificates"
       ? credentialProviders[record.issuer]
       : undefined;
+  const evidence =
+    record.certificates.find(
+      (file) => !file.representative && /photo/i.test(file.kind ?? ""),
+    ) ?? record.certificates.find((file) => !file.representative);
+  const imageSource = evidence?.src ?? provider?.src;
   return (
     <li className="award-app" data-category={record.category}>
       <button
@@ -284,17 +289,20 @@ function AchievementApp({
       >
         <span
           className="award-app-icon"
-          data-provider={provider ? record.issuer : undefined}
+          data-provider={!evidence && provider ? record.issuer : undefined}
+          data-evidence={evidence ? "true" : undefined}
           aria-hidden="true"
         >
-          {provider ? (
+          {imageSource ? (
             <>
-              <img
-                src={asset(provider.src)}
-                alt=""
-                loading="lazy"
-                decoding="async"
-              />
+              <span className="award-app-preview">
+                <img
+                  src={asset(imageSource)}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+              </span>
               <span className="award-app-topic-mark">
                 <Icon size={14} strokeWidth={1.8} />
               </span>

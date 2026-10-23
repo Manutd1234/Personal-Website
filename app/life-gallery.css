@@ -28,7 +28,7 @@
   --sticker-bg: #e9e3fb;
   --sticker-ink: #4d3a8e;
 }
-.offduty .is-gym {
+.offduty .is-fitness {
   --sticker-bg: #d9f0e4;
   --sticker-ink: #13684a;
 }
@@ -454,7 +454,7 @@
   --sticker-bg: #2f2850;
   --sticker-ink: #cfc3f7;
 }
-.dark .offduty .is-gym {
+.dark .offduty .is-fitness {
   --sticker-bg: #1d4031;
   --sticker-ink: #a6e3c4;
 }
@@ -609,10 +609,7 @@
 /* One changing photograph, with space to let it breathe. */
 .life-portrait-stage {
   display: grid;
-  grid-template-columns: minmax(90px, 0.6fr) minmax(0, 2.4fr) minmax(
-      125px,
-      0.7fr
-    );
+  grid-template-columns: minmax(0, 1fr) minmax(0, 620px) minmax(0, 1fr);
   align-items: center;
   gap: 36px;
   margin-top: 28px;
@@ -623,6 +620,7 @@
     radial-gradient(ellipse at 50% 40%, #ecebdc 0, transparent 70%), #f3f5eb;
 }
 .life-portrait-frame {
+  grid-column: 2;
   position: relative;
   min-width: 0;
   padding: 13px 13px 0;
@@ -720,75 +718,7 @@
   color: #7c8b6c;
   font: italic 400 22px/1.35 var(--classic-serif);
 }
-.life-portrait-side {
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-  gap: 22px;
-}
-.life-portrait-category {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  color: var(--classic-green);
-  font: 500 13px var(--classic-display);
-}
-.life-portrait-count {
-  color: var(--ink);
-  font: 400 26px var(--classic-serif);
-}
-.life-portrait-count i {
-  margin: 0 6px;
-  color: #99a18d;
-  font-weight: 300;
-}
-.life-portrait-nav {
-  display: flex;
-  gap: 7px;
-}
-.life-portrait-nav button {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid #bdcbb3;
-  border-radius: 50%;
-  color: var(--classic-green);
-  background: #fffef4;
-  transition:
-    background 0.2s,
-    transform 0.2s;
-}
-.life-portrait-nav button:hover {
-  transform: translateY(-2px);
-  background: #e8efdf;
-}
-.life-portrait-side small {
-  max-width: 140px;
-  color: var(--classic-muted);
-  font-size: 11px;
-  line-height: 1.8;
-}
-.life-portrait-progress {
-  width: 100%;
-  max-width: 115px;
-  height: 2px;
-  background: #d1dbc6;
-  overflow: hidden;
-}
-.life-portrait-progress i {
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: var(--classic-green);
-  transform: scaleX(0);
-  transform-origin: left;
-}
-.offduty[data-running="true"] .life-portrait-progress i {
-  animation: portrait-progress 6.5s linear both;
-}
-.life-portrait-open:focus-visible,
-.life-portrait-nav button:focus-visible {
+.life-portrait-open:focus-visible {
   outline: 2px solid var(--classic-green);
   outline-offset: 5px;
 }
@@ -814,32 +744,18 @@
 .dark .life-portrait-margin {
   color: #a4b09c;
 }
-.dark .life-portrait-nav button {
-  background: #233a2c;
-  border-color: #49604c;
-}
-.dark .life-portrait-nav button:hover {
-  background: #314c39;
-}
-.dark .life-portrait-progress {
-  background: #3e5240;
-}
-@keyframes portrait-progress {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
 @media (max-width: 900px) {
   .life-portrait-stage {
-    grid-template-columns: minmax(0, 1fr) 125px;
+    grid-template-columns: minmax(0, 620px);
+    justify-content: center;
     gap: 32px;
     padding: 40px 32px 30px;
   }
   .life-portrait-margin {
     display: none;
+  }
+  .life-portrait-frame {
+    grid-column: 1;
   }
 }
 @media (max-width: 600px) {
@@ -868,36 +784,10 @@
     width: 22px;
     height: 22px;
   }
-  .life-portrait-side {
-    width: 100%;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-  }
-  .life-portrait-category {
-    min-width: 85px;
-  }
-  .life-portrait-count {
-    font-size: 20px;
-  }
-  .life-portrait-side small {
-    display: none;
-  }
-  .life-portrait-progress {
-    max-width: none;
-    flex-basis: 100%;
-  }
   .life-portrait-expand {
     opacity: 1;
   }
   .offduty-portrait-gallery .offduty-toolbar {
     gap: 16px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .offduty .life-portrait-progress i {
-    animation: none;
   }
 }

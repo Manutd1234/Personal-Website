@@ -245,6 +245,12 @@ function Book({
         } as CSSProperties
       }
     >
+      <span className="book-hover-surface">
+        <span className="book-hit-corner" data-book-hover-corner="nw" />
+        <span className="book-hit-corner" data-book-hover-corner="ne" />
+        <span className="book-hit-corner" data-book-hover-corner="se" />
+        <span className="book-hit-corner" data-book-hover-corner="sw" />
+      </span>
       <span className="book-back">
         <span>IAN WANGSA</span>
         <span>{design.title}</span>
@@ -330,9 +336,11 @@ export default function BookCarousel({
   const count = projects.length;
   const step = count ? 360 / count : 360;
   const [currentState, setCurrent] = useState(0);
+  const [destination, setDestination] = useState<number | null>(null);
   const [opened, setOpened] = useState<number | null>(null);
   const [opening, setOpening] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [hovered, setHovered] = useState<number | null>(null);
   const [returning, setReturning] = useState(false);
   const radius = 340;
   const [reducedMotion, setReducedMotion] = useState(true);
@@ -343,6 +351,7 @@ export default function BookCarousel({
   const currentRef = useRef(0);
   const radiusRef = useRef(radius);
   const animationRef = useRef<number | null>(null);
+  const pendingRevealRef = useRef(false);
   const gestureRef = useRef<Gesture | null>(null);
   const stageRef = useRef<HTMLElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
@@ -357,6 +366,7 @@ export default function BookCarousel({
   const lastRequestRef = useRef<string | null>(null);
   const uniqueId = useId();
   const current = count ? mod(currentState, count) : 0;
+  const displayedBook = count ? mod(destination ?? current, count) : 0;
   const isOpen = opened !== null && opened < count;
   const detailIndex = opened ?? (returning ? lastOpenedRef.current : null);
   const openedProject =
@@ -367,6 +377,8 @@ export default function BookCarousel({
     if (animationRef.current !== null)
       cancelAnimationFrame(animationRef.current);
     animationRef.current = null;
+    setDestination(null);
+    pendingRevealRef.current = false;
     velocityRef.current = 0;
     stageRef.current?.removeAttribute("data-rotating");
   }, []);
@@ -418,7 +430,9 @@ export default function BookCarousel({
   function rotateTo(target: number, focusBook = false, onSettled?: () => void) {
     if (!count || !canInteract()) return;
     let velocity = velocityRef.current;
+    setHovered(null);
     stopAnimation();
+    pendingRevealRef.current = Boolean(onSettled);
     setReturning(false);
     targetAngleRef.current = target;
     let position = angleRef.current;
@@ -427,6 +441,8 @@ export default function BookCarousel({
         preventScroll: true,
       });
     const finish = () => {
+      pendingRevealRef.current = false;
+      setDestination(null);
       updateAngle(target);
       velocityRef.current = 0;
       stageRef.current?.removeAttribute("data-rotating");
@@ -440,14 +456,14 @@ export default function BookCarousel({
       finish();
       return;
     }
+    setDestination(mod(Math.round(-target / step), count));
     let previous = performance.now();
     stageRef.current?.setAttribute("data-rotating", "true");
     const start = previous;
     function frame(now: number) {
       animationRef.current = null;
       if (!canInteract()) {
-        velocityRef.current = 0;
-        stageRef.current?.removeAttribute("data-rotating");
+        stopAnimation();
         return;
       }
       const dt = Math.min(0.04, Math.max(0.001, (now - previous) / 1000));
@@ -487,11 +503,20 @@ export default function BookCarousel({
     rotateTo(angleRef.current + distance, focusBook, onSettled);
   }
 
+  function intendedBook(fallback = currentRef.current) {
+    return count && animationRef.current !== null
+      ? mod(Math.round(-targetAngleRef.current / step), count)
+      : fallback;
+  }
+
   function openBook(index: number) {
     if (!canInteract() || index < 0 || index >= count) return;
+    setHovered(null);
     stopAnimation();
     cancelGesture();
     const reveal = () => {
+      if (!canInteract()) return;
+      returnFocusRef.current = false;
       lastOpenedRef.current = index;
       setReturning(false);
       setOpened(index);
@@ -507,7 +532,10 @@ export default function BookCarousel({
   }
 
   function closeBook() {
-    if (!canInteract()) return;
+    if (!canInteract() || !isOpen) return;
+    setHovered(null);
+    stopAnimation();
+    cancelGesture();
     returnFocusRef.current = true;
     setReturning(!reducedMotion);
     setOpened(null);
@@ -546,9 +574,25 @@ export default function BookCarousel({
     if (!stage) return undefined;
     const resize = new ResizeObserver(([entry]) => {
       if (entry?.contentRect.width > 0) {
+        const stageStyle = getComputedStyle(stage);
         const bookWidth =
           parseFloat(getComputedStyle(orbitRefs.current[0] ?? stage).width) ||
           170;
+        // The desktop spread sits left of the perspective origin, so its
+        // near cover projects farther outward than a centered mobile spread.
+        // Reserve extra room for that projection and the thickest binding.
+        const spreadShare =
+          parseFloat(stageStyle.getPropertyValue("--open-column-share")) || 1;
+        const sideBySide = spreadShare < 1;
+        const spreadRoom = Math.max(
+          1,
+          entry.contentRect.width * spreadShare - (sideBySide ? 48 : 24),
+        );
+        const openScale = Math.min(
+          1.18,
+          spreadRoom / (bookWidth * (sideBySide ? 2.3 : 2.12)),
+        );
+        stage.style.setProperty("--open-book-scale", openScale.toFixed(4));
         const spacingRadius =
           count > 2 ? (bookWidth / (2 * Math.sin(Math.PI / count))) * 1.02 : 0;
         radiusRef.current = Math.max(
@@ -649,6 +693,7 @@ export default function BookCarousel({
 
   useEffect(() => {
     if (!active) {
+      setHovered(null);
       stopAnimation();
       cancelGesture();
     }
@@ -685,6 +730,35 @@ export default function BookCarousel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, requestedProject, requestKey]);
 
+  function bookAtPoint(x: number, y: number) {
+    // Pick the visible book by depth, not the browser's overlapping 3D hit stack.
+    // The stationary front plane keeps hover stable as the cover swings away.
+    const hitBooks = bookRefs.current.flatMap((button, index) => {
+      if (!button || button.disabled) return [];
+      const hit = ["[data-book-hover-corner]", "[data-book-hit-corner]"].some(
+        (selector) => {
+          const points = [
+            ...button.querySelectorAll<HTMLElement>(selector),
+          ].map((corner) => {
+            const rect = corner.getBoundingClientRect();
+            return {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2,
+            };
+          });
+          return pointInsideCover(points, x, y);
+        },
+      );
+      if (!hit) return [];
+      const depth = parseFloat(
+        orbitRefs.current[index]?.style.getPropertyValue("--orbit-z") ?? "0",
+      );
+      return [{ index, depth }];
+    });
+    hitBooks.sort((a, b) => b.depth - a.depth);
+    return hitBooks[0]?.index;
+  }
+
   function onPointerDown(event: PointerEvent<HTMLDivElement>) {
     if (
       !canInteract() ||
@@ -697,25 +771,8 @@ export default function BookCarousel({
     stopAnimation();
     cancelGesture();
     setReturning(false);
-    // Browser hit stacks are inconsistent for overlapping preserve-3d planes.
-    // Test the painted cover quadrilaterals, then prefer the nearest book.
-    // Corner probes also avoid the empty triangles in an axis-aligned rectangle.
-    const hitBooks = bookRefs.current.flatMap((button, index) => {
-      if (!button || button.disabled) return [];
-      const points = [
-        ...button.querySelectorAll<HTMLElement>("[data-book-hit-corner]"),
-      ].map((corner) => {
-        const rect = corner.getBoundingClientRect();
-        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-      });
-      if (!pointInsideCover(points, event.clientX, event.clientY)) return [];
-      const depth = parseFloat(
-        orbitRefs.current[index]?.style.getPropertyValue("--orbit-z") ?? "0",
-      );
-      return [{ index, depth }];
-    });
-    hitBooks.sort((a, b) => b.depth - a.depth);
-    const bookIndex = hitBooks[0]?.index;
+    setHovered(null);
+    const bookIndex = bookAtPoint(event.clientX, event.clientY);
     gestureRef.current = {
       pointer: event.pointerId,
       x: event.clientX,
@@ -733,7 +790,19 @@ export default function BookCarousel({
 
   function onPointerMove(event: PointerEvent<HTMLDivElement>) {
     const gesture = gestureRef.current;
-    if (!gesture || gesture.pointer !== event.pointerId || isOpen) return;
+    if (!gesture) {
+      if (
+        event.pointerType === "mouse" &&
+        event.buttons === 0 &&
+        !isOpen &&
+        !returning &&
+        animationRef.current === null &&
+        canInteract()
+      )
+        setHovered(bookAtPoint(event.clientX, event.clientY) ?? null);
+      return;
+    }
+    if (gesture.pointer !== event.pointerId || isOpen) return;
     if (!canInteract()) {
       cancelGesture();
       return;
@@ -795,6 +864,14 @@ export default function BookCarousel({
       event.target.closest('dialog, [role="dialog"]')
     )
       return;
+    if (event.key === "Escape" && pendingRevealRef.current) {
+      event.preventDefault();
+      stopAnimation();
+      cancelGesture();
+      // Cancel the queued reveal, then leave the nearest book neatly in place.
+      rotateTo(Math.round(angleRef.current / step) * step, true);
+      return;
+    }
     if (isOpen) {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -826,7 +903,7 @@ export default function BookCarousel({
       event.target === sceneRef.current
     ) {
       event.preventDefault();
-      openBook(current);
+      openBook(intendedBook());
     }
   }
 
@@ -872,6 +949,7 @@ export default function BookCarousel({
             onPointerCancel={onPointerCancel}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
+            onPointerLeave={() => setHovered(null)}
             onPointerUp={onPointerUp}
             ref={sceneRef}
             role="region"
@@ -913,9 +991,11 @@ export default function BookCarousel({
                     aria-label={`Open ${project.title} project details`}
                     className="book-click"
                     data-book-index={index}
+                    data-hovered={hovered === index}
                     disabled={isOpen || returning || !active}
                     onClick={(event) => {
-                      if (event.detail === 0 && !isOpen) openBook(index);
+                      if (event.detail === 0 && !isOpen)
+                        openBook(intendedBook(index));
                     }}
                     ref={(element) => {
                       bookRefs.current[index] = element;
@@ -975,13 +1055,13 @@ export default function BookCarousel({
             <div className="book-current">
               <button
                 disabled={returning}
-                onClick={() => openBook(current)}
+                onClick={() => openBook(intendedBook())}
                 type="button"
-                aria-label={`Open project: ${projects[current].title}`}
+                aria-label={`Open project: ${projects[displayedBook].title}`}
               >
                 <span className="book-current-action">Open project</span>
                 <span className="book-current-name">
-                  {projects[current].title} <span aria-hidden="true">↗</span>
+                  {projects[displayedBook].title} <span aria-hidden="true">↗</span>
                 </span>
               </button>
             </div>
@@ -998,7 +1078,7 @@ export default function BookCarousel({
         ) : null}
         <span className="book-screenreader-status" role="status">
           {!isOpen && !dragging
-            ? `Front book: ${projects[current].title}. ${current + 1} of ${count}.`
+            ? `Selected project: ${projects[displayedBook].title}. ${displayedBook + 1} of ${count}.`
             : ""}
         </span>
       </section>
