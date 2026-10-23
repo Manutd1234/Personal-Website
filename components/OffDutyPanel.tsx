@@ -109,13 +109,24 @@ export default function OffDutyPanel() {
     );
     return () => window.clearTimeout(timer);
   }, [running, cursor, pool.length, spotlight, order]);
-  const preloadSrc =
-    pool[mod((lightboxOpen ? openIndex : cursor) + 1, pool.length)]?.src;
+  const nextPhoto =
+    pool[mod((lightboxOpen ? openIndex : cursor) + 1, pool.length)];
+  const preloadSrc = lightboxOpen
+    ? nextPhoto?.src
+    : (nextPhoto?.preview ?? nextPhoto?.src);
+  const preloadSrcSet =
+    !lightboxOpen && nextPhoto?.preview && nextPhoto.previewWidth
+      ? `${asset(nextPhoto.preview)} ${nextPhoto.previewWidth}w, ${asset(nextPhoto.src)} ${nextPhoto.width}w`
+      : undefined;
   useEffect(() => {
     if (!visible || !preloadSrc) return;
     const image = new Image();
+    if (preloadSrcSet) {
+      image.sizes = "(max-width: 700px) calc(100vw - 72px), 620px";
+      image.srcset = preloadSrcSet;
+    }
     image.src = asset(preloadSrc);
-  }, [visible, preloadSrc]);
+  }, [visible, preloadSrc, preloadSrcSet]);
   useEffect(() => {
     const close = () => setOpenId(null);
     window.addEventListener("hashchange", close);
@@ -349,7 +360,13 @@ export default function OffDutyPanel() {
                   aria-hidden="true"
                 >
                   <img
-                    src={asset(current.src)}
+                    src={asset(current.preview ?? current.src)}
+                    srcSet={
+                      current.preview && current.previewWidth
+                        ? `${asset(current.preview)} ${current.previewWidth}w, ${asset(current.src)} ${current.width}w`
+                        : undefined
+                    }
+                    sizes="(max-width: 700px) calc(100vw - 72px), 620px"
                     alt=""
                     width={current.width}
                     height={current.height}

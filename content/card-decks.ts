@@ -27,7 +27,12 @@ export type CardMove = { name: string; text: string };
 // above each entry. A logo drawn for dark backgrounds sets `dark` so its panel
 // switches colour. Student groups can use the identified parent organisation's
 // official mark. Stealth Startup uses its public LinkedIn listing’s logo.
-type Logo = { file: string; dark?: boolean; alt?: string };
+type Logo = {
+  file: string;
+  dark?: boolean;
+  alt?: string;
+  layout?: "wide" | "football";
+};
 const logos: Readonly<Record<string, Logo>> = {
   // https://caerusgm.com/
   caerus: { file: "images/logos/caerus.webp" },
@@ -50,7 +55,7 @@ const logos: Readonly<Record<string, Logo>> = {
   "singapore-army": { file: "images/logos/singapore-army.webp" },
   // https://en.wikipedia.org/wiki/File:NationalUniversityofSingapore.svg
   nus: { file: "images/logos/nus.webp" },
-  // Current wordmark from https://www.eunoiajc.moe.edu.sg/
+  // Full-resolution official wordmark from https://www.eunoiajc.moe.edu.sg/.
   ejc: { file: "images/logos/ejc.webp", alt: "Eunoia Junior College logo" },
   "ejc-softball": {
     file: "images/logos/ejc-softball.webp",
@@ -65,11 +70,12 @@ const logos: Readonly<Record<string, Logo>> = {
   "sst-football": {
     file: "images/logos/sst-football.webp",
     alt: "SST Football logo",
+    layout: "football",
   },
   // https://www.sst.edu.sg/about-sst/sst-identity/school-symbols/
   sst: { file: "images/logos/sst.webp" },
-  // https://www.bukittimahpri.moe.edu.sg/school-info/our-vision-mission-and-motto
-  btps: { file: "images/logos/btps.webp" },
+  // Current official horizontal wordmark: https://www.bukittimahpri.moe.edu.sg/.
+  btps: { file: "images/logos/btps.webp", layout: "wide" },
   // https://nussif.com/
   nussif: { file: "images/logos/nussif.webp" },
   // https://linktr.ee/nusmedtech
@@ -81,7 +87,7 @@ const logos: Readonly<Record<string, Logo>> = {
   // https://nusgdg.org/
   "nus-gamedev": { file: "images/logos/nus-gamedev.webp" },
   // https://runnus.nussportsclub.org/
-  runnus: { file: "images/logos/runnus.webp", dark: true },
+  runnus: { file: "images/logos/runnus.webp", layout: "wide" },
   // https://nusync.nus.edu.sg/NSSC/rsvp_boot?id=379717
   sunnus: { file: "images/logos/sunnus.webp" },
   // https://nusvcf.com/

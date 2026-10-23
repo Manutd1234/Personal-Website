@@ -44,7 +44,8 @@ import {
   type KeyboardEvent,
 } from "react";
 import { achievementGroups, certifications } from "@/content/portfolio";
-import { certificateFiles, projectMedia } from "@/content/media";
+import { certificateFiles, projectMedia, teamMoments } from "@/content/media";
+import { awardIconPreviews } from "@/content/award-icon-previews";
 import { credentialProviders } from "@/content/credential-providers";
 import { asset } from "@/content/paths";
 import { trophies, type Trophy as TrophyRecord } from "@/content/trophies";
@@ -90,6 +91,63 @@ type Achievement = AwardRecord & {
 };
 
 const files: Readonly<Record<string, CertificateFile>> = certificateFiles;
+// Photos are tied to the named event; the original award documents stay in the
+// detail view. A project photo is labelled as context, never as an award ceremony.
+const achievementPhotos: Readonly<Record<string, CertificateFile | undefined>> = {
+  "BrainHack TIL-AI 2026": {
+    src: teamMoments[0].src,
+    title: teamMoments[0].title,
+    kind: "Winning team photo",
+    caption: teamMoments[0].caption,
+  },
+  "Hack the Future AI Hackathon 2026": {
+    src: teamMoments[2].src,
+    title: teamMoments[2].title,
+    kind: "Event photo",
+    caption: teamMoments[2].caption,
+  },
+  "BügleRock Rockathon 2026": {
+    src: projectMedia.DealMachine.src,
+    title: "The Deal Machine, built at Rockathon",
+    kind: "Project screenshot",
+    representative: true,
+    caption: "The team's Rockathon prototype. The certificate below records the finalist result.",
+  },
+  "SignMeUp · The Merge Hackathon 2026": {
+    src: projectMedia.SignMeUp.src,
+    title: "SignMeUp, built at The Merge",
+    kind: "Project screenshot",
+    representative: true,
+    caption: "The team's assistive-interpreter demo. The certificate below records the recognition.",
+  },
+  "SunnyHacks 2026": {
+    src: "images/logos/sunnyhacks.webp",
+    title: "SunnyHacks organizer emblem",
+    kind: "Representative emblem",
+    representative: true,
+    caption: "Official organizer emblem from the February 2026 event page.",
+    source: { label: "SunnyHacks — February 2026", url: "https://sunnyhacks-feb-2026.devpost.com/" },
+  },
+  "Certificate of Appreciation · Project BHID": {
+    src: "images/life-passport-oct24/bhid-team-afternoon.webp",
+    title: "An afternoon with the Project BHID team",
+    kind: "Project team photo",
+    representative: true,
+    caption: "A photo from Project BHID. The certificate below records the recognition.",
+  },
+  "Outstanding performance & conduct": {
+    src: "images/life-originals-oct24/army-graduation-group.webp",
+    title: "From my National Service years",
+    kind: "Service photo",
+    representative: true,
+    caption: "A group photo from National Service. The transcript excerpt below records the assessment.",
+  },
+  "Colours Award": {
+    ...certificateFiles.ejcSoftballTeam,
+    representative: true,
+    caption: "The softball team; the individual Colours Award is recorded in the certificate below.",
+  },
+};
 const projectRecords = new Map(
   trophies.map((record) => [record.title, record]),
 );
@@ -149,20 +207,23 @@ const slug = (text: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+const issuerLogoRules: readonly (readonly [RegExp, string])[] = [
+  [/Ministry of Education/i, "moe"],
+  [/CCC.CDC/i, "cdc"],
+  [/NUS High School/i, "nus-high"],
+  [/Eunoia Junior College/i, "ejc"],
+  [/School of Science and Technology|SST Changemakers/i, "sst"],
+  [/Bukit Timah Primary School/i, "btps"],
+  [/Singapore Armed Forces|160 SQN/i, "rsaf"],
+];
 function representativePreview(record: AwardRecord): CertificateFile {
   const issuer = record.issuer;
   const provider = credentialProviders[issuer];
-  const issuerLogo = isSoftballAward(record)
-    ? "ejc-softball"
-    : /Eunoia Junior College/i.test(issuer)
-      ? "ejc"
-      : /School of Science and Technology|SST Changemakers/i.test(issuer)
-        ? "sst"
-        : /Bukit Timah Primary School/i.test(issuer)
-          ? "btps"
-          : /Singapore Armed Forces|160 SQN/i.test(issuer)
-            ? "rsaf"
-            : undefined;
+  const issuerLogo = /swimsafer/i.test(record.title)
+    ? "swimsafer"
+    : isSoftballAward(record)
+      ? "ejc-softball"
+      : issuerLogoRules.find(([pattern]) => pattern.test(issuer))?.[1];
   const subject = /swim/i.test(record.title)
     ? "swimming"
     : /piano/i.test(record.title)
@@ -184,7 +245,7 @@ function representativePreview(record: AwardRecord): CertificateFile {
     representative: true,
     caption:
       issuerLogo || provider
-        ? "Issuer emblem; a personal award photo or certificate scan is not available."
+        ? "Representative issuer emblem. Available award records are shown separately."
         : "Illustrative emblem; a personal award photo or certificate scan is not available.",
   };
 }
@@ -260,6 +321,21 @@ function iconForAchievement(record: Achievement): LucideIcon {
   );
 }
 
+function previewForAchievement(record: Achievement): CertificateFile {
+  return (
+    achievementPhotos[record.title] ??
+    record.certificates.find(
+      (file) => !file.representative && /photo/i.test(file.kind ?? ""),
+    ) ??
+    record.certificates.find((file) => /patch/i.test(file.kind ?? "")) ??
+    (["government", "academic", "sport", "certificates"].includes(record.category)
+      ? representativePreview(record)
+      : undefined) ??
+    record.certificates.find((file) => !file.representative) ??
+    record.preview
+  );
+}
+
 function AchievementApp({
   record,
   onOpen,
@@ -268,15 +344,10 @@ function AchievementApp({
   onOpen: (record: Achievement, opener: HTMLButtonElement) => void;
 }) {
   const Icon = iconForAchievement(record);
-  const provider =
-    record.category === "certificates"
-      ? credentialProviders[record.issuer]
-      : undefined;
-  const evidence =
-    record.certificates.find(
-      (file) => !file.representative && /photo/i.test(file.kind ?? ""),
-    ) ?? record.certificates.find((file) => !file.representative);
-  const imageSource = evidence?.src ?? provider?.src;
+  const preview = previewForAchievement(record);
+  const photographic = /photo|patch|screenshot/i.test(preview.kind ?? "");
+  const emblem = /emblem/i.test(preview.kind ?? "");
+  const imageSource = awardIconPreviews[preview.src] ?? preview.src;
   return (
     <li className="award-app" data-category={record.category}>
       <button
@@ -289,8 +360,9 @@ function AchievementApp({
       >
         <span
           className="award-app-icon"
-          data-provider={!evidence && provider ? record.issuer : undefined}
-          data-evidence={evidence ? "true" : undefined}
+          data-provider={emblem ? record.issuer : undefined}
+          data-evidence={!emblem ? "true" : undefined}
+          data-artwork={photographic ? "photo" : emblem ? "emblem" : "document"}
           aria-hidden="true"
         >
           {imageSource ? (
@@ -686,10 +758,14 @@ export default function TrophyRoom() {
                 className="achievement-certificates"
                 aria-label="Award evidence and labelled representative images"
               >
-                {(selected.certificates.length
-                  ? selected.certificates
-                  : [selected.preview]
-                ).map((file) => (
+                {[
+                  ...(achievementPhotos[selected.title]
+                    ? [achievementPhotos[selected.title]!]
+                    : []),
+                  ...(selected.certificates.length
+                    ? selected.certificates
+                    : [selected.preview]),
+                ].map((file) => (
                   <figure key={file.src}>
                     <a
                       href={asset(file.src)}

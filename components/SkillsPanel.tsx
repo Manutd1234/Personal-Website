@@ -164,23 +164,6 @@ export default function SkillsPanel({ active = true }: { active?: boolean }) {
         />
 
         <section
-          className="skills-classic-languages"
-          aria-labelledby={languagesId}
-        >
-          <div>
-            <h2 id={languagesId}>Spoken languages</h2>
-          </div>
-          <dl>
-            {spokenLanguages.map((language) => (
-              <div key={language.title}>
-                <dt>{language.title}</dt>
-                <dd>{language.level}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-
-        <section
           className="skills-classic-credentials"
           aria-labelledby={credentialsId}
         >
@@ -296,6 +279,23 @@ export default function SkillsPanel({ active = true }: { active?: boolean }) {
               </details>
             ))}
           </div>
+        </section>
+
+        <section
+          className="skills-classic-languages"
+          aria-labelledby={languagesId}
+        >
+          <div>
+            <h2 id={languagesId}>Spoken languages</h2>
+          </div>
+          <dl>
+            {spokenLanguages.map((language) => (
+              <div key={language.title}>
+                <dt>{language.title}</dt>
+                <dd>{language.level}</dd>
+              </div>
+            ))}
+          </dl>
         </section>
       </div>
     </div>

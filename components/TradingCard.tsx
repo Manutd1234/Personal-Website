@@ -274,6 +274,7 @@ export default function TradingCard({
 
               <div
                 className="tcg-picture"
+                data-logo-layout={card.logo?.layout}
                 data-tone={
                   (card.logo ? card.logo.dark : card.stealth) ? "dark" : "light"
                 }

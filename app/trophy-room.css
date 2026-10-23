@@ -252,8 +252,8 @@
 .award-app-icon {
   display: grid;
   position: relative;
-  width: 86px;
-  height: 86px;
+  width: 102px;
+  height: 102px;
   flex: none;
   place-items: center;
   padding: 10px;
@@ -311,7 +311,7 @@
   place-items: center;
 }
 .award-app-icon[data-evidence] {
-  padding: 7px;
+  padding: 5px;
   background: linear-gradient(145deg, #fffdf7, #dedbcc);
 }
 .award-app-icon[data-evidence] .award-app-preview {
@@ -332,6 +332,19 @@
   min-height: 0;
   object-fit: contain;
   border-radius: 4px;
+}
+.award-app-icon[data-artwork="photo"] {
+  background: linear-gradient(145deg, #fffef9, #d9d4c6);
+}
+.award-app-icon[data-artwork="photo"] .award-app-preview {
+  background: #e9e5dc;
+}
+.award-app-icon[data-artwork="document"] .award-app-preview {
+  padding: 3px;
+  background: #fffef8;
+}
+.award-app-icon[data-artwork="emblem"] .award-app-preview {
+  padding: 2px;
 }
 .award-app-topic-mark {
   display: grid;
@@ -751,8 +764,8 @@
     grid-auto-rows: minmax(170px, auto);
   }
   .award-app-icon {
-    width: 74px;
-    height: 74px;
+    width: 82px;
+    height: 82px;
     padding: 8px;
     border-radius: 19px;
   }
@@ -760,7 +773,7 @@
     border-radius: 15px;
   }
   .award-app-icon[data-evidence] {
-    padding: 6px;
+    padding: 4px;
   }
   .award-app-icon[data-evidence] .award-app-preview {
     border-radius: 12px;

@@ -211,6 +211,8 @@ type Gesture = {
   moved: boolean;
   book?: number;
   element: HTMLDivElement;
+  inspecting?: boolean;
+  startTilt?: number;
 };
 
 function Book({
@@ -339,6 +341,9 @@ export default function BookCarousel({
   const [destination, setDestination] = useState<number | null>(null);
   const [opened, setOpened] = useState<number | null>(null);
   const [opening, setOpening] = useState(0);
+  const [openView, setOpenView] = useState<"read" | "inspect">("read");
+  const [inspectionOpen, setInspectionOpen] = useState(false);
+  const inspectionPose = useRef({ yaw: -24, tilt: 8 });
   const [dragging, setDragging] = useState(false);
   const [hovered, setHovered] = useState<number | null>(null);
   const [returning, setReturning] = useState(false);
@@ -519,6 +524,9 @@ export default function BookCarousel({
       returnFocusRef.current = false;
       lastOpenedRef.current = index;
       setReturning(false);
+      setOpenView("read");
+      setInspectionOpen(false);
+      setInspectionPose(-24, 8);
       setOpened(index);
       // An opening is an event even if this exact book was already open in a
       // hidden Projects tab. Keep focus in sync when React batches the same index.
@@ -529,6 +537,20 @@ export default function BookCarousel({
     // Closing then returns it to the same place, including side-cover clicks.
     if (!isOpen && Math.abs(distance) > 0.15) choose(index, false, reveal);
     else reveal();
+  }
+
+  function setInspectionPose(yaw: number, tilt: number) {
+    inspectionPose.current = { yaw, tilt: Math.max(-35, Math.min(35, tilt)) };
+    stageRef.current?.style.setProperty("--inspection-yaw", `${yaw}deg`);
+    stageRef.current?.style.setProperty(
+      "--inspection-tilt",
+      `${inspectionPose.current.tilt}deg`,
+    );
+  }
+
+  function switchView(view: "read" | "inspect") {
+    cancelGesture();
+    setOpenView(view);
   }
 
   function closeBook() {
@@ -680,16 +702,23 @@ export default function BookCarousel({
         behavior: reducedMotion ? "instant" : "smooth",
       });
     }
-  }, [isOpen, canInteract, reducedMotion]);
+  }, [isOpen, openView, inspectionOpen, canInteract, reducedMotion]);
 
   useEffect(() => {
     if (!canInteract()) return;
-    if (opened !== null) detailRef.current?.focus({ preventScroll: true });
-    else if (returnFocusRef.current && !returning) {
+    if (opened !== null) {
+      const target =
+        openView === "read"
+          ? (detailRef.current?.querySelector<HTMLElement>(
+              ".project-book-reader",
+            ) ?? detailRef.current)
+          : sceneRef.current;
+      target?.focus({ preventScroll: true });
+    } else if (returnFocusRef.current && !returning) {
       returnFocusRef.current = false;
       bookRefs.current[lastOpenedRef.current]?.focus({ preventScroll: true });
     }
-  }, [opened, opening, returning, canInteract]);
+  }, [opened, opening, openView, returning, canInteract]);
 
   useEffect(() => {
     if (!active) {
@@ -762,7 +791,7 @@ export default function BookCarousel({
   function onPointerDown(event: PointerEvent<HTMLDivElement>) {
     if (
       !canInteract() ||
-      isOpen ||
+      (isOpen && openView !== "inspect") ||
       returning ||
       !event.isPrimary ||
       event.button !== 0
@@ -772,7 +801,10 @@ export default function BookCarousel({
     cancelGesture();
     setReturning(false);
     setHovered(null);
-    const bookIndex = bookAtPoint(event.clientX, event.clientY);
+    const inspecting = isOpen && openView === "inspect";
+    const bookIndex = inspecting
+      ? undefined
+      : bookAtPoint(event.clientX, event.clientY);
     gestureRef.current = {
       pointer: event.pointerId,
       x: event.clientX,
@@ -780,7 +812,9 @@ export default function BookCarousel({
       lastX: event.clientX,
       time: performance.now(),
       velocity: 0,
-      startAngle: angleRef.current,
+      startAngle: inspecting ? inspectionPose.current.yaw : angleRef.current,
+      startTilt: inspectionPose.current.tilt,
+      inspecting,
       moved: false,
       book: bookIndex,
       element: event.currentTarget,
@@ -802,13 +836,24 @@ export default function BookCarousel({
         setHovered(bookAtPoint(event.clientX, event.clientY) ?? null);
       return;
     }
-    if (gesture.pointer !== event.pointerId || isOpen) return;
+    if (gesture.pointer !== event.pointerId) return;
     if (!canInteract()) {
       cancelGesture();
       return;
     }
     const dx = event.clientX - gesture.x;
     const dy = event.clientY - gesture.y;
+    if (gesture.inspecting) {
+      if (Math.hypot(dx, dy) > 3) {
+        gesture.moved = true;
+        setDragging(true);
+        setInspectionPose(
+          gesture.startAngle + dx * 0.65,
+          (gesture.startTilt ?? 8) - dy * 0.25,
+        );
+      }
+      return;
+    }
     if (!gesture.moved && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) {
       cancelGesture();
       return;
@@ -834,7 +879,7 @@ export default function BookCarousel({
     const gesture = gestureRef.current;
     if (!gesture || gesture.pointer !== event.pointerId) return;
     cancelGesture();
-    if (!canInteract()) return;
+    if (!canInteract() || gesture.inspecting) return;
     if (!gesture.moved) {
       if (gesture.book !== undefined) openBook(gesture.book);
       return;
@@ -852,8 +897,10 @@ export default function BookCarousel({
 
   function onPointerCancel(event: PointerEvent<HTMLDivElement>) {
     if (gestureRef.current?.pointer !== event.pointerId) return;
+    const inspecting = gestureRef.current.inspecting;
     cancelGesture();
-    if (canInteract()) rotateTo(Math.round(angleRef.current / step) * step);
+    if (canInteract() && !inspecting)
+      rotateTo(Math.round(angleRef.current / step) * step);
   }
 
   function onKeys(event: KeyboardEvent<HTMLElement>) {
@@ -876,6 +923,31 @@ export default function BookCarousel({
       if (event.key === "Escape") {
         event.preventDefault();
         closeBook();
+      } else if (openView === "inspect" && event.target === sceneRef.current) {
+        if (
+          [
+            "ArrowLeft",
+            "ArrowRight",
+            "ArrowUp",
+            "ArrowDown",
+            "Home",
+            "Enter",
+            " ",
+          ].includes(event.key)
+        ) {
+          event.preventDefault();
+          const { yaw, tilt } = inspectionPose.current;
+          if (event.key === "Home") setInspectionPose(-24, 8);
+          else if (event.key === "Enter" || event.key === " ")
+            setInspectionOpen((value) => !value);
+          else if (event.key === "ArrowLeft" || event.key === "ArrowRight")
+            setInspectionPose(
+              yaw + (event.key === "ArrowRight" ? 45 : -45),
+              tilt,
+            );
+          else
+            setInspectionPose(yaw, tilt + (event.key === "ArrowUp" ? 10 : -10));
+        }
       }
       return;
     }
@@ -921,6 +993,8 @@ export default function BookCarousel({
         className="book-stage"
         data-dragging={dragging}
         data-open={isOpen}
+        data-view={openView}
+        data-inspection-open={inspectionOpen}
         data-returning={returning}
         onKeyDown={onKeys}
         ref={stageRef}
@@ -933,17 +1007,44 @@ export default function BookCarousel({
             </button>
           ) : (
             <span className="book-drag-hint">
-              Drag to browse · Click to open
+              Drag to browse · Hover to preview · Click to read
               <span className="book-keyboard-hint">
                 ← → / Home / End · Enter opens
               </span>
             </span>
           )}
         </div>
+        {isOpen ? (
+          <div
+            className="book-view-switch"
+            role="group"
+            aria-label="Project book view"
+          >
+            <button
+              aria-pressed={openView === "read"}
+              onClick={() => switchView("read")}
+              type="button"
+            >
+              Read the book
+            </button>
+            <button
+              aria-pressed={openView === "inspect"}
+              onClick={() => switchView("inspect")}
+              type="button"
+            >
+              Inspect 360°
+            </button>
+          </div>
+        ) : null}
         <div className="book-theatre" ref={theatreRef}>
           <div
-            aria-label="Project books. Drag to rotate, or use arrow keys, Home and End. Press Enter to open the front book."
-            aria-roledescription="carousel"
+            aria-label={
+              isOpen
+                ? `${openedProject?.title} 3D book. Drag to rotate all the way around. Arrow keys rotate and tilt; Home resets; Enter opens or closes the cover.`
+                : "Project books. Drag to browse, or use arrow keys, Home and End. Press Enter to read the front book."
+            }
+            aria-roledescription={isOpen ? undefined : "carousel"}
+            aria-hidden={isOpen && openView === "read" ? true : undefined}
             className="book-scene"
             onLostPointerCapture={onPointerCancel}
             onPointerCancel={onPointerCancel}
@@ -953,7 +1054,7 @@ export default function BookCarousel({
             onPointerUp={onPointerUp}
             ref={sceneRef}
             role="region"
-            tabIndex={isOpen ? -1 : 0}
+            tabIndex={isOpen && openView === "read" ? -1 : 0}
           >
             {projects.map((project, index) => {
               // Stable SSR seed; updateAngle owns these CSS variables after
@@ -1031,13 +1132,85 @@ export default function BookCarousel({
               role="region"
               tabIndex={-1}
             >
-              {openedProject && detailIndex !== null
-                ? renderDetails(
-                    openedProject,
-                    media[openedProject.title],
-                    detailIndex,
-                  )
-                : null}
+              <div hidden={openView !== "read"}>
+                {openedProject && detailIndex !== null
+                  ? renderDetails(
+                      openedProject,
+                      media[openedProject.title],
+                      detailIndex,
+                    )
+                  : null}
+              </div>
+              {isOpen && openView === "inspect" ? (
+                <div className="book-inspection-controls">
+                  <p>
+                    <span>{openedProject?.title}</span>Drag the book to turn it
+                    in your hands.
+                  </p>
+                  <div className="book-inspection-actions">
+                    <button
+                      aria-label="Rotate book left 45 degrees"
+                      onClick={() =>
+                        setInspectionPose(
+                          inspectionPose.current.yaw - 45,
+                          inspectionPose.current.tilt,
+                        )
+                      }
+                      type="button"
+                    >
+                      ↶ Rotate
+                    </button>
+                    <button
+                      aria-pressed={inspectionOpen}
+                      onClick={() => setInspectionOpen((value) => !value)}
+                      type="button"
+                    >
+                      {inspectionOpen ? "Close cover" : "Open cover"}
+                    </button>
+                    <button
+                      aria-label="Rotate book right 45 degrees"
+                      onClick={() =>
+                        setInspectionPose(
+                          inspectionPose.current.yaw + 45,
+                          inspectionPose.current.tilt,
+                        )
+                      }
+                      type="button"
+                    >
+                      Rotate ↷
+                    </button>
+                  </div>
+                  <div
+                    className="book-inspection-presets"
+                    aria-label="Book angles"
+                  >
+                    <button
+                      onClick={() => setInspectionPose(0, 5)}
+                      type="button"
+                    >
+                      Front
+                    </button>
+                    <button
+                      onClick={() => setInspectionPose(90, 5)}
+                      type="button"
+                    >
+                      Spine
+                    </button>
+                    <button
+                      onClick={() => setInspectionPose(180, 5)}
+                      type="button"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={() => setInspectionPose(-90, 12)}
+                      type="button"
+                    >
+                      Page edges
+                    </button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -1061,7 +1234,8 @@ export default function BookCarousel({
               >
                 <span className="book-current-action">Open project</span>
                 <span className="book-current-name">
-                  {projects[displayedBook].title} <span aria-hidden="true">↗</span>
+                  {projects[displayedBook].title}{" "}
+                  <span aria-hidden="true">↗</span>
                 </span>
               </button>
             </div>

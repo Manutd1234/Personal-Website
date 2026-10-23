@@ -810,7 +810,7 @@ export const skillGroups = [
 export const spokenLanguages = [
   { title: "English", level: "Fluent" },
   { title: "Chinese", level: "Fluent" },
-  { title: "Bahasa Indonesia", level: "Intermediate" },
+  { title: "Bahasa Indonesia", level: "Fluent" },
   { title: "Hokkien", level: "Limited proficiency" },
 ];
 
