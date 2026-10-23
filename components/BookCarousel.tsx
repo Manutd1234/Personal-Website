@@ -623,7 +623,20 @@ export default function BookCarousel({
 
   useEffect(() => {
     resizeTheatreRef.current();
-  }, [isOpen]);
+    if (!isOpen || !canInteract()) return;
+    const stage = stageRef.current;
+    if (!stage) return;
+    const headerBottom =
+      document.querySelector(".classic-header")?.getBoundingClientRect()
+        .bottom ?? 0;
+    const stageTop = stage.getBoundingClientRect().top;
+    if (stageTop < headerBottom + 16) {
+      window.scrollTo({
+        top: Math.max(0, window.scrollY + stageTop - headerBottom - 16),
+        behavior: reducedMotion ? "instant" : "smooth",
+      });
+    }
+  }, [isOpen, canInteract, reducedMotion]);
 
   useEffect(() => {
     if (!canInteract()) return;
