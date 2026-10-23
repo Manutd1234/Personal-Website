@@ -195,10 +195,11 @@
 .offduty-wall {
   display: grid;
   position: relative;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 165px), 1fr));
-  gap: 34px 24px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr));
+  align-items: start;
+  gap: 28px 22px;
   margin-top: 16px;
-  padding: 38px 30px 32px;
+  padding: 34px 26px 30px;
   border: 1px solid #d3e2c8;
   border-radius: 22px;
   background:
@@ -223,13 +224,13 @@
   display: block;
   position: relative;
   width: 100%;
-  padding: 9px 9px 0;
+  padding: 10px 10px 0;
   border: 1px solid #d6dfc8;
   border-radius: 3px;
   color: #234a32;
   background: #fffef6;
   box-shadow:
-    0 10px 22px #26442a1c,
+    0 6px 15px #26442a17,
     0 2px 0 #d5dec9;
   text-align: left;
   cursor: zoom-in;
@@ -243,29 +244,30 @@
 }
 .offduty-card:hover {
   box-shadow:
-    0 20px 36px #26442a30,
+    0 12px 24px #26442a26,
     0 2px 0 #d5dec9;
 }
 .offduty-photo {
   display: block;
   aspect-ratio: 1;
+  padding: 4px;
   overflow: hidden;
   border-radius: 2px;
-  background: #e7ebdf;
+  background: #f5f2e7;
 }
 .offduty-photo img {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   pointer-events: none;
 }
 .offduty-caption {
   display: -webkit-box;
-  height: 2.8em;
-  margin: 9px 2px 12px;
+  height: 3em;
+  margin: 10px 2px 12px;
   overflow: hidden;
-  font: italic 400 14px/1.4 var(--classic-serif);
+  font: italic 400 14px/1.5 var(--classic-serif);
   letter-spacing: -0.01em;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -512,16 +514,16 @@
   color: #dfecd3;
   background: #24372a;
   box-shadow:
-    0 10px 22px #0309064d,
+    0 6px 15px #03090642,
     0 2px 0 #112616;
 }
 .dark .offduty-card:hover {
   box-shadow:
-    0 20px 36px #03090680,
+    0 12px 24px #03090670,
     0 2px 0 #112616;
 }
 .dark .offduty-photo {
-  background: #18291d;
+  background: #203025;
 }
 .dark .offduty-sticker {
   border-color: #24372a;

@@ -183,6 +183,23 @@ const mod = (value: number, length: number) =>
 const coverFor = (project: Project, index: number) =>
   COVER_DESIGNS[DESIGN_INDEX[project.title] ?? index % COVER_DESIGNS.length];
 
+type CoverPoint = { x: number; y: number };
+
+function pointInsideCover(points: readonly CoverPoint[], x: number, y: number) {
+  if (points.length !== 4) return false;
+  let direction = 0;
+  for (let index = 0; index < points.length; index++) {
+    const from = points[index];
+    const to = points[(index + 1) % points.length];
+    const cross =
+      (to.x - from.x) * (y - from.y) - (to.y - from.y) * (x - from.x);
+    if (Math.abs(cross) < 0.01) continue;
+    if (direction && Math.sign(cross) !== direction) return false;
+    direction = Math.sign(cross);
+  }
+  return direction !== 0;
+}
+
 type Gesture = {
   pointer: number;
   x: number;
@@ -214,6 +231,11 @@ function Book({
       aria-hidden="true"
       className="book-object"
       data-cover-layout={design.layout}
+      data-cover-material={
+        ["terminal", "journal", "ledger", "deal"].includes(design.layout)
+          ? "cloth"
+          : "paper"
+      }
       style={
         {
           "--cover": design.color,
@@ -228,6 +250,7 @@ function Book({
         <span>{design.title}</span>
         <small>{project.category}</small>
       </span>
+      <span className="book-back-lining" />
       <span className="book-spine">
         <b>{design.title}</b>
         <small>IW</small>
@@ -279,6 +302,11 @@ function Book({
             {project.category}
             <span>→</span>
           </span>
+          {/* Points retain the cover's real projected shape for pointer picking. */}
+          <span className="book-hit-corner" data-book-hit-corner="nw" />
+          <span className="book-hit-corner" data-book-hit-corner="ne" />
+          <span className="book-hit-corner" data-book-hit-corner="se" />
+          <span className="book-hit-corner" data-book-hit-corner="sw" />
         </span>
         <span className="book-inside-cover">
           <span>IAN WANGSA</span>
@@ -463,12 +491,19 @@ export default function BookCarousel({
     if (!canInteract() || index < 0 || index >= count) return;
     stopAnimation();
     cancelGesture();
-    lastOpenedRef.current = index;
-    setReturning(false);
-    setOpened(index);
-    // An opening is an event even if this exact book was already open in a
-    // hidden Projects tab. Keep focus in sync when React batches the same index.
-    setOpening((previous) => previous + 1);
+    const reveal = () => {
+      lastOpenedRef.current = index;
+      setReturning(false);
+      setOpened(index);
+      // An opening is an event even if this exact book was already open in a
+      // hidden Projects tab. Keep focus in sync when React batches the same index.
+      setOpening((previous) => previous + 1);
+    };
+    const distance = mod(-index * step - angleRef.current + 180, 360) - 180;
+    // Take a book from the front of the carousel before opening its cover.
+    // Closing then returns it to the same place, including side-cover clicks.
+    if (!isOpen && Math.abs(distance) > 0.15) choose(index, false, reveal);
+    else reveal();
   }
 
   function closeBook() {
@@ -649,19 +684,25 @@ export default function BookCarousel({
     stopAnimation();
     cancelGesture();
     setReturning(false);
-    // Some browsers hit the scene plane before a painted cover behind it in 3D.
-    const direct =
-      event.target instanceof Element
-        ? event.target.closest<HTMLElement>("[data-book-index]")
-        : null;
-    const hitBook =
-      direct ??
-      document
-        .elementsFromPoint(event.clientX, event.clientY)
-        .filter((element) => sceneRef.current?.contains(element))
-        .map((element) => element.closest<HTMLElement>("[data-book-index]"))
-        .find((element) => element !== null);
-    const bookIndex = hitBook?.dataset.bookIndex;
+    // Browser hit stacks are inconsistent for overlapping preserve-3d planes.
+    // Test the painted cover quadrilaterals, then prefer the nearest book.
+    // Corner probes also avoid the empty triangles in an axis-aligned rectangle.
+    const hitBooks = bookRefs.current.flatMap((button, index) => {
+      if (!button || button.disabled) return [];
+      const points = [
+        ...button.querySelectorAll<HTMLElement>("[data-book-hit-corner]"),
+      ].map((corner) => {
+        const rect = corner.getBoundingClientRect();
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      });
+      if (!pointInsideCover(points, event.clientX, event.clientY)) return [];
+      const depth = parseFloat(
+        orbitRefs.current[index]?.style.getPropertyValue("--orbit-z") ?? "0",
+      );
+      return [{ index, depth }];
+    });
+    hitBooks.sort((a, b) => b.depth - a.depth);
+    const bookIndex = hitBooks[0]?.index;
     gestureRef.current = {
       pointer: event.pointerId,
       x: event.clientX,
@@ -671,7 +712,7 @@ export default function BookCarousel({
       velocity: 0,
       startAngle: angleRef.current,
       moved: false,
-      book: bookIndex === undefined ? undefined : Number(bookIndex),
+      book: bookIndex,
       element: event.currentTarget,
     };
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -786,7 +827,7 @@ export default function BookCarousel({
       inert={!active}
     >
       <section
-        aria-label="Featured project library"
+        aria-label="Project library"
         className="book-stage"
         data-dragging={dragging}
         data-open={isOpen}
@@ -835,6 +876,7 @@ export default function BookCarousel({
                 <div
                   className="book-orbit-item"
                   data-return-book={index === lastOpenedRef.current}
+                  data-current={current === index}
                   data-selected={selected}
                   key={project.title}
                   ref={(node) => {
@@ -850,6 +892,7 @@ export default function BookCarousel({
                     } as CSSProperties
                   }
                 >
+                  <span className="book-ground-shadow" aria-hidden="true" />
                   <button
                     aria-controls={`${uniqueId}-details`}
                     aria-expanded={selected}

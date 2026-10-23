@@ -45,7 +45,7 @@ type Deal = {
   round: number;
   cycle: number;
 };
-const restingTilts = [-4, 3, -2.5, 4.5, -3.5, 2, -5, 3.5, -1.5, 4];
+const restingTilts = [-2.3, 1.5, -1.2, 2.4, -2, 1, -2.5, 1.8, -0.8, 2];
 const firstDeal: Deal = {
   order: lifePhotos.map((_, index) => index),
   frameOrder: lifePhotos.map((_, index) => index),
@@ -65,7 +65,7 @@ function reshuffle(current: Deal): Deal {
   return {
     order,
     frameOrder: order,
-    tilts: order.map(() => Math.round((Math.random() * 11 - 5.5) * 10) / 10),
+    tilts: order.map(() => Math.round((Math.random() * 6 - 3) * 10) / 10),
     round: current.round + 1,
     cycle: 0,
   };
@@ -404,6 +404,7 @@ export default function OffDutyPanel() {
             type="button"
             className="offduty-hobby is-all"
             aria-pressed={spotlight === null}
+            aria-controls={`${prefix}-photos`}
             onClick={() => spotlightHobby(null)}
           >
             <span className="offduty-hobby-icon" aria-hidden="true">
@@ -421,6 +422,7 @@ export default function OffDutyPanel() {
                 type="button"
                 className={`offduty-hobby is-${hobby.toLowerCase()}`}
                 aria-pressed={on}
+                aria-controls={`${prefix}-photos`}
                 onClick={() => spotlightHobby(on ? null : hobby)}
               >
                 <span className="offduty-hobby-icon" aria-hidden="true">
@@ -470,6 +472,7 @@ export default function OffDutyPanel() {
         </span>
       </p>
       <ul
+        id={`${prefix}-photos`}
         className="offduty-wall"
         ref={wallRef}
         data-drag={canDrag}
@@ -482,10 +485,6 @@ export default function OffDutyPanel() {
           const frame = frames[slot];
           const tilt =
             deal.tilts[frameDeck.findIndex((item) => item.id === frame.id)];
-          const frameRatio = Math.max(
-            4 / 5,
-            Math.min(4 / 3, frame.width / frame.height),
-          );
           return (
             <motion.li
               key={`${deal.round}-${spotlight ?? "all"}-${slot}`}
@@ -552,18 +551,15 @@ export default function OffDutyPanel() {
                 }}
                 whileHover={
                   canDrag && !reducedMotion
-                    ? { rotate: 0, scale: 1.06, y: -8 }
+                    ? { rotate: 0, scale: 1.03, y: -5 }
                     : undefined
                 }
-                whileTap={{ scale: 0.97 }}
+                whileTap={reducedMotion ? undefined : { scale: 0.98 }}
               >
                 {slot % 3 === 0 ? (
                   <span className="offduty-tape" aria-hidden="true" />
                 ) : null}
-                <span
-                  className="offduty-photo"
-                  style={{ aspectRatio: frameRatio }}
-                >
+                <span className="offduty-photo">
                   <img
                     src={asset(photo.thumb ?? photo.src)}
                     alt=""
@@ -574,10 +570,7 @@ export default function OffDutyPanel() {
                     draggable={false}
                     style={{
                       objectPosition: photo.position,
-                      objectFit:
-                        photo.category === "People" || photo.id !== frame.id
-                          ? "contain"
-                          : "cover",
+                      objectFit: photo.previewFit ?? "contain",
                     }}
                   />
                 </span>
