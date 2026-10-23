@@ -13,10 +13,10 @@
   --book-lime: #006d49;
   --book-width: clamp(170px, 21cqw, 238px);
   --book-height: calc(var(--book-width) * 1.42);
-  --open-book-left: 41.5%;
+  --open-book-left: 30%;
   --open-book-offset-y: calc(var(--book-height) * 0.22);
-  --open-cover-angle: -112deg;
-  --open-leaf-angle: -11deg;
+  --open-cover-angle: -48deg;
+  --open-leaf-angle: -9deg;
   position: relative;
   overflow: hidden;
   padding: 28px 34px 24px;
@@ -201,7 +201,7 @@
   transform: translateZ(calc(var(--book-half-depth) - 1px)) rotateY(0deg);
   transform-origin: 0 50%;
   transform-style: preserve-3d;
-  transition: transform 380ms cubic-bezier(0.3, 0.05, 0.25, 1);
+  transition: transform 480ms 90ms cubic-bezier(0.3, 0.05, 0.25, 1);
 }
 .book-carousel .book-front,
 .book-carousel .book-back {
@@ -486,7 +486,7 @@
   transform-origin: 0 50%;
   transform-style: preserve-3d;
   transform: translateZ(calc(var(--page-half-depth) + 0.6px)) rotateY(0deg);
-  transition: transform 300ms cubic-bezier(0.3, 0.05, 0.25, 1);
+  transition: transform 340ms cubic-bezier(0.3, 0.05, 0.25, 1);
 }
 .book-carousel .book-under-leaf {
   position: absolute;
@@ -496,16 +496,16 @@
   background: linear-gradient(90deg, #c8c0aa, #f7f2e3 9%, #f7f2e3 96%, #e3dcc9);
   transform-origin: 0 50%;
   transform: translateZ(calc(var(--page-half-depth) + 0.2px));
-  transition: transform 450ms cubic-bezier(0.22, 0.7, 0.15, 1);
+  transition: transform 380ms cubic-bezier(0.22, 0.7, 0.15, 1);
   backface-visibility: hidden;
 }
 .book-carousel .book-stage[data-open="true"] .book-under-leaf-first {
-  transform: translateZ(calc(var(--page-half-depth) + 0.2px)) rotateY(-3deg);
-  transition-delay: 420ms;
+  transform: translateZ(calc(var(--page-half-depth) + 0.2px)) rotateY(-2deg);
+  transition-delay: 260ms;
 }
 .book-carousel .book-stage[data-open="true"] .book-under-leaf-second {
-  transform: translateZ(calc(var(--page-half-depth) + 0.4px)) rotateY(-6deg);
-  transition-delay: 460ms;
+  transform: translateZ(calc(var(--page-half-depth) + 0.4px)) rotateY(-5deg);
+  transition-delay: 320ms;
 }
 .book-carousel .book-leaf-front,
 .book-carousel .book-leaf-back {
@@ -590,68 +590,88 @@
   bottom: 0;
   left: 0;
 }
+/* Fixed print zones keep every screenshot the same size and in the same place.
+   Distinct cover typefaces stay within the title area above the image mat. */
+.book-carousel .book-cover-author,
+.book-carousel .book-cover-title,
+.book-carousel .book-cover-subtitle,
+.book-carousel .book-cover-image,
+.book-carousel .book-cover-footer {
+  position: absolute;
+  left: 9%;
+  right: 7%;
+  margin: 0;
+}
 .book-carousel .book-cover-author {
   display: flex;
+  top: 6%;
   justify-content: space-between;
   gap: 6px;
-  padding-bottom: 10px;
+  padding-bottom: calc(var(--book-width) * 0.028);
   border-bottom: 1px solid currentColor;
-  font: 0.44rem/1.5 var(--book-mono);
+  font: calc(var(--book-width) * 0.03)/1.5 var(--book-mono);
   letter-spacing: 0.06em;
   opacity: 0.8;
 }
 .book-carousel .book-cover-title {
-  margin-top: 14px;
-  font: 400 clamp(1.6rem, 3cqw, 2.25rem)/1.03
+  top: 17%;
+  height: 24%;
+  font: 400 calc(var(--book-width) * 0.15)/1.03
     var(--cover-font, var(--book-serif));
   letter-spacing: -0.055em;
   white-space: pre-line;
 }
 .book-carousel .book-cover-subtitle {
-  max-width: 23ch;
-  margin-top: 8px;
-  font-size: 0.61rem;
-  line-height: 1.5;
-}
-.book-carousel .book-cover-mark {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  align-items: center;
-  justify-content: center;
-  margin: 12px 0;
-  font: 400 clamp(2.8rem, 7cqw, 5.8rem)/1 var(--cover-font);
-  letter-spacing: -0.06em;
-  opacity: 0.7;
+  top: 42%;
+  height: 8%;
+  font-size: calc(var(--book-width) * 0.038);
+  line-height: 1.45;
 }
 .book-carousel .book-cover-image {
-  display: flex;
-  flex: 1;
-  align-items: center;
+  display: grid;
+  top: 52%;
+  height: calc(var(--book-width) * 0.4725);
+  place-items: center;
+  min-width: 0;
   min-height: 0;
-  margin: 16px 0 12px;
-  padding: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: #f5f2e9;
+  overflow: hidden;
+  padding: calc(var(--book-width) * 0.027);
+  border: 1px solid #ded7c7;
+  background: #f7f3e9;
   box-shadow:
-    0 1px 2px #0002,
-    inset 0 0 0 1px #fff5;
+    0 1px 2px #0000001a,
+    inset 0 0 0 1px #fff9;
 }
 .book-carousel .book-cover-image img {
+  display: block;
   width: 100%;
   height: 100%;
+  min-width: 0;
+  min-height: 0;
   object-fit: contain;
   pointer-events: none;
 }
+.book-carousel .book-cover-mark {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--cover);
+  font: 400 calc(var(--book-width) * 0.15)/1 var(--cover-font);
+  letter-spacing: -0.06em;
+}
 .book-carousel .book-cover-footer {
   display: flex;
+  bottom: 5%;
+  height: 7%;
   align-items: end;
   justify-content: space-between;
   gap: 10px;
-  font: 0.47rem/1.6 var(--book-mono);
+  font: calc(var(--book-width) * 0.03)/1.5 var(--book-mono);
 }
 .book-carousel .book-cover-footer > span {
-  font-size: 1.1rem;
+  font-size: calc(var(--book-width) * 0.075);
 }
 .book-carousel .book-stage :focus-visible {
   outline: 2px solid var(--book-lime);
@@ -837,7 +857,7 @@
   .book-cover-hinge {
   transform: translateZ(calc(var(--book-half-depth) - 1px))
     rotateY(var(--open-cover-angle));
-  transition: transform 740ms 260ms cubic-bezier(0.22, 0.7, 0.15, 1);
+  transition: transform 680ms 140ms cubic-bezier(0.22, 0.7, 0.15, 1);
 }
 .book-carousel
   .book-stage[data-open="true"]
@@ -845,7 +865,7 @@
   .book-page-leaf {
   transform: translateZ(calc(var(--page-half-depth) + 0.6px))
     rotateY(var(--open-leaf-angle));
-  transition: transform 650ms 420ms cubic-bezier(0.22, 0.7, 0.15, 1);
+  transition: transform 560ms 350ms cubic-bezier(0.22, 0.7, 0.15, 1);
 }
 .book-carousel .book-details {
   position: relative;
@@ -984,9 +1004,9 @@
 
 @container project-books (max-width: 760px) {
   .book-carousel .book-stage {
-    --open-book-left: calc(50% + var(--book-width) * 0.45);
+    --open-book-left: 50%;
     --open-book-offset-y: calc(var(--book-height) * 0.16);
-    --open-cover-angle: -128deg;
+    --open-cover-angle: -46deg;
     --book-width: clamp(166px, 28cqw, 210px);
     padding: 20px 22px;
   }
@@ -1065,9 +1085,9 @@
 @container project-books (max-width: 480px) {
   .book-carousel .book-stage {
     --book-width: 166px;
-    --open-book-left: calc(50% + var(--book-width) * 0.11);
+    --open-book-left: 50%;
     --open-book-offset-y: 24px;
-    --open-cover-angle: -95deg;
+    --open-cover-angle: -44deg;
     --open-leaf-angle: -8deg;
     padding-inline: 17px;
     border-radius: 12px;
@@ -1116,25 +1136,6 @@
   }
   .book-carousel .book-leaf-rule {
     margin-block: 12px;
-  }
-  .book-carousel .book-cover-author {
-    font-size: 0.34rem;
-  }
-  .book-carousel .book-front {
-    padding: 15px 12px 12px 17px;
-  }
-  .book-carousel .book-cover-title {
-    font-size: 1.7rem;
-  }
-  .book-carousel .book-cover-subtitle {
-    font-size: 0.5rem;
-  }
-  .book-carousel .book-cover-image {
-    margin-top: 12px;
-    margin-bottom: 9px;
-  }
-  .book-carousel .book-cover-footer {
-    font-size: 0.38rem;
   }
   .book-carousel .book-details h3 {
     font-size: 2.15rem;
@@ -1186,54 +1187,56 @@
 
 /* Twelve covers, each typeset as its own book. No synthetic project artwork. */
 .book-carousel [data-cover-layout="terminal"] .book-cover-title {
-  font-size: clamp(1.35rem, 2.5cqw, 1.7rem);
+  font-size: calc(var(--book-width) * 0.125);
   font-weight: 750;
   letter-spacing: -0.07em;
 }
-.book-carousel [data-cover-layout="terminal"] .book-front {
-  border-top: 7px solid #c8e9ae;
+.book-carousel [data-cover-layout="terminal"] .book-front::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 7px;
+  background: #c8e9ae;
+  content: "";
 }
 .book-carousel [data-cover-layout="terminal"] .book-cover-author {
   border-bottom-style: dashed;
 }
 .book-carousel [data-cover-layout="poster"] .book-cover-title {
-  font-size: clamp(1.7rem, 3cqw, 2.1rem);
+  font-size: calc(var(--book-width) * 0.14);
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: -0.065em;
 }
-.book-carousel [data-cover-layout="poster"] .book-cover-image {
-  transform: rotate(-2deg);
-  border: 4px solid #fff9dd;
-}
 .book-carousel [data-cover-layout="journal"] .book-cover-title {
-  font-size: clamp(2.8rem, 5.4cqw, 4rem);
+  font-size: calc(var(--book-width) * 0.245);
   font-style: italic;
-  margin-top: 8px;
 }
 .book-carousel [data-cover-layout="journal"] .book-cover-author {
   letter-spacing: 0.2em;
 }
 .book-carousel [data-cover-layout="field"] .book-cover-title {
-  font-size: clamp(2.05rem, 4.1cqw, 2.9rem);
+  font-size: calc(var(--book-width) * 0.17);
   line-height: 0.92;
   letter-spacing: -0.02em;
 }
-.book-carousel [data-cover-layout="field"] .book-front {
-  border-left: 8px solid #203550;
-  padding-left: 15px;
+.book-carousel [data-cover-layout="field"] .book-front::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 8px;
+  background: #203550;
+  content: "";
 }
 .book-carousel [data-cover-layout="dossier"] .book-cover-title {
-  font-size: clamp(2rem, 4cqw, 2.9rem);
+  font-size: calc(var(--book-width) * 0.17);
   line-height: 0.98;
   font-weight: 700;
 }
-.book-carousel [data-cover-layout="dossier"] .book-cover-image {
-  border-color: #f7edbc;
-  padding: 2px;
-}
 .book-carousel [data-cover-layout="orbit"] .book-cover-title {
-  font-size: clamp(2.8rem, 5.4cqw, 4rem);
+  font-size: calc(var(--book-width) * 0.245);
   font-style: italic;
 }
 .book-carousel [data-cover-layout="orbit"] .book-cover-mark {
@@ -1246,7 +1249,7 @@
     radial-gradient(circle at 70% 65%, #e3d5f0 0, transparent 55%), var(--cover);
 }
 .book-carousel [data-cover-layout="ledger"] .book-cover-title {
-  font-size: clamp(1.85rem, 3.7cqw, 2.65rem);
+  font-size: calc(var(--book-width) * 0.145);
   font-weight: 700;
   line-height: 1.02;
 }
@@ -1258,7 +1261,7 @@
   letter-spacing: 0.04em;
 }
 .book-carousel [data-cover-layout="clinical"] .book-cover-title {
-  font-size: clamp(1.55rem, 3cqw, 2.05rem);
+  font-size: calc(var(--book-width) * 0.13);
   font-weight: 700;
 }
 .book-carousel [data-cover-layout="clinical"] .book-cover-mark {
@@ -1273,7 +1276,7 @@
   letter-spacing: 0.08em;
 }
 .book-carousel [data-cover-layout="gesture"] .book-cover-title {
-  font-size: clamp(2.2rem, 4.5cqw, 3.1rem);
+  font-size: calc(var(--book-width) * 0.17);
   font-weight: 800;
   line-height: 0.93;
 }
@@ -1283,7 +1286,7 @@
   font-style: italic;
 }
 .book-carousel [data-cover-layout="notebook"] .book-cover-title {
-  font-size: clamp(2.6rem, 5cqw, 3.6rem);
+  font-size: calc(var(--book-width) * 0.245);
   font-weight: 800;
   letter-spacing: -0.075em;
 }
@@ -1306,7 +1309,7 @@
     var(--cover);
 }
 .book-carousel [data-cover-layout="deal"] .book-cover-title {
-  font-size: clamp(2.2rem, 4.5cqw, 3.15rem);
+  font-size: calc(var(--book-width) * 0.17);
   font-style: italic;
   line-height: 0.95;
 }
@@ -1315,13 +1318,13 @@
   font-size: clamp(4rem, 9cqw, 6.3rem);
 }
 .book-carousel [data-cover-layout="strategy"] .book-cover-title {
-  font-size: clamp(1.75rem, 3.2cqw, 2.35rem);
+  font-size: calc(var(--book-width) * 0.145);
   font-weight: 800;
 }
 .book-carousel [data-cover-layout="strategy"] .book-cover-subtitle {
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-size: 0.56rem;
+  font-size: calc(var(--book-width) * 0.033);
 }
 .book-carousel [data-cover-layout="strategy"] .book-cover-mark {
   font: italic 400 clamp(1.9rem, 4cqw, 2.8rem)/1.2 var(--book-serif);

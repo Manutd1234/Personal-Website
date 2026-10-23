@@ -1,5 +1,4 @@
 "use client";
-
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import {
   ArrowLeft,
@@ -12,13 +11,14 @@ import {
   Users,
   UtensilsCrossed,
   X,
+  Maximize2,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { lifePhotos, type LifePhoto } from "@/content/life-photos";
 import { asset } from "@/content/paths";
 import { useMotionPreference } from "./useMotionPreference";
-
+import { useVisiblePlayback } from "./useVisiblePlayback";
 type Hobby = LifePhoto["category"];
 const hobbyIcons: Record<Hobby, LucideIcon> = {
   Travel: Plane,
@@ -35,56 +35,7 @@ const hobbies = (Object.keys(hobbyIcons) as Hobby[])
   .filter(({ count }) => count > 0);
 const mod = (value: number, length: number) =>
   ((value % length) + length) % length;
-
-// The first deal is fixed so the static export and first client render agree;
-// shuffles after that are random.
-type Deal = {
-  order: number[];
-  frameOrder: number[];
-  tilts: number[];
-  round: number;
-  cycle: number;
-};
-const restingTilts = [-2.3, 1.5, -1.2, 2.4, -2, 1, -2.5, 1.8, -0.8, 2];
-const firstDeal: Deal = {
-  order: lifePhotos.map((_, index) => index),
-  frameOrder: lifePhotos.map((_, index) => index),
-  tilts: lifePhotos.map(
-    (_, index) => restingTilts[index % restingTilts.length],
-  ),
-  round: 0,
-  cycle: 0,
-};
-
-function reshuffle(current: Deal): Deal {
-  const order = [...current.order];
-  for (let i = order.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [order[i], order[j]] = [order[j], order[i]];
-  }
-  return {
-    order,
-    frameOrder: order,
-    tilts: order.map(() => Math.round((Math.random() * 6 - 3) * 10) / 10),
-    round: current.round + 1,
-    cycle: 0,
-  };
-}
-
-// Dragging is for mouse and trackpad on wide screens; touch keeps native
-// swiping through the strip.
-function useCanDrag() {
-  const [canDrag, setCanDrag] = useState(false);
-  useEffect(() => {
-    const query = window.matchMedia("(pointer: fine) and (min-width: 841px)");
-    const sync = () => setCanDrag(query.matches);
-    sync();
-    query.addEventListener("change", sync);
-    return () => query.removeEventListener("change", sync);
-  }, []);
-  return canDrag;
-}
-
+const firstOrder = lifePhotos.map((_, index) => index);
 function LightboxPhoto({ photo }: { photo: LifePhoto }) {
   const [ready, setReady] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -124,226 +75,121 @@ function LightboxPhoto({ photo }: { photo: LifePhoto }) {
 }
 
 export default function OffDutyPanel() {
-  const [deal, setDeal] = useState(firstDeal);
+  const [order, setOrder] = useState(firstOrder);
   const [spotlight, setSpotlight] = useState<Hobby | null>(null);
-  const [topId, setTopId] = useState<string | null>(null);
-  const [focusSlot, setFocusSlot] = useState(0);
+  const [cursor, setCursor] = useState(0);
   const [openId, setOpenId] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [autoPlay, setAutoPlay] = useState(true);
-  const [inView, setInView] = useState(false);
-  const [pageVisible, setPageVisible] = useState(false);
-  const [panelVisible, setPanelVisible] = useState(false);
+  const [interacting, setInteracting] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const wallRef = useRef<HTMLUListElement>(null);
-  const cardRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const { ref: rootRef, visible } = useVisiblePlayback<HTMLDivElement>();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
-  const suppressClickUntilRef = useRef(0);
-  const cycleCursorRef = useRef(0);
-  const canDrag = useCanDrag();
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const suppressClick = useRef(false);
   const reducedMotion = useMotionPreference();
   const prefix = useId();
-
-  const deck = deal.order.map((index) => lifePhotos[index]);
-  const pool = spotlight
-    ? deck.filter((photo) => photo.category === spotlight)
-    : deck;
-  // Auto-play changes the pictures in the slots, never their physical frames.
-  // This also preserves a card's dragged position until a manual shuffle.
-  const frameDeck = deal.frameOrder.map((index) => lifePhotos[index]);
-  const frames = spotlight
-    ? frameDeck.filter((photo) => photo.category === spotlight)
-    : frameDeck;
+  const pool = order
+    .map((index) => lifePhotos[index])
+    .filter((photo) => !spotlight || photo.category === spotlight);
+  const current = pool[mod(cursor, pool.length)];
   const openIndex = pool.findIndex((photo) => photo.id === openId);
   const shown = openIndex >= 0 ? pool[openIndex] : null;
   const lightboxOpen = openId !== null;
-  const credits = pool.flatMap(({ id, category, credit }) =>
-    credit ? [{ id, category, ...credit }] : [],
-  );
-  const previousSrc =
-    openIndex >= 0 ? pool[mod(openIndex - 1, pool.length)]?.src : undefined;
-  const nextSrc =
-    openIndex >= 0 ? pool[mod(openIndex + 1, pool.length)]?.src : undefined;
   const autoPlayAvailable = !reducedMotion && pool.length > 1;
-  const canAutoCycle =
+  const running =
     autoPlay &&
     autoPlayAvailable &&
-    inView &&
-    pageVisible &&
-    panelVisible &&
+    visible &&
+    !interacting &&
     !hovered &&
-    !focused &&
-    !dragging &&
     !lightboxOpen;
-
+  const Icon = current ? hobbyIcons[current.category] : Sparkles;
   useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-    const panel = root.closest<HTMLElement>('[role="tabpanel"]');
-    const syncVisibility = () => {
-      setPageVisible(document.visibilityState === "visible");
-      setPanelVisible(!root.closest("[hidden], [inert], [aria-hidden='true']"));
-    };
-    syncVisibility();
-    const intersection = new IntersectionObserver(
-      ([entry]) => setInView(entry.isIntersecting),
-      { threshold: 0.05 },
+    if (!running) return;
+    const timer = window.setTimeout(
+      () => setCursor((value) => (value + 1) % pool.length),
+      6500,
     );
-    intersection.observe(root);
-    const mutation = new MutationObserver(syncVisibility);
-    if (panel)
-      mutation.observe(panel, {
-        attributes: true,
-        attributeFilter: ["hidden", "inert", "aria-hidden"],
-      });
-    document.addEventListener("visibilitychange", syncVisibility);
-    return () => {
-      intersection.disconnect();
-      mutation.disconnect();
-      document.removeEventListener("visibilitychange", syncVisibility);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!canAutoCycle) return;
-    const timer = window.setTimeout(() => {
-      const root = rootRef.current;
-      if (
-        document.visibilityState !== "visible" ||
-        !root ||
-        root.closest("[hidden], [inert], [aria-hidden='true']")
-      )
-        return;
-      const cursor = cycleCursorRef.current++;
-      setDeal((current) => {
-        const matchingSlots = current.order.flatMap((index, slot) =>
-          !spotlight || lifePhotos[index].category === spotlight ? [slot] : [],
-        );
-        if (matchingSlots.length < 2) return current;
-        const first = matchingSlots[cursor % matchingSlots.length];
-        const second = matchingSlots[(cursor + 1) % matchingSlots.length];
-        const order = [...current.order];
-        [order[first], order[second]] = [order[second], order[first]];
-        return { ...current, order, cycle: current.cycle + 1 };
-      });
-    }, 7000);
     return () => window.clearTimeout(timer);
-  }, [canAutoCycle, deal.cycle, deal.round, spotlight]);
-
+  }, [running, cursor, pool.length, spotlight, order]);
+  const preloadSrc =
+    pool[mod((lightboxOpen ? openIndex : cursor) + 1, pool.length)]?.src;
   useEffect(() => {
-    wallRef.current?.scrollTo({ left: 0, behavior: "instant" });
-  }, [spotlight, deal.round]);
-
-  useEffect(() => {
-    if (!lightboxOpen) return;
-    [...new Set([previousSrc, nextSrc])].forEach((src) => {
-      if (src) {
-        const image = new Image();
-        image.src = asset(src);
-      }
-    });
-  }, [lightboxOpen, previousSrc, nextSrc]);
-
+    if (!visible || !preloadSrc) return;
+    const image = new Image();
+    image.src = asset(preloadSrc);
+  }, [visible, preloadSrc]);
   useEffect(() => {
     const close = () => setOpenId(null);
     window.addEventListener("hashchange", close);
     return () => window.removeEventListener("hashchange", close);
   }, []);
-
   useEffect(() => {
-    if (!lightboxOpen) return undefined;
+    if (!lightboxOpen) return;
     const dialog = dialogRef.current;
-    if (!dialog) return undefined;
-    const body = document.body;
-    const html = document.documentElement;
+    if (!dialog) return;
+    const body = document.body,
+      html = document.documentElement;
     const previous = {
-      bodyOverflow: body.style.overflow,
-      htmlOverflow: html.style.overflow,
-      paddingRight: body.style.paddingRight,
+      body: body.style.overflow,
+      html: html.style.overflow,
+      padding: body.style.paddingRight,
       x: window.scrollX,
       y: window.scrollY,
     };
     const scrollbar = Math.max(0, window.innerWidth - html.clientWidth);
     if (scrollbar > 0)
-      body.style.paddingRight = `${parseFloat(window.getComputedStyle(body).paddingRight) + scrollbar}px`;
+      body.style.paddingRight = `${parseFloat(getComputedStyle(body).paddingRight) + scrollbar}px`;
     body.style.overflow = "hidden";
     html.style.overflow = "hidden";
     if (!dialog.open) dialog.showModal();
     closeRef.current?.focus({ preventScroll: true });
     return () => {
       if (dialog.open) dialog.close();
-      body.style.overflow = previous.bodyOverflow;
-      html.style.overflow = previous.htmlOverflow;
-      body.style.paddingRight = previous.paddingRight;
-      const opener = openerRef.current;
-      if (opener?.isConnected) {
+      body.style.overflow = previous.body;
+      html.style.overflow = previous.html;
+      body.style.paddingRight = previous.padding;
+      if (
+        openerRef.current?.isConnected &&
+        !openerRef.current.closest('[hidden], [inert], [aria-hidden="true"]')
+      ) {
         window.scrollTo({
           left: previous.x,
           top: previous.y,
           behavior: "instant",
         });
-        opener.focus({ preventScroll: true });
+        openerRef.current.focus({ preventScroll: true });
       }
     };
   }, [lightboxOpen]);
-
-  function spotlightHobby(hobby: Hobby | null) {
-    cycleCursorRef.current = 0;
+  function choose(hobby: Hobby | null) {
     setSpotlight(hobby);
-    setFocusSlot(0);
-    setTopId(null);
-    const matches = hobby
-      ? deck.filter((photo) => photo.category === hobby).length
-      : deck.length;
-    setStatus(
-      hobby
-        ? `Showing ${matches} ${hobby.toLowerCase()} photo${matches === 1 ? "" : "s"}.`
-        : `Showing all ${matches} photos.`,
-    );
+    setCursor(0);
+    setStatus(hobby ? `${hobby} photos.` : "All photos.");
   }
-
+  function browse(offset: number) {
+    setCursor((value) => mod(value + offset, pool.length));
+    setAutoPlay(false);
+  }
+  function move(offset: number) {
+    if (openIndex < 0) return;
+    const next = mod(openIndex + offset, pool.length);
+    setOpenId(pool[next].id);
+    setCursor(next);
+  }
   function shuffle() {
-    cycleCursorRef.current = 0;
-    setDeal(reshuffle);
-    setTopId(null);
-    setFocusSlot(0);
+    const next = [...order];
+    for (let i = next.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [next[i], next[j]] = [next[j], next[i]];
+    }
+    setOrder(next);
+    setCursor(0);
     setStatus("Photos shuffled.");
   }
-
-  function openPhoto(photo: LifePhoto, opener: HTMLElement) {
-    openerRef.current = opener;
-    setOpenId(photo.id);
-  }
-
-  function move(offset: number) {
-    if (pool.length > 1 && openIndex >= 0)
-      setOpenId(pool[mod(openIndex + offset, pool.length)].id);
-  }
-
-  function wallKeys(event: KeyboardEvent<HTMLUListElement>) {
-    if (!pool.length) return;
-    const next =
-      event.key === "ArrowRight" || event.key === "ArrowDown"
-        ? focusSlot + 1
-        : event.key === "ArrowLeft" || event.key === "ArrowUp"
-          ? focusSlot - 1
-          : event.key === "Home"
-            ? 0
-            : event.key === "End"
-              ? pool.length - 1
-              : null;
-    if (next === null) return;
-    event.preventDefault();
-    const slot = mod(next, pool.length);
-    setFocusSlot(slot);
-    cardRefs.current[slot]?.focus();
-  }
-
   function lightboxKeys(event: KeyboardEvent<HTMLDialogElement>) {
     if (event.key === "Escape") {
       event.preventDefault();
@@ -357,8 +203,8 @@ export default function OffDutyPanel() {
           "button:not(:disabled), a[href]",
         ),
       ];
-      const first = targets[0];
-      const last = targets[targets.length - 1];
+      const first = targets[0],
+        last = targets[targets.length - 1];
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
         last?.focus();
@@ -368,30 +214,18 @@ export default function OffDutyPanel() {
       }
     }
   }
-
-  if (!lifePhotos.length)
-    return (
-      <div className="life-gallery-empty">
-        Photos will appear here once they’re added.
-      </div>
-    );
-
+  if (!current) return null;
   return (
     <div
-      className="offduty"
+      className="offduty offduty-portrait-gallery"
       ref={rootRef}
-      onPointerEnter={(event) => {
-        if (event.pointerType === "mouse") setHovered(true);
-      }}
-      onPointerLeave={(event) => {
-        if (event.pointerType === "mouse") setHovered(false);
-      }}
+      data-running={running}
       onFocusCapture={(event) =>
-        setFocused(event.target.matches(":focus-visible"))
+        setInteracting(event.target.matches(":focus-visible"))
       }
       onBlurCapture={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget))
-          setFocused(false);
+          setInteracting(false);
       }}
     >
       <div className="offduty-toolbar">
@@ -405,31 +239,28 @@ export default function OffDutyPanel() {
             className="offduty-hobby is-all"
             aria-pressed={spotlight === null}
             aria-controls={`${prefix}-photos`}
-            onClick={() => spotlightHobby(null)}
+            onClick={() => choose(null)}
           >
-            <span className="offduty-hobby-icon" aria-hidden="true">
+            <span className="offduty-hobby-icon">
               <Sparkles size={14} />
             </span>
             Everything
-            <span className="offduty-hobby-count">{lifePhotos.length}</span>
           </button>
-          {hobbies.map(({ hobby, count }) => {
-            const Icon = hobbyIcons[hobby];
-            const on = spotlight === hobby;
+          {hobbies.map(({ hobby }) => {
+            const HobbyIcon = hobbyIcons[hobby];
             return (
               <button
                 key={hobby}
                 type="button"
                 className={`offduty-hobby is-${hobby.toLowerCase()}`}
-                aria-pressed={on}
+                aria-pressed={spotlight === hobby}
                 aria-controls={`${prefix}-photos`}
-                onClick={() => spotlightHobby(on ? null : hobby)}
+                onClick={() => choose(hobby)}
               >
-                <span className="offduty-hobby-icon" aria-hidden="true">
-                  <Icon size={14} />
+                <span className="offduty-hobby-icon">
+                  <HobbyIcon size={14} />
                 </span>
                 {hobby}
-                <span className="offduty-hobby-count">{count}</span>
               </button>
             );
           })}
@@ -441,168 +272,165 @@ export default function OffDutyPanel() {
             role="switch"
             aria-checked={autoPlay && autoPlayAvailable}
             aria-label="Auto-play photos"
-            aria-describedby={`${prefix}-autoplay-help`}
             disabled={!autoPlayAvailable}
-            onClick={() => setAutoPlay((current) => !current)}
+            onClick={() => setAutoPlay((value) => !value)}
           >
             <span className="offduty-switch" aria-hidden="true" />
             Auto-play
-            <span className="offduty-autoplay-state" aria-hidden="true">
+            <span className="offduty-autoplay-state">
               {autoPlay && autoPlayAvailable ? "On" : "Off"}
             </span>
           </button>
           <button type="button" className="offduty-shuffle" onClick={shuffle}>
-            <Shuffle size={15} aria-hidden="true" /> Shuffle
+            <Shuffle size={15} />
+            Shuffle
           </button>
         </div>
       </div>
-      <span className="sr-only" id={`${prefix}-autoplay-help`}>
-        {reducedMotion
-          ? "Automatic photo changes are off because reduced motion is enabled."
-          : pool.length < 2
-            ? "Automatic photo changes need at least two photos."
-            : "Changes two photos every seven seconds while the board is visible and idle. Stops while you interact with the board."}
-      </span>
-      <p className="offduty-help" id={`${prefix}-help`}>
-        <span className="offduty-help-fine">
-          Drag to rearrange. Click a photo to open it.
-        </span>
-        <span className="offduty-help-touch">
-          Swipe to browse. Tap a photo to open it.
-        </span>
-      </p>
-      <ul
+      <div
         id={`${prefix}-photos`}
-        className="offduty-wall"
-        ref={wallRef}
-        data-drag={canDrag}
+        className={`life-portrait-stage is-${current.category.toLowerCase()}`}
+        role="region"
+        aria-roledescription="carousel"
         aria-label="Photos from life outside the code"
-        aria-describedby={`${prefix}-help`}
-        onKeyDown={wallKeys}
       >
-        {pool.map((photo, slot) => {
-          const Icon = hobbyIcons[photo.category];
-          const frame = frames[slot];
-          const tilt =
-            deal.tilts[frameDeck.findIndex((item) => item.id === frame.id)];
-          return (
-            <motion.li
-              key={`${deal.round}-${spotlight ?? "all"}-${slot}`}
-              className="offduty-polaroid"
-              data-top={topId === photo.id}
-              drag={canDrag}
-              dragConstraints={wallRef}
-              dragElastic={0.18}
-              dragTransition={{ power: 0.25, timeConstant: 220 }}
-              onPointerDown={() => canDrag && setTopId(photo.id)}
-              // framer-motion reports the drag end after the release click, so
-              // block clicks from the moment a drag starts.
-              onDragStart={() => {
-                setDragging(true);
-                suppressClickUntilRef.current = Infinity;
-              }}
-              onDragEnd={() => {
-                setDragging(false);
-                suppressClickUntilRef.current = performance.now() + 150;
-              }}
-            >
-              <motion.button
-                key={photo.id}
-                type="button"
-                className="offduty-card"
-                ref={(element) => {
-                  cardRefs.current[slot] = element;
-                }}
-                tabIndex={slot === focusSlot ? 0 : -1}
-                onFocus={() => setFocusSlot(slot)}
-                onClick={(event) => {
-                  if (
-                    event.detail !== 0 &&
-                    performance.now() < suppressClickUntilRef.current
-                  )
-                    return;
-                  openPhoto(photo, event.currentTarget);
-                }}
-                aria-label={`${photo.category}: ${photo.caption} Open photo.`}
-                initial={
-                  reducedMotion
-                    ? false
-                    : deal.cycle > 0
-                      ? { opacity: 0, rotate: tilt }
-                      : deal.round === 0
-                        ? false
-                        : { opacity: 0, y: -70, rotate: tilt * 4, scale: 0.8 }
-                }
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                  rotate: tilt,
-                  scale: 1,
-                  transition: reducedMotion
-                    ? { duration: 0 }
-                    : deal.cycle > 0
-                      ? { duration: 0.32, ease: "easeOut" }
-                      : {
-                          type: "spring",
-                          stiffness: 240,
-                          damping: 18,
-                          delay: deal.round && !spotlight ? slot * 0.04 : 0,
-                        },
-                }}
-                whileHover={
-                  canDrag && !reducedMotion
-                    ? { rotate: 0, scale: 1.03, y: -5 }
-                    : undefined
-                }
-                whileTap={reducedMotion ? undefined : { scale: 0.98 }}
-              >
-                {slot % 3 === 0 ? (
-                  <span className="offduty-tape" aria-hidden="true" />
-                ) : null}
-                <span className="offduty-photo">
-                  <img
-                    src={asset(photo.thumb ?? photo.src)}
-                    alt=""
-                    width={photo.width}
-                    height={photo.height}
-                    loading="lazy"
-                    decoding="async"
-                    draggable={false}
-                    style={{
-                      objectPosition: photo.position,
-                      objectFit: photo.previewFit ?? "contain",
-                    }}
-                  />
-                </span>
-                <span className="offduty-caption">{photo.caption}</span>
-                <span
-                  className={`offduty-sticker is-${photo.category.toLowerCase()}`}
+        <div className="life-portrait-margin" aria-hidden="true">
+          <span>
+            A FEW THINGS
+            <br />I COME BACK TO.
+          </span>
+          <span className="life-portrait-handnote">Life, in between.</span>
+        </div>
+        <div
+          className="life-portrait-frame"
+          onPointerEnter={(event) => {
+            if (event.pointerType === "mouse") setHovered(true);
+          }}
+          onPointerLeave={() => setHovered(false)}
+        >
+          <span className="offduty-tape" aria-hidden="true" />
+          <button
+            type="button"
+            className="life-portrait-open"
+            aria-label={`${current.category}: ${current.caption} Open photo.`}
+            onPointerDown={(event) => {
+              touchStart.current = { x: event.clientX, y: event.clientY };
+              suppressClick.current = false;
+            }}
+            onPointerUp={(event) => {
+              const start = touchStart.current;
+              touchStart.current = null;
+              if (
+                start &&
+                Math.abs(event.clientX - start.x) > 55 &&
+                Math.abs(event.clientX - start.x) >
+                  Math.abs(event.clientY - start.y) * 1.3
+              ) {
+                suppressClick.current = true;
+                browse(event.clientX < start.x ? 1 : -1);
+              }
+            }}
+            onPointerCancel={() => {
+              touchStart.current = null;
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+                event.preventDefault();
+                browse(event.key === "ArrowRight" ? 1 : -1);
+              }
+            }}
+            onClick={(event) => {
+              if (suppressClick.current) {
+                suppressClick.current = false;
+                return;
+              }
+              openerRef.current = event.currentTarget;
+              setOpenId(current.id);
+            }}
+          >
+            <span className="life-portrait-image">
+              <AnimatePresence initial={false}>
+                <motion.span
+                  key={current.id}
+                  className="life-portrait-slide"
+                  initial={{ opacity: reducedMotion ? 1 : 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: reducedMotion ? 0 : 0.6 }}
                   aria-hidden="true"
                 >
-                  <Icon size={14} />
-                </span>
-              </motion.button>
-            </motion.li>
-          );
-        })}
-      </ul>
-      {credits.length ? (
-        <p className="offduty-credits">
-          {credits.map((credit) => (
-            <span key={credit.id}>
-              {credit.category} photo:{" "}
-              <a href={credit.url} target="_blank" rel="noreferrer">
-                {credit.label}
-              </a>
-              {" · "}
-              <a href={credit.licenseUrl} target="_blank" rel="noreferrer">
-                CC BY 2.0
-              </a>
+                  <img
+                    src={asset(current.src)}
+                    alt=""
+                    width={current.width}
+                    height={current.height}
+                    draggable={false}
+                    decoding="async"
+                  />
+                </motion.span>
+              </AnimatePresence>
+              <span className="life-portrait-expand">
+                <Maximize2 size={15} />
+              </span>
             </span>
-          ))}
-        </p>
-      ) : null}
-      <span className="sr-only" role="status" aria-live="polite">
+            <span
+              className="life-portrait-caption"
+              aria-live={autoPlay ? "off" : "polite"}
+            >
+              {current.caption}
+            </span>
+          </button>
+          <motion.span
+            key={current.category}
+            className={`life-portrait-sticker is-${current.category.toLowerCase()}`}
+            aria-hidden="true"
+            initial={reducedMotion ? false : { rotate: -15, scale: 0.85 }}
+            animate={{ rotate: 0, scale: 1 }}
+            transition={{ type: "spring", stiffness: 240, damping: 20 }}
+          >
+            <Icon size={28} />
+          </motion.span>
+        </div>
+        <div className="life-portrait-side">
+          <span
+            className={`life-portrait-category is-${current.category.toLowerCase()}`}
+          >
+            <Icon size={17} />
+            {current.category}
+          </span>
+          <span className="life-portrait-count">
+            {String(mod(cursor, pool.length) + 1).padStart(2, "0")} <i>/</i>{" "}
+            {String(pool.length).padStart(2, "0")}
+          </span>
+          <div className="life-portrait-nav">
+            <button
+              type="button"
+              onClick={() => browse(-1)}
+              aria-label="Previous portrait"
+              disabled={pool.length < 2}
+            >
+              <ArrowLeft size={19} />
+            </button>
+            <button
+              type="button"
+              onClick={() => browse(1)}
+              aria-label="Next portrait"
+              disabled={pool.length < 2}
+            >
+              <ArrowRight size={19} />
+            </button>
+          </div>
+          <span className="life-portrait-progress" aria-hidden="true">
+            <i key={`${current.id}-${running}`} />
+          </span>
+          <small>
+            {reducedMotion
+              ? "Take your time. Browse at your own pace."
+              : "A little window into life outside work."}
+          </small>
+        </div>
+      </div>
+      <span className="sr-only" role="status">
         {status}
       </span>
       <dialog

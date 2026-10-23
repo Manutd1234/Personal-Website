@@ -147,7 +147,7 @@ export default function SkillsPanel({ active = true }: { active?: boolean }) {
                 "No matching skills. Try another search."
               )
             ) : (
-              "Drag a skill. Pick a category to light it up."
+              "Drag the labels around. Choose a category to bring it into focus."
             )}
           </p>
           {filtering ? (

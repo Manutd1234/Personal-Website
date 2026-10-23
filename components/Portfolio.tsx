@@ -150,9 +150,7 @@ export default function Portfolio() {
               aria-label="Ian Wangsa, back to top"
             >
               <span>IW</span>
-              <span className="classic-wordmark-text">
-                Ian Wangsa<small>Software engineer</small>
-              </span>
+              <span className="classic-wordmark-text">Ian Wangsa</span>
             </a>
             <nav aria-label="Primary navigation">
               <div

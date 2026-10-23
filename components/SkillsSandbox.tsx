@@ -9,12 +9,9 @@ import type {
 import { ArrowDown, ChevronDown, List, RotateCcw } from "lucide-react";
 import { skillGroups } from "@/content/portfolio";
 import { useMotionPreference } from "./useMotionPreference";
-import {
-  containSkillBody,
-  createSkillBody,
-  createSkillWalls,
-} from "./skill-physics";
+import { containSkillBody, createSkillWalls } from "./skill-physics";
 import "@/app/skills-blocks.css";
+import "@/app/skills-atelier.css";
 
 type MatterLibrary = typeof import("matter-js");
 const skills = skillGroups
@@ -30,6 +27,10 @@ const skills = skillGroups
   .sort(
     (a, b) => a.itemIndex - b.itemIndex || a.categoryIndex - b.categoryIndex,
   );
+// Stable forms keep labels recognisable between drops; only their placement changes.
+const paperForms = ["scrap", "ticket", "pebble", "tag"] as const;
+const paperForm = (index: number) =>
+  paperForms[(index * 7 + Math.floor(index / 5)) % paperForms.length];
 const STEP = 1000 / 60;
 const clamp = (value: number, low: number, high: number) =>
   Math.min(high, Math.max(low, value));
@@ -178,14 +179,14 @@ export default function SkillsSandbox({
       (element): element is HTMLButtonElement => Boolean(element),
     );
     if (!world || elements.length !== skills.length) return;
-    const { Body, Composite, Constraint, Engine, Sleeping } = matter;
+    const { Bodies, Body, Composite, Constraint, Engine, Sleeping } = matter;
     const engine = Engine.create({
       enableSleeping: true,
       positionIterations: 8,
       velocityIterations: 6,
       constraintIterations: 3,
     });
-    engine.gravity.y = 0.36;
+    engine.gravity.y = 0.46;
     let bodies: PhysicsBody[] = [];
     let sizes: { width: number; height: number }[] = [];
     let homes: { x: number; y: number }[] = [];
@@ -193,6 +194,8 @@ export default function SkillsSandbox({
     let dropOrder: number[] = [];
     let nextDrop = 0;
     let nextDropAt = 0;
+    let handfulRemaining = 0;
+    let releaseX = 0;
     let width = 0,
       height = 0,
       frame = 0,
@@ -246,7 +249,7 @@ export default function SkillsSandbox({
         Body.setAngle(body, 0);
       } else {
         const size = sizes[index];
-        const angle = (Math.random() - 0.5) * 0.2;
+        const angle = (Math.random() - 0.5) * 0.58;
         const halfWidth =
           (Math.abs(Math.cos(angle)) * size.width +
             Math.abs(Math.sin(angle)) * size.height) /
@@ -257,7 +260,7 @@ export default function SkillsSandbox({
           2;
         const left = halfWidth + 11;
         const right = Math.max(left, width - halfWidth - 11);
-        const y = halfHeight + 12 + Math.random() * 13;
+        const y = halfHeight + 10 + Math.random() * 22;
         const entering = bodies.filter(
           (other, otherIndex) =>
             spawned[otherIndex] && other.bounds.min.y < y + halfHeight + 8,
@@ -267,7 +270,18 @@ export default function SkillsSandbox({
         // Wait for a real gap instead of inserting overlapping bodies and
         // letting the collision solver push the pile apart.
         for (let attempt = 0; attempt < 12; attempt += 1) {
-          const x = left + Math.random() * (right - left);
+          // A handful enters from one loose area. If it is occupied, use a
+          // real gap elsewhere rather than forcing the pile out of the way.
+          const x =
+            attempt < 5
+              ? clamp(
+                  releaseX +
+                    (Math.random() + Math.random() - 1) *
+                      Math.min(230, width * 0.36),
+                  left,
+                  right,
+                )
+              : left + Math.random() * (right - left);
           Body.setPosition(body, { x, y });
           if (!matter!.Query.collides(body, entering).length) {
             clear = true;
@@ -276,9 +290,9 @@ export default function SkillsSandbox({
         }
         if (!clear) return false;
       }
-      Body.setAngularVelocity(body, atHome ? 0 : (Math.random() - 0.5) * 0.005);
+      Body.setAngularVelocity(body, atHome ? 0 : (Math.random() - 0.5) * 0.012);
       Body.setVelocity(body, {
-        x: atHome ? 0 : (Math.random() - 0.5) * 0.65,
+        x: atHome ? 0 : (Math.random() - 0.5) * 0.9,
         y: 0,
       });
       Composite.add(engine.world, body);
@@ -313,14 +327,15 @@ export default function SkillsSandbox({
         dropOrder[nextDrop],
       ];
       nextDrop += 1;
-      // A little breathing room in narrow boards; varied releases feel like
-      // a handful being let go, without a burst of overdue pills after a pause.
-      const pace = clamp(12500 / width, 22, 52);
-      nextDropAt =
-        elapsed +
-        pace +
-        Math.random() * 65 +
-        (Math.random() < 0.16 ? 65 + Math.random() * 55 : 0);
+      handfulRemaining -= 1;
+      const pace = clamp(21000 / width, 42, 90);
+      if (handfulRemaining <= 0) {
+        handfulRemaining = 3 + Math.floor(Math.random() * 3);
+        releaseX = width * (0.18 + Math.random() * 0.64);
+        nextDropAt = elapsed + 180 + Math.random() * 200;
+      } else {
+        nextDropAt = elapsed + pace + Math.random() * 80;
+      }
     }
     function tick(time: number) {
       frame = 0;
@@ -355,6 +370,7 @@ export default function SkillsSandbox({
       if (!drag || (event && drag.pointer !== event.pointerId)) return false;
       const current = drag;
       drag = null;
+      delete current.element.dataset.held;
       Composite.remove(engine.world, current.constraint);
       if (!cancel && current.moved && performance.now() - current.time < 100) {
         Body.setVelocity(current.body, {
@@ -373,6 +389,7 @@ export default function SkillsSandbox({
         element.style.height = "";
         element.style.transform = "";
         element.style.opacity = "";
+        delete element.dataset.held;
       });
     }
     function rebuild() {
@@ -407,15 +424,24 @@ export default function SkillsSandbox({
       }));
       Composite.add(engine.world, createSkillWalls(matter!, width, height));
       bodies = sizes.map((size, index) => {
-        const body = createSkillBody(matter!, size, homes[index]);
-        Body.set(body, {
-          restitution: 0.12,
-          friction: 0.48,
-          frictionStatic: 0.7,
-          frictionAir: 0.016,
-          sleepThreshold: 65,
-        });
-        return body;
+        const form = paperForm(index);
+        const softness =
+          form === "pebble" ? 0.9 : form === "tag" ? 0.45 : 0.15;
+        return Bodies.rectangle(
+          homes[index].x,
+          homes[index].y,
+          size.width,
+          size.height,
+          {
+            chamfer: { radius: Math.max(3, (size.height / 2 - 1) * softness) },
+            density: 0.0011 + (index % 5) * 0.00008,
+            restitution: 0.04 + softness * 0.055,
+            friction: 0.52 + (index % 4) * 0.035,
+            frictionStatic: 0.82,
+            frictionAir: 0.018 + (index % 5) * 0.002,
+            sleepThreshold: 70,
+          },
+        );
       });
       spawned = bodies.map(() => false);
       dropOrder = bodies.map((_, index) => index);
@@ -427,7 +453,9 @@ export default function SkillsSandbox({
         ];
       }
       nextDrop = 0;
-      nextDropAt = 70;
+      nextDropAt = 120;
+      handfulRemaining = 3 + Math.floor(Math.random() * 3);
+      releaseX = width * (0.25 + Math.random() * 0.5);
       elapsed = 0;
       replayPendingRef.current = false;
       elements.forEach((element, index) => {
@@ -533,6 +561,7 @@ export default function SkillsSandbox({
           velocityY: 0,
           moved: false,
         };
+        event.currentTarget.dataset.held = "true";
         event.currentTarget.setPointerCapture(event.pointerId);
         event.preventDefault();
         if (event.pointerType === "mouse")
@@ -671,7 +700,7 @@ export default function SkillsSandbox({
 
   return (
     <section
-      className="skill-physics"
+      className="skill-physics skill-atelier"
       id={id}
       ref={rootRef}
       data-ready={ready && !still}
@@ -685,7 +714,7 @@ export default function SkillsSandbox({
         {skills.length} skills across {skillGroups.length} categories.{" "}
         {still
           ? "A settled view of every skill. Use arrow keys to browse, or open the full list below."
-          : "Drag and fling a pill, or tap to grab it before dragging on touch. The filters above light up matches."}
+          : "Drag and release a label, or tap to pick it up before dragging on touch. The filters above highlight matching skills."}
       </p>
       <div className="skill-physics-toolbar">
         <button
@@ -694,7 +723,7 @@ export default function SkillsSandbox({
           onClick={() => {
             setGrabbed(null);
             controllerRef.current?.replay();
-            setAnnouncement("All skills dropped again.");
+            setAnnouncement("Dropping the skills again.");
           }}
         >
           <RotateCcw size={14} aria-hidden="true" />
@@ -706,11 +735,11 @@ export default function SkillsSandbox({
           onClick={() => {
             setGrabbed(null);
             controllerRef.current?.arrange();
-            setAnnouncement("All skills arranged neatly.");
+            setAnnouncement("All skills arranged in rows.");
           }}
         >
           <List size={15} aria-hidden="true" />
-          Arrange neatly
+          Lay them out
         </button>
         {filtering ? (
           <button
@@ -728,7 +757,7 @@ export default function SkillsSandbox({
         className="skill-physics-world"
         ref={worldRef}
         role="group"
-        aria-label={`All ${skills.length} skill pills`}
+        aria-label={`All ${skills.length} skill labels`}
         aria-describedby={`${prefix}-keyboard`}
       >
         {skills.map((skill, index) => (
@@ -740,6 +769,8 @@ export default function SkillsSandbox({
               pillRefs.current[index] = element;
             }}
             data-tone={skill.categoryIndex}
+            data-paper={paperForm(index)}
+            data-long={skill.label.length > 18}
             data-lit={matchingIndices.has(index)}
             data-filtering={filtering}
             data-selected={selected === index}
@@ -772,7 +803,7 @@ export default function SkillsSandbox({
             onPointerCancel={(event) => pointerUp(event, true)}
             onLostPointerCapture={(event) => pointerUp(event, true)}
           >
-            {skill.label}
+            <span>{skill.label}</span>
           </button>
         ))}
       </div>
@@ -780,7 +811,7 @@ export default function SkillsSandbox({
         <summary>Keyboard controls</summary>
         <p className="skill-physics-keyboard" id={`${prefix}-keyboard`}>
           {still
-            ? "Arrow keys browse skills. Page Up / Page Down choose the previous or next pill."
+            ? "Arrow keys browse skills. Page Up / Page Down choose the previous or next label."
             : "Tab into the board. Arrow keys move a skill; Shift moves it further. Page Up / Page Down switch skills. Esc releases."}
         </p>
       </details>

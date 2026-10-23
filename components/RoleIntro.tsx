@@ -7,6 +7,12 @@ const roles = [
   "a software builder",
   "an AI enthusiast",
   "a quant researcher",
+  "a Computer Science student",
+  "a Manchester United fan",
+  "a former signals commander",
+  "an Eunoia softball alumnus",
+  "a regular at the gym",
+  "always planning another trip",
   "a curious learner",
 ] as const;
 
@@ -89,8 +95,7 @@ export default function RoleIntro() {
   }, [running, frame]);
 
   // The caret holds steady while keys are moving and blinks only at rest.
-  const holding =
-    !frame.deleting && frame.letters === roles[frame.role].length;
+  const holding = !frame.deleting && frame.letters === roles[frame.role].length;
 
   return (
     <div
@@ -114,8 +119,9 @@ export default function RoleIntro() {
         </span>
       </span>
       <span className="sr-only">
-        I’m a software builder, an AI enthusiast, a quant researcher, and a
-        curious learner.
+        I’m a software builder and Computer Science student at NUS, a former
+        signals commander, an Eunoia softball alumnus, and a Manchester United
+        fan. Outside work, I enjoy the gym, travel, and food.
       </span>
     </div>
   );

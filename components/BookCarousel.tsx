@@ -283,8 +283,8 @@ function Book({
           <span className="book-cover-author">IAN WANGSA</span>
           <span className="book-cover-title">{design.title}</span>
           <span className="book-cover-subtitle">{design.subtitle}</span>
-          {media?.src ? (
-            <span className="book-cover-image">
+          <span className="book-cover-image">
+            {media?.src ? (
               <img
                 alt=""
                 decoding="async"
@@ -294,10 +294,10 @@ function Book({
                 src={asset(media.src)}
                 width={640}
               />
-            </span>
-          ) : (
-            <span className="book-cover-mark">{design.mark}</span>
-          )}
+            ) : (
+              <span className="book-cover-mark">{design.mark}</span>
+            )}
+          </span>
           <span className="book-cover-footer">
             {project.category}
             <span>→</span>

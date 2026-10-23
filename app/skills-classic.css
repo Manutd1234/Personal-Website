@@ -1,4 +1,4 @@
-/* The original green toolkit: roomy cards, readable pills, mint and cream. */
+/* A quiet paper workspace around the interactive skill labels. */
 .skills-classic {
   min-width: 0;
   color: var(--ink);
@@ -6,10 +6,10 @@
 
 .skills-classic-workspace {
   min-width: 0;
-  padding: 28px;
-  border: 1px solid #c7dfcc;
-  border-radius: 24px;
-  background: linear-gradient(125deg, #f0fbf2, #fffdf1 55%, #f8fff8);
+  padding: clamp(18px, 3vw, 32px);
+  border: 1px solid #cbd4c0;
+  border-radius: 10px 20px 14px 8px;
+  background: #faf8ef;
 }
 
 .skills-classic-quick-action {
@@ -29,7 +29,7 @@
   border-radius: 999px;
   background: #e3efbc;
   color: #24553a;
-  font: 650 12px/1.6 var(--classic-display);
+  font: 550 13px/1.6 var(--classic-display);
 }
 
 .skills-classic-quick-action > button:hover {
@@ -50,7 +50,7 @@
 .skills-classic-search > label,
 .skills-classic-mobile-filter > label {
   color: #245444;
-  font: 650 12px/1.6 var(--classic-display);
+  font: 550 13px/1.6 var(--classic-display);
 }
 
 .skills-classic-search-field {
@@ -125,7 +125,7 @@
   border-radius: 999px;
   background: #ffffffd9;
   color: #345347;
-  font: 550 11px/1.5 var(--classic-display);
+  font: 500 12px/1.5 var(--classic-display);
   text-align: left;
   transition:
     color 0.18s,
@@ -142,7 +142,7 @@
   border-radius: 50%;
   background: #eef4ec;
   color: #527163;
-  font: 400 9px var(--font-mono);
+  font: 400 10px var(--font-mono);
 }
 
 .skills-classic-filters > button:hover {
@@ -167,7 +167,7 @@
 
 .skills-classic-result-bar {
   display: flex;
-  min-height: 58px;
+  min-height: 56px;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -175,8 +175,9 @@
 }
 
 .skills-classic-result-bar p {
-  color: #5b6f60;
-  font: 400 12px/1.7 var(--classic-display);
+  color: #66705f;
+  font: 400 14px/1.6 var(--classic-serif);
+  font-style: italic;
 }
 
 .skills-classic-result-bar strong {
@@ -629,8 +630,8 @@
 }
 
 .dark .skills-classic-workspace {
-  border-color: #344c38;
-  background: linear-gradient(125deg, #162e22, #292c1b 55%, #14291e);
+  border-color: #42513e;
+  background: #202e23;
 }
 
 .dark .skills-classic-search > label,

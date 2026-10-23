@@ -1,0 +1,303 @@
+/* Loose paper on a worktable. Physics owns transforms; CSS owns the material. */
+.skill-physics.skill-atelier {
+  --table-paper: #f4f0e5;
+  --table-edge: #c9cebb;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.skill-atelier .skill-physics-toolbar {
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.skill-atelier .skill-physics-toolbar button {
+  min-height: 42px;
+  padding: 8px 13px;
+  border-color: #c3cdbb;
+  border-radius: 6px;
+  background: #fffdf6;
+  color: #3a5846;
+  font: 500 12px/1.5 var(--classic-display);
+}
+
+.skill-atelier .skill-physics-toolbar button:hover:not(:disabled) {
+  background: #e9eede;
+  border-color: #82937a;
+}
+
+.skill-atelier .skill-physics-world {
+  min-height: 470px;
+  gap: 9px;
+  padding: 38px 18px 18px;
+  border-color: var(--table-edge);
+  border-radius: 7px 13px 9px 5px;
+  background-color: var(--table-paper);
+  background-image:
+    linear-gradient(90deg, transparent 23px, #7c877611 23px, #7c877611 24px, transparent 24px),
+    repeating-linear-gradient(0deg, transparent 0, transparent 31px, #7c87760b 31px, #7c87760b 32px);
+  background-size: auto;
+  box-shadow: inset 0 2px 12px #37422d05, inset 0 -1px 0 #ffffffb3;
+}
+
+.skill-atelier .skill-physics-world.is-live {
+  padding: 0;
+}
+
+.skill-atelier .skill-physics-world::after {
+  right: 13px;
+  bottom: 8px;
+  left: 13px;
+  background: #445a3524;
+  box-shadow: none;
+}
+
+.skill-atelier .skill-pill {
+  --pill-fill: #e5ead6;
+  --pill-ink: #294a35;
+  --pill-edge: #a9b89a;
+  min-height: 37px;
+  max-width: calc(100% - 36px);
+  padding: 8px 14px;
+  border-width: 1px;
+  border-radius: 4px 7px 3px 5px;
+  background-color: var(--pill-fill);
+  background-image: linear-gradient(115deg, #ffffff38, transparent 56%, #29452906);
+  box-shadow: 0 1px 1px #263a2712, 1px 3px 4px #263a2714, inset 0 1px 0 #ffffff80;
+  font: 550 13px/1.35 var(--classic-display);
+  letter-spacing: -0.01em;
+  transition: opacity 180ms ease, background-color 180ms, border-color 180ms, color 180ms, box-shadow 180ms;
+}
+
+.skill-atelier .skill-pill > span {
+  position: relative;
+  z-index: 1;
+}
+
+.skill-atelier .skill-pill[data-paper="scrap"] {
+  border-radius: 3px 8px 4px 2px;
+  font: 500 15px/1.25 var(--classic-serif);
+  letter-spacing: -0.025em;
+}
+
+.skill-atelier .skill-pill[data-paper="ticket"] {
+  padding-right: 23px;
+  border-radius: 3px;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+.skill-atelier .skill-pill[data-paper="ticket"]::after {
+  position: absolute;
+  top: 5px;
+  right: 10px;
+  bottom: 5px;
+  border-left: 1px dashed var(--pill-edge);
+  content: "";
+  pointer-events: none;
+}
+
+.skill-atelier .skill-pill[data-paper="pebble"] {
+  padding-inline: 17px;
+  border-radius: 43% 48% 42% 46% / 47% 42% 53% 45%;
+  font: 500 14px/1.3 var(--classic-serif);
+  font-style: italic;
+}
+
+.skill-atelier .skill-pill[data-paper="tag"] {
+  padding-left: 23px;
+  border-radius: 14px 3px 3px 14px;
+  font: 500 11.5px/1.45 var(--font-mono);
+  letter-spacing: -0.035em;
+}
+
+.skill-atelier .skill-pill[data-paper="tag"]::before {
+  position: absolute;
+  top: calc(50% - 2px);
+  left: 8px;
+  width: 4px;
+  height: 4px;
+  border: 1px solid var(--pill-edge);
+  border-radius: 50%;
+  background: var(--table-paper);
+  content: "";
+  pointer-events: none;
+}
+
+.skill-atelier .skill-pill[data-long="true"] {
+  font-size: 11.5px;
+}
+
+.skill-atelier .skill-pill[data-tone="1"] {
+  --pill-fill: #dcebe1;
+  --pill-ink: #295644;
+  --pill-edge: #a4bdac;
+}
+.skill-atelier .skill-pill[data-tone="2"] {
+  --pill-fill: #efe5cb;
+  --pill-ink: #675432;
+  --pill-edge: #c6b78f;
+}
+.skill-atelier .skill-pill[data-tone="3"] {
+  --pill-fill: #d8e3cb;
+  --pill-ink: #365135;
+  --pill-edge: #9caf90;
+}
+.skill-atelier .skill-pill[data-tone="4"] {
+  --pill-fill: #e5e5c9;
+  --pill-ink: #515d36;
+  --pill-edge: #b5b891;
+}
+.skill-atelier .skill-pill[data-tone="5"] {
+  --pill-fill: #dbe7e5;
+  --pill-ink: #365c56;
+  --pill-edge: #a1bbb4;
+}
+.skill-atelier .skill-pill[data-tone="6"] {
+  --pill-fill: #e9e8dc;
+  --pill-ink: #505b45;
+  --pill-edge: #b8bcaa;
+}
+.skill-atelier .skill-pill[data-tone="7"] {
+  --pill-fill: #f0dfd2;
+  --pill-ink: #735440;
+  --pill-edge: #c5aa95;
+}
+
+.skill-atelier .skill-pill[data-filtering="true"][data-lit="false"] {
+  background-color: #eae9e0;
+  border-color: #c9cbbd;
+  color: #646b5c;
+  box-shadow: 0 1px 2px #263a270c;
+}
+.skill-atelier .skill-pill[data-filtering="true"][data-lit="true"] {
+  border-color: #507744;
+  box-shadow: 0 0 0 1px #5077445c, 0 3px 7px #304d2926;
+}
+.skill-atelier .skill-pill:hover {
+  border-color: var(--pill-ink);
+  box-shadow: 0 3px 8px #263a2729, inset 0 1px 0 #ffffff9c;
+}
+.skill-atelier .skill-pill[data-grabbed="true"],
+.skill-atelier .skill-pill[data-held="true"] {
+  z-index: 3;
+  cursor: grabbing;
+  outline: 2px solid #476a3e;
+  outline-offset: 3px;
+  box-shadow: 0 7px 13px #263a2730;
+}
+.skill-atelier .skill-physics-help {
+  margin-top: 4px;
+  font-size: 12px;
+}
+.skill-atelier .skill-physics-keyboard {
+  max-width: 650px;
+  font-size: 12px;
+  line-height: 1.75;
+}
+.skill-atelier .skill-physics-list {
+  margin-top: 5px;
+  border-color: #c9d2c0;
+}
+.skill-atelier .skill-physics-list > summary {
+  font-size: 13px;
+  font-weight: 500;
+}
+.skill-atelier .skill-physics-list h4 {
+  font-size: 14px;
+  font-weight: 550;
+}
+.skill-atelier .skill-physics-list li {
+  padding: 5px 8px;
+  border-radius: 3px;
+  border-color: #ced6c5;
+  background: #fdfbf3;
+  font: 400 12px/1.5 var(--classic-display);
+}
+
+.dark .skill-physics.skill-atelier {
+  --table-paper: #1d2b23;
+  --table-edge: #4e5e48;
+  background: transparent;
+  box-shadow: none;
+}
+.dark .skill-atelier .skill-physics-world {
+  background-color: var(--table-paper);
+  background-image:
+    linear-gradient(90deg, transparent 23px, #c0c9aa12 23px, #c0c9aa12 24px, transparent 24px),
+    repeating-linear-gradient(0deg, transparent 0, transparent 31px, #c0c9aa09 31px, #c0c9aa09 32px);
+  box-shadow: inset 0 2px 12px #0000000d;
+}
+.dark .skill-atelier .skill-physics-toolbar button {
+  border-color: #53644c;
+  background: #29382b;
+  color: #d5dfc5;
+}
+.dark .skill-atelier .skill-physics-toolbar button:hover:not(:disabled) {
+  background: #35452e;
+  border-color: #839776;
+}
+.dark .skill-atelier .skill-pill {
+  background-color: color-mix(in srgb, var(--pill-fill) 92%, #425443);
+  color: var(--pill-ink);
+  border-color: color-mix(in srgb, var(--pill-edge) 65%, #56654b);
+  box-shadow: 0 2px 5px #030c0759, inset 0 1px 0 #ffffff4d;
+}
+.dark .skill-atelier .skill-pill[data-filtering="true"][data-lit="false"] {
+  background: #2a382d;
+  color: #a1ab97;
+  border-color: #4d5b46;
+  box-shadow: 0 1px 2px #0000001f;
+}
+.dark .skill-atelier .skill-pill[data-filtering="true"][data-lit="true"] {
+  border-color: #e2edbb;
+  box-shadow: 0 0 0 1px #e2edbb80, 0 3px 8px #030c0759;
+}
+.dark .skill-atelier .skill-pill[data-grabbed="true"],
+.dark .skill-atelier .skill-pill[data-held="true"],
+.dark .skill-atelier .skill-pill:focus-visible {
+  outline-color: #e2edbb;
+}
+.dark .skill-atelier .skill-physics-list li {
+  background: #29382b;
+  border-color: #4d6045;
+  color: #cbd6be;
+}
+
+@media (max-width: 620px) {
+  .skill-atelier .skill-physics-world {
+    min-height: 420px;
+    gap: 8px;
+  }
+  .skill-atelier .skill-pill {
+    min-height: 35px;
+    padding: 7px 11px;
+    font-size: 12px;
+  }
+  .skill-atelier .skill-pill[data-paper="scrap"] {
+    font-size: 14px;
+  }
+  .skill-atelier .skill-pill[data-paper="pebble"] {
+    padding-inline: 14px;
+    font-size: 13px;
+  }
+  .skill-atelier .skill-pill[data-paper="tag"] {
+    padding-left: 21px;
+    font-size: 11px;
+  }
+  .skill-atelier .skill-pill[data-paper="ticket"] {
+    padding-right: 20px;
+  }
+  .skill-atelier .skill-pill[data-long="true"] {
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skill-atelier .skill-pill {
+    transition: none;
+  }
+}

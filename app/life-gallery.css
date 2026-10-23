@@ -605,3 +605,299 @@
     transition: none !important;
   }
 }
+
+/* One changing photograph, with space to let it breathe. */
+.life-portrait-stage {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.6fr) minmax(0, 2.4fr) minmax(
+      125px,
+      0.7fr
+    );
+  align-items: center;
+  gap: 36px;
+  margin-top: 28px;
+  padding: 45px 45px 38px;
+  border: 1px solid #dce3d4;
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse at 50% 40%, #ecebdc 0, transparent 70%), #f3f5eb;
+}
+.life-portrait-frame {
+  position: relative;
+  min-width: 0;
+  padding: 13px 13px 0;
+  border: 1px solid #d8d9ca;
+  border-radius: 3px 5px 4px 3px;
+  background: #fffef6;
+  box-shadow:
+    1px 4px 0 #d5dacb,
+    0 18px 32px #26392115;
+  transform: rotate(-1.2deg);
+}
+.life-portrait-frame .offduty-tape {
+  top: -19px;
+  left: calc(50% - 48px);
+  width: 96px;
+  height: 35px;
+}
+.life-portrait-open {
+  display: block;
+  width: 100%;
+  cursor: zoom-in;
+  touch-action: pan-y;
+}
+.life-portrait-image {
+  display: block;
+  position: relative;
+  aspect-ratio: 1.08;
+  overflow: hidden;
+  background: #e9e8dd;
+}
+.life-portrait-slide {
+  position: absolute;
+  inset: 0;
+}
+.life-portrait-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.life-portrait-expand {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fffef4dd;
+  color: #3b5644;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.life-portrait-open:is(:hover, :focus-visible) .life-portrait-expand {
+  opacity: 1;
+}
+.life-portrait-caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 85px;
+  padding: 18px 10px;
+  color: #35503c;
+  font: italic 400 clamp(18px, 2.1vw, 24px)/1.4 var(--classic-serif);
+  text-align: center;
+  text-wrap: balance;
+}
+.life-portrait-sticker {
+  position: absolute;
+  top: -23px;
+  right: -22px;
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border: 5px solid #fffef6;
+  border-radius: 50%;
+  color: var(--sticker-ink);
+  background: var(--sticker-bg);
+  box-shadow: 0 5px 14px #293b2218;
+}
+.life-portrait-margin {
+  display: flex;
+  flex-direction: column;
+  gap: 35px;
+  color: #7d8877;
+}
+.life-portrait-margin > span:first-child {
+  font: 400 9px/1.8 var(--font-mono);
+  letter-spacing: 0.1em;
+}
+.life-portrait-handnote {
+  max-width: 110px;
+  transform: rotate(-8deg);
+  color: #7c8b6c;
+  font: italic 400 22px/1.35 var(--classic-serif);
+}
+.life-portrait-side {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 22px;
+}
+.life-portrait-category {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--classic-green);
+  font: 500 13px var(--classic-display);
+}
+.life-portrait-count {
+  color: var(--ink);
+  font: 400 26px var(--classic-serif);
+}
+.life-portrait-count i {
+  margin: 0 6px;
+  color: #99a18d;
+  font-weight: 300;
+}
+.life-portrait-nav {
+  display: flex;
+  gap: 7px;
+}
+.life-portrait-nav button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #bdcbb3;
+  border-radius: 50%;
+  color: var(--classic-green);
+  background: #fffef4;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+.life-portrait-nav button:hover {
+  transform: translateY(-2px);
+  background: #e8efdf;
+}
+.life-portrait-side small {
+  max-width: 140px;
+  color: var(--classic-muted);
+  font-size: 11px;
+  line-height: 1.8;
+}
+.life-portrait-progress {
+  width: 100%;
+  max-width: 115px;
+  height: 2px;
+  background: #d1dbc6;
+  overflow: hidden;
+}
+.life-portrait-progress i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--classic-green);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.offduty[data-running="true"] .life-portrait-progress i {
+  animation: portrait-progress 6.5s linear both;
+}
+.life-portrait-open:focus-visible,
+.life-portrait-nav button:focus-visible {
+  outline: 2px solid var(--classic-green);
+  outline-offset: 5px;
+}
+.dark .life-portrait-stage {
+  border-color: #34483a;
+  background:
+    radial-gradient(ellipse at 50% 35%, #3a473325, transparent 70%), #17251e;
+}
+.dark .life-portrait-frame {
+  border-color: #a5ad99;
+  background: #e6e8dc;
+  box-shadow:
+    1px 4px 0 #68755d,
+    0 18px 32px #0003;
+}
+.dark .life-portrait-image {
+  background: #cfd6c7;
+}
+.dark .life-portrait-sticker {
+  border-color: #e6e8dc;
+}
+.dark .life-portrait-handnote,
+.dark .life-portrait-margin {
+  color: #a4b09c;
+}
+.dark .life-portrait-nav button {
+  background: #233a2c;
+  border-color: #49604c;
+}
+.dark .life-portrait-nav button:hover {
+  background: #314c39;
+}
+.dark .life-portrait-progress {
+  background: #3e5240;
+}
+@keyframes portrait-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@media (max-width: 900px) {
+  .life-portrait-stage {
+    grid-template-columns: minmax(0, 1fr) 125px;
+    gap: 32px;
+    padding: 40px 32px 30px;
+  }
+  .life-portrait-margin {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  .life-portrait-stage {
+    display: flex;
+    flex-direction: column;
+    padding: 32px 22px 23px;
+    gap: 28px;
+  }
+  .life-portrait-frame {
+    width: 100%;
+    padding: 9px 9px 0;
+  }
+  .life-portrait-caption {
+    min-height: 78px;
+    font-size: 20px;
+  }
+  .life-portrait-sticker {
+    width: 50px;
+    height: 50px;
+    right: -16px;
+    top: -20px;
+    border-width: 4px;
+  }
+  .life-portrait-sticker svg {
+    width: 22px;
+    height: 22px;
+  }
+  .life-portrait-side {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .life-portrait-category {
+    min-width: 85px;
+  }
+  .life-portrait-count {
+    font-size: 20px;
+  }
+  .life-portrait-side small {
+    display: none;
+  }
+  .life-portrait-progress {
+    max-width: none;
+    flex-basis: 100%;
+  }
+  .life-portrait-expand {
+    opacity: 1;
+  }
+  .offduty-portrait-gallery .offduty-toolbar {
+    gap: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .offduty .life-portrait-progress i {
+    animation: none;
+  }
+}

@@ -5,12 +5,32 @@ import {
   Award,
   BatteryFull,
   BookOpen,
+  BrainCircuit,
+  ChartColumnIncreasing,
+  Cloud,
+  CodeXml,
+  Container,
+  Crosshair,
+  Database,
+  Dumbbell,
+  Flag,
+  Footprints,
+  GitBranch,
   GraduationCap,
   HeartHandshake,
   Landmark,
   Medal,
+  MessageSquare,
+  Network,
+  Piano,
+  Presentation,
   Search,
+  ShieldCheck,
+  Sigma,
+  Sun,
+  TrendingUp,
   Trophy,
+  Waves,
   Wifi,
   X,
   type LucideIcon,
@@ -206,6 +226,40 @@ const hashFilters: Readonly<Record<string, CollectionFilter>> = {
   "#certificates": "certificates",
 };
 
+// App icons describe the subject; the actual award documents stay in the detail view.
+const achievementIconRules: readonly (readonly [RegExp, LucideIcon])[] = [
+  [/marksmanship/i, Crosshair],
+  [/IPPT/i, Dumbbell],
+  [/swim/i, Waves],
+  [/piano/i, Piano],
+  [/athletics|sports day/i, Footprints],
+  [/softball|colours award/i, Medal],
+  [/mathematical|maths/i, Sigma],
+  [/business pitch|rockathon/i, Presentation],
+  [/sunnyhacks/i, Sun],
+  [/brainhack|AI fluency|machine learning/i, BrainCircuit],
+  [/claude/i, MessageSquare],
+  [/hack the future|performance.*conduct/i, ShieldCheck],
+  [/national education/i, Flag],
+  [/good progress/i, TrendingUp],
+  [/signmeup|active elderly|project BHID/i, HeartHandshake],
+  [/scholarship|dean|GCE|academic achievement/i, GraduationCap],
+  [/AI\/BI/i, ChartColumnIncreasing],
+  [/docker/i, Container],
+  [/AWS|cloud/i, Cloud],
+  [/GitHub/i, GitBranch],
+  [/SQL/i, Database],
+  [/Java/i, CodeXml],
+  [/Cisco|network/i, Network],
+];
+function iconForAchievement(record: Achievement): LucideIcon {
+  return (
+    achievementIconRules.find(([pattern]) => pattern.test(record.title))?.[1] ??
+    categories.find((category) => category.id === record.category)?.icon ??
+    Award
+  );
+}
+
 function AchievementApp({
   record,
   onOpen,
@@ -213,33 +267,41 @@ function AchievementApp({
   record: Achievement;
   onOpen: (record: Achievement, opener: HTMLButtonElement) => void;
 }) {
-  const Icon =
-    categories.find((category) => category.id === record.category)?.icon ??
-    Award;
-  const first = record.preview;
-  const provider = credentialProviders[record.issuer];
+  const Icon = iconForAchievement(record);
+  const provider =
+    record.category === "certificates"
+      ? credentialProviders[record.issuer]
+      : undefined;
   return (
     <li className="award-app" data-category={record.category}>
       <button
         type="button"
         className="award-app-button"
-        aria-label={`View achievement: ${record.title}`}
+        aria-label={`View achievement: ${record.title}, ${record.issuer}${/Expired/i.test(record.detail ?? "") ? ", expired credential" : ""}`}
+        title={record.title}
         aria-haspopup="dialog"
         onClick={(event) => onOpen(record, event.currentTarget)}
       >
         <span
           className="award-app-icon"
-          data-emblem={Boolean(provider || first.representative)}
+          data-provider={provider ? record.issuer : undefined}
+          aria-hidden="true"
         >
-          <img
-            src={asset(provider?.src ?? first.src)}
-            alt=""
-            loading="lazy"
-            decoding="async"
-          />
-          <span className="award-app-category-mark" aria-hidden="true">
-            <Icon size={13} />
-          </span>
+          {provider ? (
+            <>
+              <img
+                src={asset(provider.src)}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+              <span className="award-app-topic-mark">
+                <Icon size={14} strokeWidth={1.8} />
+              </span>
+            </>
+          ) : (
+            <Icon className="award-app-glyph" size={38} strokeWidth={1.65} />
+          )}
         </span>
         <span className="award-app-label">{record.title}</span>
         <span className="award-app-date">
@@ -449,9 +511,6 @@ export default function TrophyRoom() {
               : visible.length === 1
                 ? "achievement"
                 : "achievements"}
-            {filter !== "all"
-              ? ` · ${categories.find((category) => category.id === filter)?.label}`
-              : ""}
             {search ? ` for “${query.trim()}”` : ""}
           </p>
           <div
