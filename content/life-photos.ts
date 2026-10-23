@@ -517,4 +517,14 @@ export const lifePhotos: readonly LifePhoto[] = [
     width: 900,
     height: 1600,
   },
+  {
+    id: "munich-gym-mirror",
+    src: "images/life-originals-oct24/munich-gym-mirror.webp",
+    thumb: "images/life-originals-oct24/munich-gym-mirror-thumb.webp",
+    alt: "A mirror photo behind a row of dumbbells in a gym in Munich.",
+    caption: "Training in Munich.",
+    category: "Fitness",
+    width: 1200,
+    height: 1600,
+  },
 ];
