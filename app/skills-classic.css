@@ -331,17 +331,9 @@
   background: #edf5df;
 }
 
-.skills-classic-languages > div > p,
-.skills-classic-credentials > header p {
-  color: #60784c;
-  font: 500 9px/1.7 var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 .skills-classic-languages h2,
 .skills-classic-credentials h2 {
-  margin-top: 7px;
+  margin-top: 0;
   color: #214b37;
   font: 700 21px/1.35 var(--classic-display);
   letter-spacing: -0.03em;
@@ -631,12 +623,6 @@
   padding: 0 20px 20px;
 }
 
-.skills-classic-note {
-  margin-top: 15px;
-  color: var(--classic-muted);
-  font: 400 10px/1.8 var(--font-mono);
-}
-
 .skills-classic :is(button, a, select, summary):focus-visible {
   outline: 2px solid var(--classic-green);
   outline-offset: 4px;
@@ -760,8 +746,6 @@
   background: #233523;
 }
 
-.dark .skills-classic-languages > div > p,
-.dark .skills-classic-credentials > header p,
 .dark .skills-classic-languages dt,
 .dark .skills-classic-issuer > summary h3,
 .dark .skills-classic-issuer-count,

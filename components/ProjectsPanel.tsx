@@ -73,10 +73,8 @@ function SourceIcon({ report = false }: { report?: boolean }) {
 
 function SourceLink({ source, title }: { source: Source; title: string }) {
   const report = isReport(source.url);
-  const repository = source.url
-    .match(/^https?:\/\/github\.com\/([^/]+\/[^/#?]+)/i)?.[1]
-    ?.replace(/\.git$/, "");
   const label = report ? "Case study" : "Source code";
+  const visibleLabel = source.label?.replace(/\s*\(private\)/i, "") || label;
   const privateSource = source.visibility === "private";
   return (
     <div className="min-w-0">
@@ -88,19 +86,9 @@ function SourceLink({ source, title }: { source: Source; title: string }) {
         target="_blank"
       >
         <SourceIcon report={report} />
-        {label}
+        {visibleLabel}
         <span aria-hidden="true">↗</span>
       </a>
-      {source.label ? (
-        <p className="mt-0.5 text-xs leading-relaxed text-stone-600 dark:text-stone-400">
-          {source.label.replace(/\s*\(private\)/i, "")}
-        </p>
-      ) : null}
-      {repository ? (
-        <p className="mt-1 break-all font-mono text-[11px] leading-relaxed text-stone-500 dark:text-stone-400">
-          {repository}
-        </p>
-      ) : null}
       {privateSource ? (
         <p className="mt-1.5 text-xs font-medium text-amber-800 dark:text-amber-300">
           Private · access required
@@ -207,20 +195,25 @@ function ProjectBookDetails({
         </div>
       ) : null}
       {note ? (
-        <dl className="book-build-notes">
-          <div>
-            <dt>The challenge</dt>
-            <dd>{note.question}</dd>
-          </div>
-          <div>
-            <dt>Inside the build</dt>
-            <dd>{note.decision}</dd>
-          </div>
-          <div className="book-proof">
-            <dt>Proof of work</dt>
-            <dd>{note.proof}</dd>
-          </div>
-        </dl>
+        <details className="book-build-disclosure">
+          <summary>
+            Design notes <span aria-hidden="true">+</span>
+          </summary>
+          <dl className="book-build-notes">
+            <div>
+              <dt>The challenge</dt>
+              <dd>{note.question}</dd>
+            </div>
+            <div>
+              <dt>Inside the build</dt>
+              <dd>{note.decision}</dd>
+            </div>
+            <div className="book-proof">
+              <dt>Proof of work</dt>
+              <dd>{note.proof}</dd>
+            </div>
+          </dl>
+        </details>
       ) : project.outcome ? (
         <p className="book-detail-outcome">{project.outcome}</p>
       ) : null}

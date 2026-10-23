@@ -19,6 +19,10 @@ Live site: https://manutd1234.github.io/Personal-Website/
 - A green mint-paper contact panel with oversized italic typography, a rolling invitation, prominent email action, two-second copy feedback and the original professional links. The invitation pauses offscreen and respects reduced motion.
 - Sticky five-tab navigation, clear project actions and filter counts, light/dark themes and visible focus states.
 
+## Content hierarchy
+
+Each tab has one main heading. The Profile introduces Ian without repeating the detailed work history; the Workbench keeps its three interactive walkthroughs. Books show highlights, links and screenshots first, with their longer challenge/build/proof narratives under **Design notes**. Skills keep one short interaction hint and expandable keyboard guidance. Experience cards retain all contributions without repeated footer labels, and Awards use one results count. Contact keeps the rolling invitation, email/copy actions and professional links. All 12 projects, 36 experience/community records, 37 awards and credentials, 79 skills and 27 photographs remain available.
+
 ## Run locally
 
 ```sh

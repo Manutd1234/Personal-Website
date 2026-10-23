@@ -15,7 +15,6 @@ import {
   CalendarDays,
   Compass,
   EyeOff,
-  FileText,
   HeartHandshake,
   MapPin,
   Medal,
@@ -326,9 +325,6 @@ export default function TradingCard({
               </ul>
 
               <footer className="tcg-band tcg-footer">
-                <p className="tcg-record-label">
-                  <FileText size={13} aria-hidden="true" /> Field notes
-                </p>
                 <button
                   type="button"
                   ref={frontButton}
@@ -357,7 +353,7 @@ export default function TradingCard({
                 </span>
                 <div className="tcg-heading">
                   <p className="tcg-kicker">{type.label}</p>
-                  <p className="tcg-title">Story & details</p>
+                  <p className="tcg-title">The full story</p>
                 </div>
               </header>
               <div className="tcg-back-identity">
@@ -391,10 +387,7 @@ export default function TradingCard({
                   </ul>
                 ) : null}
                 {card.note ? (
-                  <p className="tcg-back-note">
-                    <span>Engineering note</span>
-                    {card.note}
-                  </p>
+                  <p className="tcg-back-note">{card.note}</p>
                 ) : null}
                 {certificates.length ? (
                   <div className="tcg-back-links">
@@ -429,7 +422,6 @@ export default function TradingCard({
                   <ArrowLeft size={13} strokeWidth={2.3} aria-hidden="true" />
                   Back to highlights
                 </button>
-                <p>{type.label}</p>
               </footer>
             </div>
           </section>

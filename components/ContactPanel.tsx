@@ -48,7 +48,6 @@ export default function ContactPanel() {
     <div className="contact-paper" ref={panel}>
       <div className="contact-paper-body">
         <div className="contact-paper-intro">
-          <p className="contact-paper-eyebrow">A good place to start</p>
           <h2 id="contact-title" className="contact-paper-title">
             Let’s talk.
             <br />
@@ -73,7 +72,7 @@ export default function ContactPanel() {
         </div>
         <div className="contact-paper-actions">
           <div className="contact-paper-note" aria-hidden="true">
-            <span>It starts with a hello.</span>
+            <span>Say hello.</span>
             <svg viewBox="0 0 105 55" fill="none">
               <path
                 d="M4 6c29-7 77 5 78 36M71 33l12 12 14-13"
@@ -89,7 +88,6 @@ export default function ContactPanel() {
             <ArrowUpRight aria-hidden="true" size={23} strokeWidth={1.6} />
           </a>
           <div className="contact-paper-secondary">
-            <span>Opportunities, projects, or just a conversation.</span>
             <button
               type="button"
               onClick={copy}
@@ -113,18 +111,17 @@ export default function ContactPanel() {
         </div>
       </div>
       <div className="contact-paper-bottom">
-        <p className="contact-paper-signoff">See you on the next build.</p>
         <nav aria-label="Contact and professional links">
           <a href={profile.github} target="_blank" rel="noreferrer">
-            github <span aria-hidden="true">↗︎</span>
+            GitHub <span aria-hidden="true">↗︎</span>
             <span className="sr-only"> (opens in a new tab)</span>
           </a>
           <a href={profile.linkedin} target="_blank" rel="noreferrer">
-            linkedin <span aria-hidden="true">↗︎</span>
+            LinkedIn <span aria-hidden="true">↗︎</span>
             <span className="sr-only"> (opens in a new tab)</span>
           </a>
           <a href={profile.resumeUrl} target="_blank" rel="noreferrer">
-            resume <span aria-hidden="true">↗︎</span>
+            Résumé <span aria-hidden="true">↗︎</span>
             <span className="sr-only"> (opens in a new tab)</span>
           </a>
         </nav>

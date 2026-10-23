@@ -62,34 +62,6 @@
   color: #21452c;
   background: #e4f49b;
 }
-.deck-progress {
-  flex: none;
-  margin: 0;
-  padding: 10px 12px;
-  border: 1px dashed #6f9871;
-  border-radius: 6px;
-  color: #3a6947;
-  background: #fffdf3;
-  font: 600 10px/1.6 var(--font-mono);
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-.deck-progress-label {
-  text-transform: uppercase;
-}
-.deck-progress-count {
-  margin-left: 8px;
-  color: #086447;
-}
-.deck-progress-count > span {
-  display: inline-block;
-}
-.deck-progress[data-complete="true"] {
-  border-style: solid;
-  border-color: #739b69;
-  color: #285d3c;
-  background: #e7f1d6;
-}
 .deck-stage {
   position: relative;
   background: linear-gradient(145deg, #eff6e9, #e6f0e1 60%, #f4efda);
@@ -540,17 +512,8 @@
   margin-top: auto;
   border-top: 1px solid var(--tcg-line);
 }
-.tcg-footer p {
-  min-width: 0;
-  margin: 0;
-  color: #617058;
-  font-size: 10px;
-  line-height: 1.5;
-}
-.tcg-record-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+.tcg-front .tcg-footer {
+  justify-content: flex-end;
 }
 .tcg-footer button {
   display: inline-flex;
@@ -685,15 +648,6 @@
   font-style: italic;
   line-height: 1.6;
 }
-.tcg-back-note span {
-  display: block;
-  margin-bottom: 3px;
-  color: #62705e;
-  font: 600 9px/1.7 var(--font-mono);
-  font-style: normal;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
 .tcg-back-links {
   display: grid;
   justify-items: start;
@@ -745,18 +699,6 @@
 .dark .deck-tabs button[aria-selected="true"] .deck-tab-count {
   color: #21452c;
   background: #e4f49b;
-}
-.dark .deck-progress {
-  border-color: #779b76;
-  color: #c9ddc2;
-  background: #1b3021;
-}
-.dark .deck-progress-count {
-  color: #a6e5ba;
-}
-.dark .deck-progress[data-complete="true"] {
-  color: #d4e8bf;
-  background: #2b452a;
 }
 .dark .deck-stage {
   background: linear-gradient(145deg, #1b3324, #14261b 60%, #25331e);
@@ -830,9 +772,6 @@
   .deck-tabs {
     flex-basis: 100%;
   }
-  .deck-progress {
-    margin-left: auto;
-  }
 }
 @media (max-width: 700px) {
   .deck-toolbar {
@@ -847,10 +786,6 @@
     min-height: 48px;
     padding: 9px 10px;
     font-size: 12px;
-  }
-  .deck-progress {
-    margin-right: 2px;
-    font-size: 9px;
   }
   .deck-track {
     --fade-end: 12px;
@@ -915,9 +850,6 @@
   }
   .tcg-footer {
     gap: 8px;
-  }
-  .tcg-footer p {
-    font-size: 9px;
   }
   .tcg-footer button {
     padding-inline: 9px;

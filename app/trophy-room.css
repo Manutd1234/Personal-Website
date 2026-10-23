@@ -8,27 +8,11 @@
   color: var(--trophy-ink);
   min-width: 0;
 }
-.trophy-collection-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 18px;
-}
-.trophy-collection-heading > p {
-  color: var(--trophy-muted);
-  font: 400 13px/1.8 var(--classic-display);
-}
 .trophy-eyebrow {
   color: var(--trophy-green);
   font: 600 10px/1.6 var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-.trophy-collection-count {
-  flex: none;
-  color: var(--trophy-muted);
-  font: 400 10px/1.6 var(--font-mono);
 }
 
 .award-tablet {
@@ -145,14 +129,8 @@
 .award-tablet-home-heading > div {
   min-width: 0;
 }
-.award-tablet-home-heading > div > p {
-  color: #c5ddba;
-  font: 500 8px/1.5 var(--font-mono);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
 .award-tablet-home-heading h3 {
-  margin-top: 5px;
+  margin: 0;
   color: #f3f7e8;
   font: 550 clamp(21px, 2.4vw, 26px)/1.25 var(--classic-display);
   letter-spacing: -0.025em;
@@ -704,11 +682,6 @@
   }
 }
 @media (max-width: 620px) {
-  .trophy-collection-heading {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 7px;
-  }
   .award-tablet-status {
     padding-inline: 17px;
     font-size: 8px;

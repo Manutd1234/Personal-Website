@@ -87,6 +87,39 @@
   border-radius: 50%;
   background: var(--book-lime);
 }
+.book-build-disclosure {
+  border-top: 1px solid color-mix(in srgb, var(--book-lime) 22%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--book-lime) 22%, transparent);
+}
+.book-build-disclosure > summary {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--book-cream);
+  cursor: pointer;
+  list-style: none;
+  font: 600 12px/1.7 var(--classic-display);
+}
+.book-build-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+.book-build-disclosure > summary > span {
+  color: var(--book-lime);
+  font-size: 20px;
+  transition: transform 0.2s;
+}
+.book-build-disclosure[open] > summary > span {
+  transform: rotate(45deg);
+}
+.book-build-disclosure > summary:focus-visible {
+  outline: 2px solid var(--book-lime);
+  outline-offset: 3px;
+}
+.book-build-disclosure > .book-build-notes {
+  padding-bottom: 20px;
+}
 .book-build-notes {
   display: grid;
   gap: 18px;

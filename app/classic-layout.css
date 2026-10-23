@@ -393,7 +393,7 @@ main.classic-shell {
   font: italic 400 clamp(2.4rem, 4vw, 3.45rem)/1.15 var(--classic-serif);
   letter-spacing: -0.05em;
   color: var(--classic-green);
-  margin-top: 22px;
+  margin-top: 0;
 }
 .classic-about-copy {
   font: 400 15px/1.85 var(--classic-display);
@@ -637,49 +637,19 @@ main.classic-shell {
   }
 }
 
-/* Match the original editorial section openers across the five main tabs. */
+/* One clear title per tab, with room for the content below. */
 .classic-section-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.72fr);
-  align-items: end;
-  gap: 18px 44px;
+  display: block;
+  margin-top: clamp(28px, 4vw, 48px);
   margin-bottom: 28px;
 }
-.classic-section-header > .classic-kicker,
-.classic-section-header > h1 {
-  grid-column: 1;
-}
 .classic-section-header > h1 {
   margin-top: 0;
-}
-.classic-section-header > .classic-section-note {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  justify-self: end;
-  max-width: 340px;
-  margin-top: 0;
-  font-family: var(--classic-display);
-}
-#skills-panel > .classic-section-header {
-  display: block;
-}
-#skills-panel > .classic-section-header h1 {
-  margin-top: 20px;
-}
-#skills-panel > .classic-section-header > .classic-section-note {
-  max-width: 740px;
-  margin-top: 18px;
+  max-width: 900px;
+  text-wrap: balance;
 }
 @media (max-width: 700px) {
   .classic-section-header {
-    display: block;
     margin-bottom: 24px;
-  }
-  .classic-section-header > h1 {
-    margin-top: 18px;
-  }
-  .classic-section-header > .classic-section-note {
-    max-width: 100%;
-    margin-top: 15px;
   }
 }

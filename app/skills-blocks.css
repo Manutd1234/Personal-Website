@@ -54,17 +54,6 @@
   box-shadow: inset 0 -10px 24px #47743a08;
   isolation: isolate;
 }
-.skill-physics-world::before {
-  position: absolute;
-  top: 14px;
-  left: 17px;
-  color: #81966e;
-  font: 500 8px/1 var(--font-mono);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  content: "Pick one up. See what happens.";
-  pointer-events: none;
-}
 .skill-physics-world::after {
   position: absolute;
   right: 10px;
@@ -190,24 +179,35 @@
   outline: 3px solid #174d30;
   outline-offset: 2px;
 }
+.skill-physics-help {
+  margin-top: 8px;
+  color: #627452;
+  font: 400 11px/1.8 var(--classic-display);
+}
+.skill-physics-help > summary {
+  display: flex;
+  min-height: 44px;
+  width: fit-content;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+.skill-physics-help > summary::-webkit-details-marker {
+  display: none;
+}
+.skill-physics-help > summary::after {
+  content: "+";
+  font-size: 15px;
+}
+.skill-physics-help[open] > summary::after {
+  content: "−";
+}
 .skill-physics-keyboard {
-  margin-top: 14px;
+  margin-top: 0;
+  margin-bottom: 10px;
   color: #627452;
   font: 400 10px/1.8 var(--classic-display);
-}
-.skill-physics-selection {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  margin-top: 9px;
-  color: #315e40;
-  font: 400 11px/1.7 var(--classic-display);
-}
-.skill-physics-selection strong {
-  font-weight: 700;
-}
-.skill-physics-selection span {
-  color: #657850;
 }
 .skill-physics-list {
   margin-top: 20px;
@@ -263,8 +263,8 @@
   color: #d8e6ca;
   box-shadow: 0 5px 0 #15271a;
 }
-.dark .skill-physics-keyboard,
-.dark .skill-physics-selection span {
+.dark .skill-physics-help,
+.dark .skill-physics-keyboard {
   color: #a6bb93;
 }
 .dark .skill-physics-toolbar button {
@@ -297,9 +297,6 @@
 .dark .skill-pill[data-grabbed="true"],
 .dark .skill-physics .skill-pill:focus-visible {
   outline-color: #e7f6bd;
-}
-.dark .skill-physics-selection {
-  color: #c5dfa6;
 }
 .dark .skill-physics-list {
   border-color: #48633d;

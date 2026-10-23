@@ -77,8 +77,7 @@ body {
     center / 100% 100% no-repeat;
 }
 
-.classic-kicker::before,
-.contact-paper-eyebrow::before {
+.classic-kicker::before {
   width: 25px;
   height: 7px;
   border-radius: 0;

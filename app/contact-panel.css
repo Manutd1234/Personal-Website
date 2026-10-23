@@ -27,25 +27,8 @@
   gap: 34px;
   padding-bottom: 34px;
 }
-.contact-paper-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #3d6c4c;
-  font: 650 10px/1.6 var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.contact-paper-eyebrow::before {
-  width: 24px;
-  height: 5px;
-  border-radius: 70% 40%;
-  background: #88b582;
-  transform: rotate(-8deg);
-  content: "";
-}
 .contact-paper-title {
-  margin: 21px 0 0;
+  margin: 0;
   font: 750 clamp(3.2rem, 6vw, 5rem)/0.99 var(--classic-display);
   letter-spacing: -0.065em;
 }
@@ -106,7 +89,8 @@
   align-items: flex-start;
   justify-content: flex-end;
   gap: 10px;
-  height: 55px;
+  min-height: 55px;
+  padding-bottom: 10px;
   padding-right: 12px;
   color: #577448;
 }
@@ -160,7 +144,7 @@
 .contact-paper-secondary {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: 1px 12px;
   margin-top: 11px;
@@ -186,15 +170,11 @@
 .contact-paper-bottom {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: 4px 20px;
   padding-block: 11px;
   border-top: 1px solid #c5d8b7;
-}
-.contact-paper-signoff {
-  color: #507146;
-  font: italic 400 17px/1.5 var(--classic-serif);
 }
 .contact-paper-bottom nav {
   display: flex;
@@ -228,11 +208,9 @@
   background: #1b2c20;
   box-shadow: 0 6px 0 #263d29;
 }
-.dark .contact-paper-eyebrow,
 .dark .contact-paper-invitation,
 .dark .contact-paper-note,
-.dark .contact-paper-secondary,
-.dark .contact-paper-signoff {
+.dark .contact-paper-secondary {
   color: #a9c7a4;
 }
 .dark .contact-paper-title em::after {
@@ -287,7 +265,7 @@
     margin-left: 0.12em;
   }
   .contact-paper-note {
-    height: 43px;
+    min-height: 43px;
   }
   .contact-paper-note > span {
     font-size: 19px;

@@ -14,31 +14,26 @@ const tabs = [
     id: "profile",
     label: "Profile",
     hash: "profile",
-    title: "A little context",
   },
   {
     id: "projects",
     label: "Projects",
     hash: "builds",
-    title: "Selected projects",
   },
   {
     id: "experience",
     label: "Experience",
     hash: "experience",
-    title: "Experience & education",
   },
   {
     id: "skills",
     label: "Skills",
     hash: "toolkit",
-    title: "Skills & languages",
   },
   {
     id: "awards",
     label: "Awards",
     hash: "achievements",
-    title: "Awards & certificates",
   },
 ] as const;
 type TabId = (typeof tabs)[number]["id"];
@@ -238,10 +233,6 @@ export default function Portfolio() {
                       <h2 id="offduty-title" className="classic-contact-title">
                         Off the <em>clock.</em>
                       </h2>
-                      <p className="classic-section-note">
-                        Gym, travel, good food, friends &amp; learning — the
-                        life around the code.
-                      </p>
                     </header>
                     <OffDutyPanel />
                   </section>
@@ -252,7 +243,6 @@ export default function Portfolio() {
                     <h1 className="sr-only">Project library</h1>
                   ) : (
                     <header className="classic-section-header">
-                      <p className="classic-kicker">{tab.title}</p>
                       <h1>
                         {tab.id === "experience" ? (
                           <>
@@ -268,13 +258,6 @@ export default function Portfolio() {
                           </>
                         )}
                       </h1>
-                      <p className="classic-section-note">
-                        {tab.id === "experience"
-                          ? "Work, study, and the communities I contribute to."
-                          : tab.id === "skills"
-                            ? "A hands-on toolkit, with a few things to try."
-                            : "Team wins, school milestones, service, and continued learning."}
-                      </p>
                     </header>
                   )}
                   {tab.id === "projects" ? (
@@ -302,10 +285,7 @@ export default function Portfolio() {
           </section>
         </main>
         <footer className="classic-shell classic-footer">
-          <p>
-            © 2026 Ian Abiel Wangsa{" "}
-            <span>· built with next.js &amp; caffeine</span>
-          </p>
+          <p>© 2026 Ian Abiel Wangsa</p>
           <button
             onClick={() =>
               window.scrollTo({

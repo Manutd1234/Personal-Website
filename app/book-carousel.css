@@ -72,12 +72,6 @@
   font: 0.65rem/1.7 var(--book-mono);
   letter-spacing: 0.1em;
 }
-.book-carousel .book-library-label > span {
-  display: block;
-  color: var(--book-muted);
-  font-size: 0.57rem;
-  letter-spacing: 0.08em;
-}
 .book-carousel .book-drag-hint {
   color: var(--book-muted);
   font-size: 0.73rem;
@@ -85,9 +79,14 @@
   text-align: right;
 }
 .book-carousel .book-drag-hint > span {
-  display: block;
+  display: none;
   margin-top: 3px;
   font: 0.55rem/1.6 var(--book-mono);
+}
+.book-carousel
+  .book-stage:has(.book-scene:focus-visible, .book-click:focus-visible)
+  .book-keyboard-hint {
+  display: block;
 }
 .book-carousel .book-theatre {
   position: relative;

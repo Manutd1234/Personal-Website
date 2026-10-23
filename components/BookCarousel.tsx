@@ -795,17 +795,17 @@ export default function BookCarousel({
         ref={stageRef}
       >
         <div className="book-stage-header">
-          <span className="book-library-label">
-            THE PROJECT LIBRARY <span>Research, apps & team builds</span>
-          </span>
+          <span className="book-library-label">THE PROJECT LIBRARY</span>
           {isOpen ? (
             <button className="book-close" onClick={closeBook} type="button">
               ← Back to the books <span aria-hidden="true">Esc</span>
             </button>
           ) : (
             <span className="book-drag-hint">
-              Drag to rotate · Click to open
-              <span>← → / Home / End · Enter opens</span>
+              Drag to browse · Click to open
+              <span className="book-keyboard-hint">
+                ← → / Home / End · Enter opens
+              </span>
             </span>
           )}
         </div>

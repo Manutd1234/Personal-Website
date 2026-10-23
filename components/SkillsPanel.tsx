@@ -12,10 +12,6 @@ import { credentialProviders } from "@/content/credential-providers";
 import { asset } from "@/content/paths";
 import SkillsSandbox from "./SkillsSandbox";
 
-const TOTAL_SKILLS = skillGroups.reduce(
-  (total, group) => total + group.items.length,
-  0,
-);
 const credentialGroups = [
   ...new Set(certifications.map((record) => record.issuer)),
 ].map((issuer) => ({
@@ -52,6 +48,7 @@ export default function SkillsPanel({ active = true }: { active?: boolean }) {
       group.items.length > 0,
   );
   const count = groups.reduce((total, group) => total + group.items.length, 0);
+  const filtering = Boolean(query) || category !== "all";
   const filters = [
     {
       value: "all",
@@ -124,7 +121,7 @@ export default function SkillsPanel({ active = true }: { active?: boolean }) {
           ))}
         </div>
         <div className="skills-classic-mobile-filter">
-          <label htmlFor={categoryId}>Light up a category</label>
+          <label htmlFor={categoryId}>Category</label>
           <select
             id={categoryId}
             aria-controls={resultsId}
@@ -140,19 +137,24 @@ export default function SkillsPanel({ active = true }: { active?: boolean }) {
         </div>
         <div className="skills-classic-result-bar">
           <p role="status" aria-live="polite">
-            <strong>{count}</strong> of {TOTAL_SKILLS} skills highlighted
-            {category === "all" && count > 0
-              ? ` across ${groups.length} ${groups.length === 1 ? "category" : "categories"}`
-              : ""}
-            {!count ? ". No matches; every skill stays in the sandbox." : "."}
+            {filtering ? (
+              count ? (
+                <>
+                  <strong>{count}</strong> {count === 1 ? "skill" : "skills"}{" "}
+                  highlighted
+                </>
+              ) : (
+                "No matching skills. Try another search."
+              )
+            ) : (
+              "Drag a skill. Pick a category to light it up."
+            )}
           </p>
-          <button
-            type="button"
-            disabled={!search && category === "all"}
-            onClick={reset}
-          >
-            Reset filters <span aria-hidden="true">↗</span>
-          </button>
+          {filtering ? (
+            <button type="button" onClick={reset}>
+              Clear filters
+            </button>
+          ) : null}
         </div>
         <SkillsSandbox
           id={resultsId}
@@ -166,7 +168,6 @@ export default function SkillsPanel({ active = true }: { active?: boolean }) {
           aria-labelledby={languagesId}
         >
           <div>
-            <p>Beyond programming</p>
             <h2 id={languagesId}>Spoken languages</h2>
           </div>
           <dl>
@@ -185,7 +186,6 @@ export default function SkillsPanel({ active = true }: { active?: boolean }) {
         >
           <header>
             <div>
-              <p>Continued learning</p>
               <h2 id={credentialsId}>Credentials</h2>
             </div>
             <a href="#certificates">
@@ -298,11 +298,6 @@ export default function SkillsPanel({ active = true }: { active?: boolean }) {
           </div>
         </section>
       </div>
-
-      <p className="skills-classic-note">
-        {TOTAL_SKILLS} tools and practices across projects, work, and
-        coursework.
-      </p>
     </div>
   );
 }

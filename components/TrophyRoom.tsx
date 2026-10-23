@@ -164,8 +164,8 @@ function representativePreview(record: AwardRecord): CertificateFile {
     representative: true,
     caption:
       issuerLogo || provider
-        ? "Representative issuer emblem. A personal award photograph or certificate preview is not available for this record."
-        : "Representative subject emblem. A personal award photograph or certificate preview is not available for this record.",
+        ? "Issuer emblem; a personal award photo or certificate scan is not available."
+        : "Illustrative emblem; a personal award photo or certificate scan is not available.",
   };
 }
 const relatedProjectTitles: Readonly<Record<string, string>> = {
@@ -197,13 +197,6 @@ const collection: readonly Achievement[] = categories.flatMap((category) =>
     };
   }),
 );
-const previewCount = new Set(
-  collection.flatMap((record) =>
-    record.certificates
-      .filter((file) => !file.representative)
-      .map((file) => file.src),
-  ),
-).size;
 const hashFilters: Readonly<Record<string, CollectionFilter>> = {
   "#competitions": "competitions",
   "#government": "government",
@@ -410,29 +403,27 @@ export default function TrophyRoom() {
       aria-labelledby={`${prefix}-title`}
       data-suspended={!available || reduced}
     >
-      <header className="trophy-collection-heading">
-        <h2 id={`${prefix}-title`} className="sr-only">
-          Awards and certificates
-        </h2>
-        <p>Open an award to see the certificate and story.</p>
-        <span className="trophy-collection-count">
-          {collection.length} records · {previewCount} previews
-        </span>
-      </header>
+      <h2 id={`${prefix}-title`} className="sr-only">
+        Awards and certificates
+      </h2>
       <div className="award-tablet">
         <span className="award-tablet-camera" aria-hidden="true" />
         <div className="award-tablet-screen">
           <div className="award-tablet-status" aria-hidden="true">
             <span>Ian’s collection</span>
             <span>
-              {collection.length} records <Wifi size={13} />
+              <Wifi size={13} />
               <BatteryFull size={17} />
             </span>
           </div>
           <div className="award-tablet-home-heading">
             <div>
-              <p>Personal archive</p>
-              <h3>Awards & certificates.</h3>
+              <h3>
+                {filter === "all"
+                  ? "All achievements"
+                  : categories.find((category) => category.id === filter)
+                      ?.label}
+              </h3>
             </div>
             <label className="trophy-search">
               <Search size={17} aria-hidden="true" />
@@ -440,7 +431,7 @@ export default function TrophyRoom() {
               <input
                 type="search"
                 value={query}
-                placeholder="Search this collection…"
+                placeholder="Search awards & certificates…"
                 onChange={(event) => {
                   setQuery(event.target.value);
                   setFilter("all");
@@ -450,11 +441,18 @@ export default function TrophyRoom() {
             </label>
           </div>
           <p className="trophy-results" role="status">
-            {visible.length} {visible.length === 1 ? "app" : "apps"}
-            {filter === "all"
-              ? " · all awards & credentials"
-              : ` · ${categories.find((category) => category.id === filter)?.label}`}
-            {search ? ` matching “${query.trim()}”` : ""}
+            {visible.length}{" "}
+            {search
+              ? visible.length === 1
+                ? "match"
+                : "matches"
+              : visible.length === 1
+                ? "achievement"
+                : "achievements"}
+            {filter !== "all"
+              ? ` · ${categories.find((category) => category.id === filter)?.label}`
+              : ""}
+            {search ? ` for “${query.trim()}”` : ""}
           </p>
           <div
             className="award-app-scroll"
@@ -586,8 +584,8 @@ export default function TrophyRoom() {
                 <div className="achievement-fact-wide">
                   <dt>
                     {selected.category === "certificates"
-                      ? "Status / record"
-                      : "Result / recognition"}
+                      ? "Status"
+                      : "Recognition"}
                   </dt>
                   <dd>{selected.detail}</dd>
                 </div>

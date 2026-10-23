@@ -20,17 +20,17 @@ const workbenchNotes = [
   {
     title: "AlphaEngine",
     label: "AlphaEngine",
-    decision: "Recover the feed. Check the sequence.",
+    caption: "Research dashboard with paper execution gates.",
   },
   {
     title: "BrainHack TIL-AI",
     label: "BrainHack",
-    decision: "Package the services for an air-gapped evaluation.",
+    caption: "The six-team arena at BrainHack TIL-AI.",
   },
   {
     title: "CS2 Decision Coach",
     label: "RE:DECIDE",
-    decision: "Ground the coaching in match evidence.",
+    caption: "Match analysis inside RE:DECIDE.",
   },
 ] as const;
 const buildNotes = workbenchNotes.flatMap((note) => {
@@ -84,11 +84,7 @@ function Workbench({
           <p className="classic-kicker">How I build</p>
           <h2 id={`${prefix}-title`}>At the workbench.</h2>
         </div>
-        <p>
-          Pick a project. Follow the decisions.
-          <br />
-          Then look under the hood.
-        </p>
+        <p>The decisions behind three builds.</p>
       </header>
       <div className="builder-notebook">
         <div
@@ -114,9 +110,6 @@ function Workbench({
               {note.label}
             </button>
           ))}
-          <span className="builder-tab-aside" aria-hidden="true">
-            a peek behind the build ↙
-          </span>
         </div>
         <div className="builder-note-stage">
           {buildNotes.map((note, index) => {
@@ -162,7 +155,7 @@ function Workbench({
                       <ArrowUpRight size={15} /> View full image
                     </span>
                   </a>
-                  <figcaption>{note.media.caption}</figcaption>
+                  <figcaption>{note.caption}</figcaption>
                 </figure>
                 <div className="builder-note-copy">
                   <p className="builder-note-category">
@@ -244,7 +237,7 @@ function Workbench({
                       onClick={() => openProjects(note.title)}
                       aria-label={`Open the bookshelf: ${note.title} book details`}
                     >
-                      Open the bookshelf{" "}
+                      Project details{" "}
                       <ArrowUpRight size={15} aria-hidden="true" />
                     </button>
                   </div>
@@ -352,7 +345,6 @@ export default function ProfilePanel({
               </div>
               <figcaption>
                 <span>London, United Kingdom</span>
-                <span>A little outside the code</span>
               </figcaption>
             </motion.figure>
           </div>
@@ -360,29 +352,19 @@ export default function ProfilePanel({
       </section>
       <section className="classic-about" aria-labelledby="about-title">
         <div>
-          <p className="classic-kicker">A little context</p>
           <h2 id="about-title">About me</h2>
         </div>
         <div className="classic-about-copy">
           <p>
             I study Computer Science at NUS, with a second major in Mathematics
-            and a minor in Economics. I like projects where I can work through
-            the whole problem, from the data and backend to the part someone
-            actually uses.
+            and a minor in Economics. I enjoy following a problem all the way
+            from raw data to something people can use.
           </p>
           <p>
-            So far, that has included quantitative research at Caerus, product
-            work at a startup, recruitment tools at CTES, and AI developer tools
-            at Accenture. Before university, I served as a signals commander in
-            the RSAF.
+            Before NUS, I served as a signals commander in the RSAF. Outside
+            work, I’m usually at the gym, planning a trip, or finding somewhere
+            good to eat.
           </p>
-          <p>
-            Outside work, you’ll find me at the gym, travelling, finding good
-            food, or learning something new.
-          </p>
-          <a href={profile.linkedin} target="_blank" rel="noreferrer">
-            More on LinkedIn <ArrowUpRight size={14} />
-          </a>
         </div>
       </section>
       <Workbench openProjects={openProjects} />

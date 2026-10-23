@@ -463,10 +463,10 @@ export default function OffDutyPanel() {
       </span>
       <p className="offduty-help" id={`${prefix}-help`}>
         <span className="offduty-help-fine">
-          Pick a hobby, drag the photos around, or click one for a closer look.
+          Drag to rearrange. Click a photo to open it.
         </span>
         <span className="offduty-help-touch">
-          Pick a hobby, swipe through, or tap a photo for a closer look.
+          Swipe to browse. Tap a photo to open it.
         </span>
       </p>
       <ul

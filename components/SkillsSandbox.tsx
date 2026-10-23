@@ -666,7 +666,6 @@ export default function SkillsSandbox({
     }
     if (cancelled) setGrabbed(null);
   }
-  const selectedSkill = skills[selected];
   const matchAfter =
     matching.find(({ index }) => index > selected) ?? matching[0];
 
@@ -721,7 +720,7 @@ export default function SkillsSandbox({
               if (matchAfter) focusPill(matchAfter.index);
             }}
           >
-            Find a highlighted skill <ArrowDown size={14} aria-hidden="true" />
+            Next match <ArrowDown size={14} aria-hidden="true" />
           </button>
         ) : null}
       </div>
@@ -777,15 +776,14 @@ export default function SkillsSandbox({
           </button>
         ))}
       </div>
-      <p className="skill-physics-keyboard" id={`${prefix}-keyboard`}>
-        {still
-          ? "Arrow keys browse skills. Page Up / Page Down choose the previous or next pill."
-          : "Keyboard: Tab into the board, then use arrow keys to move a pill; Shift moves further. Page Up / Page Down switch pills. Esc releases."}
-      </p>
-      <p className="skill-physics-selection">
-        <strong>{selectedSkill.label}</strong>
-        <span>{selectedSkill.category}</span>
-      </p>
+      <details className="skill-physics-help">
+        <summary>Keyboard controls</summary>
+        <p className="skill-physics-keyboard" id={`${prefix}-keyboard`}>
+          {still
+            ? "Arrow keys browse skills. Page Up / Page Down choose the previous or next pill."
+            : "Tab into the board. Arrow keys move a skill; Shift moves it further. Page Up / Page Down switch skills. Esc releases."}
+        </p>
+      </details>
       <details className="skill-physics-list">
         <summary>
           Read all {skills.length} skills{" "}

@@ -533,12 +533,14 @@ function DeckTrack({
         </p>
         <p className="deck-hint">
           <span className="deck-hint-pointer">
-            {reduced ? "" : "Always rolling · hover to pause · "}
-            click a card to turn it · ← → to browse
+            Click to turn a card{reduced ? "" : " · hover to pause"}
+            <span className="sr-only">
+              {" "}
+              · Use the left and right arrow keys to browse.
+            </span>
           </span>
           <span className="deck-hint-touch">
-            {reduced ? "" : "Always rolling · "}swipe to browse · tap a card to
-            turn it
+            Swipe to browse · tap to turn a card
           </span>
         </p>
       </div>
@@ -609,9 +611,6 @@ export default function CardShowcase({
   }
 
   const deck = decks.find((item) => item.id === active)!;
-  const count = collected[active].length;
-  const total = deck.cards.length;
-  const complete = count === total;
 
   return (
     <div className="deck-showcase career-archive-shell">
@@ -647,30 +646,6 @@ export default function CardShowcase({
             </button>
           ))}
         </div>
-        <p className="deck-progress" data-complete={complete}>
-          <span aria-hidden="true">
-            <span className="deck-progress-label">
-              {complete ? "All explored" : "Explored"}
-            </span>
-            <span className="deck-progress-count">
-              <motion.span
-                key={`${active}-${count}`}
-                initial={reduced ? false : { opacity: 0, y: -7 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={reduced ? { duration: 0 } : undefined}
-              >
-                {count}
-              </motion.span>{" "}
-              / {total}
-            </span>
-          </span>
-          <span className="sr-only">
-            {count} of {total} {deck.label} records explored.
-          </span>
-        </p>
-        <p className="sr-only" role="status">
-          {complete ? `All ${total} ${deck.label} records explored.` : ""}
-        </p>
       </div>
       <div
         ref={stageRef}
