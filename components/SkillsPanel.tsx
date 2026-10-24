@@ -135,32 +135,34 @@ export default function SkillsPanel({ active = true }: { active?: boolean }) {
             ))}
           </select>
         </div>
-        <div className="skills-classic-result-bar">
-          <p role="status" aria-live="polite">
-            {filtering ? (
-              count ? (
-                <>
-                  <strong>{count}</strong> {count === 1 ? "skill" : "skills"}{" "}
-                  highlighted
-                </>
-              ) : (
-                "No matching skills. Try another search."
-              )
-            ) : (
-              "Drag the labels around. Choose a category to bring it into focus."
-            )}
-          </p>
-          {filtering ? (
-            <button type="button" onClick={reset}>
-              Clear filters
-            </button>
-          ) : null}
-        </div>
         <SkillsSandbox
           id={resultsId}
           category={category}
           search={search}
           active={active}
+          status={
+            <div className="skills-classic-result-bar">
+              <p role="status" aria-live="polite">
+                {filtering ? (
+                  count ? (
+                    <>
+                      <strong>{count}</strong> {count === 1 ? "skill" : "skills"}{" "}
+                      highlighted
+                    </>
+                  ) : (
+                    "No matching skills. Try another search."
+                  )
+                ) : (
+                  "Drag the labels around. Choose a category to bring it into focus."
+                )}
+              </p>
+              {filtering ? (
+                <button type="button" onClick={reset}>
+                  Clear filters
+                </button>
+              ) : null}
+            </div>
+          }
         />
 
         <section

@@ -43,7 +43,7 @@ const deckMotion = {
 };
 const AUTO_SPEED = 24;
 const MAX_FRAME_DELTA = 50;
-const MANUAL_IDLE = 8500;
+const MANUAL_IDLE = 1200;
 
 // The card whose snap position is closest to the current scroll. On a phone no
 // card sits fully inside the track between snap points, so position must come
@@ -105,6 +105,8 @@ function DeckTrack({
   const autoMoving = useRef(false);
   const idleUntil = useRef(0);
   const lastIdleSignal = useRef(-Infinity);
+  const inputMode = useRef<"keyboard" | "pointer">("keyboard");
+  const activeTouches = useRef(0);
   const pending = useRef<number | null>(null);
   const pendingTimer = useRef(0);
   const [view, setView] = useState<TrackView>({
@@ -125,7 +127,7 @@ function DeckTrack({
   const trackId = useId();
   const canAutoplay =
     active && dealt && onScreen && visible && !reduced &&
-    !hovered && !focused && !pressed && reading.size === 0;
+    !hovered && !focused && !pressed;
 
   const idle = useCallback(() => {
     const now = performance.now();
@@ -137,6 +139,9 @@ function DeckTrack({
   }, []);
 
   const releasePointer = useCallback(() => {
+    // Native touch scrolling cancels pointer events before the finger lifts.
+    // Keep the rail still until the matching touchend/touchcancel arrives.
+    if (activeTouches.current > 0) return;
     setPressed(false);
     idle();
   }, [idle]);
@@ -296,12 +301,47 @@ function DeckTrack({
   }, []);
 
   useEffect(() => {
+    // A click and the subsequent front/back focus transfer are pointer focus,
+    // not a request to stop autoplay forever. Keyboard users still keep their
+    // focused controls stationary, including when they tab in from elsewhere.
+    const keyboard = (event: globalThis.KeyboardEvent) => {
+      if (["Shift", "Control", "Alt", "Meta"].includes(event.key)) return;
+      inputMode.current = "keyboard";
+      if (groupRef.current?.contains(document.activeElement)) setFocused(true);
+    };
+    const pointer = () => {
+      inputMode.current = "pointer";
+      setFocused(false);
+    };
+    document.addEventListener("keydown", keyboard, true);
+    document.addEventListener("pointerdown", pointer, true);
+    return () => {
+      document.removeEventListener("keydown", keyboard, true);
+      document.removeEventListener("pointerdown", pointer, true);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!pressed) return;
+    const releaseTouch = (event: TouchEvent) => {
+      activeTouches.current = event.touches.length;
+      releasePointer();
+    };
+    const releaseOutsideWindow = () => {
+      activeTouches.current = 0;
+      releasePointer();
+    };
     window.addEventListener("pointerup", releasePointer);
     window.addEventListener("pointercancel", releasePointer);
+    window.addEventListener("touchend", releaseTouch);
+    window.addEventListener("touchcancel", releaseTouch);
+    window.addEventListener("blur", releaseOutsideWindow);
     return () => {
       window.removeEventListener("pointerup", releasePointer);
       window.removeEventListener("pointercancel", releasePointer);
+      window.removeEventListener("touchend", releaseTouch);
+      window.removeEventListener("touchcancel", releaseTouch);
+      window.removeEventListener("blur", releaseOutsideWindow);
     };
   }, [pressed, releasePointer]);
 
@@ -434,7 +474,20 @@ function DeckTrack({
       onPointerDownCapture={() => { setPressed(true); idle(); }}
       onPointerUpCapture={releasePointer}
       onPointerCancelCapture={releasePointer}
-      onFocusCapture={() => setFocused(true)}
+      onTouchStartCapture={(event) => {
+        activeTouches.current = event.touches.length;
+        setPressed(true);
+        idle();
+      }}
+      onTouchEndCapture={(event) => {
+        activeTouches.current = event.touches.length;
+        releasePointer();
+      }}
+      onTouchCancelCapture={(event) => {
+        activeTouches.current = event.touches.length;
+        releasePointer();
+      }}
+      onFocusCapture={() => setFocused(inputMode.current === "keyboard")}
       onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) { setFocused(false); idle(); } }}
       onKeyDownCapture={idle}
       onWheelCapture={idle}

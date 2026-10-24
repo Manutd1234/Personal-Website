@@ -360,33 +360,25 @@
   color: #9cae8f;
 }
 @media (prefers-reduced-motion: no-preference) {
-  /* Keep the mascot mounted, but finish fading the previous chapter before
-     revealing the next. Layered paragraphs and diagrams must not double up. */
-  .journey-scene-action,
-  .journey-scene-caption {
-    transition:
-      opacity 0.18s ease,
-      visibility 0s linear 0.18s;
+  /* Both workspace layers meet in a short crossfade. The room and person
+     stay mounted, and hands rest throughout the handoff. */
+  .journey-scene-action {
+    transition: opacity 0.22s ease, visibility 0s linear 0.22s;
   }
-  .journey-scene-action[data-active="true"],
+  .journey-scene-action[data-active="true"] {
+    transition: opacity 0.22s ease, visibility 0s linear;
+  }
+  /* Text changes as a single readable layer, with no ghosted captions. */
+  .journey-copy,
+  .journey-copy[data-active="true"],
+  .journey-scene-caption,
   .journey-scene-caption[data-active="true"] {
-    transition:
-      opacity 0.24s ease 0.2s,
-      visibility 0s linear 0.2s;
-  }
-  .journey-copy {
-    transform: translateY(4px);
-    transition:
-      opacity 0.16s ease,
-      transform 0.16s ease,
-      visibility 0s linear 0.16s;
-  }
-  .journey-copy[data-active="true"] {
     transform: none;
-    transition:
-      opacity 0.28s ease 0.18s,
-      transform 0.28s cubic-bezier(0.2, 0.7, 0.3, 1) 0.18s,
-      visibility 0s linear 0.18s;
+    transition: none;
+  }
+  [data-hand-open],
+  [data-hand-carry] {
+    transition: opacity 0.14s ease;
   }
   /* A shared clock drives the authored poses and work. Only natural blinking
      loops independently, and it pauses with the rest of the scene. */
@@ -395,16 +387,8 @@
     transform-origin: center;
     animation: scene-blink 6.5s infinite;
   }
-  /* An explicit pause reveals the whole chapter. Scrolling offscreen only
-     freezes its progress; returning resumes smoothly without replaying it. */
-  .build-journey:is([data-paused="true"], [data-entrance="false"])
-    .journey-scene-action[data-active="true"]
-    .scene-code-line {
-    animation: none;
-    opacity: 1;
-    transform: none;
-    clip-path: none;
-  }
+  /* Pausing holds the current pose and partially typed line, just like
+     scrolling away. Reduced motion still renders the completed chapter. */
   .build-journey[data-running="false"]
     :is(.journey-scene-action, .journey-copy)[data-active="true"] {
     transition: none;

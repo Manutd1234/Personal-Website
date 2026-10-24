@@ -14,7 +14,7 @@ import {
 import { type CSSProperties, useEffect, useId, useRef, useState } from "react";
 import { useMotionPreference } from "./useMotionPreference";
 import { useVisiblePlayback } from "./useVisiblePlayback";
-import { sampleBuilderChoreography } from "./builder-choreography";
+import { type BuilderArm, sampleBuilderChoreography } from "./builder-choreography";
 
 const STEP_DURATION_MS = 7500;
 
@@ -91,6 +91,38 @@ const steps = [
   },
 ] as const;
 
+/** Rounded, tapered silhouettes keep the elbow and sleeve joined at every pose. */
+function armArtwork({ shoulder: s, elbow: e, hand: h }: BuilderArm) {
+  const upper = [(e[0] - s[0]) / 44, (e[1] - s[1]) / 44];
+  const fore = [(h[0] - e[0]) / 46, (h[1] - e[1]) / 46];
+  const n = [-upper[1], upper[0]], m = [-fore[1], fore[0]];
+  const at = (point: number[], direction: number[], amount: number) => `${point[0] + direction[0] * amount} ${point[1] + direction[1] * amount}`;
+  const cuff = [s[0] + upper[0] * 29, s[1] + upper[1] * 29];
+  const arm = `M${at(s, n, 7)} L${at(e, n, 6)} Q${e[0] + (n[0] + m[0]) * 6} ${e[1] + (n[1] + m[1]) * 6} ${at(e, m, 5.5)} L${at(h, m, 3.5)} Q${at(h, fore, 4)} ${at(h, m, -3.5)} L${at(e, m, -5.5)} Q${e[0] - (n[0] + m[0]) * 6} ${e[1] - (n[1] + m[1]) * 6} ${at(e, n, -6)} L${at(s, n, -7)} Q${at(s, upper, -7)} ${at(s, n, 7)}Z`;
+  const sleeve = `M${at(s, n, 10)} Q${s[0] + upper[0] * 17 + n[0] * 10} ${s[1] + upper[1] * 17 + n[1] * 10} ${at(cuff, n, 8.5)} Q${at(cuff, upper, 3)} ${at(cuff, n, -8.5)} Q${s[0] + upper[0] * 17 - n[0] * 10} ${s[1] + upper[1] * 17 - n[1] * 10} ${at(s, n, -10)} Q${at(s, upper, -8)} ${at(s, n, 10)}Z`;
+  return { arm, sleeve, cuff: `M${at(cuff, n, 7)} Q${at(cuff, upper, 2)} ${at(cuff, n, -7)}` };
+}
+
+function BuilderArmArtwork({ side }: { side: "left" | "right" }) {
+  const art = armArtwork(sampleBuilderChoreography(0, 0)[side]);
+  return <g className={`scene-arm scene-arm-${side}`} strokeLinejoin="round">
+    <path data-rig-arm={side} d={art.arm} fill={side === "right" ? "#e5c7a1" : "#cba984"} stroke={side === "right" ? "#bea17d" : "#b29473"} strokeWidth=".6" />
+    <path data-rig-sleeve={side} d={art.sleeve} fill={side === "right" ? "#23866a" : "#286f58"} stroke={side === "right" ? "#2f755c" : "#32654e"} strokeWidth=".7" />
+    <path data-rig-cuff={side} d={art.cuff} stroke={side === "right" ? "#66a98d" : "#4b8b70"} strokeWidth="1.4" strokeLinecap="round" />
+  </g>;
+}
+
+function BuilderHandArtwork({ side }: { side: "left" | "right" }) {
+  const hand = sampleBuilderChoreography(0, 0)[side].hand;
+  return <g data-rig-hand={side} transform={`translate(${hand[0]} ${hand[1]})`} fill={side === "right" ? "#e5c7a1" : "#cba984"} stroke={side === "right" ? "#bea17d" : "#b29473"} strokeWidth=".5" strokeLinejoin="round">
+    <path data-hand-open d="M-4-3Q0-4 4-2L7 0Q8 2 5 3L1 3Q-1 6-3 3L-5 1Z" />
+    <g data-hand-carry opacity="0" transform={side === "left" ? "scale(-1 1)" : undefined}>
+      <path d="M-5-1Q-5 3 0 3H2Q6 3 6-1L5-5Q3-7 2-4L1-1Z" />
+      <path d="M-2 1Q1 2 4 0" fill="none" strokeWidth=".6" />
+    </g>
+  </g>;
+}
+
 /** One continuous workspace, with short, authored reaches over the desk. */
 function BuilderScene({ stage, outgoing, running, settled }: {
   stage: number;
@@ -110,7 +142,10 @@ function BuilderScene({ stage, outgoing, running, settled }: {
     const arms = ["right", "left"].map(side => ({
       arm: svg.querySelector<SVGPathElement>(`[data-rig-arm="${side}"]`),
       sleeve: svg.querySelector<SVGPathElement>(`[data-rig-sleeve="${side}"]`),
+      cuff: svg.querySelector<SVGPathElement>(`[data-rig-cuff="${side}"]`),
       hand: svg.querySelector<SVGGElement>(`[data-rig-hand="${side}"]`),
+      openHand: svg.querySelector<SVGPathElement>(`[data-rig-hand="${side}"] [data-hand-open]`),
+      carryHand: svg.querySelector<SVGGElement>(`[data-rig-hand="${side}"] [data-hand-carry]`),
     }));
     const action = svg.querySelector<SVGGElement>(`[data-rig-stage="${stage}"]`);
     const blocks = action?.querySelectorAll<SVGGElement>("[data-rig-block]");
@@ -131,10 +166,14 @@ function BuilderScene({ stage, outgoing, running, settled }: {
       const pose = sampleBuilderChoreography(stage, progress);
       head?.setAttribute("transform", `rotate(${pose.headTilt} 163 193)`);
       pupils?.setAttribute("transform", `translate(${pose.gaze[0]} ${pose.gaze[1]})`);
-      [pose.right, pose.left].forEach(({ shoulder: [sx, sy], elbow: [ex, ey], hand: [hx, hy] }, index) => {
-        arms[index].arm?.setAttribute("d", `M${sx} ${sy}L${ex} ${ey}L${hx} ${hy}`);
-        arms[index].sleeve?.setAttribute("d", `M${sx} ${sy}L${sx + (ex - sx) * .62} ${sy + (ey - sy) * .62}`);
-        arms[index].hand?.setAttribute("transform", `translate(${hx} ${hy})`);
+      [pose.right, pose.left].forEach((arm, index) => {
+        const art = armArtwork(arm);
+        arms[index].arm?.setAttribute("d", art.arm);
+        arms[index].sleeve?.setAttribute("d", art.sleeve);
+        arms[index].cuff?.setAttribute("d", art.cuff);
+        arms[index].hand?.setAttribute("transform", `translate(${arm.hand[0]} ${arm.hand[1]})`);
+        arms[index].openHand?.setAttribute("opacity", pose.carrying ? "0" : "1");
+        arms[index].carryHand?.setAttribute("opacity", pose.carrying ? "1" : "0");
       });
       pencil?.setAttribute("transform", `translate(${pose.right.hand[0]} ${pose.right.hand[1]})`);
       blocks?.forEach((block, index) => block.setAttribute("transform", `translate(${pose.blocks[index][0]} ${pose.blocks[index][1]})`));
@@ -143,7 +182,7 @@ function BuilderScene({ stage, outgoing, running, settled }: {
       cables?.forEach((cable, index) => {
         const hand = pose.right.hand;
         const point = index === 0
-          ? progress < .12 ? [244, 246] : progress < .26 ? hand : [238, 238]
+          ? progress < .14 ? [253, 251] : progress < .26 ? hand : [238, 238]
           : progress < .44 ? [266, 242] : progress < .62 ? hand : [262, 238];
         const [x, y] = point;
         cable.setAttribute("d", `M${405 + index * 16} 252C${350 + index * 15} 278 ${x + 30} 277 ${x} ${y + 9}`);
@@ -156,7 +195,7 @@ function BuilderScene({ stage, outgoing, running, settled }: {
       });
       keys?.forEach((key, index) => {
         const hand = index === 0 ? pose.left.hand : pose.right.hand;
-        key.style.opacity = pose.typing && hand[1] > 250.6 ? "1" : "0";
+        key.style.opacity = pose.typing && hand[1] > (index === 0 ? 243.6 : 252.6) ? "1" : "0";
       });
       releaseBar?.setAttribute("width", String(pose.launch * 154));
       if (result) result.style.opacity = stage === 4 ? pose.launch >= .98 ? "1" : "0" : progress >= .76 ? "1" : "0";
@@ -206,6 +245,8 @@ function BuilderScene({ stage, outgoing, running, settled }: {
         <path d="M93 259H519L529 269H92Z" fill="#e1d4af" stroke="#a3ab8f" strokeWidth="1.5" />
         <path d="M93 269H527V278H93Z" fill="#cbbb96" />
 
+        {/* The far sleeve and forearm sit behind the shirt, giving the arms depth. */}
+        <BuilderArmArtwork side="left" />
         {/* A seated, three-quarter developer, with a relaxed shoulder line. */}
         <path d="M147 196L174 197L177 213H143Z" fill="#d8b58c" />
         <path d="M143 204C126 207 120 223 126 244L132 272C152 279 176 276 193 269L195 227C195 214 182 205 173 204L161 215Z" fill="#23866a" stroke="#3b6751" strokeWidth="1.5" />
@@ -235,7 +276,7 @@ function BuilderScene({ stage, outgoing, running, settled }: {
               ))}
               <path d="M203 240Q222 235 242 241Q260 236 278 241L282 262Q260 257 243 263Q223 258 200 262Z" fill="#fffdf2" stroke="#a0af91" strokeWidth="1.5" />
               <path d="M242 241L243 263M208 246L232 246M207 251L234 251M252 246L272 246M253 251L274 251" stroke="#c7d2b9" strokeWidth="1" />
-              <g className="scene-builder-pencil"><path d="M-4-9L6 7" stroke="#d5af52" strokeWidth="4" strokeLinecap="round" /><path d="M6 7L8 10" stroke="#4f6451" strokeWidth="2" strokeLinecap="round" /></g>
+              <g className="scene-builder-pencil" transform="translate(253 251)"><path d="M-4-9L6 7" stroke="#d5af52" strokeWidth="4" strokeLinecap="round" /><path d="M6 7L8 10" stroke="#4f6451" strokeWidth="2" strokeLinecap="round" /></g>
             </>}
             {index === 1 && <>
               <text x="348" y="103" className="scene-work-mono">stack decisions</text>
@@ -249,11 +290,11 @@ function BuilderScene({ stage, outgoing, running, settled }: {
                 <text x="324" y={150 + row * 29} className="scene-work-label">{title}</text>
                 <text x="324" y={159 + row * 29} className="scene-work-small">{detail}</text>
               </g>)}
-              <path d="M179 257H277" stroke="#a8b69a" strokeWidth="4" strokeLinecap="round" />
-              {['DATA', 'API', 'UI'].map((title, row) => <g key={title} data-rig-block={row}>
-                <rect x="232" y={238 - row * 16} width="38" height="16" rx="3" fill={['#e5d6a4', '#c7dfcd', '#cbdfe4'][row]} stroke="#7d9672" strokeWidth="1.4" />
-                <path d={`M237 ${242 - row * 16}H264`} stroke="#fffef7" strokeWidth="1" opacity=".6" />
-                <text x="251" y={249 - row * 16} textAnchor="middle" className="scene-tile-label">{title}</text>
+              <path d="M200 259H281" stroke="#a8b69a" strokeWidth="4" strokeLinecap="round" />
+              {['DATA', 'API', 'UI'].map((title, row) => <g key={title} data-rig-block={row} transform={`translate(-40 ${[-20, 0, 20][row]})`}>
+                <rect x="244" y={247 - row * 10} width="32" height="10" rx="3" fill={['#e5d6a4', '#c7dfcd', '#cbdfe4'][row]} stroke="#7d9672" strokeWidth="1.4" />
+                <path d={`M248 ${250 - row * 10}H272`} stroke="#fffef7" strokeWidth="1" opacity=".6" />
+                <text x="260" y={255 - row * 10} textAnchor="middle" className="scene-tile-label">{title}</text>
               </g>)}
             </>}
             {index === 2 && <>
@@ -268,7 +309,7 @@ function BuilderScene({ stage, outgoing, running, settled }: {
               <path d="M218 234H279L283 260H215Z" fill="#e5e9da" stroke="#99ac8b" strokeWidth="1.5" />
               <circle cx="238" cy="244" r="5" fill="#839d85" /><circle cx="262" cy="244" r="5" fill="#b3a16d" />
               <path d="M227 254H247M253 254H273" stroke="#b1bfa4" strokeWidth="1.5" />
-              {[0, 1].map(wire => <g key={wire} data-rig-plug={wire}><rect x="-4" y="0" width="8" height="10" rx="2" fill={wire ? '#cfb66a' : '#a5c4ad'} stroke="#6d8368" strokeWidth="1" /><path d="M-2 8V11M2 8V11" stroke="#65785d" strokeWidth="1.2" /></g>)}
+              {[0, 1].map(wire => <g key={wire} data-rig-plug={wire} transform={wire === 0 ? "translate(253 251)" : "translate(266 242)"}><rect x="-4" y="0" width="8" height="10" rx="2" fill={wire ? '#cfb66a' : '#a5c4ad'} stroke="#6d8368" strokeWidth="1" /><path d="M-2 8V11M2 8V11" stroke="#65785d" strokeWidth="1.2" /></g>)}
             </>}
             {index === 3 && <>
               <path d="M302 112H512V228Q512 234 506 234H308Q302 234 302 228Z" fill="#234b3e" />
@@ -277,7 +318,7 @@ function BuilderScene({ stage, outgoing, running, settled }: {
               <g className="scene-work-result"><circle cx="320" cy="222" r="3" fill="#add399" /><text x="330" y="225" className="scene-work-small scene-work-success">One complete path</text></g>
               <path d="M210 241H283L293 262H203Z" fill="#dde5d2" stroke="#8ca17e" strokeWidth="1.5" />
               <path d="M216 247H281M212 253H285M222 244L219 258M233 244L232 258M245 244V258M257 244L258 258M269 244L272 258" stroke="#b0bfa4" strokeWidth="1" />
-              <rect className="scene-key-flash" x="223" y="250" width="8" height="4" rx="1" fill="#d5b85b" /><rect className="scene-key-flash" x="253" y="250" width="8" height="4" rx="1" fill="#d5b85b" />
+              <rect className="scene-key-flash" x="229" y="246" width="8" height="4" rx="1" fill="#d5b85b" /><rect className="scene-key-flash" x="259" y="253" width="8" height="4" rx="1" fill="#d5b85b" />
             </>}
             {index === 4 && <>
               <text x="348" y="103" className="scene-work-mono">release checks</text>
@@ -286,18 +327,15 @@ function BuilderScene({ stage, outgoing, running, settled }: {
               <rect x="316" y="204" width="154" height="5" rx="2.5" fill="#d7e1cc" /><rect className="scene-release-progress" x="316" y="204" width="0" height="5" rx="2.5" fill="#168567" />
               <g className="scene-work-result"><circle cx="320" cy="221" r="3" fill="#168567" /><text x="330" y="224" className="scene-work-small">Live · observe & improve</text></g>
               <path d="M218 241H271L277 263H213Z" fill="#e4e9d7" stroke="#8ca17e" strokeWidth="1.5" />
-              <rect className="scene-run-button" x="222" y="247" width="17" height="9" rx="3" fill="#d6dfc4" /><rect className="scene-ship-button" x="251" y="247" width="17" height="9" rx="3" fill="#d6dfc4" />
-              <path d="M228 249L232 252L228 254ZM257 254V249M255 251L257 249L259 251" stroke="#69855c" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+              <rect className="scene-run-button" x="231" y="247" width="17" height="9" rx="3" fill="#d6dfc4" /><rect className="scene-ship-button" x="255" y="247" width="17" height="9" rx="3" fill="#d6dfc4" />
+              <path d="M237 249L241 252L237 254ZM262 254V249M260 251L262 249L264 251" stroke="#69855c" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
             </>}
           </g>
         ))}
 
-        {/* Each arm is an authored shoulder–elbow–wrist path; no inverse rig. */}
-        {(['left', 'right'] as const).map(side => <g key={side} strokeLinecap="round" strokeLinejoin="round">
-          <path data-rig-arm={side} d={side === 'right' ? 'M190 214L212 244L244 246' : 'M166 211L184 244L218 246'} stroke={side === 'right' ? '#e5c7a1' : '#cfad87'} strokeWidth="10" />
-          <path data-rig-sleeve={side} d={side === 'right' ? 'M190 214L204 233' : 'M166 211L177 231'} stroke={side === 'right' ? '#23866a' : '#28795e'} strokeWidth="17" />
-          <g data-rig-hand={side} transform={side === 'right' ? 'translate(244 246)' : 'translate(218 246)'}><ellipse rx="5" ry="4" fill={side === 'right' ? '#e5c7a1' : '#cfad87'} /><path d="M1 1L4 3" stroke={side === 'right' ? '#e5c7a1' : '#cfad87'} strokeWidth="4" /></g>
-        </g>)}
+        <BuilderArmArtwork side="right" />
+        <BuilderHandArtwork side="left" />
+        <BuilderHandArtwork side="right" />
         <g className="scene-builder-head">
           <path d="M140 149C140 134 149 126 164 127C184 128 190 140 188 158L196 170L188 175L186 187C182 198 164 202 151 191L144 174Z" fill="#e5c7a1" stroke="#a58b68" strokeWidth="1.2" />
           <path d="M141 170C133 164 133 149 137 138C142 123 158 119 176 125C189 129 195 139 190 151L184 145L180 137C167 143 154 140 149 153L146 174Z" fill="#38574a" />
@@ -352,7 +390,6 @@ export default function BuildJourney({
   const [playing, setPlaying] = useState(true);
   const [outgoing, setOutgoing] = useState<number | null>(null);
   const remainingMs = useRef(STEP_DURATION_MS);
-  const [settledChapter, setSettledChapter] = useState<number | null>(null);
   const { ref, visible } = useVisiblePlayback<HTMLElement>();
   const reduced = useMotionPreference();
   const prefix = useId();
@@ -365,7 +402,6 @@ export default function BuildJourney({
     const timer = window.setTimeout(() => {
       completed = true;
       remainingMs.current = STEP_DURATION_MS;
-      setSettledChapter(null);
       setOutgoing(active);
       setActive((value) => (value + 1) % steps.length);
     }, remainingMs.current);
@@ -382,8 +418,9 @@ export default function BuildJourney({
 
   useEffect(() => {
     if (outgoing === null) return;
-    // Retain the outgoing pose until the 440 ms fade-out/fade-in sequence ends.
-    const timer = window.setTimeout(() => setOutgoing(null), 500);
+    // The old workspace remains during the short crossfade. Hands are at rest
+    // on both sides of the handoff.
+    const timer = window.setTimeout(() => setOutgoing(null), 300);
     return () => window.clearTimeout(timer);
   }, [outgoing]);
 
@@ -410,7 +447,6 @@ export default function BuildJourney({
       data-running={running}
       data-paused={!playing}
       data-reduced={reduced}
-      data-entrance={settledChapter !== active}
       style={{ "--journey-step-duration": `${STEP_DURATION_MS}ms` } as CSSProperties}
     >
       <header className="builder-workbench-heading">
@@ -433,7 +469,6 @@ export default function BuildJourney({
             }
             aria-pressed={playing}
             onClick={() => {
-              if (playing) setSettledChapter(active);
               setPlaying((value) => !value);
             }}
           >
@@ -471,7 +506,7 @@ export default function BuildJourney({
             stage={active}
             outgoing={outgoing}
             running={running}
-            settled={settledChapter === active || !playing || reduced}
+            settled={reduced}
           />
           <div className="journey-copy-stack">
             {steps.map((step, index) => (

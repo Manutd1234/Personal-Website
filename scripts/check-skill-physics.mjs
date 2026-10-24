@@ -39,11 +39,11 @@ const originalDesktopSizes = [
   [147, 27], [55, 25], [120, 31], [205, 27], [68, 37], [125, 27], [126, 29], [68, 27],
   [99, 25], [84, 31], [83, 29],
 ].map(([width, height]) => ({ width, height }));
-// The CSS scales the complete tile envelope (font and shape padding) by 7%.
+// The CSS scales the complete tile envelope (font and shape padding) by 12%.
 // Keep the original measured metrics as a conservative basis for the fixture.
 const desktopSizes = originalDesktopSizes.map(({ width, height }) => ({
-  width: Math.ceil(width * 0.93),
-  height: Math.ceil(height * 0.93),
+  width: Math.ceil(width * 0.88),
+  height: Math.ceil(height * 0.88),
 }));
 const portfolio = ts.createSourceFile("portfolio.ts", readFileSync(new URL("content/portfolio.ts", root), "utf8"), ts.ScriptTarget.Latest, true);
 let catalogCount = 0;
@@ -194,7 +194,7 @@ function assertGrounded(bodies, floor, context) {
   assert.deepEqual(floating, [], `${context}: labels must connect through contacts to the floor, not float: ${floating.join(", ")}`);
 }
 
-for (const [name, width, frameHeight, scale] of [["desktop", 980, 603, 1], ["narrow", 340, 506, 1.1]]) {
+for (const [name, width, frameHeight, scale] of [["desktop", 980, 538, 1], ["narrow", 340, 478, 1.1]]) {
   const sizes = desktopSizes.map((size) => ({ width: Math.ceil(size.width * scale), height: Math.ceil(size.height * scale) }));
   const area = sizes.reduce((sum, size) => sum + (size.width + physics.SKILL_COLLISION_PADDING * 2) * (size.height + physics.SKILL_COLLISION_PADDING * 2), 0);
   for (const seed of [7, 42, 2026]) {

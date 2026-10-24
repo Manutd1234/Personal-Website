@@ -2,7 +2,7 @@
 .skill-physics.skill-atelier {
   --table-paper: #f2f5ec;
   --table-edge: #c4d2c0;
-  --skill-tile-scale: 0.93;
+  --skill-tile-scale: 0.88;
   --skill-label-font: var(--portfolio-sans), "Avenir Next", Arial, sans-serif;
   padding: 0;
   border: 0;
@@ -12,8 +12,26 @@
 }
 
 .skill-atelier .skill-physics-toolbar {
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 18px;
+  margin: 14px 0 12px;
+}
+
+.skill-atelier .skills-classic-result-bar {
+  flex: 1 1 180px;
+  min-width: 0;
+  min-height: 42px;
+  margin: 0;
+}
+
+.skill-atelier .skill-physics-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
-  margin-bottom: 15px;
+  margin-left: auto;
 }
 
 .skill-atelier .skill-physics-toolbar button {
@@ -32,7 +50,7 @@
 }
 
 .skill-atelier .skill-physics-viewport {
-  height: 605px;
+  height: 540px;
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-gutter: stable;
@@ -49,7 +67,7 @@
 }
 
 .skill-atelier .skill-physics-world {
-  min-height: 603px;
+  min-height: 538px;
   gap: 4px;
   padding: 10px;
   border: 0;
@@ -251,10 +269,10 @@
 }
 @media (max-width: 620px) {
   .skill-atelier .skill-physics-viewport {
-    height: 508.2px;
+    height: 480px;
   }
   .skill-atelier .skill-physics-world {
-    min-height: 506.2px;
+    min-height: 478px;
     gap: 5px;
   }
   .skill-atelier .skill-pill {

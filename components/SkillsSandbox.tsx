@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import type { KeyboardEvent, PointerEvent } from "react";
+import type { KeyboardEvent, PointerEvent, ReactNode } from "react";
 import type { Body as PhysicsBody } from "matter-js";
 import { ArrowDown, RotateCcw } from "lucide-react";
 import { skillGroups } from "@/content/portfolio";
@@ -74,11 +74,13 @@ export default function SkillsSandbox({
   search = "",
   id,
   active = true,
+  status,
 }: {
   category?: string;
   search?: string;
   id?: string;
   active?: boolean;
+  status?: ReactNode;
 }) {
   const [selected, setSelected] = useState(0);
   const [grabbed, setGrabbed] = useState<number | null>(null);
@@ -494,7 +496,7 @@ export default function SkillsSandbox({
       const packed = layoutSkillRows(sizes, width);
       height = Math.ceil(
         Math.max(
-          viewportRef.current?.clientHeight ?? 605,
+          viewportRef.current?.clientHeight ?? 540,
           packed.height,
           area / Math.max(1, (width - 24) * SKILL_PACKING_DENSITY) + 28,
         ),
@@ -795,29 +797,32 @@ export default function SkillsSandbox({
           : "Drag and release a label, or tap to pick it up before dragging on touch. Scroll inside the board to reach every label. The filters above highlight matching skills."}
       </p>
       <div className="skill-physics-toolbar">
-        <button
-          type="button"
-          disabled={!ready || still}
-          onClick={() => {
-            setGrabbed(null);
-            controllerRef.current?.replay();
-            setAnnouncement("Dropping the skills again.");
-          }}
-        >
-          <RotateCcw size={14} aria-hidden="true" />
-          Drop again
-        </button>
-        {filtering ? (
+        {status}
+        <div className="skill-physics-actions">
           <button
             type="button"
-            disabled={!matchAfter}
+            disabled={!ready || still}
             onClick={() => {
-              if (matchAfter) focusPill(matchAfter.index);
+              setGrabbed(null);
+              controllerRef.current?.replay();
+              setAnnouncement("Dropping the skills again.");
             }}
           >
-            Next match <ArrowDown size={14} aria-hidden="true" />
+            <RotateCcw size={14} aria-hidden="true" />
+            Drop again
           </button>
-        ) : null}
+          {filtering ? (
+            <button
+              type="button"
+              disabled={!matchAfter}
+              onClick={() => {
+                if (matchAfter) focusPill(matchAfter.index);
+              }}
+            >
+              Next match <ArrowDown size={14} aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
       </div>
       <div
         className="skill-physics-viewport"

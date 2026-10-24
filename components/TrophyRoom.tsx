@@ -495,7 +495,6 @@ function AchievementSections({ record }: { record: Achievement }) {
         <section className="achievement-section achievement-certificates" aria-label="Certificates and official records">
           <div className="achievement-section-heading">
             <h3>{record.category === "certificates" ? "Completion record" : "Award record"}</h3>
-            <p>{documents.length > 1 ? "Certificates and records, organised in one place." : "Certificate or official record of the recognition."} Select an image to read it at full size.</p>
           </div>
           <div className="achievement-media-grid" data-count={documents.length}>
             {documents.map((file) => <AchievementMedia key={file.src} file={file} />)}
@@ -507,7 +506,6 @@ function AchievementSections({ record }: { record: Achievement }) {
         <section className="achievement-section" aria-label="Photos and moments">
           <div className="achievement-section-heading">
             <h3>Photos & moments</h3>
-            <p>From the event, team, or award collection.</p>
           </div>
           <div className="achievement-media-grid" data-count={photos.length}>
             {photos.map((file) => <AchievementMedia key={file.src} file={file} />)}

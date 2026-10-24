@@ -932,14 +932,14 @@ export const achievementGroups: readonly {
         title: "BügleRock Rockathon 2026",
         issuer: "BügleRock",
         detail: "Top 5 Finalist Team",
-        year: "25–27 Mar 2026",
+        year: "2026",
         certificateKey: "rockathonTop5",
       },
       {
         title: "SunnyHacks 2026",
         issuer: "SunnyHacks",
         detail: "2nd Place",
-        year: "Feb 2026",
+        year: "2026",
         certificateKey: "sunnyHacksSecondPlace",
       },
       {
@@ -1013,7 +1013,7 @@ export const achievementGroups: readonly {
         title: "SSSC Colours Award · Softball",
         issuer: "Singapore Schools Sports Council",
         detail: "Sporting excellence in softball",
-        year: "23 Sep 2022",
+        year: "2022",
         certificateKey: "coloursAward2022",
       },
       {

@@ -63,7 +63,7 @@ export const awardIconPreviews: Readonly<Record<string, string | undefined>> = {
   "images/logos/sunnyhacks-original.webp": "images/award-icons/sunnyhacks-hq.webp",
   "images/portfolio/signmeup-gesture-demo.webp":
     "images/award-icons/signmeup-gesture-demo.webp",
-  "images/logos/moe.webp": "images/award-icons/moe.webp",
+  "images/logos/moe.webp": "images/logos/moe.svg",
   "images/logos/cdc.webp": "images/award-icons/cdc.webp",
   "images/logos/ejc.webp": "images/award-icons/ejc.webp",
   "images/awards/ejc-softball-team-original.webp":
@@ -77,7 +77,7 @@ export const awardIconPreviews: Readonly<Record<string, string | undefined>> = {
   "images/logos/btps.webp": "images/award-icons/btps.webp",
   "images/logos/swimsafer.webp": "images/award-icons/swimsafer.webp",
   "images/awards/representative-music-emblem.svg":
-    "images/award-icons/representative-music-emblem.webp",
+    "images/awards/representative-music-emblem.svg",
   "images/life-passport-oct24/bhid-team-afternoon.webp":
     "images/award-icons/bhid-team-afternoon.webp",
   "images/awards/160-sqn-ne-award-presentation.webp":
@@ -88,8 +88,8 @@ export const awardIconPreviews: Readonly<Record<string, string | undefined>> = {
     "images/award-icons/ippt-gold-cloth-patch.webp",
   "images/awards/marksmanship-cloth-patch.webp":
     "images/award-icons/marksmanship-cloth-patch.webp",
-  "images/logos/anthropic.svg": "images/award-icons/anthropic.webp",
-  "images/logos/datacamp.webp": "images/award-icons/datacamp.webp",
-  "images/logos/databricks.svg": "images/award-icons/databricks.webp",
+  "images/logos/anthropic.svg": "images/logos/anthropic.svg",
+  "images/logos/datacamp.webp": "images/logos/datacamp.svg",
+  "images/logos/databricks.svg": "images/logos/databricks.svg",
   "images/logos/cisco.webp": "images/award-icons/cisco.webp",
 };

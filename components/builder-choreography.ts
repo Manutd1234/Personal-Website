@@ -9,19 +9,17 @@ export type BuilderChoreography = {
   left: BuilderArm;
   headTilt: number;
   gaze: BuilderPoint;
-  /** Offsets from the three tiles' final positions on the workbench. */
   blocks: BuilderPoint[];
   wires: [number, number];
   checks: number;
   typing: boolean;
+  carrying: boolean;
   launch: number;
 };
 
 type PointFrame = readonly [number, number, number];
-type ArmFrame = readonly [number, number, number, number, number];
 const clamp = (value: number) => Math.min(1, Math.max(0, value));
 const interval = (p: number, start: number, end: number) => clamp((p - start) / (end - start));
-// Zero velocity and acceleration at each authored hold keep starts and stops soft.
 const ease = (value: number) => {
   const t = clamp(value);
   return t * t * t * (t * (t * 6 - 15) + 10);
@@ -37,108 +35,96 @@ function pointAt(p: number, frames: readonly PointFrame[]): BuilderPoint {
   const last = frames[frames.length - 1];
   return [last[1], last[2]];
 }
-function armAt(side: "right" | "left", p: number, frames: readonly ArmFrame[]): BuilderArm {
+
+const rightRest: BuilderPoint = [253, 251];
+const leftRest: BuilderPoint = [227, 247];
+const rightFrame = (time: number): PointFrame => [time, ...rightRest];
+const leftFrame = (time: number): PointFrame => [time, ...leftRest];
+
+/** All authored targets stay forward of the shoulders and below the chest.
+ * A single downward elbow branch keeps 44/46-unit limbs constant without
+ * branch changes, flaring or independent elbow/hand interpolation. */
+export function resolveDeskArm(side: "right" | "left", hand: BuilderPoint): BuilderArm {
+  const shoulder: BuilderPoint = side === "right" ? [197, 214] : [177, 210];
+  const dx = hand[0] - shoulder[0], dy = hand[1] - shoulder[1];
+  const distance = Math.hypot(dx, dy);
+  const along = (44 ** 2 - 46 ** 2 + distance ** 2) / (2 * distance);
+  const down = Math.sqrt(Math.max(0, 44 ** 2 - along ** 2));
   return {
-    shoulder: side === "right" ? [190, 214] : [166, 211],
-    elbow: pointAt(p, frames.map(([time, x, y]) => [time, x, y])),
-    hand: pointAt(p, frames.map(([time, , , x, y]) => [time, x, y])),
+    shoulder,
+    elbow: [shoulder[0] + dx * along / distance - dy * down / distance, shoulder[1] + dy * along / distance + dx * down / distance],
+    hand,
   };
 }
-const rightRest = [212, 244, 244, 246] as const;
-const leftRest = [184, 244, 218, 246] as const;
-const rightFrame = (time: number): ArmFrame => [time, ...rightRest];
-const leftFrame = (time: number): ArmFrame => [time, ...leftRest];
 
-/** Authored seated poses, not an IK solver. The shoulders stay at the desk,
- * elbows remain below them, and the props are close enough for short reaches.
- * Every chapter starts and ends with both hands resting in the same place. */
+/** Shared hand/prop choreography. Each chapter starts and ends at rest, with
+ * comfortable reaches, small wrist movements and time to read the result. */
 export function sampleBuilderChoreography(stage: number, progress: number): BuilderChoreography {
   const p = Number.isFinite(progress) ? clamp(progress) : 0;
+  let right: BuilderPoint = [...rightRest], left: BuilderPoint = [...leftRest];
   const pose: BuilderChoreography = {
-    right: armAt("right", p, [rightFrame(0), rightFrame(1)]),
-    left: armAt("left", p, [leftFrame(0), leftFrame(1)]),
-    headTilt: 0,
-    gaze: [0, 0],
-    blocks: [[0, 0], [0, 0], [0, 0]],
-    wires: [1, 1],
-    checks: 3,
-    typing: false,
-    launch: 1,
+    right: resolveDeskArm("right", right), left: resolveDeskArm("left", left),
+    headTilt: 0, gaze: [0, 0], blocks: [[0, 0], [0, 0], [0, 0]],
+    wires: [1, 1], checks: 3, typing: false, carrying: false, launch: 1,
   };
-
   if (stage === 0) {
-    pose.right = armAt("right", p, [rightFrame(0), rightFrame(.08), [.18, 208, 246, 242, 249], [.72, 208, 246, 242, 249], rightFrame(.94), rightFrame(1)]);
-    pose.left = armAt("left", p, [leftFrame(0), leftFrame(.08), [.18, 171, 247, 211, 251], [.72, 171, 247, 211, 251], leftFrame(.94), leftFrame(1)]);
-    for (const start of [.2, .38, .56]) {
-      if (p >= start && p <= start + .12) {
-        const t = interval(p, start, start + .12);
+    right = pointAt(p, [rightFrame(0), rightFrame(.08), [.2, 249, 251], [.72, 249, 251], rightFrame(.94), rightFrame(1)]);
+    left = pointAt(p, [leftFrame(0), leftFrame(.08), [.2, 217, 252], [.72, 217, 252], leftFrame(.94), leftFrame(1)]);
+    for (const start of [.22, .4, .58]) {
+      if (p >= start && p <= start + .1) {
+        const t = interval(p, start, start + .1);
         const stroke = Math.sin(t * Math.PI * 2) * Math.sin(t * Math.PI) ** 2;
-        pose.right.hand[0] += stroke * 2;
-        pose.right.hand[1] -= stroke * .8;
+        right[0] += stroke * 1.7;
+        right[1] -= stroke * .6;
       }
     }
-    pose.checks = [.28, .46, .64].filter(time => p >= time).length;
-    pose.headTilt = pointAt(p, [[0, 0, 0], [.18, 3, 0], [.72, 3, 0], [.94, 0, 0], [1, 0, 0]])[0];
-    pose.gaze = pointAt(p, [[0, 0, 0], [.18, 0, 1.5], [.72, 0, 1.5], [.94, 0, 0], [1, 0, 0]]);
+    pose.checks = [.3, .48, .66].filter(time => p >= time).length;
+    pose.headTilt = pointAt(p, [[0, 0, 0], [.2, 2, 0], [.72, 2, 0], [.94, 0, 0], [1, 0, 0]])[0];
+    pose.gaze = pointAt(p, [[0, 0, 0], [.2, 0, 1], [.72, 0, 1], [.94, 0, 0], [1, 0, 0]]);
   } else if (stage === 1) {
-    pose.right = armAt("right", p, [
-      rightFrame(0), rightFrame(.06), [.14, 203, 252, 222, 216], [.32, 232, 229, 270, 246],
-      [.4, 196, 249, 222, 232], [.58, 232, 235, 270, 230],
-      [.66, 181, 250, 222, 248], [.84, 230, 233, 270, 214], rightFrame(.96), rightFrame(1),
-    ]);
-    pose.left = armAt("left", p, [
-      leftFrame(0), leftFrame(.06), [.14, 151, 245, 184, 216], [.32, 188, 245, 232, 246],
-      [.4, 148, 246, 184, 232], [.58, 192, 247, 232, 230],
-      [.66, 145, 245, 184, 248], [.84, 197, 241, 232, 214], leftFrame(.96), leftFrame(1),
-    ]);
-    const carries = [
-      { start: .14, end: .32, y: 246, offsetY: -30, rightElbow: [[203, 252], [232, 229]], leftElbow: [[151, 245], [188, 245]] },
-      { start: .4, end: .58, y: 230, offsetY: 2, rightElbow: [[196, 249], [232, 235]], leftElbow: [[148, 246], [192, 247]] },
-      { start: .66, end: .84, y: 214, offsetY: 34, rightElbow: [[181, 250], [230, 233]], leftElbow: [[145, 245], [197, 241]] },
-    ];
-    pose.blocks = carries.map(({ start, end, y, offsetY, rightElbow, leftElbow }) => {
+    right = pointAt(p, [rightFrame(0), rightFrame(.06), [.14, 233, 238], [.32, 273, 258], [.4, 233, 248], [.58, 273, 248], [.66, 233, 258], [.84, 273, 238], rightFrame(.96), rightFrame(1)]);
+    left = pointAt(p, [leftFrame(0), leftFrame(.06), [.14, 207, 238], [.32, 247, 258], [.4, 207, 248], [.58, 247, 248], [.66, 207, 258], [.84, 247, 238], leftFrame(.96), leftFrame(1)]);
+    const carries = [{start: .14, end: .32, y: 258, offsetY: -20}, {start: .4, end: .58, y: 248, offsetY: 0}, {start: .66, end: .84, y: 238, offsetY: 20}];
+    pose.blocks = carries.map(({start, end, y, offsetY}) => {
       const t = interval(p, start + .018, end - .025);
-      const clearance = Math.min(offsetY, 0) - 6;
-      const offset = pointAt(t, [[0, -48, offsetY], [.25, -48, clearance], [.72, 0, clearance], [1, 0, 0]]);
+      const clearance = Math.min(offsetY, 0) - 5;
+      const offset = pointAt(t, [[0, -40, offsetY], [.25, -40, clearance], [.72, 0, clearance], [1, 0, 0]]);
       if (p >= start && p <= end) {
-        // Both palms travel with the same tile. A brief grip and placement hold
-        // are shared by the arms and tile, so neither hand slides on its edge.
-        pose.right.hand = [270 + offset[0], y + offset[1]];
-        pose.left.hand = [232 + offset[0], y + offset[1]];
-        pose.right.elbow = pointAt(t, [[0, rightElbow[0][0], rightElbow[0][1]], [.25, 201, 249], [.72, 230, 233], [1, rightElbow[1][0], rightElbow[1][1]]]);
-        pose.left.elbow = pointAt(t, [[0, leftElbow[0][0], leftElbow[0][1]], [.25, 152, 242], [.72, 197, 241], [1, leftElbow[1][0], leftElbow[1][1]]]);
+        // Palms support the underside; fingers curl up the two lower corners.
+        right = [273 + offset[0], y + offset[1]];
+        left = [247 + offset[0], y + offset[1]];
+        pose.carrying = true;
       }
       return offset;
     });
-    pose.headTilt = pointAt(p, [[0, 0, 0], [.14, 2, 0], [.84, 2, 0], [.96, 0, 0], [1, 0, 0]])[0];
+    pose.headTilt = pointAt(p, [[0, 0, 0], [.14, 1.5, 0], [.84, 1.5, 0], [.96, 0, 0], [1, 0, 0]])[0];
     pose.gaze = pointAt(p, [[0, 0, 0], [.14, 0, 1], [.84, 1, 1], [.96, 0, 0], [1, 0, 0]]);
   } else if (stage === 2) {
-    pose.right = armAt("right", p, [
-      rightFrame(0), rightFrame(.1), [.14, 207, 248, 244, 246], [.22, 202, 249, 238, 226], [.26, 198, 252, 238, 238], [.36, 198, 252, 238, 238],
-      [.44, 219, 243, 266, 242], [.5, 219, 243, 266, 242], [.57, 223, 244, 262, 226], [.62, 221, 242, 262, 238], [.74, 221, 242, 262, 238], rightFrame(.94), rightFrame(1),
-    ]);
-    pose.left = armAt("left", p, [leftFrame(0), leftFrame(.1), [.2, 181, 246, 220, 250], [.76, 181, 246, 220, 250], leftFrame(.94), leftFrame(1)]);
+    right = pointAt(p, [rightFrame(0), rightFrame(.14), [.22, 238, 228], [.26, 238, 238], [.36, 238, 238], [.44, 266, 242], [.5, 266, 242], [.57, 262, 228], [.62, 262, 238], [.74, 262, 238], rightFrame(.94), rightFrame(1)]);
+    left = pointAt(p, [leftFrame(0), leftFrame(.1), [.2, 221, 252], [.76, 221, 252], leftFrame(.94), leftFrame(1)]);
     pose.wires = [ease(interval(p, .26, .4)), ease(interval(p, .62, .76))];
-    pose.headTilt = pointAt(p, [[0, 0, 0], [.22, 2, 0], [.66, 2, 0], [.84, -1, 0], [.94, 0, 0], [1, 0, 0]])[0];
+    pose.headTilt = pointAt(p, [[0, 0, 0], [.22, 1.5, 0], [.66, 1.5, 0], [.84, -1, 0], [.94, 0, 0], [1, 0, 0]])[0];
   } else if (stage === 3) {
-    pose.right = armAt("right", p, [rightFrame(0), rightFrame(.06), [.16, 217, 244, 257, 251], [.8, 217, 244, 257, 251], rightFrame(.94), rightFrame(1)]);
-    pose.left = armAt("left", p, [leftFrame(0), leftFrame(.06), [.16, 186, 245, 227, 251], [.8, 186, 245, 227, 251], leftFrame(.94), leftFrame(1)]);
+    right = pointAt(p, [rightFrame(0), rightFrame(.06), [.16, 263, 253], [.8, 263, 253], rightFrame(.94), rightFrame(1)]);
+    left = pointAt(p, [leftFrame(0), leftFrame(.06), [.16, 233, 244], [.8, 233, 244], leftFrame(.94), leftFrame(1)]);
     const lineStart = [.18, .32, .46, .6].find(start => p >= start && p < start + .11);
     pose.typing = lineStart !== undefined;
     if (lineStart !== undefined) {
       const t = interval(p, lineStart, lineStart + .11);
       const tap = Math.sin(t * Math.PI * 4) * Math.sin(t * Math.PI) ** 2;
-      pose.right.hand[1] -= Math.max(0, tap) * 1.1;
-      pose.left.hand[1] -= Math.max(0, -tap) * 1.1;
+      right[1] -= Math.max(0, tap) * .8;
+      left[1] -= Math.max(0, -tap) * .8;
     }
-    pose.headTilt = pointAt(p, [[0, 0, 0], [.16, 2, 0], [.46, 2, 0], [.62, -1, 0], [.8, -1, 0], [.94, 0, 0], [1, 0, 0]])[0];
+    pose.headTilt = pointAt(p, [[0, 0, 0], [.16, 1.5, 0], [.46, 1.5, 0], [.62, -1, 0], [.8, -1, 0], [.94, 0, 0], [1, 0, 0]])[0];
     pose.gaze = pointAt(p, [[0, 0, 0], [.16, 0, 1], [.46, 0, 1], [.62, 1.5, -1], [.8, 1.5, -1], [.94, 0, 0], [1, 0, 0]]);
   } else if (stage === 4) {
-    pose.right = armAt("right", p, [rightFrame(0), rightFrame(.08), [.18, 195, 249, 230, 248], [.23, 195, 249, 230, 250], [.3, 204, 246, 240, 243], [.54, 204, 246, 240, 243], [.64, 221, 244, 260, 249], [.69, 221, 244, 260, 251], [.78, 212, 244, 244, 246], rightFrame(1)]);
+    right = pointAt(p, [rightFrame(0), rightFrame(.08), [.18, 239, 248], [.23, 239, 250], [.3, 250, 246], [.54, 250, 246], [.64, 264, 249], [.69, 264, 251], rightFrame(.82), rightFrame(1)]);
     pose.checks = [.26, .4, .54].filter(time => p >= time).length;
     pose.launch = ease(interval(p, .69, .9));
-    pose.headTilt = pointAt(p, [[0, 0, 0], [.18, 2, 0], [.32, -1, 0], [.54, -1, 0], [.64, 1, 0], [.78, -1, 0], [.96, 0, 0], [1, 0, 0]])[0];
+    pose.headTilt = pointAt(p, [[0, 0, 0], [.18, 1.5, 0], [.32, -1, 0], [.54, -1, 0], [.64, 1, 0], [.78, -1, 0], [.96, 0, 0], [1, 0, 0]])[0];
     pose.gaze = pointAt(p, [[0, 0, 0], [.3, 1.5, -1], [.54, 1.5, -1], [.64, 0, 1], [.78, 1.5, -1], [.96, 0, 0], [1, 0, 0]]);
   }
+  pose.right = resolveDeskArm("right", right);
+  pose.left = resolveDeskArm("left", left);
   return pose;
 }
