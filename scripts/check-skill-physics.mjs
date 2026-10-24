@@ -21,7 +21,7 @@ const physics = scope.exports;
 // metrics, including all seven decorative forms. These are collision fixtures,
 // not a substitute for the browser's measured text-fit check. Narrow fixtures
 // are deliberately larger to cover the mobile minimum font size.
-const desktopSizes = [
+const originalDesktopSizes = [
   [86, 41], [71, 29], [148, 35], [86, 31], [86, 41], [110, 29], [60, 31], [99, 31],
   [171, 29], [78, 35], [76, 31], [81, 29], [109, 29], [78, 31], [94, 31], [93, 29],
   [82, 41], [105, 31], [50, 25], [103, 27], [60, 37], [83, 27], [62, 27], [65, 31],
@@ -39,6 +39,12 @@ const desktopSizes = [
   [147, 27], [55, 25], [120, 31], [205, 27], [68, 37], [125, 27], [126, 29], [68, 27],
   [99, 25], [84, 31], [83, 29],
 ].map(([width, height]) => ({ width, height }));
+// The CSS scales the complete tile envelope (font and shape padding) by 7%.
+// Keep the original measured metrics as a conservative basis for the fixture.
+const desktopSizes = originalDesktopSizes.map(({ width, height }) => ({
+  width: Math.ceil(width * 0.93),
+  height: Math.ceil(height * 0.93),
+}));
 const portfolio = ts.createSourceFile("portfolio.ts", readFileSync(new URL("content/portfolio.ts", root), "utf8"), ts.ScriptTarget.Latest, true);
 let catalogCount = 0;
 function countSkills(node) {
@@ -128,7 +134,7 @@ for (let step = 0; step < 30; step += 1) physics.steerSkillBody(Matter, draggabl
 assert.ok(Math.abs(draggable.position.x - 200) < 0.1, "A free label must follow the pointer");
 const blocker = makeBody({ width: 80, height: 30 }, { x: 300, y: 100 }, 1);
 for (let step = 0; step < 100; step += 1) physics.steerSkillBody(Matter, draggable, { x: 800, y: 100 }, [draggable, blocker], 980, 603);
-assert.ok(draggable.position.x > 200 && draggable.position.x <= 212.1, "Dragging must approach and stop at its neighbour");
+assert.ok(draggable.position.x > 200 && draggable.position.x <= 300 - 80 - physics.SKILL_COLLISION_PADDING * 2 + 0.1, "Dragging must approach and stop at its neighbour");
 
 // A lone label must reach the floor, and a previously resting label must fall
 // when its support is removed. These fail when Matter leaves it asleep in air.
@@ -254,6 +260,7 @@ for (const [name, width, frameHeight, scale] of [["desktop", 980, 603, 1], ["nar
     assert.ok(steps < 14400, `${context}: drop must finish within a finite run`);
     assert.ok(dropped.every((body) => !body.isSleeping), `${context}: no label may sleep in air`);
     assertGrounded(dropped, walls[0], context);
+    const pileHeight = height - physics.SKILL_WORLD_INSET - Math.min(...dropped.flatMap((body) => body.vertices.map((vertex) => vertex.y)));
     const naturalUpsideDown = dropped.filter((body) => Math.cos(body.angle) < 0).length;
 
     // Stress a complete natural pile with fast pointer targets and a fling.
@@ -302,7 +309,7 @@ for (const [name, width, frameHeight, scale] of [["desktop", 980, 603, 1], ["nar
       console.log(`wall-hanging regression: ${angledWallLabels.length} angled sidewall labels, pile fell ${(averageY() - restingY).toFixed(1)}px without rearrangement — PASS`);
     }
     Matter.Engine.clear(engine);
-    console.log(`${context}: ${width}×${height}, ${dropped.length} naturally dropped, ${growths} floor extensions, maximum visible overlap ${worst.toFixed(2)}px, idle after ${firstRestAt ?? "over20"}s, upside-down ${naturalUpsideDown}/${dropped.filter((body) => Math.cos(body.angle) < 0).length} — PASS`);
+    console.log(`${context}: ${width}×${height}, ${dropped.length} naturally dropped, ${growths} floor extensions, pile height ${pileHeight.toFixed(1)}px, maximum visible overlap ${worst.toFixed(2)}px, idle after ${firstRestAt ?? "over20"}s, upside-down ${naturalUpsideDown}/${dropped.filter((body) => Math.cos(body.angle) < 0).length} — PASS`);
   }
 }
 console.log("Skill physics checks passed.");

@@ -464,7 +464,7 @@ export const education = [
     credential: "GCE A-Levels · Science Stream",
     dates: "Feb 2021 — Nov 2022",
     bullets: [
-      "Grade: AAAA/B. H2 Mathematics, Physics, Chemistry, and Economics; H1 Chinese, General Paper, and Project Work.",
+      "Straight As in H2 Physics, Chemistry, Mathematics and Economics. H1 Chinese, General Paper and Project Work.",
       "Dean’s List (Academic), 2021 and 2022.",
       "Softball team, 2021–2022: National School Games A Division first runner-up in 2022; SSSC Colours Award, 23 September 2022.",
       "VIA Ambassador and Softball VIA committee member; organised an online activity for elderly residents at Tembusu Home for the Aged.",

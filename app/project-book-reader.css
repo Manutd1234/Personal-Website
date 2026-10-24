@@ -3,6 +3,7 @@
   --reader-paper: #fffaf0;
   --reader-ink: #213f32;
   --reader-muted: #66745f;
+  --reader-spread-height: clamp(520px, 62svh, 640px);
   color: var(--reader-ink);
   position: relative;
   width: 100%;
@@ -25,7 +26,11 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+/* Every leaf has the same paper dimensions. Long chapters scroll inside the
+   page, so flipping pages never moves the book frame or navigation. */
 .reader-spread {
+  height: var(--reader-spread-height);
+  min-height: 0;
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -53,6 +58,7 @@
 .reader-static-page {
   display: flex;
   min-width: 0;
+  min-height: 0;
 }
 .reader-page {
   display: flex;
@@ -60,7 +66,8 @@
   position: relative;
   width: 100%;
   min-width: 0;
-  min-height: 520px;
+  height: 100%;
+  min-height: 0;
   margin: 0;
   padding: clamp(22px, 3cqw, 40px);
   background: var(--reader-paper);
@@ -90,6 +97,10 @@
   font: 9px/1.5 var(--font-mono, monospace);
   letter-spacing: 0.06em;
 }
+.reader-page > header,
+.reader-page > footer {
+  flex-shrink: 0;
+}
 .reader-page > header {
   padding-bottom: 15px;
   border-bottom: 1px solid #35563d20;
@@ -99,10 +110,22 @@
 }
 .reader-page > footer {
   margin-top: auto;
-  padding-top: 28px;
+  padding-top: 18px;
 }
 .reader-page-body {
-  padding-top: 30px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #879a7566 transparent;
+  padding: 26px 8px 2px 0;
+  outline-offset: -2px;
+}
+.reader-page-body:focus-visible {
+  outline: 2px solid #7e9d65;
+  border-radius: 3px;
 }
 .book-carousel .book-details .reader-page h3 {
   margin: 14px 0 24px;
@@ -373,6 +396,9 @@
   text-align: center;
   font: 10px/1.5 var(--font-mono, monospace);
 }
+.project-book-reader[data-single="true"] {
+  --reader-spread-height: clamp(480px, 64svh, 620px);
+}
 .project-book-reader[data-single="true"] .reader-spread {
   grid-template-columns: minmax(0, 1fr);
   overflow: clip;
@@ -382,7 +408,7 @@
 }
 .project-book-reader[data-single="true"] .reader-page {
   border-radius: 5px;
-  min-height: 480px;
+  min-height: 0;
   padding: 24px;
 }
 .project-book-reader[data-single="true"] .reader-page h3 {
@@ -447,13 +473,4 @@
 }
 .dark .project-book-reader .reader-page-count > span {
   opacity: 0.8;
-}
-
-/* Measure the next spread before turning, so long bullets never clip a leaf. */
-.project-book-reader .reader-measure-spread {
-  position: absolute;
-  inset: 0 0 auto;
-  visibility: hidden;
-  pointer-events: none;
-  box-shadow: none;
 }

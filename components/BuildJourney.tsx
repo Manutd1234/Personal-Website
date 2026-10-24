@@ -14,9 +14,9 @@ import {
 import { type CSSProperties, useEffect, useId, useRef, useState } from "react";
 import { useMotionPreference } from "./useMotionPreference";
 import { useVisiblePlayback } from "./useVisiblePlayback";
-import { sampleBuilderChoreography } from "./builder-choreography";
+import { getBuilderElbow, sampleBuilderChoreography } from "./builder-choreography";
 
-const STEP_DURATION_MS = 5500;
+const STEP_DURATION_MS = 7500;
 
 const steps = [
   {
@@ -145,12 +145,7 @@ function BuilderScene({
       [pose.right, pose.left].forEach(([worldX, y], index) => {
         const x = worldX - pose.bodyX;
         const shoulderX = index === 0 ? 148 : 73;
-        const dx = x - shoulderX;
-        const dy = y - 254;
-        const distance = Math.max(1, Math.hypot(dx, dy));
-        const bend = Math.min(28, Math.sqrt(Math.max(0, 62 ** 2 - (distance / 2) ** 2)));
-        const elbowX = (shoulderX + x) / 2 - (dy / distance) * bend;
-        const elbowY = (254 + y) / 2 + (dx / distance) * bend;
+        const [elbowX, elbowY] = getBuilderElbow([shoulderX, 254], [x, y]);
         arms[index].arm?.setAttribute("d", `M${shoulderX} 254L${elbowX} ${elbowY}L${x} ${y}`);
         arms[index].hand?.setAttribute("cx", String(x));
         arms[index].hand?.setAttribute("cy", String(y));

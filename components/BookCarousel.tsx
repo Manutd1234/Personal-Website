@@ -11,7 +11,7 @@ import type {
 import { asset } from "@/content/paths";
 import "@/app/book-carousel.css";
 
-const BOOK_OPEN_MS = 1800;
+const BOOK_OPEN_MS = 2200;
 const BOOK_RETURN_MS = 640;
 
 export type ProjectSource = {
@@ -648,6 +648,32 @@ export default function BookCarousel({
           ? flow.getBoundingClientRect().height
           : parseFloat(getComputedStyle(flow).minHeight),
       );
+      // Match the first paper spread to the opening 3D book before it grows
+      // into the reading view. Use layout dimensions: client rectangles here
+      // include the arrive animation's scale and would create a feedback loop.
+      const stage = stageRef.current;
+      const details = detailRef.current;
+      const reader = details?.querySelector<HTMLElement>(".project-book-reader");
+      const paper = reader?.querySelector<HTMLElement>(".reader-spread");
+      const book = orbitRefs.current[lastOpenedRef.current];
+      if (stage?.dataset.open === "true" && details && reader && paper && book) {
+        const scale = parseFloat(getComputedStyle(stage).getPropertyValue("--open-book-scale")) || 1;
+        const singlePage = reader.dataset.single === "true";
+        let paperTop = 0;
+        let parent: HTMLElement | null = paper;
+        while (parent && parent !== details) {
+          paperTop += parent.offsetTop;
+          parent = parent.offsetParent as HTMLElement | null;
+        }
+        const paperCenter = paperTop + paper.offsetHeight / 2;
+        const bookCenter = (sceneRef.current?.offsetHeight ?? 430) / 2 + book.offsetHeight * 0.18;
+        stage.style.setProperty("--open-book-offset-y", `${book.offsetHeight * 0.18}px`);
+        details.style.setProperty("--reader-arrival-origin-y", `${paperCenter}px`);
+        details.style.setProperty("--reader-arrival-y", `${bookCenter - details.offsetTop - paperCenter}px`);
+        details.style.setProperty("--reader-arrival-x", `${singlePage ? book.offsetWidth * scale / 2 : 0}px`);
+        details.style.setProperty("--reader-arrival-scale-x", `${book.offsetWidth * scale * (singlePage ? 1 : 2) / paper.offsetWidth}`);
+        details.style.setProperty("--reader-arrival-scale-y", `${book.offsetHeight * scale / paper.offsetHeight}`);
+      }
       if (!next || Math.abs(next - lastHeight) < 1) return;
       lastHeight = next;
       const from = theatre.getBoundingClientRect().height;

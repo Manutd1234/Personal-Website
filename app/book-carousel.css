@@ -15,11 +15,11 @@
   --book-height: calc(var(--book-width) * 1.42);
   --open-book-scale: 1.12;
   --open-book-left: calc(
-    50% + var(--book-width) * var(--open-book-scale) * 0.46
+    50% + var(--book-width) * var(--open-book-scale) * 0.5
   );
   --open-book-offset-y: calc(var(--book-height) * 0.22);
-  --open-cover-angle: -156deg;
-  --open-leaf-angle: -10deg;
+  --open-cover-angle: -180deg;
+  --open-leaf-angle: 0deg;
   position: relative;
   overflow: hidden;
   padding: 28px 34px 24px;
@@ -889,13 +889,13 @@
   .book-stage[data-open="true"]
   .book-orbit-item[data-selected="true"] {
   left: var(--open-book-left);
-  transform: translate3d(0, var(--open-book-offset-y), 30px);
+  transform: translate3d(0, var(--open-book-offset-y), 0);
 }
 .book-carousel
   .book-stage[data-open="true"]
   .book-orbit-item[data-selected="true"]
   .book-object {
-  transform: rotateX(3deg) rotateY(-3deg) rotateZ(-1deg)
+  transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg)
     scale(var(--open-book-scale));
 }
 .book-carousel
@@ -1041,7 +1041,7 @@
 @container project-books (max-width: 760px) {
   .book-carousel .book-stage {
     --open-book-left: calc(
-      50% + var(--book-width) * var(--open-book-scale) * 0.46
+      50% + var(--book-width) * var(--open-book-scale) * 0.5
     );
     --open-book-offset-y: calc(var(--book-height) * 0.16);
     --book-width: clamp(166px, 28cqw, 210px);
@@ -1082,7 +1082,7 @@
     .book-stage[data-open="true"]
     .book-orbit-item[data-selected="true"]
     .book-object {
-    transform: rotateX(2deg) rotateY(0deg) rotateZ(-1deg)
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg)
       scale(var(--open-book-scale));
   }
   .book-carousel .book-details {
@@ -1152,7 +1152,7 @@
     .book-stage[data-open="true"]
     .book-orbit-item[data-selected="true"]
     .book-object {
-    transform: rotateX(2deg) rotateY(0deg) rotateZ(-1deg)
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg)
       scale(var(--open-book-scale));
   }
   .book-carousel .book-inside-cover {
@@ -1465,8 +1465,8 @@
   align-items: flex-start;
 }
 .book-carousel .book-stage[data-open="true"] .book-details {
-  transform-origin: 50% 25%;
-  animation: book-reader-arrive var(--book-open-duration) cubic-bezier(0.2, 0.65, 0.2, 1) both;
+  transform-origin: 50% var(--reader-arrival-origin-y, 50%);
+  animation: book-reader-arrive var(--book-open-duration) cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 .book-carousel .book-stage[data-open="true"] .book-scene {
   pointer-events: none;
@@ -1484,24 +1484,27 @@
   transition-duration: 540ms;
   transition-delay: 0ms;
 }
+/* The paper first replaces the open leaves at their actual size. Only after
+   that handoff does it expand, so there is never a full-size reader over a
+   separate, smaller book. Visibility keeps the 3D scene unflattened. */
 @keyframes book-object-depart {
-  0%,
-  62% {
-    visibility: visible;
-  }
-  100% {
-    visibility: hidden;
-  }
+  0%, 67% { visibility: visible; }
+  67.01%, 100% { visibility: hidden; }
 }
 @keyframes book-reader-arrive {
-  0%,
-  62% {
+  0%, 55% {
     opacity: 0;
-    transform: translateY(10px) scale(0.985);
+    transform: translate(var(--reader-arrival-x, 0px), var(--reader-arrival-y, 0px))
+      scale(var(--reader-arrival-scale-x, 0.5), var(--reader-arrival-scale-y, 0.5));
+  }
+  67% {
+    opacity: 1;
+    transform: translate(var(--reader-arrival-x, 0px), var(--reader-arrival-y, 0px))
+      scale(var(--reader-arrival-scale-x, 0.5), var(--reader-arrival-scale-y, 0.5));
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate(0, 0) scale(1);
   }
 }
 @keyframes book-reader-leave {

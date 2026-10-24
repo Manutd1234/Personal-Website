@@ -158,6 +158,7 @@ const recordsFor = (title: string): readonly AwardRecord[] =>
 // Keep the historical milestones in the source records, while the app
 // collection follows Ian's selection of awards to feature here.
 const hiddenSchoolApps = new Set(["Piano Grade 3 · Merit", "SwimSafer Gold"]);
+const hiddenCredentialProviders = new Set(["Anthropic", "Databricks Academy", "Cisco"]);
 const schoolRecords = recordsFor("Academic & sporting awards").filter(
   (record) => !hiddenSchoolApps.has(record.title),
 );
@@ -205,7 +206,7 @@ const categories: readonly {
     id: "certificates",
     label: "Credentials",
     icon: BookOpen,
-    records: certifications,
+    records: certifications.filter((record) => !hiddenCredentialProviders.has(record.issuer)),
   },
 ];
 const slug = (text: string) =>

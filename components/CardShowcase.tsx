@@ -96,6 +96,7 @@ function DeckTrack({
   active: boolean;
 }) {
   const cards = deck.cards;
+  const autoSpeed = deck.id === "education" ? 28 : AUTO_SPEED;
   const count = cards.length;
   const groupRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLUListElement>(null);
@@ -330,7 +331,7 @@ function DeckTrack({
         const layout = geometry();
         if (layout && initialized.current) {
           const delta = Math.min(MAX_FRAME_DELTA, Math.max(0, now - previous));
-          const requested = layout.track.scrollLeft + (AUTO_SPEED * delta) / 1000 + remainder;
+          const requested = layout.track.scrollLeft + (autoSpeed * delta) / 1000 + remainder;
           layout.track.scrollLeft = requested;
           // Preserve fractional pixels on browsers with integral scrollLeft.
           remainder = requested - layout.track.scrollLeft;
@@ -349,7 +350,7 @@ function DeckTrack({
       autoMoving.current = false;
       trackRef.current?.removeAttribute("data-auto-moving");
     };
-  }, [canAutoplay, count, geometry, interaction, recenter]);
+  }, [autoSpeed, canAutoplay, count, geometry, interaction, recenter]);
 
   useEffect(() => {
     const timers = new Map<Element, number>();

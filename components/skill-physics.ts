@@ -4,7 +4,7 @@ type MatterLibrary = typeof import("matter-js");
 export type SkillSize = { width: number; height: number };
 export const SKILL_WORLD_INSET = 8;
 // Include the full SVG envelope and its stroke, not just a chamfered interior.
-export const SKILL_COLLISION_PADDING = 4;
+export const SKILL_COLLISION_PADDING = 3;
 export const SKILL_PACKING_DENSITY = 0.82;
 export const SKILL_DROP_BLOCKED_MS = 1600;
 export const SKILL_PHYSICS_STEP = 1000 / 120;
@@ -117,8 +117,8 @@ export function createSkillBody(
       // corners allowed neighbouring SVGs to enter each other's writing area.
       density: 0.0011 + (index % 5) * 0.00008,
       restitution: 0.04,
-      friction: 0.2,
-      frictionStatic: 0.3,
+      friction: 0.16,
+      frictionStatic: 0.24,
       frictionAir: 0.035,
       slop: 0.01,
     },

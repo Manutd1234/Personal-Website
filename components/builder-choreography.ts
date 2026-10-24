@@ -52,6 +52,19 @@ function numberAt(p: number, frames: readonly NumberFrame[]) {
   return frames[frames.length - 1][1];
 }
 
+/** Two fixed-length arm segments: reaching changes the elbow angle, not the
+ * length of the arm. All choreography targets stay within this reach. */
+export function getBuilderElbow(shoulder: BuilderPoint, hand: BuilderPoint): BuilderPoint {
+  const dx = hand[0] - shoulder[0];
+  const dy = hand[1] - shoulder[1];
+  const distance = Math.max(1, Math.hypot(dx, dy));
+  const bend = Math.sqrt(Math.max(0, 50 ** 2 - (distance / 2) ** 2));
+  return [
+    (shoulder[0] + hand[0]) / 2 - (dy / distance) * bend,
+    (shoulder[1] + hand[1]) / 2 + (dx / distance) * bend,
+  ];
+}
+
 /** A deterministic chapter timeline shared by the builder and the objects.
  * Hands use global SVG coordinates; only the blocks use relative offsets.
  * Every chapter starts and finishes in the same resting pose.
@@ -91,12 +104,12 @@ export function sampleBuilderChoreography(
     for (const [start, end] of [[0.18, 0.25], [0.41, 0.49], [0.64, 0.72]]) {
       if (p >= start && p <= end) {
         const stroke = interval(p, start, end);
-        pose.right[0] += Math.sin(stroke * Math.PI * 4) * 3;
-        pose.right[1] += Math.sin(stroke * Math.PI * 2) * 1.5;
+        pose.right[0] += Math.sin(stroke * Math.PI * 2) * 2;
+        pose.right[1] += Math.sin(stroke * Math.PI * 2) * 1;
       }
     }
     pose.left = [pose.bodyX + 72, 289];
-    pose.headTilt = numberAt(p, [[0, 0], [0.18, 5], [0.72, 5], [1, 0]]);
+    pose.headTilt = numberAt(p, [[0, 0], [0.18, 3], [0.72, 3], [1, 0]]);
     pose.checks = [0.2, 0.45, 0.68].filter((time) => p >= time).length;
   } else if (stage === 1) {
     const carries = [
@@ -117,10 +130,12 @@ export function sampleBuilderChoreography(
       [1, 215, 270],
     ]);
     pose.blocks = carries.map(({ start, end, offset, grip }) => {
-      const t = interval(p, start, end);
+      // Pause with a secure grip before lifting, then hold the block in place
+      // before letting go. The shallow arc reads as carrying, not bouncing.
+      const t = interval(p, start + 0.018, end - 0.024);
       const carried: BuilderPoint = [
         offset[0] * (1 - ease(t)),
-        offset[1] * (1 - ease(t)) - (t > 0 && t < 1 ? Math.sin(t * Math.PI) * 12 : 0),
+        offset[1] * (1 - ease(t)) - (t > 0 && t < 1 ? Math.sin(t * Math.PI) * 5 : 0),
       ];
       // Derive the hand from the carried object to prevent contact drift.
       if (p >= start && p <= end) {
@@ -129,34 +144,39 @@ export function sampleBuilderChoreography(
       return carried;
     });
     pose.left = [pose.bodyX + 72, 289];
-    pose.headTilt = numberAt(p, [[0, 0], [0.12, -3], [0.3, 3], [0.58, -3], [0.8, 5], [1, 0]]);
+    pose.headTilt = numberAt(p, [[0, 0], [0.12, -2], [0.3, 2], [0.58, -2], [0.8, 3], [1, 0]]);
   } else if (stage === 2) {
     pose.bodyX = numberAt(p, [[0, 42], [0.32, 42], [0.46, 90], [0.76, 90], [1, 42]]);
     pose.right = pointAt(p, [
       [0, 215, 270],
       [0.1, 240, 245],
+      [0.21, 215, 178],
       [0.25, 215, 169],
       [0.4, 215, 169],
       [0.46, 260, 245],
+      [0.56, 296, 278],
       [0.6, 305, 278],
       [0.75, 305, 278],
       [0.84, 260, 260],
       [1, 215, 270],
     ]);
     pose.left = [pose.bodyX + 72, 289];
-    pose.headTilt = numberAt(p, [[0, 0], [0.25, 5], [0.42, 0], [0.6, 4], [0.75, 4], [1, 0]]);
+    pose.headTilt = numberAt(p, [[0, 0], [0.25, 3], [0.42, 0], [0.6, 2], [0.75, 2], [1, 0]]);
     pose.wires = [ease(interval(p, 0.25, 0.4)), ease(interval(p, 0.6, 0.75))];
   } else if (stage === 3) {
     pose.bodyX = numberAt(p, [[0, 42], [0.12, 52], [0.85, 52], [1, 42]]);
     pose.right = pointAt(p, [[0, 215, 270], [0.13, 239, 294], [0.85, 239, 294], [1, 215, 270]]);
     pose.left = pointAt(p, [[0, 114, 289], [0.13, 207, 294], [0.85, 207, 294], [1, 114, 289]]);
-    pose.typing = p >= 0.13 && p < 0.7;
-    if (pose.typing) {
-      const tap = Math.sin(interval(p, 0.13, 0.7) * Math.PI * 24);
-      pose.right[1] -= Math.max(0, tap) * 6;
-      pose.left[1] -= Math.max(0, -tap) * 6;
+    const lineStart = [0.13, 0.25, 0.37, 0.49].find((start) => p >= start && p < start + 0.11);
+    pose.typing = lineStart !== undefined;
+    if (lineStart !== undefined) {
+      // Short alternating presses, with a breath between lines and a final
+      // review pause. The wrists stay close to the keyboard throughout.
+      const tap = Math.sin(interval(p, lineStart, lineStart + 0.11) * Math.PI * 4);
+      pose.right[1] -= Math.max(0, tap) * 2.2;
+      pose.left[1] -= Math.max(0, -tap) * 2.2;
     }
-    pose.headTilt = numberAt(p, [[0, 0], [0.13, 4], [0.7, 4], [1, 0]]);
+    pose.headTilt = numberAt(p, [[0, 0], [0.13, 2], [0.62, 2], [0.7, -1], [0.85, -1], [1, 0]]);
   } else if (stage === 4) {
     pose.bodyX = numberAt(p, [[0, 42], [0.16, 47], [0.66, 47], [0.78, 42], [1, 42]]);
     pose.right = pointAt(p, [
@@ -170,13 +190,12 @@ export function sampleBuilderChoreography(
       [0.59, 218, 284],
       [0.66, 218, 318],
       [0.7, 218, 312],
-      [0.78, 226, 190],
-      [0.84, 238, 181],
-      [0.9, 222, 188],
+      [0.79, 226, 230],
+      [0.9, 226, 230],
       [1, 215, 270],
     ]);
-    pose.left = pointAt(p, [[0, 114, 289], [0.68, 119, 289], [0.79, 103, 218], [0.85, 83, 193], [0.91, 103, 214], [1, 114, 289]]);
-    pose.headTilt = numberAt(p, [[0, 0], [0.2, 4], [0.66, 4], [0.8, -5], [1, 0]]);
+    pose.left = [pose.bodyX + 72, 289];
+    pose.headTilt = numberAt(p, [[0, 0], [0.2, 3], [0.66, 3], [0.8, -3], [1, 0]]);
     pose.checks = [0.2, 0.38, 0.54].filter((time) => p >= time).length;
     pose.launch = ease(interval(p, 0.68, 0.92));
   }

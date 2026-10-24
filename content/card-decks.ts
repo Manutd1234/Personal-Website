@@ -287,7 +287,7 @@ const details: Readonly<Record<string, CardDetails>> = {
     moves: [
       move(
         "H2 Quartet",
-        "Grade **AAAA/B** with H2 Mathematics, Physics, Chemistry and Economics.",
+        "**Straight As** in H2 Physics, Chemistry, Mathematics and Economics.",
       ),
       move(
         "Dean’s List ×2",

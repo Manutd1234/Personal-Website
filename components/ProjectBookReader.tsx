@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useId, useMemo, useReducer, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { KeyboardEvent, PointerEvent, ReactNode } from "react";
 import type {
   Project,
@@ -334,7 +334,6 @@ type PageTurn = {
   from: number;
   to: number;
   direction: "next" | "previous";
-  height: number;
 };
 
 type ReaderState = {
@@ -348,7 +347,7 @@ type ReaderAction =
   | { type: "navigate"; direction: number; pageCount: number }
   | { type: "jump"; page: number; pageCount: number }
   | { type: "resize"; single: boolean; pageCount: number }
-  | { type: "start"; height: number }
+  | { type: "start" }
   | { type: "finish"; from: number; to: number }
   | { type: "settle" };
 
@@ -381,7 +380,6 @@ function readerReducer(state: ReaderState, action: ReaderAction): ReaderState {
         from: state.page,
         to: state.target,
         direction: state.target > state.page ? "next" : "previous",
-        height: action.height,
       },
     };
   }
@@ -409,8 +407,7 @@ export default function ProjectBookReader({
   });
   const [reduced, setReduced] = useState(true);
   const root = useRef<HTMLDivElement>(null);
-  const spread = useRef<HTMLDivElement>(null);
-  const targetSpread = useRef<HTMLDivElement>(null);
+  const pageScroll = useRef(new Map<number, number>());
   const swipe = useRef<{ pointer: number; x: number; y: number } | null>(null);
   const id = useId();
   const last = pages.length - (single ? 1 : 2);
@@ -424,10 +421,14 @@ export default function ProjectBookReader({
     return () => query.removeEventListener("change", sync);
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = root.current;
     if (!element) return;
-    let previousWidth = 0;
+    // Resolve one-/two-page layout before the opening transition measures it.
+    // clientWidth is unaffected by the reader's temporary opening scale.
+    let previousWidth = element.clientWidth;
+    if (previousWidth > 0)
+      dispatch({ type: "resize", single: previousWidth < 680, pageCount: pages.length });
     const observer = new ResizeObserver(([entry]) => {
       if (!entry || entry.contentRect.width === 0 || Math.abs(entry.contentRect.width - previousWidth) < 1) return;
       previousWidth = entry.contentRect.width;
@@ -443,13 +444,7 @@ export default function ProjectBookReader({
       dispatch({ type: "settle" });
       return;
     }
-    dispatch({
-      type: "start",
-      height: Math.max(
-        spread.current?.getBoundingClientRect().height ?? 0,
-        targetSpread.current?.getBoundingClientRect().height ?? 0,
-      ),
-    });
+    dispatch({ type: "start" });
   }, [target, page, turn, reduced]);
 
   useEffect(() => {
@@ -463,11 +458,22 @@ export default function ProjectBookReader({
     return () => window.clearTimeout(timer);
   }, [turn, reduced]);
 
+  function preservePageFocus() {
+    const focused = document.activeElement;
+    // A scrolling body is replaced (and made inert) during a turn. Keep
+    // keyboard focus on the persistent reader so consecutive arrows work.
+    if (focused instanceof HTMLElement && root.current?.contains(focused) &&
+      focused.closest(".reader-page-body"))
+      root.current.focus({ preventScroll: true });
+  }
+
   function navigate(direction: number) {
+    preservePageFocus();
     dispatch({ type: "navigate", direction, pageCount: pages.length });
   }
 
   function jump(next: number) {
+    preservePageFocus();
     dispatch({ type: "jump", page: next, pageCount: pages.length });
   }
 
@@ -506,16 +512,28 @@ export default function ProjectBookReader({
       navigate(dx < 0 ? 1 : -1);
   }
 
-  function leaf(index: number, extraClass = "") {
+  function leaf(index: number, turningCopy = false) {
     const chapter = pages[index];
     if (!chapter) return null;
     return (
-      <article className={`reader-page ${extraClass}`} data-kind={chapter.kind}>
+      <article className="reader-page" data-kind={chapter.kind}>
         <header>
           <span>{project.title}</span>
           <span aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
         </header>
-        <div className="reader-page-body">
+        <div
+          aria-label={`${chapter.title}, page ${index + 1} content`}
+          className="reader-page-body"
+          key={index}
+          onScroll={turningCopy ? undefined : (event) => {
+            pageScroll.current.set(index, event.currentTarget.scrollTop);
+          }}
+          ref={(element) => {
+            if (element) element.scrollTop = pageScroll.current.get(index) ?? 0;
+          }}
+          role="region"
+          tabIndex={turningCopy ? -1 : 0}
+        >
           {chapter.kind !== "title" ? <h4>{chapter.title}</h4> : null}
           {chapter.content}
         </div>
@@ -551,12 +569,6 @@ export default function ProjectBookReader({
         <span>Project notes</span>
         <span>{project.category}</span>
       </div>
-      {target !== page && !turn ? (
-        <div aria-hidden="true" className="reader-spread reader-measure-spread" inert ref={targetSpread}>
-          <div className="reader-static-page reader-static-left">{leaf(target)}</div>
-          {!single ? <div className="reader-static-page reader-static-right">{leaf(target + 1)}</div> : null}
-        </div>
-      ) : null}
       <div
         aria-busy={turning}
         aria-label={`${project.title}, page${single ? "" : "s"} ${page + 1}${single ? "" : `–${page + 2}`}`}
@@ -565,9 +577,7 @@ export default function ProjectBookReader({
         onPointerDown={startSwipe}
         onPointerUp={endSwipe}
         onPointerCancel={() => { swipe.current = null; }}
-        ref={spread}
         role="group"
-        style={turn ? { minHeight: turn.height } : undefined}
       >
         <div className="reader-static-page reader-static-left" inert={Boolean(turn)}>
           {leaf(single && turn ? turn.to : baseLeft)}
@@ -589,8 +599,8 @@ export default function ProjectBookReader({
                 dispatch({ type: "finish", from: turn.from, to: turn.to });
             }}
           >
-            <div className="reader-turn-front">{leaf(front)}</div>
-            <div className="reader-turn-back">{leaf(back)}</div>
+            <div className="reader-turn-front">{leaf(front, true)}</div>
+            <div className="reader-turn-back">{leaf(back, true)}</div>
           </div>
         ) : null}
       </div>
@@ -615,7 +625,7 @@ export default function ProjectBookReader({
           Next <span aria-hidden="true">→</span>
         </button>
       </nav>
-      <p className="reader-key-hint">{single ? "Swipe or use ← → to turn a page" : "Turn a page with ← →"}</p>
+      <p className="reader-key-hint">{single ? "Scroll to read · Swipe or use ← → to turn a page" : "Scroll within a page · Use ← → to turn pages"}</p>
       <span className="book-screenreader-status" role="status">
         {!turning ? `${pages[page].title}. Page ${page + 1}${single ? "" : ` to ${page + 2}`} of ${pages.length}.` : ""}
       </span>

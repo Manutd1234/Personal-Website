@@ -380,7 +380,7 @@
       visibility 0s linear 0.18s;
   }
   .journey-scene-action:is([data-active="true"], [data-outgoing="true"]) .scene-arrive {
-    animation: scene-reveal 0.6s cubic-bezier(0.2, 0.7, 0.3, 1)
+    animation: scene-reveal 0.75s cubic-bezier(0.2, 0.7, 0.3, 1)
       var(--scene-delay, 0.15s) both;
   }
   .scene-delay-one {
@@ -400,12 +400,12 @@
   .scene-builder-eyes {
     transform-box: fill-box;
     transform-origin: center;
-    animation: scene-blink 5s infinite;
+    animation: scene-blink 6.5s infinite;
   }
   .journey-scene-action:is([data-active="true"], [data-outgoing="true"]) .scene-thought {
     transform-box: fill-box;
     transform-origin: center;
-    animation: scene-think 3s ease-in-out infinite;
+    animation: scene-think 4s ease-in-out infinite;
   }
   .journey-scene-action:is([data-active="true"], [data-outgoing="true"]) .scene-cursor {
     animation: scene-caret 1.1s step-end infinite;
@@ -413,7 +413,7 @@
   .journey-scene-action:is([data-active="true"], [data-outgoing="true"]) .scene-flame {
     transform-box: fill-box;
     transform-origin: center top;
-    animation: scene-flame 0.45s ease-in-out calc(var(--journey-step-duration) * 0.68) infinite alternate;
+    animation: scene-flame 0.65s ease-in-out calc(var(--journey-step-duration) * 0.68) infinite alternate;
   }
   /* An explicit pause reveals the whole chapter. Scrolling offscreen only
      freezes its progress; returning resumes smoothly without replaying it. */
@@ -441,7 +441,7 @@
 @keyframes scene-reveal {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -466,10 +466,10 @@
 @keyframes scene-think {
   0%,
   100% {
-    transform: translateY(0) rotate(-1deg);
+    transform: translateY(0) rotate(-0.5deg);
   }
   50% {
-    transform: translateY(-4px) rotate(1deg);
+    transform: translateY(-2px) rotate(0.5deg);
   }
 }
 @keyframes scene-caret {
@@ -479,10 +479,10 @@
 }
 @keyframes scene-flame {
   from {
-    transform: scale(0.9, 0.8);
+    transform: scale(0.96, 0.9);
   }
   to {
-    transform: scale(1.05, 1.18);
+    transform: scale(1.02, 1.08);
   }
 }
 @media (max-width: 900px) {
