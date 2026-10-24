@@ -391,77 +391,77 @@
     animation: scene-type 0.65s steps(24) var(--scene-delay, 0.15s) both;
   }
   .scene-delay-one {
-    --scene-delay: 0.55s;
+    --scene-delay: calc(var(--journey-step-duration) * 0.09167);
   }
   .scene-delay-two {
-    --scene-delay: 1.15s;
+    --scene-delay: calc(var(--journey-step-duration) * 0.19167);
   }
   .scene-delay-three {
-    --scene-delay: 1.8s;
+    --scene-delay: calc(var(--journey-step-duration) * 0.3);
   }
   .scene-builder {
     transform-box: fill-box;
     transform-origin: center bottom;
     animation: scene-builder-bob 3s ease-in-out infinite;
   }
-  /* Hands meet the actual objects. Each six-second gesture shares its timing
+  /* Hands meet the actual objects. Each chapter-long gesture shares its timing
      with the chapter's checklist, block, connection, keyboard or launch. */
   .scene-builder-pose > g {
     transform-box: view-box;
     transform-origin: 148px 254px;
   }
   .scene-builder-pose:is([data-active="true"], [data-outgoing="true"]) .scene-builder-ask {
-    animation: scene-ask 6s ease-in-out both;
+    animation: scene-ask var(--journey-step-duration) ease-in-out both;
   }
   .scene-builder-pose:is([data-active="true"], [data-outgoing="true"]) .scene-builder-lift {
-    animation: scene-lift-arm 1.35s cubic-bezier(0.3, 0, 0.25, 1) 0.65s both;
+    animation: scene-lift-arm calc(var(--journey-step-duration) * 0.225) cubic-bezier(0.3, 0, 0.25, 1) calc(var(--journey-step-duration) * 0.10833) both;
   }
   .journey-scene-action:is([data-active="true"], [data-outgoing="true"]) .scene-stack-lift {
-    animation: scene-lift-block 1.35s cubic-bezier(0.3, 0, 0.25, 1) 0.65s both;
+    animation: scene-lift-block calc(var(--journey-step-duration) * 0.225) cubic-bezier(0.3, 0, 0.25, 1) calc(var(--journey-step-duration) * 0.10833) both;
   }
   .scene-plan-finish {
-    --scene-delay: 2.2s;
+    --scene-delay: calc(var(--journey-step-duration) * 0.36667);
   }
   .scene-build-finish {
-    --scene-delay: 3.6s;
+    --scene-delay: calc(var(--journey-step-duration) * 0.6);
   }
   .scene-share-finish {
-    --scene-delay: 4.5s;
+    --scene-delay: calc(var(--journey-step-duration) * 0.75);
   }
   .scene-builder-pose:is([data-active="true"], [data-outgoing="true"]) .scene-builder-connect {
-    animation: scene-connect-arm 6s ease-in-out both;
+    animation: scene-connect-arm var(--journey-step-duration) ease-in-out both;
   }
   .journey-scene-action:is([data-active="true"], [data-outgoing="true"]) .scene-connect-spark {
-    animation: scene-contact 0.65s ease-out 1.2s both;
+    animation: scene-contact 0.65s ease-out calc(var(--journey-step-duration) * 0.2) both;
   }
   .scene-builder-pose:is([data-active="true"], [data-outgoing="true"]) .scene-builder-type {
-    animation: scene-type-arm 6s ease-in-out both;
+    animation: scene-type-arm var(--journey-step-duration) ease-in-out both;
   }
   .journey-scene-action:is([data-active="true"], [data-outgoing="true"]) .scene-key-flash {
-    animation: scene-key-flash 6s step-end both;
+    animation: scene-key-flash var(--journey-step-duration) step-end both;
   }
   .journey-cartoon[data-scene="3"] .scene-code-line {
-    --scene-delay: 0.8s;
+    --scene-delay: calc(var(--journey-step-duration) * 0.13);
   }
   .journey-cartoon[data-scene="3"] .scene-code-line.scene-delay-one {
-    --scene-delay: 1.5s;
+    --scene-delay: calc(var(--journey-step-duration) * 0.25);
   }
   .journey-cartoon[data-scene="3"] .scene-code-line.scene-delay-two {
-    --scene-delay: 2.2s;
+    --scene-delay: calc(var(--journey-step-duration) * 0.37);
   }
   .journey-cartoon[data-scene="3"] .scene-code-line.scene-delay-three {
-    --scene-delay: 2.9s;
+    --scene-delay: calc(var(--journey-step-duration) * 0.49);
   }
   .scene-builder-pose:is([data-active="true"], [data-outgoing="true"]) .scene-builder-launch {
-    animation: scene-launch-arm 6s ease-in-out both;
+    animation: scene-launch-arm var(--journey-step-duration) ease-in-out both;
   }
   .journey-cartoon[data-scene="4"] .scene-builder {
-    animation: scene-builder-celebrate 6s ease-in-out both;
+    animation: scene-builder-celebrate var(--journey-step-duration) ease-in-out both;
   }
   .journey-cartoon[data-scene="4"] .scene-builder-left-arm {
     transform-box: view-box;
     transform-origin: 73px 254px;
-    animation: scene-celebrate-arm 6s ease-in-out both;
+    animation: scene-celebrate-arm var(--journey-step-duration) ease-in-out both;
   }
   .scene-builder-eyes {
     transform-box: fill-box;
@@ -480,18 +480,18 @@
     opacity: 0;
   }
   .journey-scene-action:is([data-active="true"], [data-outgoing="true"]) .scene-packet {
-    animation: scene-packet 2.7s linear 1.8s infinite;
+    animation: scene-packet 2.7s linear calc(var(--journey-step-duration) * 0.3) infinite;
   }
   .journey-scene-action:is([data-active="true"], [data-outgoing="true"]) .scene-cursor {
     animation: scene-caret 1.1s step-end infinite;
   }
   .journey-scene-action:is([data-active="true"], [data-outgoing="true"]) .scene-rocket {
-    animation: scene-launch 6s cubic-bezier(0.35, 0, 0.2, 1) both;
+    animation: scene-launch var(--journey-step-duration) cubic-bezier(0.35, 0, 0.2, 1) both;
   }
   .journey-scene-action:is([data-active="true"], [data-outgoing="true"]) .scene-flame {
     transform-box: fill-box;
     transform-origin: center top;
-    animation: scene-flame 0.45s ease-in-out 2.6s infinite alternate;
+    animation: scene-flame 0.45s ease-in-out calc(var(--journey-step-duration) * 0.43333) infinite alternate;
   }
   /* An explicit pause reveals the whole chapter. Scrolling offscreen only
      freezes its progress; returning resumes smoothly without replaying it. */

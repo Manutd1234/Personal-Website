@@ -3,14 +3,16 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent, PointerEvent } from "react";
 import type { Body as PhysicsBody } from "matter-js";
-import { ArrowDown, List, RotateCcw } from "lucide-react";
+import { ArrowDown, RotateCcw } from "lucide-react";
 import { skillGroups } from "@/content/portfolio";
 import { useMotionPreference } from "./useMotionPreference";
 import {
   containSkillBody,
   createSkillBody,
+  createSkillEngine,
   createSkillWalls,
   layoutSkillRows,
+  isSkillPileStill,
   limitSkillVelocity,
   moveSkillBody,
   steerSkillBody,
@@ -59,7 +61,6 @@ type PillPointer = PointerEvent<HTMLButtonElement>;
 type Controller = {
   availability: (available: boolean) => void;
   replay: () => void;
-  arrange: () => void;
   reveal: (index: number) => void;
   nudge: (index: number, key: string, large: boolean) => void;
   grab: (index: number, event: PillPointer) => void;
@@ -201,17 +202,13 @@ export default function SkillsSandbox({
       (element): element is HTMLButtonElement => Boolean(element),
     );
     if (!world || elements.length !== skills.length) return;
-    const { Body, Composite, Engine, Sleeping } = matter;
-    const engine = Engine.create({
-      enableSleeping: true,
-      positionIterations: 14,
-      velocityIterations: 8,
-      constraintIterations: 3,
-    });
-    engine.gravity.y = 0.46;
+    const { Body, Composite, Engine } = matter;
+    const engine = createSkillEngine(matter);
     let bodies: PhysicsBody[] = [];
     let sizes: { width: number; height: number }[] = [];
-    let homes: { x: number; y: number }[] = [];
+    let walls: PhysicsBody[] = [];
+    let stillSince: number | null = null;
+    let pendingReveal: number | null = null;
     let spawned: boolean[] = [];
     let dropOrder: number[] = [];
     let nextDrop = 0;
@@ -323,6 +320,7 @@ export default function SkillsSandbox({
       Composite.add(engine.world, body);
       spawned[index] = true;
       elements[index].style.opacity = "1";
+      elements[index].style.pointerEvents = "";
       contain(body);
       return true;
     }
@@ -345,13 +343,19 @@ export default function SkillsSandbox({
       }
       if (released === -1) {
         blockedSince ??= elapsed;
-        // A random pile can bridge across the entry even with room below.
-        // Repack safely rather than hiding the remaining skills or inserting
-        // them through another label. Then let the complete stack settle.
+        // Make room below a crowded pile without moving or arranging labels.
+        // Gravity carries the existing pile down to the new floor naturally.
         if (!drag && elapsed - blockedSince > SKILL_DROP_BLOCKED_MS) {
-          arrangeAll(false);
+          height += 64;
+          world!.style.height = `${height}px`;
+          if (width >= 700 && viewportRef.current)
+            viewportRef.current.style.height = `${height}px`;
+          walls.forEach((wall) => Composite.remove(engine.world, wall));
+          walls = createSkillWalls(matter!, width, height);
+          Composite.add(engine.world, walls);
           blockedSince = null;
-        } else nextDropAt = elapsed + 40;
+        }
+        nextDropAt = elapsed + 40;
         return;
       }
       blockedSince = null;
@@ -393,15 +397,23 @@ export default function SkillsSandbox({
         accumulator -= SKILL_PHYSICS_STEP;
       }
       draw();
-      if (
-        drag ||
-        spawned.some((value) => !value) ||
-        bodies.some((body, index) => spawned[index] && !body.isSleeping)
-      ) {
+      if (pendingReveal !== null && spawned[pendingReveal]) {
+        if (document.activeElement === elements[pendingReveal])
+          elements[pendingReveal].scrollIntoView({ block: "nearest", inline: "nearest" });
+        pendingReveal = null;
+      }
+      // Pause only the complete simulation after the whole pile is still.
+      // No individual body is frozen, so lifting a support restarts gravity
+      // for every label above it as soon as the interaction resumes the loop.
+      if (drag || nextDrop < dropOrder.length || !isSkillPileStill(bodies))
+        stillSince = null;
+      else stillSince ??= elapsed;
+      if (stillSince === null || elapsed - stillSince < 1200)
         frame = requestAnimationFrame(tick);
-      } else stop();
+      else stop();
     }
     function start() {
+      stillSince = null;
       if (!enabled || frame || !bodies.length || cancelled) return;
       world!.dataset.running = "true";
       frame = requestAnimationFrame(tick);
@@ -428,6 +440,7 @@ export default function SkillsSandbox({
         element.style.height = "";
         element.style.transform = "";
         element.style.opacity = "";
+        element.style.pointerEvents = "";
         delete element.dataset.held;
       });
     }
@@ -440,6 +453,7 @@ export default function SkillsSandbox({
       Engine.clear(engine);
       world!.classList.remove("is-live");
       world!.style.height = "";
+      if (viewportRef.current) viewportRef.current.style.height = "";
       clearElementStyles();
       width = nextWidth;
       // Natural flex widths are fractional. Rounding offsetWidth down and then
@@ -463,8 +477,8 @@ export default function SkillsSandbox({
         (total, size) => total + (size.width + SKILL_COLLISION_PADDING * 2) * (size.height + SKILL_COLLISION_PADDING * 2),
         0,
       );
-      // Smaller measured tiles and compact rows fit the full desktop set.
-      // Narrow screens can still grow vertically without shrinking readable text.
+      // Estimate space from measured envelopes; this layout is only a sizing
+      // calculation. Labels enter from the top and never snap to its positions.
       const packed = layoutSkillRows(sizes, width);
       height = Math.ceil(
         Math.max(
@@ -474,12 +488,11 @@ export default function SkillsSandbox({
         ),
       );
       world!.style.height = `${height}px`;
-      homes = packed.positions.map((position) => ({
-        x: position.x,
-        y: position.y + (height - packed.height) / 2,
-      }));
-      Composite.add(engine.world, createSkillWalls(matter!, width, height));
-      bodies = sizes.map((size, index) => createSkillBody(matter!, size, homes[index], index));
+      if (width >= 700 && viewportRef.current)
+        viewportRef.current.style.height = `${height}px`;
+      walls = createSkillWalls(matter!, width, height);
+      Composite.add(engine.world, walls);
+      bodies = sizes.map((size, index) => createSkillBody(matter!, size, { x: width / 2, y: 0 }, index));
       spawned = bodies.map(() => false);
       dropOrder = bodies.map((_, index) => index);
       for (let index = dropOrder.length - 1; index > 1; index -= 1) {
@@ -490,6 +503,8 @@ export default function SkillsSandbox({
         ];
       }
       nextDrop = 0;
+      pendingReveal = null;
+      stillSince = null;
       blockedSince = null;
       nextDropAt = 120;
       handfulRemaining = 3 + Math.floor(Math.random() * 3);
@@ -500,33 +515,27 @@ export default function SkillsSandbox({
         element.style.width = `${sizes[index].width}px`;
         element.style.height = `${sizes[index].height}px`;
         element.style.opacity = "0";
+        element.style.pointerEvents = "none";
       });
       world!.classList.add("is-live");
       world!.dataset.bodies = String(bodies.length);
       setReady(true);
       start();
     }
-    function arrangeAll(settled = true) {
-      release(undefined, true);
-      stop();
-      bodies.forEach((body, index) => {
-        Body.setPosition(body, homes[index]);
-        Body.setAngle(body, 0);
-        Body.setVelocity(body, { x: 0, y: 0 });
-        Body.setAngularVelocity(body, 0);
-        if (!spawned[index]) Composite.add(engine.world, body);
-        spawned[index] = true;
-        elements[index].style.opacity = "1";
-        Sleeping.set(body, settled);
-      });
-      nextDrop = dropOrder.length;
-      nextDropAt = Infinity;
-      draw();
-    }
     function ensureVisible(index: number) {
-      // A keyboard jump may target a label that has not dropped yet. Its home
-      // can already be occupied, so expose the complete safe layout together.
-      if (!spawned[index]) arrangeAll();
+      if (spawned[index]) {
+        pendingReveal = null;
+        return true;
+      }
+      // Keyboard/search navigation brings only this label to the front of the
+      // drop queue. It must not rearrange or freeze the rest of the pile.
+      const queued = dropOrder.indexOf(index, nextDrop);
+      if (queued >= 0)
+        [dropOrder[nextDrop], dropOrder[queued]] = [dropOrder[queued], dropOrder[nextDrop]];
+      nextDropAt = elapsed;
+      pendingReveal = index;
+      start();
+      return false;
     }
     const controller: Controller = {
       availability(next) {
@@ -540,7 +549,6 @@ export default function SkillsSandbox({
       replay() {
         rebuild();
       },
-      arrange: arrangeAll,
       reveal(index) {
         ensureVisible(index);
         draw();
@@ -549,8 +557,7 @@ export default function SkillsSandbox({
       nudge(index, key, large) {
         const body = bodies[index];
         if (!body || !enabled) return;
-        ensureVisible(index);
-        Sleeping.set(body, false);
+        if (!ensureVisible(index)) return;
         const distance = large ? 30 : 12;
         moveSkillBody(matter!, body, {
           x:
@@ -575,8 +582,7 @@ export default function SkillsSandbox({
         )
           return;
         release(undefined, true);
-        ensureVisible(index);
-        Sleeping.set(body, false);
+        if (!ensureVisible(index)) return;
         const point = local(event),
           dx = point.x - body.position.x,
           dy = point.y - body.position.y;
@@ -659,6 +665,7 @@ export default function SkillsSandbox({
       Engine.clear(engine);
       world.classList.remove("is-live");
       world.style.height = "";
+      if (viewportRef.current) viewportRef.current.style.height = "";
       delete world.dataset.bodies;
       delete world.dataset.running;
       clearElementStyles();
@@ -778,18 +785,6 @@ export default function SkillsSandbox({
           <RotateCcw size={14} aria-hidden="true" />
           Drop again
         </button>
-        <button
-          type="button"
-          disabled={!ready || still}
-          onClick={() => {
-            setGrabbed(null);
-            controllerRef.current?.arrange();
-            setAnnouncement("All skills arranged in rows.");
-          }}
-        >
-          <List size={15} aria-hidden="true" />
-          Lay them out
-        </button>
         {filtering ? (
           <button
             type="button"
@@ -877,7 +872,7 @@ export default function SkillsSandbox({
       <p className="sr-only" id={`${prefix}-keyboard`}>
         {still
           ? "Arrow keys browse skills. Page Up / Page Down choose the previous or next label."
-          : "Tab into the board. Arrow keys move a skill; Shift moves it further. Page Up / Page Down switch skills. Esc releases. Use Lay them out for a neatly arranged view."}
+          : "Tab into the board. Arrow keys move a skill; Shift moves it further. Page Up / Page Down switch skills. Esc releases."}
       </p>
       <span className="sr-only" role="status" aria-live="polite">
         {announcement}

@@ -8,7 +8,7 @@ export const SKILL_COLLISION_PADDING = 4;
 export const SKILL_PACKING_DENSITY = 0.82;
 export const SKILL_DROP_BLOCKED_MS = 1600;
 export const SKILL_PHYSICS_STEP = 1000 / 120;
-export const SKILL_MAX_VELOCITY = 8;
+export const SKILL_MAX_VELOCITY = 6;
 
 // Pack the measured rectangles into short rows instead of giving every row
 // the height of its tallest decorative seal. DOM/keyboard order stays intact.
@@ -40,6 +40,26 @@ export function layoutSkillRows(sizes: readonly SkillSize[], width: number) {
   return { positions, height: y - (rows.length ? gap : 0) + inset };
 }
 
+// Keep every body responsive to gravity. Per-body sleeping can strand a label
+// in midair when a neighbour is dragged out from under it.
+export function createSkillEngine(matter: MatterLibrary) {
+  const engine = matter.Engine.create({
+    enableSleeping: false,
+    positionIterations: 14,
+    velocityIterations: 8,
+    constraintIterations: 3,
+  });
+  engine.gravity.y = 0.46;
+  return engine;
+}
+
+export function isSkillPileStill(bodies: readonly Body[]) {
+  return bodies.every((body) =>
+    Math.hypot(body.velocity.x, body.velocity.y) < 0.04 &&
+    Math.abs(body.angularVelocity) < 0.002,
+  );
+}
+
 export function createSkillWalls(
   matter: MatterLibrary,
   width: number,
@@ -47,34 +67,36 @@ export function createSkillWalls(
 ) {
   const thickness = 80;
   const inset = SKILL_WORLD_INSET;
+  // Smooth walls cannot hold a bridge in midair when the floor moves down.
+  // Label-to-label friction still lets the pile settle against itself.
   return [
     matter.Bodies.rectangle(
       width / 2,
       height + thickness / 2 - inset,
       width + thickness * 2,
       thickness,
-      { isStatic: true },
+      { isStatic: true, friction: 0, frictionStatic: 0 },
     ),
     matter.Bodies.rectangle(
       width / 2,
       -thickness / 2 + inset,
       width + thickness * 2,
       thickness,
-      { isStatic: true },
+      { isStatic: true, friction: 0, frictionStatic: 0 },
     ),
     matter.Bodies.rectangle(
       -thickness / 2 + inset,
       height / 2,
       thickness,
       height + thickness * 2,
-      { isStatic: true },
+      { isStatic: true, friction: 0, frictionStatic: 0 },
     ),
     matter.Bodies.rectangle(
       width + thickness / 2 - inset,
       height / 2,
       thickness,
       height + thickness * 2,
-      { isStatic: true },
+      { isStatic: true, friction: 0, frictionStatic: 0 },
     ),
   ];
 }
@@ -93,14 +115,12 @@ export function createSkillBody(
     {
       // The decorative silhouette stays inside this complete rectangle. Rounded
       // corners allowed neighbouring SVGs to enter each other's writing area.
-      inertia: Infinity,
       density: 0.0011 + (index % 5) * 0.00008,
       restitution: 0.04,
-      friction: 0.55,
-      frictionStatic: 0.85,
+      friction: 0.2,
+      frictionStatic: 0.3,
       frictionAir: 0.035,
       slop: 0.01,
-      sleepThreshold: 70,
     },
   );
 }

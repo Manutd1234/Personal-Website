@@ -11,82 +11,82 @@ import {
   Play,
   Rocket,
 } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useId, useRef, useState } from "react";
 import { useMotionPreference } from "./useMotionPreference";
 import { useVisiblePlayback } from "./useVisiblePlayback";
 
-const STEP_DURATION_MS = 6000;
+const STEP_DURATION_MS = 5500;
 
 const steps = [
   {
     title: "Start with the right question.",
     short: "Understand",
     icon: Lightbulb,
-    question: "Who is this for, and what would make their day easier?",
-    body: "I listen, ask questions and look at how things work today. Before jumping into a solution, I get clear on the problem and what a useful first step would look like.",
+    question: "Who is this for, and what should the system make possible?",
+    body: "I start with the people, the problem and the outcome. I turn what I learn into clear requirements, define how to measure success and identify limits such as time, cost and performance.",
     decisions: [
-      "Understand the people using it",
-      "Find the problem worth solving",
-      "Agree on what a good result looks like",
+      "User needs and acceptance criteria",
+      "Performance, cost and data constraints",
+      "The smallest useful first version",
     ],
-    artifact: "A clear problem and a shared goal.",
-    scene: "Every build starts with a question.",
+    artifact: "A clear problem and requirements I can test.",
+    scene: "A useful question. A testable goal.",
   },
   {
-    title: "Choose a practical starting point.",
+    title: "Choose tools with a reason.",
     short: "Plan",
     icon: Blocks,
-    question: "What do we need, and what should come first?",
-    body: "I break the idea into manageable pieces, choose tools that fit the job and make room for the unknowns. A small first version helps me learn before committing to more.",
+    question: "What does the problem need from the tools we choose?",
+    body: "I choose the stack around the work: the interface, the logic and the data. I weigh speed, complexity and maintainability, then try the uncertain parts before building too much around them.",
     decisions: [
-      "Choose the essentials",
-      "Balance time, effort and cost",
-      "Try the uncertain parts early",
+      "Tools that fit the workload",
+      "Clear tradeoffs and dependencies",
+      "A small prototype for the riskiest part",
     ],
-    artifact: "A simple plan with room to learn.",
-    scene: "One useful piece at a time.",
+    artifact: "A practical stack and a plan for the first version.",
+    scene: "The right pieces, for the right reasons.",
   },
   {
     title: "Make the pieces fit together.",
     short: "Design",
     icon: GitBranch,
-    question: "How should it work from beginning to end?",
-    body: "I sketch the experience and work out how the parts connect. Walking through the idea helps me spot missing steps and make it easier to understand and use.",
+    question: "How does an action move through the whole system?",
+    body: "I follow the user journey from the interface through the API to the data and back. I give each part a clear responsibility, define what they exchange and plan for mistakes and failures.",
     decisions: [
-      "Map the main steps",
-      "Give each part a clear purpose",
-      "Think through what could go wrong",
+      "UI, API and data flow",
+      "Clear boundaries and data structures",
+      "Permissions, error handling and recovery",
     ],
-    artifact: "A clear picture of how it all connects.",
-    scene: "Connect the pieces. Follow the idea through.",
+    artifact: "A system design that is clear enough to build.",
+    scene: "Connect the parts. Follow the flow.",
   },
   {
-    title: "Turn the idea into something real.",
+    title: "Make one complete path work.",
     short: "Build",
     icon: Braces,
-    question: "What can we make useful today?",
-    body: "I build in small steps and try things as I go. Each working piece gives me something to show, discuss and improve, so the project keeps moving with a clear purpose.",
+    question: "Can someone use this to complete a real task?",
+    body: "I connect the interface, logic and storage in small working steps. I validate inputs, handle loading and errors, and keep changes easy to review so each version gives me something real to improve.",
     decisions: [
-      "Start with one complete task",
-      "Keep the work easy to follow",
-      "Review and improve along the way",
+      "Working code from input to result",
+      "Validation and clear user feedback",
+      "Small changes, reviewed along the way",
     ],
-    artifact: "A working version people can try.",
-    scene: "Small steps become something real.",
+    artifact: "Working software people can try and build on.",
+    scene: "A little code. A working connection.",
   },
   {
-    title: "Try it. Share it. Make it better.",
+    title: "Test it. Ship it. Learn.",
     short: "Improve",
     icon: Rocket,
-    question: "Does it help, and what should we improve next?",
-    body: "I check the details, put the work in people's hands and listen to what happens. Real use reveals what works well and where the next version can do better.",
+    question: "Does it work in real use, and what should improve next?",
+    body: "I test the parts and the complete user journey, automate release checks and verify the deployment. Once it is live, I watch errors and performance and use feedback to guide the next version.",
     decisions: [
-      "Check it with real examples",
-      "Share it and listen to feedback",
-      "Keep learning after it goes live",
+      "Unit, integration and user journey tests",
+      "Automated checks and a verified deployment",
+      "Monitoring, feedback and steady improvement",
     ],
-    artifact: "Something useful—and a direction for what comes next.",
-    scene: "Ready to share. Still room to grow.",
+    artifact: "A verified release—and a direction for what comes next.",
+    scene: "Test the build. Then let it take flight.",
   },
 ] as const;
 
@@ -155,7 +155,7 @@ function BuilderScene({
                   fill="#e6eddb"
                 />
                 <text x="250" y="125" className="scene-mono">
-                  The starting point
+                  requirements.md
                 </text>
                 <g className="scene-arrive scene-delay-one">
                   <circle cx="247" cy="164" r="5" fill="#dfb857" />
@@ -172,7 +172,7 @@ function BuilderScene({
                 <g className="scene-arrive scene-delay-two">
                   <circle cx="247" cy="209" r="5" fill="#dfb857" />
                   <text x="263" y="214" className="scene-label">
-                    What would help?
+                    What must work?
                   </text>
                   <path
                     d="M263 226h129"
@@ -190,7 +190,7 @@ function BuilderScene({
                     strokeLinejoin="round"
                   />
                   <text x="263" y="257" className="scene-label">
-                    A clear goal
+                    A testable goal
                   </text>
                 </g>
                 <g transform="translate(42 0)">
@@ -229,10 +229,10 @@ function BuilderScene({
                     strokeWidth="2"
                   />
                   <text x="259" y="265" className="scene-label">
-                    The essentials
+                    Data & storage
                   </text>
                   <text x="259" y="284" className="scene-note">
-                    what matters most
+                    structure · reliability
                   </text>
                 </g>
                 <g className="scene-stack-lift">
@@ -247,10 +247,10 @@ function BuilderScene({
                     strokeWidth="2"
                   />
                   <text x="276" y="195" className="scene-label">
-                    The right tools
+                    Logic & services
                   </text>
                   <text x="276" y="214" className="scene-note">
-                    a good fit for the job
+                    capabilities · tradeoffs
                   </text>
                 </g>
                 <g className="scene-stack scene-plan-finish">
@@ -265,10 +265,10 @@ function BuilderScene({
                     strokeWidth="2"
                   />
                   <text x="259" y="125" className="scene-label">
-                    A first version
+                    Interface
                   </text>
                   <text x="259" y="144" className="scene-note">
-                    small enough to try
+                    clarity · speed
                   </text>
                 </g>
                 <g className="scene-arrive scene-delay-three">
@@ -317,11 +317,11 @@ function BuilderScene({
                     rx="4"
                     fill="#dce9cd"
                   />
-                  <text x="225" y="139" className="scene-label">
-                    Start
+                  <text x="246" y="139" className="scene-label">
+                    UI
                   </text>
                   <text x="218" y="157" className="scene-note">
-                    a person, an idea
+                    input & feedback
                   </text>
                 </g>
                 <g className="scene-arrive scene-delay-one">
@@ -335,11 +335,11 @@ function BuilderScene({
                     stroke="#688062"
                     strokeWidth="2"
                   />
-                  <text x="423" y="206" className="scene-label">
-                    Make
+                  <text x="425" y="206" className="scene-label">
+                    API
                   </text>
                   <text x="400" y="227" className="scene-note">
-                    do the useful work
+                    validate · process
                   </text>
                 </g>
                 <g className="scene-arrive scene-delay-two">
@@ -358,8 +358,8 @@ function BuilderScene({
                     stroke="#688062"
                     strokeWidth="2"
                   />
-                  <text x="331" y="293" className="scene-label">
-                    Result
+                  <text x="338" y="293" className="scene-label">
+                    Data
                   </text>
                 </g>
                 <g className="scene-arrive scene-delay-three">
@@ -374,7 +374,7 @@ function BuilderScene({
                     strokeWidth="2"
                   />
                   <text x="390" y="95" className="scene-note">
-                    What if…?
+                    Handle errors
                   </text>
                 </g>
                 <circle cx="215" cy="169" r="5" fill="#dce9cd" stroke="#688062" strokeWidth="2" />
@@ -413,30 +413,30 @@ function BuilderScene({
                 <circle cx="237" cy="102" r="4" fill="#9dc898" />
                 <circle cx="250" cy="102" r="4" fill="#bfdbb6" />
                 <text x="307" y="106" className="scene-mono scene-code-muted">
-                  A working version
+                  one-working-path.ts
                 </text>
                 <g className="scene-code-line">
                   <text x="226" y="151" className="scene-code">
-                    start with one useful piece
+                    const input = validate(req);
                   </text>
                 </g>
                 <g className="scene-code-line scene-delay-one">
                   <text x="226" y="181" className="scene-code">
-                    try it with real examples
+                    await checkAccess(user);
                   </text>
                 </g>
                 <g className="scene-code-line scene-delay-two">
                   <text x="226" y="211" className="scene-code">
-                    make small improvements
+                    const result = await run(input);
                   </text>
                 </g>
                 <g className="scene-code-line scene-delay-three">
                   <text x="226" y="241" className="scene-code">
-                    keep what works
+                    return result;
                   </text>
                   <rect
                     className="scene-cursor"
-                    x="337"
+                    x="331"
                     y="229"
                     width="7"
                     height="15"
@@ -485,7 +485,7 @@ function BuilderScene({
                     strokeLinejoin="round"
                   />
                   <text x="312" y="292" className="scene-note">
-                    It works!
+                    UI → API → data
                   </text>
                 </g>
               </>
@@ -504,9 +504,9 @@ function BuilderScene({
                 />
                 <path d="M196 195h202" stroke="#ced8bd" strokeWidth="2" />
                 <text x="213" y="184" className="scene-mono">
-                  Ready to share?
+                  Test → deploy → observe
                 </text>
-                {["try it out", "listen and learn", "make it better"].map(
+                {["unit + integration", "user journey", "release checks"].map(
                   (label, index) => (
                     <g
                       key={label}
@@ -573,7 +573,7 @@ function BuilderScene({
                   />
                   <circle cx="426" cy="288" r="4" fill="#008363" />
                   <text x="438" y="293" className="scene-note">
-                    shared
+                    deployed
                   </text>
                 </g>
               </>
@@ -855,6 +855,7 @@ export default function BuildJourney({
       data-paused={!playing}
       data-reduced={reduced}
       data-entrance={settledChapter !== active}
+      style={{ "--journey-step-duration": `${STEP_DURATION_MS}ms` } as CSSProperties}
     >
       <header className="builder-workbench-heading">
         <div>
