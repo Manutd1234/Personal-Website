@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useId, useReducer, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useReducer, useRef, useState } from "react";
 import type { KeyboardEvent, PointerEvent, ReactNode } from "react";
 import type {
   Project,
@@ -9,6 +9,8 @@ import type {
   ProjectSource as Source,
 } from "./BookCarousel";
 import { buildNotes } from "@/content/build-notes";
+import { projectStories } from "@/content/project-stories";
+import type { ProjectPoint } from "@/content/project-stories";
 import { teamMoments } from "@/content/media";
 import { asset } from "@/content/paths";
 import "@/app/project-book-reader.css";
@@ -141,8 +143,42 @@ type Chapter = {
   kind?: "title" | "image" | "sources";
 };
 
+function pointPages(points: readonly ProjectPoint[]): ProjectPoint[][] {
+  const pages: ProjectPoint[][] = [];
+  const wordCount = (items: readonly ProjectPoint[]) => items
+    .map(({ label, detail }) => `${label} ${detail}`)
+    .join(" ").split(/\s+/).length;
+  for (const point of points) {
+    const current = pages.at(-1);
+    const words = wordCount([...(current ?? []), point]);
+    if (!current || current.length === 3 || words > 155) pages.push([point]);
+    else current.push(point);
+  }
+  // Keep a four-point section balanced across its two pages.
+  const last = pages.at(-1);
+  const previous = pages.at(-2);
+  if (last?.length === 1 && previous?.length === 3 &&
+      wordCount([previous[2], ...last]) <= 155) {
+    last.unshift(previous.pop()!);
+  }
+  return pages;
+}
+
+function PointList({ points }: { points: readonly ProjectPoint[] }) {
+  return (
+    <ul className="reader-highlights">
+      {points.map((point) => (
+        <li key={point.label}>
+          <p><strong>{point.label}.</strong> {point.detail}</p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function chaptersFor(project: Project, media?: ProjectMedia): Chapter[] {
   const note = buildNotes[project.title];
+  const story = projectStories[project.title];
   const moments =
     project.title === "BrainHack TIL-AI"
       ? teamMoments.filter((moment) => moment.src.includes("brainhack"))
@@ -157,8 +193,9 @@ function chaptersFor(project: Project, media?: ProjectMedia): Chapter[] {
         <>
           <p className="reader-category">{project.category}</p>
           <h3>{project.title}</h3>
-          <p className="reader-intro">{project.description}</p>
-          {project.outcome ? (
+          <p className="reader-intro">{story?.summary ?? project.description}</p>
+          {story ? <p className="reader-audience"><strong>Who it helps</strong>{story.audience}</p> : null}
+          {!story && project.outcome ? (
             <p className="reader-outcome">{project.outcome}</p>
           ) : null}
           <p className="reader-signature">Ian Wangsa</p>
@@ -166,37 +203,36 @@ function chaptersFor(project: Project, media?: ProjectMedia): Chapter[] {
       ),
     },
   ];
-  const highlights = project.highlights ?? [];
-  const highlightPages: string[][] = [];
-  for (const point of highlights) {
-    const current = highlightPages.at(-1);
-    const words = [...(current ?? []), point].join(" ").split(/\s+/).length;
-    if (!current || current.length === 2 || words > 120)
-      highlightPages.push([point]);
-    else current.push(point);
-  }
-  highlightPages.forEach((points, index) => {
+  if (story) {
     pages.push({
-      title: index === 0 ? "What I built" : "Implementation notes",
+      title: "The problem & my role",
       content: (
-        <ul className="reader-highlights">
-          {points.map((point) => {
-            const labelEnd = point.indexOf(":");
-            const hasLabel = labelEnd > 0 && labelEnd < 48;
-            return (
-              <li key={point}>
-                <p>
-                  {hasLabel ? <strong>{point.slice(0, labelEnd + 1)} </strong> : null}
-                  {hasLabel ? point.slice(labelEnd + 1).trim() : point}
-                </p>
-              </li>
-            );
-          })}
-        </ul>
+        <dl className="reader-context">
+          <div><dt>The problem</dt><dd>{story.problem}</dd></div>
+          <div><dt>My contribution</dt><dd>{story.contribution}</dd></div>
+        </dl>
       ),
     });
-  });
-  if (note)
+    story.sections.forEach((section) => {
+      const chunks = pointPages(section.points);
+      chunks.forEach((points, index) => pages.push({
+        title: `${section.title}${chunks.length > 1 ? ` · ${index + 1}/${chunks.length}` : ""}`,
+        content: <PointList points={points} />,
+      }));
+    });
+  } else {
+    const points = (project.highlights ?? []).map((point) => {
+      const labelEnd = point.indexOf(":");
+      return labelEnd > 0 && labelEnd < 48
+        ? { label: point.slice(0, labelEnd), detail: point.slice(labelEnd + 1).trim() }
+        : { label: "Project detail", detail: point };
+    });
+    pointPages(points).forEach((points, index) => pages.push({
+      title: index === 0 ? "What I built" : `Implementation notes · ${index}`,
+      content: <PointList points={points} />,
+    }));
+  }
+  if (note && !story)
     pages.push({
       title: "Decisions along the way",
       content: (
@@ -364,7 +400,7 @@ export default function ProjectBookReader({
   project: Project;
   media?: ProjectMedia;
 }) {
-  const pages = chaptersFor(project, media);
+  const pages = useMemo(() => chaptersFor(project, media), [project, media]);
   const [{ page, target, single, turn }, dispatch] = useReducer(readerReducer, {
     page: 0,
     target: 0,

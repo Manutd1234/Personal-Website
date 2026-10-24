@@ -153,6 +153,30 @@
 .reader-intro {
   font-size: 16px;
 }
+.reader-audience {
+  border-top: 1px solid #35563d20;
+  padding-top: 20px;
+  color: #536548;
+  font-size: 14px;
+}
+.reader-audience strong,
+.reader-context dt {
+  display: block;
+  margin-bottom: 7px;
+  color: #244c37;
+  font: 650 13px/1.5 var(--font-body, sans-serif);
+}
+.reader-context {
+  margin: 0;
+}
+.reader-context > div + div {
+  margin-top: 25px;
+  padding-top: 25px;
+  border-top: 1px solid #35563d20;
+}
+.reader-context dd {
+  margin: 0;
+}
 .reader-outcome {
   border-left: 2px solid #9baf81;
   padding-left: 15px;
