@@ -1,7 +1,7 @@
 "use client";
 import { MotionConfig, motion } from "framer-motion";
 import { ArrowUpRight, Moon, Sun } from "lucide-react";
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import SkillsPanel from "./SkillsPanel";
 import WorkPanel from "./WorkPanel";
 import ProjectsPanel from "./ProjectsPanel";
@@ -69,22 +69,57 @@ export default function Portfolio() {
     id: number;
   }>();
   const navRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const activeRef = useRef<TabId>(active);
+  const focusSectionRef = useRef(false);
+  const scrollFrameRef = useRef(0);
+  activeRef.current = active;
+
+  const keepSectionFocus = useCallback((next: TabId) => {
+    if (next === activeRef.current) return;
+    const focused = document.activeElement;
+    focusSectionRef.current = Boolean(
+      document.getElementById(`${activeRef.current}-panel`)?.contains(focused) ||
+      (focused instanceof Element && focused.closest(".classic-nav")),
+    );
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!focusSectionRef.current) return;
+    focusSectionRef.current = false;
+    navRefs.current[tabs.findIndex((tab) => tab.id === active)]?.focus({ preventScroll: true });
+  }, [active]);
+
   useEffect(() => {
     const sync = () => {
-      const hash = window.location.hash.slice(1);
-      if (["main", "life-in-pictures", "contact"].includes(hash)) return;
-      setActive(aliases[hash] ?? "profile");
-      if (aliases[hash])
-        requestAnimationFrame(() =>
+      cancelAnimationFrame(scrollFrameRef.current);
+      const hash = window.location.hash.slice(1).toLowerCase();
+      if (["main", "contact"].includes(hash)) return;
+      const next = hash === "life-in-pictures" ? "profile" : aliases[hash] ?? "profile";
+      keepSectionFocus(next);
+      setActive(next);
+      if (hash === "life-in-pictures") {
+        // History can return here while Profile is hidden. Reveal it before
+        // positioning the anchor, rather than relying on native hash scrolling.
+        scrollFrameRef.current = requestAnimationFrame(() =>
+          document.getElementById(hash)?.scrollIntoView({ block: "start", behavior: "instant" }),
+        );
+      } else if (aliases[hash]) {
+        scrollFrameRef.current = requestAnimationFrame(() =>
           window.scrollTo({ top: 0, behavior: "instant" }),
         );
+      }
     };
     sync();
     window.addEventListener("hashchange", sync);
     setDark(document.documentElement.classList.contains("dark"));
-    return () => window.removeEventListener("hashchange", sync);
-  }, []);
+    return () => {
+      cancelAnimationFrame(scrollFrameRef.current);
+      window.removeEventListener("hashchange", sync);
+    };
+  }, [keepSectionFocus]);
   function navigate(id: TabId, history: "push" | "replace" = "push") {
+    cancelAnimationFrame(scrollFrameRef.current);
+    keepSectionFocus(id);
     setActive(id);
     const hash = `#${tabs.find((tab) => tab.id === id)!.hash}`;
     if (window.location.hash !== hash) {

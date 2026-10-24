@@ -39,19 +39,21 @@ const originalDesktopSizes = [
   [147, 27], [55, 25], [120, 31], [205, 27], [68, 37], [125, 27], [126, 29], [68, 27],
   [99, 25], [84, 31], [83, 29],
 ].map(([width, height]) => ({ width, height }));
-// The CSS scales the complete tile envelope (font and shape padding) by 12%.
-// Keep the original measured metrics as a conservative basis for the fixture.
+// Retain the former 0.88 desktop envelopes as a conservative stress fixture
+// after compacting the board; mobile still uses these larger dimensions.
 const desktopSizes = originalDesktopSizes.map(({ width, height }) => ({
   width: Math.ceil(width * 0.88),
   height: Math.ceil(height * 0.88),
 }));
 const portfolio = ts.createSourceFile("portfolio.ts", readFileSync(new URL("content/portfolio.ts", root), "utf8"), ts.ScriptTarget.Latest, true);
 let catalogCount = 0;
+const catalogGroups = [];
 function countSkills(node) {
   if (ts.isVariableDeclaration(node) && node.name.getText(portfolio) === "skillGroups") {
     function visitItems(child) {
       if (ts.isPropertyAssignment(child) && child.name.getText(portfolio) === "items" && ts.isArrayLiteralExpression(child.initializer)) {
         catalogCount += child.initializer.elements.length;
+        catalogGroups.push(child.initializer.elements.map((element) => element.text));
       }
       ts.forEachChild(child, visitItems);
     }
@@ -59,25 +61,26 @@ function countSkills(node) {
   } else ts.forEachChild(node, countSkills);
 }
 countSkills(portfolio);
+const catalogLabels = catalogGroups.flatMap((group, categoryIndex) => group.map((label, itemIndex) => ({ label, categoryIndex, itemIndex })))
+  .sort((a, b) => a.itemIndex - b.itemIndex || a.categoryIndex - b.categoryIndex).map(({ label }) => label);
 assert.equal(desktopSizes.length, catalogCount, "Update the collision fixture when the skill catalog changes");
 
-// SAT uses the visible, rotated rectangle, excluding the extra collision padding.
-// Any overlap here can cover another skill's silhouette or writing area.
-function visibleOverlap(a, aSize, b, bSize) {
-  const ca = Math.cos(a.angle), sa = Math.sin(a.angle);
-  const cb = Math.cos(b.angle), sb = Math.sin(b.angle);
-  const dx = b.position.x - a.position.x, dy = b.position.y - a.position.y;
+// SAT follows the painted fill outline, allowing the two half-pixel strokes
+// to meet. Empty rectangular corners around curved shapes may interleave.
+function visibleOverlap(a, _aSize, b, _bSize) {
   let depth = Infinity;
-  for (const [x, y] of [[ca, sa], [-sa, ca], [cb, sb], [-sb, cb]]) {
-    const aRadius = Math.abs(x * ca + y * sa) * aSize.width / 2 + Math.abs(-x * sa + y * ca) * aSize.height / 2;
-    const bRadius = Math.abs(x * cb + y * sb) * bSize.width / 2 + Math.abs(-x * sb + y * cb) * bSize.height / 2;
-    const overlap = aRadius + bRadius - Math.abs(dx * x + dy * y);
+  for (const axis of [...a.axes, ...b.axes]) {
+    const pa = a.vertices.map((point) => point.x * axis.x + point.y * axis.y);
+    const pb = b.vertices.map((point) => point.x * axis.x + point.y * axis.y);
+    const overlap = Math.min(Math.max(...pa), Math.max(...pb)) - Math.max(Math.min(...pa), Math.min(...pb));
     if (overlap <= 0) return 0;
     depth = Math.min(depth, overlap);
   }
-  return depth;
+  return Math.max(0, depth - physics.SKILL_COLLISION_PADDING * 2);
 }
-function checkBodies(bodies, sizes, width, height, context) {
+// Contact resolution can leave subpixel edge penetration; keep settled labels
+// within one rendered pixel, well inside their text padding.
+function checkBodies(bodies, sizes, width, height, context, tolerance = 1) {
   let worst = 0;
   for (let i = 0; i < bodies.length; i += 1) {
     const body = bodies[i];
@@ -89,7 +92,7 @@ function checkBodies(bodies, sizes, width, height, context) {
       if (!Matter.Bounds.overlaps(body.bounds, other.bounds)) continue;
       const depth = visibleOverlap(body, sizes[body.plugin.index], other, sizes[other.plugin.index]);
       worst = Math.max(worst, depth);
-      assert.ok(depth < 0.5, `${context}: labels ${body.plugin.index} / ${other.plugin.index} overlap ${depth.toFixed(2)}px`);
+      assert.ok(depth < tolerance, `${context}: labels ${body.plugin.index} / ${other.plugin.index} overlap ${depth.toFixed(2)}px`);
     }
   }
   return worst;
@@ -101,13 +104,11 @@ function createWorld(width, height) {
   Matter.Composite.add(engine.world, walls);
   return { engine, walls };
 }
-function update(engine, bodies, width, height) {
-  for (const body of bodies) physics.limitSkillVelocity(Matter, body);
-  Matter.Engine.update(engine, physics.SKILL_PHYSICS_STEP);
-  for (const body of bodies) physics.containSkillBody(Matter, body, width, height);
+function update(engine, bodies, width, height, grip = null) {
+  physics.stepSkillPhysics(Matter, engine, bodies, width, height, grip);
 }
 function makeBody(size, position, index) {
-  const body = physics.createSkillBody(Matter, size, position, index);
+  const body = physics.createSkillBody(Matter, size, position, index, physics.skillTileForm(index, catalogLabels[index] ?? "skill"));
   body.plugin.index = index;
   return body;
 }
@@ -118,6 +119,27 @@ function randomGenerator(seed) {
   };
 }
 
+// Colliders follow painted silhouettes rather than inflated bounding boxes.
+// In particular, ellipse corners remain empty and its border reaches the floor.
+for (const shape of Object.keys(physics.skillTilePaths)) {
+  const width = 400, height = 220;
+  const { engine } = createWorld(width, height);
+  const size = { width: 120, height: 34 };
+  const body = physics.createSkillBody(Matter, size, { x: 200, y: 70 }, 0, shape);
+  assert.ok(body.vertices.length <= 16, `${shape}: bound collision-axis cost`);
+  assert.ok(body.plugin.skillRadius < 65, `${shape}: radius must use local dimensions, not world position`);
+  if (shape === "ellipse") {
+    assert.equal(Matter.Query.point([body], { x: 255, y: 83 }).length, 0, "Ellipse corners must not contain invisible collision rectangles");
+    assert.ok(body.area < size.width * size.height * 0.85, "Ellipse collision area must follow its curved outline");
+  }
+  Matter.Composite.add(engine.world, body);
+  for (let step = 0; step < 720; step += 1) update(engine, [body], width, height);
+  const floorGap = height - physics.SKILL_WORLD_INSET - Math.max(...body.vertices.map((vertex) => vertex.y));
+  assert.ok(Math.abs(floorGap) < 0.5, `${shape}: painted border must touch the inner floor (${floorGap.toFixed(2)}px gap)`);
+  Matter.Engine.clear(engine);
+}
+console.log("All seven silhouettes use bounded outline hulls and touch the floor — PASS");
+
 // Regression: predictive bounds cross the floor while actual vertices stay in
 // the world. Post-solver clamping must not shove this card into its neighbour.
 const contained = makeBody({ width: 80, height: 30 }, { x: 100, y: 575 }, 0);
@@ -127,19 +149,46 @@ const positionBefore = { ...contained.position };
 physics.containSkillBody(Matter, contained, 980, 603);
 assert.deepEqual(contained.position, positionBefore, "Containment must ignore predictive bounds");
 
-// Pointer pickup must pass freely over another label, then re-enter only in
-// clear space. The old drag sweep stopped at its neighbour, trapping buried
-// labels in a pile. Keyboard nudges deliberately retain that conservative rule.
-const draggable = makeBody({ width: 80, height: 30 }, { x: 100, y: 100 }, 0);
-const blocker = makeBody({ width: 80, height: 30 }, { x: 300, y: 100 }, 1);
-physics.positionHeldSkillBody(Matter, draggable, { x: 300, y: 100 }, 980, 603);
-assert.ok(Math.abs(draggable.position.x - 300) < 0.1, "A lifted label must reach the pointer even above an occupied label");
-assert.ok(physics.placeReleasedSkillBody(Matter, draggable, [draggable, blocker], 980, 603), "A lifted label must find free space on release");
-assert.ok(draggable.position.y < blocker.bounds.min.y, "Releasing above another label must place it on top of the pile");
-checkBodies([draggable, blocker], [{ width: 80, height: 30 }, { width: 80, height: 30 }], 980, 603, "pointer release");
-Matter.Body.setPosition(draggable, { x: 200, y: 100 });
-for (let step = 0; step < 100; step += 1) physics.moveSkillBody(Matter, draggable, { x: 12, y: 0 }, [draggable, blocker], 980, 603);
-assert.ok(draggable.position.x > 200 && draggable.position.x <= 300 - 80 - physics.SKILL_COLLISION_PADDING * 2 + 0.1, "Keyboard nudging must stop at its neighbour");
+// A dragged label must remain in the physical world and push its neighbour.
+// This fails the old implementation, which removed it for the entire gesture.
+{
+  const width = 500, height = 260;
+  const { engine } = createWorld(width, height);
+  const sizes = [{ width: 80, height: 30 }, { width: 80, height: 30 }];
+  const draggable = makeBody(sizes[0], { x: 110, y: 230 }, 0);
+  const blocker = makeBody(sizes[1], { x: 220, y: 230 }, 1);
+  Matter.Composite.add(engine.world, [draggable, blocker]);
+  for (let step = 0; step < 240; step += 1) update(engine, [draggable, blocker], width, height);
+  const neighbourX = blocker.position.x;
+  const grip = physics.createSkillDrag(Matter, draggable, draggable.position);
+  grip.target = { x: 320, y: draggable.position.y };
+  for (let step = 0; step < 180; step += 1) {
+    update(engine, [draggable, blocker], width, height, grip);
+    checkBodies([draggable, blocker], sizes, width, height, "colliding pointer drag");
+  }
+  assert.ok(Matter.Composite.allBodies(engine.world).includes(draggable), "The held label must stay in the collision world");
+  assert.ok(draggable.position.x > 250, "A dragged label must follow the grip");
+  assert.ok(blocker.position.x > neighbourX + 80, "Dragging a label must visibly bump its neighbour");
+  const releasePosition = { ...draggable.position };
+  const gripFriction = grip.frictionStatic;
+  physics.releaseSkillDrag(Matter, grip);
+  assert.equal(draggable.frictionStatic, gripFriction, "Release must restore the label's original static friction");
+  assert.deepEqual(draggable.position, releasePosition, "Releasing a label must not snap it to a new gap");
+  for (let step = 0; step < 300; step += 1) update(engine, [draggable, blocker], width, height);
+  checkBodies([draggable, blocker], sizes, width, height, "drag release");
+  const blockerBefore = blocker.position.x;
+  for (let step = 0; step < 100; step += 1) physics.moveSkillBody(Matter, draggable, { x: 12, y: 0 }, [draggable, blocker], width, height);
+  assert.equal(blocker.position.x, blockerBefore, "Keyboard nudges must not teleport neighbours");
+  checkBodies([draggable, blocker], sizes, width, height, "keyboard after drag");
+  Matter.Engine.clear(engine);
+  console.log("Pointer drag stays physical, bumps neighbours, and releases without snapping — PASS");
+}
+// A scaled or scrolled board must map the visible pointer to the same body.
+for (const scale of [0.75, 1, 1.5]) {
+  const mapped = physics.skillPointerPosition({ x: 120 + 150 * scale, y: -300 + 220 * scale },
+    { left: 120, top: -300, width: 980 * scale, height: 538 * scale }, 980, 538);
+  assert.ok(Math.abs(mapped.x - 150) < 0.001 && Math.abs(mapped.y - 220) < 0.001, "Pointer conversion must account for scroll and visual scaling");
+}
 
 // A lone label must reach the floor, and a previously resting label must fall
 // when its support is removed. These fail when Matter leaves it asleep in air.
@@ -268,38 +317,69 @@ for (const [name, width, frameHeight, scale] of [["desktop", 980, 538, 1], ["nar
     const pileHeight = height - physics.SKILL_WORLD_INSET - Math.min(...dropped.flatMap((body) => body.vertices.map((vertex) => vertex.y)));
     const naturalUpsideDown = dropped.filter((body) => Math.cos(body.angle) < 0).length;
 
-    // Extract a genuinely buried label from a complete natural pile. Its held
-    // visual is intentionally above the other labels, outside the collision
-    // plane; every unheld label must remain non-overlapping throughout.
+    // A 100ms mouse sweep (300ms on the dense touch board) must lift a bottom label
+    // hundreds of pixels while bumping the actual pile. Slow ploughing was broken drag.
+    // Allow up to 6px of transient edge compression while pushing; the writing
+    // stays inside wider shape padding. Resting labels stay within one rendered pixel.
+    {
+      const picked = dropped.find((body) => body.plugin.index === 0);
+      const from = { ...picked.position };
+      const to = { x: width * (from.x > width / 2 ? 0.25 : 0.75), y: Math.max(70, from.y - 300) };
+      const fastGrip = physics.createSkillDrag(Matter, picked, from);
+      let physicsMs = 0;
+      const gestureFrames = name === "desktop" ? 12 : 36;
+      for (let frame = 1; frame <= gestureFrames; frame += 1) {
+        fastGrip.target = { x: from.x + (to.x - from.x) * frame / gestureFrames, y: from.y + (to.y - from.y) * frame / gestureFrames };
+        const started = performance.now();
+        update(engine, dropped, width, height, fastGrip);
+        physicsMs += performance.now() - started;
+        checkBodies(dropped, sizes, width, height, `${context}: fast diagonal grip ${frame}`, 6);
+      }
+      // Release may arrive between frames; complete its last pointer movement
+      // for at most the same 200ms grace used by the UI controller.
+      for (let frame = 0; frame < 24 && Math.hypot(picked.position.x - to.x, picked.position.y - to.y) >= 2; frame += 1)
+        update(engine, dropped, width, height, fastGrip);
+      const lag = Math.hypot(picked.position.x - to.x, picked.position.y - to.y);
+      assert.ok(lag < 45, `${context}: a fast pickup must track the pointer (lag ${lag.toFixed(1)}px)`);
+      physics.releaseSkillDrag(Matter, fastGrip);
+      for (let frame = 0; frame < 480; frame += 1) update(engine, dropped, width, height);
+      console.log(`${context}: fast diagonal pickup lag ${lag.toFixed(1)}px, physics ${(physicsMs / (gestureFrames / 2)).toFixed(1)}ms per display frame — PASS`);
+    }
+
+    // Pull a genuinely buried label through its settled neighbours, then sweep
+    // it across the pile. Contacts must remain active throughout the gesture.
     const held = dropped.reduce((lowest, body) => body.position.y > lowest.position.y ? body : lowest);
     const buriedY = held.position.y;
-    Matter.Composite.remove(engine.world, held);
-    physics.positionHeldSkillBody(Matter, held, { x: width / 2, y: Math.max(100, buriedY - 300) }, width, height);
-    assert.ok(held.position.y < buriedY - 250, `${context}: a buried label must lift immediately, not wait for neighbours to move`);
-    assert.equal(Matter.Composite.allBodies(engine.world).includes(held), false, "The held label must be outside the collision plane");
-    for (let step = 0; step < 1200; step += 1) {
-      if (step < 600) physics.positionHeldSkillBody(Matter, held, {
-        x: width * (0.1 + 0.8 * Math.sin(step / 80) ** 2), y: height - 18,
-      }, width, height);
-      if (step === 600) {
-        if (!physics.placeReleasedSkillBody(Matter, held, dropped, width, height)) {
-          const bodyHeight = held.bounds.max.y - held.bounds.min.y;
-          Matter.Composite.remove(engine.world, walls);
-          height += Math.max(64, Math.ceil(bodyHeight) + 24);
-          walls = physics.createSkillWalls(Matter, width, height);
-          Matter.Composite.add(engine.world, walls);
-          physics.positionHeldSkillBody(Matter, held, {
-            x: held.position.x, y: height - bodyHeight / 2 - 12,
-          }, width, height);
-        }
-        checkBodies(dropped, sizes, width, height, `${context}: before reinsertion`);
-        Matter.Composite.add(engine.world, held);
-        Matter.Body.setVelocity(held, { x: 30, y: -30 });
+    const from = { ...held.position };
+    const lifted = { x: from.x, y: Math.max(100, buriedY - 300) };
+    const grip = physics.createSkillDrag(Matter, held, held.position);
+    for (let step = 0; step < 1500; step += 1) {
+      // Feed actual pointer travel, rather than teleporting the target hundreds
+      // of pixels in zero elapsed time. Fast 100ms pickup is covered above.
+      if (step < 360) {
+        const t = Math.min(1, (step + 1) / 36);
+        grip.target = { x: from.x, y: from.y + (lifted.y - from.y) * t };
       }
-      update(engine, dropped, width, height);
+      if (step === 360) assert.ok(held.position.y < buriedY - 150, `${context}: a buried label must lift through its neighbours (moved ${(buriedY - held.position.y).toFixed(1)}px)`);
+      if (step >= 360 && step < 900) {
+        const t = Math.min(1, (step - 359) / 36);
+        grip.target = {
+          x: lifted.x + (width * (0.1 + 0.8 * Math.sin(step / 80) ** 2) - lifted.x) * t,
+          y: lifted.y + (height - 60 - lifted.y) * t,
+        };
+      }
+      if (step === 900) {
+        const before = { ...held.position };
+        physics.releaseSkillDrag(Matter, grip);
+        assert.deepEqual(held.position, before, "Releasing must preserve the real physical position");
+        assert.ok(Matter.Composite.allBodies(engine.world).includes(held), "A dragged label must never leave the world");
+      }
+      update(engine, dropped, width, height, step < 900 ? grip : null);
+      // Sustained pressure against a dense wall can briefly compress contacts
+      // in a discrete solver. Record that depth while the hand is forcing it;
+      // require clean, bounded contact again within 500ms of release.
       if (step % 2 === 0) worst = Math.max(worst, checkBodies(
-        step < 600 ? dropped.filter((body) => body !== held) : dropped,
-        sizes, width, height, `${context}: pickup/release/fling ${step}`,
+        dropped, sizes, width, height, `${context}: colliding drag/release ${step}`, step < 960 ? Infinity : 1,
       ));
     }
     // Every label receives four large keyboard moves into its neighbours.

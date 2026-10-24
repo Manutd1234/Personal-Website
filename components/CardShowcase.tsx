@@ -101,6 +101,7 @@ function DeckTrack({
   const groupRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLUListElement>(null);
   const slotRefs = useRef<(HTMLLIElement | null)[]>([]);
+  const dotRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const initialized = useRef(false);
   const autoMoving = useRef(false);
   const idleUntil = useRef(0);
@@ -432,6 +433,15 @@ function DeckTrack({
     const target = candidates.reduce((best, current) => Math.abs(current - from) < Math.abs(best - from) ? current : best);
     scrollToCard(target);
   }
+  function dotKeys(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    const next = event.key === "Home" ? 0 : event.key === "End" ? count - 1
+      : event.key === "ArrowRight" ? (index + 1) % count
+      : event.key === "ArrowLeft" ? (index + count - 1) % count : null;
+    if (next === null) return;
+    event.preventDefault();
+    goTo(next);
+    dotRefs.current[next]?.focus({ preventScroll: true });
+  }
   function step(delta: number) {
     const track = trackRef.current;
     if (!track) return;
@@ -540,9 +550,21 @@ function DeckTrack({
           <button type="button" className="deck-arrow" aria-label="Previous record" aria-controls={trackId} onClick={() => step(-1)}>
             <ChevronLeft size={18} aria-hidden="true" />
           </button>
-          <div className="deck-dots" aria-hidden="true">
+          <div className="deck-dots" role="group" aria-label="Choose a record">
             {cards.map((card, index) => (
-              <button type="button" tabIndex={-1} key={card.id} data-collected={collected.includes(index)} data-visible={inView(index)} onClick={() => goTo(index)} />
+              <button
+                type="button"
+                tabIndex={view.nearest === index ? 0 : -1}
+                key={card.id}
+                ref={(element) => { dotRefs.current[index] = element; }}
+                aria-label={`Show ${card.org}: ${card.role}`}
+                aria-controls={trackId}
+                aria-current={view.nearest === index ? "true" : undefined}
+                data-collected={collected.includes(index)}
+                data-visible={inView(index)}
+                onClick={() => goTo(index)}
+                onKeyDown={(event) => dotKeys(event, index)}
+              />
             ))}
           </div>
           <button type="button" className="deck-arrow" aria-label="Next record" aria-controls={trackId} onClick={() => step(1)}>

@@ -1,14 +1,108 @@
-import type { Body, Vector } from "matter-js";
+import type { Body, Engine, Pair, Vector, Vertex } from "matter-js";
 
 type MatterLibrary = typeof import("matter-js");
 export type SkillSize = { width: number; height: number };
-export const SKILL_WORLD_INSET = 8;
-// Include the full SVG envelope and its stroke, not just a chamfered interior.
-export const SKILL_COLLISION_PADDING = 3;
+export const SKILL_WORLD_INSET = 1;
+// The only expansion is the visible 1px SVG border. There is no invisible gap.
+export const SKILL_COLLISION_PADDING = 0.5;
 export const SKILL_PACKING_DENSITY = 0.82;
 export const SKILL_DROP_BLOCKED_MS = 1600;
 export const SKILL_PHYSICS_STEP = 1000 / 120;
 export const SKILL_MAX_VELOCITY = 6;
+export const SKILL_DRAG_MAX_VELOCITY = 96;
+
+export const skillTilePaths = {
+  ellipse: "M98 50A48 47 0 1 1 2 50A48 47 0 1 1 98 50Z",
+  hexagon: "M12 3H88L99 50L88 97H12L1 50Z",
+  ticket: "M6 3H94Q99 3 99 11V35Q90 50 99 65V89Q99 97 94 97H6Q1 97 1 89V65Q10 50 1 35V11Q1 3 6 3Z",
+  pebble: "M25 5C40 0 55 9 72 5C93 1 99 23 98 49C99 78 85 97 64 95C47 93 33 100 17 91C0 82 0 62 3 41C5 18 10 9 25 5Z",
+  cloud: "M15 27C16 6 34 1 43 17C52 0 73 5 76 24C96 17 104 46 94 63C103 85 85 100 69 90C59 103 43 96 37 87C20 103 2 86 7 68C-2 54 1 32 15 27Z",
+  pennant: "M2 3H85L99 50L85 97H2L10 50Z",
+  seal: "M50 2L60 12L74 8L79 23L94 27L90 43L99 54L88 65L90 81L74 85L66 98L51 91L37 98L28 85L12 81L14 65L2 54L11 42L7 27L23 22L28 8L42 12Z",
+} as const;
+export type SkillShape = keyof typeof skillTilePaths;
+const tileForms = ["ellipse", "hexagon", "ticket", "pebble", "cloud", "pennant"] as const;
+export function skillTileForm(index: number, label: string): SkillShape {
+  if (label.length <= 8 && index % 4 === 0) return "seal";
+  return tileForms[(index * 5 + Math.floor(index / 7)) % tileForms.length];
+}
+
+// Sample the same path that paints the label, so curved silhouettes do not sit
+// inside invisible rectangular colliders. Small concave notches use their outer
+// convex hull: neighbouring labels can touch the silhouette without interlocking.
+export function skillShapeOutline(shape: SkillShape, size: SkillSize): Vector[] {
+  const points: Vector[] = [];
+  if (shape === "ellipse") {
+    for (let index = 0; index < 16; index += 1) {
+      const angle = index * Math.PI / 8;
+      points.push({ x: 50 + 48 * Math.cos(angle), y: 50 + 47 * Math.sin(angle) });
+    }
+  } else {
+    const tokens = skillTilePaths[shape].match(/[A-Z]|-?\d+(?:\.\d+)?/g)!;
+    let index = 0, point = { x: 0, y: 0 };
+    const number = () => Number(tokens[index++]);
+    while (index < tokens.length) {
+      const command = tokens[index++];
+      if (command === "Z") break;
+      if (command === "M" || command === "L") point = { x: number(), y: number() };
+      else if (command === "H") point = { x: number(), y: point.y };
+      else if (command === "V") point = { x: point.x, y: number() };
+      else if (command === "Q" || command === "C") {
+        const from = point, control = { x: number(), y: number() };
+        const second = { x: number(), y: number() };
+        const end = command === "C" ? { x: number(), y: number() } : second;
+        for (let sample = 1; sample <= 10; sample += 1) {
+          const t = sample / 10, u = 1 - t;
+          points.push(command === "C" ? {
+            x: u ** 3 * from.x + 3 * u ** 2 * t * control.x + 3 * u * t ** 2 * second.x + t ** 3 * end.x,
+            y: u ** 3 * from.y + 3 * u ** 2 * t * control.y + 3 * u * t ** 2 * second.y + t ** 3 * end.y,
+          } : {
+            x: u ** 2 * from.x + 2 * u * t * control.x + t ** 2 * end.x,
+            y: u ** 2 * from.y + 2 * u * t * control.y + t ** 2 * end.y,
+          });
+        }
+        point = end;
+        continue;
+      }
+      points.push(point);
+    }
+  }
+  return points.map(({ x, y }) => ({ x: (x / 100 - 0.5) * size.width, y: (y / 100 - 0.5) * size.height }));
+}
+
+function borderedHull(matter: MatterLibrary, points: Vector[]) {
+  // hull only reads coordinates, despite Matter's narrower declaration.
+  const hull = matter.Vertices.hull(points as Vertex[]);
+  // Flat curve segments do not need their own SAT axis. Bound contact cost
+  // for all 123 labels while keeping each painted silhouette's outer shape.
+  while (hull.length > 16) {
+    let remove = 0, smallest = Infinity;
+    hull.forEach((point, index) => {
+      const before = hull[(index + hull.length - 1) % hull.length], after = hull[(index + 1) % hull.length];
+      const deviation = Math.abs((after.x - before.x) * (point.y - before.y) - (after.y - before.y) * (point.x - before.x)) /
+        Math.max(0.001, Math.hypot(after.x - before.x, after.y - before.y));
+      if (deviation < smallest) { smallest = deviation; remove = index; }
+    });
+    hull.splice(remove, 1);
+  }
+  // Matter's hull is clockwise in screen coordinates (positive signed area).
+  return hull.map((point, index) => {
+    const before = hull[(index + hull.length - 1) % hull.length], after = hull[(index + 1) % hull.length];
+    const firstLength = Math.hypot(point.x - before.x, point.y - before.y);
+    const secondLength = Math.hypot(after.x - point.x, after.y - point.y);
+    const first = { x: (point.y - before.y) / firstLength, y: (before.x - point.x) / firstLength };
+    const second = { x: (after.y - point.y) / secondLength, y: (point.x - after.x) / secondLength };
+    const x = first.x + second.x, y = first.y + second.y;
+    const offset = SKILL_COLLISION_PADDING / (x * first.x + y * first.y);
+    return { x: point.x + x * offset, y: point.y + y * offset };
+  });
+}
+
+export function skillBodyVisualCenter(body: Body): Vector {
+  const offset: Vector = body.plugin.skillVisualOffset ?? { x: 0, y: 0 };
+  const c = Math.cos(body.angle), s = Math.sin(body.angle);
+  return { x: body.position.x + offset.x * c - offset.y * s, y: body.position.y + offset.x * s + offset.y * c };
+}
 
 // Pack the measured rectangles into short rows instead of giving every row
 // the height of its tallest decorative seal. DOM/keyboard order stays intact.
@@ -106,91 +200,178 @@ export function createSkillBody(
   size: SkillSize,
   position: Vector,
   index = 0,
+  shape: SkillShape = "hexagon",
 ) {
-  return matter.Bodies.rectangle(
-    position.x,
-    position.y,
-    size.width + SKILL_COLLISION_PADDING * 2,
-    size.height + SKILL_COLLISION_PADDING * 2,
-    {
-      // The decorative silhouette stays inside this complete rectangle. Rounded
-      // corners allowed neighbouring SVGs to enter each other's writing area.
+  const vertices = borderedHull(matter, skillShapeOutline(shape, size));
+  const center = matter.Vertices.centre(vertices);
+  const body = matter.Body.create({
+      position,
+      vertices,
       density: 0.0011 + (index % 5) * 0.00008,
       restitution: 0.04,
       friction: 0.16,
       frictionStatic: 0.24,
       frictionAir: 0.035,
       slop: 0.01,
-    },
-  );
-}
-
-export function limitSkillVelocity(matter: MatterLibrary, body: Body) {
-  const speed = Math.hypot(body.velocity.x, body.velocity.y);
-  if (speed > SKILL_MAX_VELOCITY)
-    matter.Body.setVelocity(body, {
-      x: body.velocity.x * SKILL_MAX_VELOCITY / speed,
-      y: body.velocity.y * SKILL_MAX_VELOCITY / speed,
     });
+  // SVG boxes rotate about their own centre; Matter rotates about the polygon's
+  // centroid. Account for that small difference instead of shifting the art.
+  body.plugin.skillVisualOffset = { x: -center.x, y: -center.y };
+  body.plugin.skillShape = shape;
+  body.plugin.skillRadius = Math.max(...body.vertices.map((vertex) => Math.hypot(vertex.x - body.position.x, vertex.y - body.position.y)));
+  return body;
 }
 
-// A picked-up paper label lives above the pile until release. Its body is
-// temporarily removed from the engine by the controller, so a buried label can
-// follow the pointer without having to push every supporting label out first.
-export function positionHeldSkillBody(
-  matter: MatterLibrary,
-  body: Body,
-  target: Vector,
-  width: number,
-  height: number,
-) {
-  const halfWidth = (Math.max(...body.vertices.map((point) => point.x)) -
-    Math.min(...body.vertices.map((point) => point.x))) / 2;
-  const halfHeight = (Math.max(...body.vertices.map((point) => point.y)) -
-    Math.min(...body.vertices.map((point) => point.y))) / 2;
-  const inset = SKILL_WORLD_INSET + 1;
-  matter.Body.setVelocity(body, { x: 0, y: 0 });
-  matter.Body.setAngularVelocity(body, 0);
-  matter.Body.setPosition(body, {
-    x: Math.max(inset + halfWidth, Math.min(width - inset - halfWidth, target.x)),
-    y: Math.max(inset + halfHeight, Math.min(height - inset - halfHeight, target.y)),
-  });
+export function limitSkillVelocity(matter: MatterLibrary, body: Body, maximum = SKILL_MAX_VELOCITY) {
+  const speed = Math.hypot(body.velocity.x, body.velocity.y);
+  if (speed > maximum)
+    matter.Body.setVelocity(body, {
+      x: body.velocity.x * maximum / speed,
+      y: body.velocity.y * maximum / speed,
+    });
+  // Long, thin labels must not sweep their ends through a neighbour in one
+  // update even when a fast hand movement gives them a strong turning impulse.
+  if (Math.abs(body.angularVelocity) > 0.08)
+    matter.Body.setAngularVelocity(body, Math.sign(body.angularVelocity) * 0.08);
 }
 
-// Rejoin the physical pile only in empty space. Releasing over other labels
-// first tries the pointer's column, above the nearby contacts, then the free
-// space along the top. No existing label is moved or rearranged by this search.
-// A full board returns false so its floor can be extended before reinsertion.
-export function placeReleasedSkillBody(
+export type SkillDrag = {
+  body: Body;
+  target: Vector;
+  offset: Vector;
+  velocity: Vector;
+  frictionStatic: number;
+};
+
+// A hand guides a solid body in small collision-solving steps. The label stays
+// in the same world and pushes its neighbours throughout the gesture.
+export function createSkillDrag(
   matter: MatterLibrary,
   body: Body,
-  obstacles: readonly Body[],
-  width: number,
-  height: number,
-) {
-  const others = obstacles.filter((other) => other !== body);
-  positionHeldSkillBody(matter, body, body.position, width, height);
-  const target = { ...body.position };
-  const halfWidth = (body.bounds.max.x - body.bounds.min.x) / 2;
-  const halfHeight = (body.bounds.max.y - body.bounds.min.y) / 2;
-  const top = SKILL_WORLD_INSET + halfHeight + 1;
-  const left = SKILL_WORLD_INSET + halfWidth + 1;
-  const right = width - left;
-  const clear = (x: number, y: number) => {
-    matter.Body.setPosition(body, { x, y });
-    return matter.Query.collides(body, others).every((hit) => hit.depth <= 0.1);
+  point: Vector,
+): SkillDrag {
+  matter.Sleeping.set(body, false);
+  const dx = point.x - body.position.x, dy = point.y - body.position.y;
+  const c = Math.cos(body.angle), s = Math.sin(body.angle);
+  const drag = {
+    body,
+    target: { ...point },
+    offset: { x: dx * c + dy * s, y: -dx * s + dy * c },
+    velocity: { x: 0, y: 0 },
+    frictionStatic: body.frictionStatic,
   };
-  const heights = [target.y, top, ...others.map((other) => other.bounds.min.y - halfHeight - 1)]
-    .filter((y) => y >= top && y <= target.y)
-    .sort((a, b) => b - a);
-  for (const y of heights) if (clear(target.x, y)) return true;
-  const columns = [left, right, ...others.flatMap((other) => [
-    other.bounds.min.x - halfWidth - 1, other.bounds.max.x + halfWidth + 1,
-  ])].filter((x) => x >= left && x <= right)
-    .sort((a, b) => Math.abs(a - target.x) - Math.abs(b - target.x));
-  for (const x of columns) if (clear(x, top)) return true;
-  matter.Body.setPosition(body, target);
-  return false;
+  // While held, the hand determines this body's movement; neighbours cannot
+  // pin it beneath the pile. It remains a solid collider throughout the grip.
+  matter.Body.setStatic(body, true);
+  body.friction = 0.02;
+  body.frictionStatic = 0.04;
+  return drag;
+}
+
+export function updateSkillDrag(
+  matter: MatterLibrary,
+  drag: SkillDrag,
+  width: number,
+  height: number,
+  step = SKILL_PHYSICS_STEP / 8,
+  advance = true,
+) {
+  const { body, offset } = drag;
+  const c = Math.cos(body.angle), s = Math.sin(body.angle);
+  const anchor = {
+    x: body.position.x + offset.x * c - offset.y * s,
+    y: body.position.y + offset.x * s + offset.y * c,
+  };
+  const minX = Math.min(...body.vertices.map((vertex) => vertex.x));
+  const maxX = Math.max(...body.vertices.map((vertex) => vertex.x));
+  const minY = Math.min(...body.vertices.map((vertex) => vertex.y));
+  const maxY = Math.max(...body.vertices.map((vertex) => vertex.y));
+  const dx = Math.max(SKILL_WORLD_INSET - minX,
+    Math.min(width - SKILL_WORLD_INSET - maxX, drag.target.x - anchor.x));
+  const dy = Math.max(SKILL_WORLD_INSET - minY,
+    Math.min(height - SKILL_WORLD_INSET - maxY, drag.target.y - anchor.y));
+  const timeScale = step / (1000 / 60);
+  const ratio = advance
+    ? Math.min(1, SKILL_DRAG_MAX_VELOCITY * timeScale / Math.max(0.001, Math.hypot(dx, dy)))
+    : 0;
+  const move = { x: dx * ratio, y: dy * ratio };
+  drag.velocity = { x: move.x / timeScale, y: move.y / timeScale };
+  matter.Body.setPosition(body, { x: body.position.x + move.x, y: body.position.y + move.y });
+  // Static bodies skip Matter.Body.update, so keep their integration interval
+  // current before assigning velocity for collision impulses.
+  Object.assign(body, { deltaTime: step });
+  matter.Body.setVelocity(body, drag.velocity);
+}
+
+export function releaseSkillDrag(matter: MatterLibrary, drag: SkillDrag) {
+  matter.Body.setStatic(drag.body, false);
+  drag.body.frictionStatic = drag.frictionStatic;
+  matter.Body.setVelocity(drag.body, drag.velocity);
+}
+
+// Active mouse/finger gestures can travel much faster than the falling pile.
+// Small substeps preserve contact accuracy at that speed; idle animation
+// keeps the cheaper 120 Hz loop. All bodies may respond to the hand's impact.
+export function stepSkillPhysics(
+  matter: MatterLibrary,
+  engine: Engine,
+  bodies: readonly Body[],
+  width: number,
+  height: number,
+  drag: SkillDrag | null = null,
+) {
+  const fastest = Math.max(0, ...bodies.map((body) => {
+    const radius: number = body.plugin.skillRadius ?? 0;
+    return Math.hypot(body.velocity.x, body.velocity.y) + Math.min(0.08, Math.abs(body.angularVelocity)) * radius;
+  }));
+  let substeps = Math.min(4, Math.max(1, Math.ceil(fastest / 4)));
+  if (drag) {
+    const c = Math.cos(drag.body.angle), s = Math.sin(drag.body.angle);
+    const distance = Math.hypot(
+      drag.target.x - drag.body.position.x - drag.offset.x * c + drag.offset.y * s,
+      drag.target.y - drag.body.position.y - drag.offset.x * s - drag.offset.y * c,
+    );
+    const travel = Math.max(Math.min(distance, SKILL_DRAG_MAX_VELOCITY / 2), fastest / 2);
+    substeps = Math.max(4, Math.min(24, Math.ceil(travel / 2)));
+  }
+  const maximum = drag ? SKILL_DRAG_MAX_VELOCITY : SKILL_MAX_VELOCITY;
+  const iterations = engine.positionIterations;
+  if (drag) engine.positionIterations = 28;
+  for (let step = 0; step < substeps; step += 1) {
+    const before = drag ? { ...drag.body.position } : null;
+    if (drag) {
+      // Do not keep forcing a solid tile into a packed wall of neighbours.
+      // Give existing contacts a substep to clear before advancing the hand.
+      const crowded = engine.pairs.list.some((pair: Pair) => pair.isActive && pair.collision.depth > 0.8);
+      updateSkillDrag(matter, drag, width, height, SKILL_PHYSICS_STEP / substeps, !crowded);
+    }
+    for (const body of bodies) limitSkillVelocity(matter, body, body === drag?.body ? maximum : Math.min(maximum, 24));
+    matter.Engine.update(engine, SKILL_PHYSICS_STEP / substeps);
+    for (const body of bodies) containSkillBody(matter, body, width, height);
+    if (drag && before && matter.Query.collides(drag.body, bodies.filter((body) => body !== drag.body))
+      .some((collision) => collision.depth > 1.8)) {
+      // A hand cannot force a solid tile through a tightly packed neighbour.
+      // Keep the last physical position while the pushed contacts settle.
+      matter.Body.setPosition(drag.body, before);
+      drag.velocity = { x: 0, y: 0 };
+      matter.Body.setVelocity(drag.body, drag.velocity);
+    }
+  }
+  engine.positionIterations = iterations;
+}
+
+// client coordinates and the physics layout can differ when the board or an
+// ancestor is scaled. This also handles scrolling because the live rect moves.
+export function skillPointerPosition(
+  point: Vector,
+  rect: { left: number; top: number; width: number; height: number },
+  width: number,
+  height: number,
+): Vector {
+  return {
+    x: (point.x - rect.left) * width / Math.max(1, rect.width),
+    y: (point.y - rect.top) * height / Math.max(1, rect.height),
+  };
 }
 
 // Keyboard movement is swept in small increments, stopping at another card

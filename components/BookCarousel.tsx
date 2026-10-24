@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type {
   CSSProperties,
   KeyboardEvent,
@@ -11,8 +11,7 @@ import type {
 import { asset } from "@/content/paths";
 import "@/app/book-carousel.css";
 
-const BOOK_OPEN_MS = 2200;
-const BOOK_RETURN_MS = 640;
+const BOOK_TRANSITION_MS = 1000;
 
 export type ProjectSource = {
   url: string;
@@ -361,7 +360,16 @@ export default function BookCarousel({
   const sceneRef = useRef<HTMLDivElement>(null);
   const theatreRef = useRef<HTMLDivElement>(null);
   const flowRef = useRef<HTMLDivElement>(null);
+  const controlsRef = useRef<HTMLDivElement>(null);
   const resizeTheatreRef = useRef<() => void>(() => {});
+  const refreshBookGeometryRef = useRef<() => void>(() => {});
+  const bookAnimationsRef = useRef<Animation[]>([]);
+  const closingRef = useRef(false);
+  const openingPoseRef = useRef<{
+    transforms: Map<HTMLElement, string>;
+    height: number;
+    controlsHeight: number;
+  } | null>(null);
   const detailRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const orbitRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -378,6 +386,16 @@ export default function BookCarousel({
   const openedProject =
     detailIndex !== null ? projects[detailIndex] : undefined;
   activeRef.current = active;
+
+  const stopBookTransition = useCallback(() => {
+    bookAnimationsRef.current.forEach((animation) => {
+      animation.onfinish = null;
+      animation.cancel();
+    });
+    bookAnimationsRef.current = [];
+    refreshBookGeometryRef.current = () => {};
+    closingRef.current = false;
+  }, []);
 
   const stopAnimation = useCallback(() => {
     if (animationRef.current !== null)
@@ -441,6 +459,7 @@ export default function BookCarousel({
     let velocity = velocityRef.current;
     setHovered(null);
     stopAnimation();
+    stopBookTransition();
     pendingRevealRef.current = Boolean(onSettled);
     setReturning(false);
     targetAngleRef.current = target;
@@ -525,6 +544,18 @@ export default function BookCarousel({
   function revealBook(index: number) {
     if (!canInteract() || index < 0 || index >= count || !isCenteredBook(index))
       return;
+    stopBookTransition();
+    const book = orbitRefs.current[index];
+    const transforms = new Map<HTMLElement, string>();
+    if (book) {
+      [book, ...book.querySelectorAll<HTMLElement>(".book-click, .book-object, .book-cover-hinge, .book-page-leaf, .book-under-leaf")]
+        .forEach((element) => transforms.set(element, getComputedStyle(element).transform));
+    }
+    openingPoseRef.current = {
+      transforms,
+      height: theatreRef.current?.offsetHeight ?? 430,
+      controlsHeight: controlsRef.current?.offsetHeight ?? 0,
+    };
     setHovered(null);
     cancelGesture();
     returnFocusRef.current = false;
@@ -546,15 +577,23 @@ export default function BookCarousel({
     setHovered(null);
     stopAnimation();
     cancelGesture();
-    if (detailRef.current) {
-      detailRef.current.style.setProperty(
-        "--reader-exit-opacity",
-        getComputedStyle(detailRef.current).opacity,
-      );
-    }
     returnFocusRef.current = true;
-    setReturning(!reducedMotion);
     setReaderReady(false);
+    const animations = bookAnimationsRef.current;
+    if (!reducedMotion && animations.length) {
+      closingRef.current = true;
+      setReturning(true);
+      // The same animations run backwards, including an interrupted opening.
+      // Nothing is remounted or replaced with a separate closing pose.
+      const time = Math.max(1, Number(animations[0].currentTime ?? 0));
+      animations.forEach((animation) => {
+        animation.currentTime = time;
+        animation.reverse();
+      });
+    } else {
+      stopBookTransition();
+      setReturning(false);
+    }
     setOpened(null);
   }
 
@@ -639,57 +678,16 @@ export default function BookCarousel({
     const theatre = theatreRef.current;
     const flow = flowRef.current;
     if (!theatre || !flow) return;
-    let animation: Animation | null = null;
-    let measured = false;
-    let lastHeight = 0;
     const resize = () => {
-      const next = Math.ceil(
-        stageRef.current?.dataset.open === "true"
-          ? flow.getBoundingClientRect().height
-          : parseFloat(getComputedStyle(flow).minHeight),
-      );
-      // Match the first paper spread to the opening 3D book before it grows
-      // into the reading view. Use layout dimensions: client rectangles here
-      // include the arrive animation's scale and would create a feedback loop.
-      const stage = stageRef.current;
-      const details = detailRef.current;
-      const reader = details?.querySelector<HTMLElement>(".project-book-reader");
-      const paper = reader?.querySelector<HTMLElement>(".reader-spread");
-      const book = orbitRefs.current[lastOpenedRef.current];
-      if (stage?.dataset.open === "true" && details && reader && paper && book) {
-        const scale = parseFloat(getComputedStyle(stage).getPropertyValue("--open-book-scale")) || 1;
-        const singlePage = reader.dataset.single === "true";
-        let paperTop = 0;
-        let parent: HTMLElement | null = paper;
-        while (parent && parent !== details) {
-          paperTop += parent.offsetTop;
-          parent = parent.offsetParent as HTMLElement | null;
-        }
-        const paperCenter = paperTop + paper.offsetHeight / 2;
-        const bookCenter = (sceneRef.current?.offsetHeight ?? 430) / 2 + book.offsetHeight * 0.18;
-        stage.style.setProperty("--open-book-offset-y", `${book.offsetHeight * 0.18}px`);
-        details.style.setProperty("--reader-arrival-origin-y", `${paperCenter}px`);
-        details.style.setProperty("--reader-arrival-y", `${bookCenter - details.offsetTop - paperCenter}px`);
-        details.style.setProperty("--reader-arrival-x", `${singlePage ? book.offsetWidth * scale / 2 : 0}px`);
-        details.style.setProperty("--reader-arrival-scale-x", `${book.offsetWidth * scale * (singlePage ? 1 : 2) / paper.offsetWidth}`);
-        details.style.setProperty("--reader-arrival-scale-y", `${book.offsetHeight * scale / paper.offsetHeight}`);
+      // The shared timeline owns height while moving. Resize only the settled
+      // endpoint, so an observer cannot restart an animation mid-handoff.
+      if (bookAnimationsRef.current.some((animation) => animation.playState === "running")) return;
+      const reading = stageRef.current?.dataset.open === "true";
+      if (reading && bookAnimationsRef.current.length) {
+        refreshBookGeometryRef.current();
+        return;
       }
-      if (!next || Math.abs(next - lastHeight) < 1) return;
-      lastHeight = next;
-      const from = theatre.getBoundingClientRect().height;
-      animation?.cancel();
-      theatre.style.height = `${next}px`;
-      if (measured && !reducedMotion && Math.abs(next - from) > 1) {
-        animation = theatre.animate(
-          [{ height: `${from}px` }, { height: `${next}px` }],
-          {
-            duration:
-              stageRef.current?.dataset.open === "true" ? 1000 : BOOK_RETURN_MS,
-            easing: "cubic-bezier(.22,.7,.15,1)",
-          },
-        );
-      }
-      measured = true;
+      theatre.style.height = `${reading ? flow.offsetHeight : parseFloat(getComputedStyle(flow).minHeight)}px`;
     };
     const observer = new ResizeObserver(resize);
     resizeTheatreRef.current = resize;
@@ -697,11 +695,175 @@ export default function BookCarousel({
     resize();
     return () => {
       observer.disconnect();
-      animation?.cancel();
       theatre.style.height = "";
       resizeTheatreRef.current = () => {};
     };
-  }, [reducedMotion]);
+  }, []);
+
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    const theatre = theatreRef.current;
+    const flow = flowRef.current;
+    const scene = sceneRef.current;
+    const details = detailRef.current;
+    const controls = controlsRef.current;
+    const book = orbitRefs.current[lastOpenedRef.current];
+    const reader = details?.querySelector<HTMLElement>(".project-book-reader");
+    const paper = reader?.querySelector<HTMLElement>(".reader-spread");
+    const pose = openingPoseRef.current;
+    if (!opening || !stage || !theatre || !flow || !scene || !details || !controls || !book || !reader || !paper || !pose) return;
+    if (reducedMotion) {
+      setReaderReady(true);
+      resizeTheatreRef.current();
+      return;
+    }
+
+    const measureTransition = () => {
+      const scale = parseFloat(getComputedStyle(stage).getPropertyValue("--open-book-scale")) || 1;
+      const singlePage = reader.clientWidth < 680;
+      let paperTop = 0;
+      let parent: HTMLElement | null = paper;
+      while (parent && parent !== details) {
+        paperTop += parent.offsetTop;
+        parent = parent.offsetParent as HTMLElement | null;
+      }
+      const paperCenter = paperTop + paper.offsetHeight / 2;
+      const bookOffset = book.offsetHeight * 0.12;
+      const bookCenter = scene.offsetHeight / 2 + bookOffset;
+      const perspective = parseFloat(getComputedStyle(scene).perspective) || 1400;
+      const lift = Math.min(160, perspective * 0.2);
+      const compensation = 1 - lift / perspective;
+      const originOffset = scene.offsetHeight * 0.12;
+      const raised = `translate3d(0, ${originOffset * (compensation - 1)}px, ${lift}px) scale(${compensation})`;
+      const positioned = `translate3d(${book.offsetWidth * scale / 2 * compensation}px, ${(originOffset + bookOffset) * compensation - originOffset}px, ${lift}px) scale(${compensation})`;
+      // A narrow reader lands on the right leaf; desktop lands on both leaves.
+      const arrival = `translate(${singlePage ? book.offsetWidth * scale / 2 : 0}px, ${bookCenter - details.offsetTop - paperCenter}px) scale(${book.offsetWidth * scale * (singlePage ? 1 : 2) / paper.offsetWidth}, ${book.offsetHeight * scale / paper.offsetHeight})`;
+      details.style.transformOrigin = `50% ${paperCenter}px`;
+      return { scale, raised, positioned, arrival, finalHeight: flow.offsetHeight };
+    };
+    let geometry = measureTransition();
+    theatre.style.height = `${geometry.finalHeight}px`;
+    const animations: Animation[] = [];
+    const animate = (element: HTMLElement, frames: Keyframe[]) => {
+      const animation = element.animate(frames, {
+        duration: BOOK_TRANSITION_MS,
+        fill: "both",
+        easing: "linear",
+      });
+      animations.push(animation);
+      return animation;
+    };
+    const ease = "cubic-bezier(.4,0,.2,1)";
+    const move = (element: HTMLElement, to: string, start = 0, end = 0.5) => {
+      const from = pose.transforms.get(element) ?? getComputedStyle(element).transform;
+      return animate(element, [
+        { transform: from, offset: 0 },
+        { transform: from, offset: start, easing: ease },
+        { transform: to, offset: end },
+        { transform: to, offset: 1 },
+      ]);
+    };
+    // Transform only preserve-3d containers. Opacity/filter on any ancestor
+    // flattens the covers behind the cream page blocks in WebKit/Chromium.
+    const bookFrames = (): Keyframe[] => [
+      { transform: pose.transforms.get(book), offset: 0, easing: ease },
+      { transform: geometry.raised, offset: 0.12, easing: ease },
+      { transform: geometry.positioned, offset: 0.5 },
+      { transform: geometry.positioned, offset: 1 },
+    ];
+    const bookAnimation = animate(book, bookFrames());
+    const button = book.querySelector<HTMLElement>(".book-click");
+    const object = book.querySelector<HTMLElement>(".book-object");
+    const cover = book.querySelector<HTMLElement>(".book-cover-hinge");
+    const leaf = book.querySelector<HTMLElement>(".book-page-leaf");
+    if (button) move(button, "rotateY(0deg)");
+    const objectAnimation = object ? move(object, `rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(${geometry.scale})`) : null;
+    if (cover) move(cover, "translateZ(calc(var(--book-half-depth) - 1px)) rotateY(-180deg)", 0.12, 0.5);
+    if (leaf) move(leaf, "translateZ(calc(var(--page-half-depth) + 0.6px)) rotateY(0deg)", 0.12, 0.5);
+    book.querySelectorAll<HTMLElement>(".book-under-leaf").forEach((under) =>
+      move(under, "translateZ(calc(var(--page-half-depth) + 0.2px)) rotateY(0deg)", 0.12, 0.5),
+    );
+    animate(scene, [
+      { visibility: "visible", offset: 0 },
+      { visibility: "visible", offset: 0.9999 },
+      { visibility: "hidden", offset: 1 },
+    ]);
+    const controlsAnimation = animate(controls, [
+      { height: `${pose.controlsHeight}px`, opacity: 1, offset: 0, easing: ease },
+      { height: "0px", opacity: 0, offset: 0.5 },
+      { height: "0px", opacity: 0, offset: 1 },
+    ]);
+    const theatreFrames = (): Keyframe[] => [
+      { height: `${pose.height}px`, offset: 0, easing: ease },
+      { height: `${geometry.finalHeight}px`, offset: 1 },
+    ];
+    const paperFrames = (): Keyframe[] => [
+      { opacity: 1, visibility: "hidden", transform: geometry.arrival, offset: 0 },
+      { opacity: 1, visibility: "hidden", transform: geometry.arrival, offset: 0.56 },
+      { opacity: 1, visibility: "visible", transform: geometry.arrival, offset: 0.5601, easing: ease },
+      { opacity: 1, visibility: "visible", transform: "translate(0, 0) scale(1)", offset: 1 },
+    ];
+    const theatreAnimation = animate(theatre, theatreFrames());
+    const paperAnimation = animate(details, paperFrames());
+    const updateFrames = (animation: Animation, frames: Keyframe[]) => {
+      (animation.effect as KeyframeEffect).setKeyframes(frames);
+    };
+    // Finished fill:both animations still own their styles. Update the actual
+    // keyframes on a settled resize, including the reverse endpoint, rather
+    // than writing a height that a finished animation would keep overriding.
+    refreshBookGeometryRef.current = () => {
+      geometry = measureTransition();
+      pose.height = parseFloat(getComputedStyle(flow).minHeight);
+      const controlsBody = controls.querySelector<HTMLElement>(".book-browse-controls");
+      if (controlsBody) {
+        // The collapsed flex row centres children outside its zero-height box;
+        // scrollHeight only sees the lower half. Measure the actual controls.
+        pose.controlsHeight = Math.max(...Array.from(controlsBody.children, (child) => (child as HTMLElement).offsetHeight));
+      }
+      theatre.style.height = `${geometry.finalHeight}px`;
+      updateFrames(theatreAnimation, theatreFrames());
+      updateFrames(paperAnimation, paperFrames());
+      updateFrames(bookAnimation, bookFrames());
+      const retarget = (animation: Animation, to: string) => {
+        const frames = (animation.effect as KeyframeEffect).getKeyframes();
+        updateFrames(animation, frames.map((frame) => ({
+          offset: frame.offset,
+          easing: frame.easing,
+          transform: frame.computedOffset >= 0.5 ? to : frame.transform,
+        })));
+      };
+      if (objectAnimation) retarget(objectAnimation, `rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(${geometry.scale})`);
+      updateFrames(controlsAnimation, [
+        { height: `${pose.controlsHeight}px`, opacity: 1, offset: 0, easing: ease },
+        { height: "0px", opacity: 0, offset: 0.5 },
+        { height: "0px", opacity: 0, offset: 1 },
+      ]);
+    };
+    const startTime = document.timeline.currentTime;
+    if (typeof startTime === "number") animations.forEach((animation) => { animation.startTime = startTime; });
+    bookAnimationsRef.current = animations;
+    // The child reader commits its one/two-page breakpoint in a layout effect.
+    // Read that final paper height before the first painted animation frame.
+    const geometryFrame = requestAnimationFrame(() => refreshBookGeometryRef.current());
+    paperAnimation.onfinish = () => {
+      if (closingRef.current) {
+        stopBookTransition();
+        setReturning(false);
+        // Clear the open-height endpoint before the closed flow re-renders.
+        theatre.style.height = `${pose.height}px`;
+      } else {
+        setReaderReady(true);
+        resizeTheatreRef.current();
+      }
+    };
+    return () => {
+      cancelAnimationFrame(geometryFrame);
+      stopBookTransition();
+    };
+    // Opening is a discrete event. Closing reverses these same Animation
+    // objects directly, rather than rebuilding them when opened becomes null.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opening, reducedMotion, stopBookTransition]);
 
   useEffect(() => {
     resizeTheatreRef.current();
@@ -720,17 +882,6 @@ export default function BookCarousel({
     }
   }, [isOpen, canInteract, reducedMotion]);
 
-  useEffect(() => {
-    if (opened === null) return;
-    if (reducedMotion) {
-      setReaderReady(true);
-      return;
-    }
-    // The animation event opens interaction; this fallback also covers a
-    // backgrounded tab or animation interrupted by a preference change.
-    const timer = window.setTimeout(() => setReaderReady(true), BOOK_OPEN_MS + 80);
-    return () => window.clearTimeout(timer);
-  }, [opened, opening, reducedMotion]);
 
   useEffect(() => {
     if (!canInteract()) return;
@@ -754,6 +905,7 @@ export default function BookCarousel({
       setHovered(null);
       stopAnimation();
       cancelGesture();
+      bookAnimationsRef.current.forEach((animation) => animation.finish());
       updateAngle(Math.round(angleRef.current / step) * step);
     }
   }, [active, cancelGesture, stopAnimation, step, updateAngle]);
@@ -767,11 +919,6 @@ export default function BookCarousel({
     updateAngle(0);
   }, [count, cancelGesture, stopAnimation, updateAngle]);
 
-  useEffect(() => {
-    if (!returning) return undefined;
-    const timeout = window.setTimeout(() => setReturning(false), BOOK_RETURN_MS);
-    return () => window.clearTimeout(timeout);
-  }, [returning]);
 
   useEffect(() => {
     if (!active || !requestedProject || !canInteract()) return;
@@ -972,10 +1119,6 @@ export default function BookCarousel({
       className="book-carousel"
       data-reduced-motion={reducedMotion}
       inert={!active}
-      style={{
-        "--book-open-duration": `${BOOK_OPEN_MS}ms`,
-        "--book-return-duration": `${BOOK_RETURN_MS}ms`,
-      } as CSSProperties}
     >
       <section
         aria-label="Project library"
@@ -1095,10 +1238,6 @@ export default function BookCarousel({
                   : "Project details"
               }
               className="book-details"
-              onAnimationEnd={(event) => {
-                if (event.target === event.currentTarget && event.animationName === "book-reader-arrive" && isOpen)
-                  setReaderReady(true);
-              }}
               hidden={!isOpen && !returning}
               aria-hidden={!isOpen || !readerReady ? true : undefined}
               inert={!isOpen || !readerReady}
@@ -1121,14 +1260,15 @@ export default function BookCarousel({
         </div>
         <div
           className="book-browse-controls-shell"
-          aria-hidden={isOpen ? true : undefined}
-          inert={isOpen}
+          ref={controlsRef}
+          aria-hidden={isOpen || returning ? true : undefined}
+          inert={isOpen || returning}
         >
           <div className="book-browse-controls">
             <button
               aria-label="Rotate to previous book"
               className="book-arrow"
-              disabled={count < 2 || isOpen}
+              disabled={count < 2 || isOpen || returning}
               onClick={() => browse(-1)}
               type="button"
             >
@@ -1153,7 +1293,7 @@ export default function BookCarousel({
             <button
               aria-label="Rotate to next book"
               className="book-arrow"
-              disabled={count < 2 || isOpen}
+              disabled={count < 2 || isOpen || returning}
               onClick={() => browse(1)}
               type="button"
             >

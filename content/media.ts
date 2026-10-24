@@ -114,16 +114,13 @@ export const teamMoments = [
 export const certificateFiles = {
   ejcSoftballTeam: {
     src: "images/awards/ejc-softball-team-original.webp",
-    title: "Eunoia softball — user-supplied team photo",
+    title: "Eunoia softball team",
     kind: "Team photo" as const,
-    caption: "Eunoia softball team photo supplied by Ian.",
   },
   brainHackMedal: {
     src: "images/portfolio/brainhack-champion-medal.webp",
     title: "BrainHack 2026 — TIL-AI Novice Champion medal on its black ribbon",
     kind: "Medal photo" as const,
-    caption:
-      "Actual medal photograph from the saved BrainHack competition photos.",
   },
   ipptGoldBadge: {
     src: "images/awards/ippt-gold-cloth-patch.webp",
@@ -131,7 +128,7 @@ export const certificateFiles = {
     kind: "Representative patch" as const,
     representative: true,
     caption:
-      "Representative Army No.4 cloth patch. Product photo by G Military, cropped for layout; the personal award is recorded in the transcript excerpt below.",
+      "Representative Army No.4 cloth patch. Product photo by G Military.",
     source: {
       label: "Patch photo — G Military",
       url: "https://g-military.com/products/ippt-gold-no-4-badge",
@@ -143,7 +140,7 @@ export const certificateFiles = {
     kind: "Representative patch" as const,
     representative: true,
     caption:
-      "Representative Army No.4 cloth patch. Product photo by G Military, cropped for layout; the personal award is recorded in the transcript excerpt below.",
+      "Representative Army No.4 cloth patch. Product photo by G Military.",
     source: {
       label: "Patch photo — G Military",
       url: "https://g-military.com/products/marksmanship-army-no-4-badge",

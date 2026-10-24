@@ -113,14 +113,12 @@ const achievementPhotos: Readonly<Record<string, CertificateFile | undefined>> =
     title: "The Deal Machine, built at Rockathon",
     kind: "Project screenshot",
     representative: true,
-    caption: "The team's Rockathon prototype. The certificate below records the finalist result.",
   },
   "SignMeUp · The Merge Hackathon 2026": {
     src: projectMedia.SignMeUp.src,
     title: "SignMeUp, built at The Merge",
     kind: "Project screenshot",
     representative: true,
-    caption: "The team's assistive-interpreter demo. The certificate below records the recognition.",
   },
   "SunnyHacks 2026": {
     src: "images/logos/sunnyhacks-original.webp",
@@ -135,19 +133,16 @@ const achievementPhotos: Readonly<Record<string, CertificateFile | undefined>> =
     title: "An afternoon with the Project BHID team",
     kind: "Project team photo",
     representative: true,
-    caption: "A photo from Project BHID. The certificate below records the recognition.",
   },
   "National Service · Outstanding Performance & Conduct": {
     src: "images/life-originals-oct24/army-graduation-group.webp",
     title: "From my National Service years",
     kind: "Service photo",
     representative: true,
-    caption: "A group photo from National Service. The transcript excerpt below records the assessment.",
   },
   "SSSC Colours Award · Softball": {
     ...certificateFiles.ejcSoftballTeam,
     representative: true,
-    caption: "The softball team; the individual Colours Award is recorded in the certificate below.",
   },
 };
 const projectRecords = new Map(
@@ -596,6 +591,7 @@ export default function TrophyRoom() {
   const prefix = useId();
   const sectionRef = useRef<HTMLElement>(null);
   const appsRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLButtonElement | null>(null);
@@ -767,6 +763,7 @@ export default function TrophyRoom() {
               <Search size={17} aria-hidden="true" />
               <span className="sr-only">Search all awards and credentials</span>
               <input
+                ref={searchRef}
                 type="search"
                 value={query}
                 placeholder="Search awards & certificates…"
@@ -820,6 +817,7 @@ export default function TrophyRoom() {
                   onClick={() => {
                     setQuery("");
                     setFilter("all");
+                    searchRef.current?.focus({ preventScroll: true });
                   }}
                 >
                   Reset collection

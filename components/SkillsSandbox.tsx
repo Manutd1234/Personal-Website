@@ -8,19 +8,23 @@ import { skillGroups } from "@/content/portfolio";
 import { useMotionPreference } from "./useMotionPreference";
 import {
   containSkillBody,
+  skillTilePaths,
+  skillTileForm,
+  skillBodyVisualCenter,
   createSkillBody,
   createSkillEngine,
   createSkillWalls,
   layoutSkillRows,
   isSkillPileStill,
-  limitSkillVelocity,
   moveSkillBody,
-  positionHeldSkillBody,
-  placeReleasedSkillBody,
+  createSkillDrag,
+  stepSkillPhysics,
+  releaseSkillDrag,
+  skillPointerPosition,
+  type SkillDrag,
   SKILL_COLLISION_PADDING,
   SKILL_DROP_BLOCKED_MS,
   SKILL_PACKING_DENSITY,
-  SKILL_MAX_VELOCITY,
   SKILL_PHYSICS_STEP,
 } from "./skill-physics";
 import "@/app/skills-blocks.css";
@@ -40,20 +44,8 @@ const skills = skillGroups
   .sort(
     (a, b) => a.itemIndex - b.itemIndex || a.categoryIndex - b.categoryIndex,
   );
-// Each silhouette has a generous central writing area; short names can use seals.
-const tilePaths = {
-  ellipse: "M98 50A48 47 0 1 1 2 50A48 47 0 1 1 98 50Z",
-  hexagon: "M12 3H88L99 50L88 97H12L1 50Z",
-  ticket: "M6 3H94Q99 3 99 11V35Q90 50 99 65V89Q99 97 94 97H6Q1 97 1 89V65Q10 50 1 35V11Q1 3 6 3Z",
-  pebble: "M25 5C40 0 55 9 72 5C93 1 99 23 98 49C99 78 85 97 64 95C47 93 33 100 17 91C0 82 0 62 3 41C5 18 10 9 25 5Z",
-  cloud: "M15 27C16 6 34 1 43 17C52 0 73 5 76 24C96 17 104 46 94 63C103 85 85 100 69 90C59 103 43 96 37 87C20 103 2 86 7 68C-2 54 1 32 15 27Z",
-  pennant: "M2 3H85L99 50L85 97H2L10 50Z",
-  seal: "M50 2L60 12L74 8L79 23L94 27L90 43L99 54L88 65L90 81L74 85L66 98L51 91L37 98L28 85L12 81L14 65L2 54L11 42L7 27L23 22L28 8L42 12Z",
-} as const;
-const tileForms = ["ellipse", "hexagon", "ticket", "pebble", "cloud", "pennant"] as const;
-function tileForm(index: number): keyof typeof tilePaths {
-  if (skills[index].label.length <= 8 && index % 4 === 0) return "seal";
-  return tileForms[(index * 5 + Math.floor(index / 7)) % tileForms.length];
+function tileForm(index: number) {
+  return skillTileForm(index, skills[index].label);
 }
 const STEP = 1000 / 60;
 const clamp = (value: number, low: number, high: number) =>
@@ -96,12 +88,6 @@ export default function SkillsSandbox({
   const controllerRef = useRef<Controller | null>(null);
   const availableRef = useRef(false);
   const replayPendingRef = useRef(false);
-  const pendingTouchRef = useRef<{
-    pointer: number;
-    index: number;
-    x: number;
-    y: number;
-  } | null>(null);
   const suppressClickRef = useRef(0);
   const focusFrameRef = useRef<number | null>(null);
   const prefix = useId();
@@ -190,7 +176,6 @@ export default function SkillsSandbox({
       replayPendingRef.current = false;
     }
     if (!canMove) {
-      pendingTouchRef.current = null;
       setGrabbed(null);
     }
   }, [active, available, ready, reducedMotion]);
@@ -229,19 +214,13 @@ export default function SkillsSandbox({
     let cancelled = false;
     let drag: {
       pointer: number;
-      index: number;
       body: PhysicsBody;
-      offsetX: number;
-      offsetY: number;
+      grip: SkillDrag;
       element: HTMLButtonElement;
       startX: number;
       startY: number;
-      x: number;
-      y: number;
-      time: number;
-      velocityX: number;
-      velocityY: number;
       moved: boolean;
+      releasedAt: number | null;
     } | null = null;
 
     function stop() {
@@ -253,7 +232,7 @@ export default function SkillsSandbox({
     }
     function local(event: PillPointer) {
       const box = world!.getBoundingClientRect();
-      return { x: event.clientX - box.left, y: event.clientY - box.top };
+      return skillPointerPosition({ x: event.clientX, y: event.clientY }, box, width, height);
     }
     function contain(body: PhysicsBody) {
       containSkillBody(matter!, body, width, height);
@@ -261,8 +240,9 @@ export default function SkillsSandbox({
     function draw() {
       bodies.forEach((body, index) => {
         if (!spawned[index]) return;
+        const center = skillBodyVisualCenter(body);
         elements[index].style.transform =
-          `translate3d(${body.position.x - sizes[index].width / 2}px, ${body.position.y - sizes[index].height / 2}px, 0) rotate(${body.angle}rad)`;
+          `translate3d(${center.x - sizes[index].width / 2}px, ${center.y - sizes[index].height / 2}px, 0) rotate(${body.angle}rad)`;
       });
     }
     function spawn(index: number) {
@@ -288,7 +268,7 @@ export default function SkillsSandbox({
         const y = halfHeight + 10 + Math.random() * 22;
         const entering = bodies.filter(
           (other, otherIndex) =>
-            spawned[otherIndex] && other !== drag?.body && other.bounds.min.y < y + halfHeight + 8,
+            spawned[otherIndex] && other.bounds.min.y < y + halfHeight + 8,
         );
         let clear = false;
         Body.setAngle(body, angle);
@@ -389,16 +369,19 @@ export default function SkillsSandbox({
       accumulator += delta;
       releaseNextPill();
       while (accumulator >= SKILL_PHYSICS_STEP) {
-        bodies.forEach((body, index) => {
-          if (spawned[index]) limitSkillVelocity(matter!, body);
-        });
-        Engine.update(engine, SKILL_PHYSICS_STEP);
-        bodies.forEach((body, index) => {
-          if (spawned[index]) contain(body);
-        });
+        stepSkillPhysics(matter!, engine,
+          bodies.filter((_, index) => spawned[index]), width, height, drag?.grip);
         accumulator -= SKILL_PHYSICS_STEP;
       }
       draw();
+      if (drag && drag.releasedAt !== null) {
+        const c = Math.cos(drag.body.angle), s = Math.sin(drag.body.angle);
+        const distance = Math.hypot(
+          drag.grip.target.x - drag.body.position.x - drag.grip.offset.x * c + drag.grip.offset.y * s,
+          drag.grip.target.y - drag.body.position.y - drag.grip.offset.x * s - drag.grip.offset.y * c,
+        );
+        if (distance < 2 || time - drag.releasedAt >= 200) release();
+      }
       if (pendingReveal !== null && spawned[pendingReveal]) {
         if (document.activeElement === elements[pendingReveal])
           elements[pendingReveal].scrollIntoView({ block: "nearest", inline: "nearest" });
@@ -410,9 +393,9 @@ export default function SkillsSandbox({
       if (drag || nextDrop < dropOrder.length || !isSkillPileStill(bodies))
         stillSince = null;
       else stillSince ??= elapsed;
-      if (stillSince === null || elapsed - stillSince < 1200)
-        frame = requestAnimationFrame(tick);
-      else stop();
+      if (stillSince === null || elapsed - stillSince < 1200) {
+        if (!frame) frame = requestAnimationFrame(tick);
+      } else stop();
     }
     function start() {
       stillSince = null;
@@ -423,26 +406,25 @@ export default function SkillsSandbox({
     function release(event?: PillPointer, cancel = false) {
       if (!drag || (event && drag.pointer !== event.pointerId)) return false;
       const current = drag;
+      // A fast release can arrive between animation frames. Finish that final
+      // pointer movement through collisions instead of dropping at an old frame.
+      if (event && current.releasedAt !== null) return false;
+      if (event && !cancel && current.moved) {
+        current.grip.target = local(event);
+        current.releasedAt = performance.now();
+        delete current.element.dataset.held;
+        if (current.element.hasPointerCapture(current.pointer))
+          current.element.releasePointerCapture(current.pointer);
+        start();
+        return true;
+      }
       drag = null;
       delete current.element.dataset.held;
-      if (!placeReleasedSkillBody(matter!, current.body,
-        bodies.filter((_, index) => spawned[index]), width, height)) {
-        // A nearly full narrow board may have no gap in the released pose.
-        // Add empty space underneath; gravity will settle everything naturally.
-        const bodyHeight = current.body.bounds.max.y - current.body.bounds.min.y;
-        growWorld(Math.max(64, Math.ceil(bodyHeight) + 24));
-        positionHeldSkillBody(matter!, current.body, {
-          x: current.body.position.x, y: height - bodyHeight / 2 - 12,
-        }, width, height);
-      }
-      Composite.add(engine.world, current.body);
+      releaseSkillDrag(matter!, current.grip);
+      if (cancel) Body.setVelocity(current.body, { x: 0, y: 0 });
+      // Preserve the body's real momentum. Releasing never teleports it into a
+      // gap or reinserts it into the world; it has been colliding all along.
       draw();
-      if (!cancel && current.moved && performance.now() - current.time < 100) {
-        Body.setVelocity(current.body, {
-          x: clamp(current.velocityX, -SKILL_MAX_VELOCITY, SKILL_MAX_VELOCITY),
-          y: clamp(current.velocityY, -SKILL_MAX_VELOCITY, SKILL_MAX_VELOCITY),
-        });
-      }
       if (current.element.hasPointerCapture(current.pointer))
         current.element.releasePointerCapture(current.pointer);
       start();
@@ -506,7 +488,7 @@ export default function SkillsSandbox({
         viewportRef.current.style.height = `${height}px`;
       walls = createSkillWalls(matter!, width, height);
       Composite.add(engine.world, walls);
-      bodies = sizes.map((size, index) => createSkillBody(matter!, size, { x: width / 2, y: 0 }, index));
+      bodies = sizes.map((size, index) => createSkillBody(matter!, size, { x: width / 2, y: 0 }, index, tileForm(index)));
       spawned = bodies.map(() => false);
       dropOrder = bodies.map((_, index) => index);
       for (let index = dropOrder.length - 1; index > 1; index -= 1) {
@@ -598,30 +580,18 @@ export default function SkillsSandbox({
           return;
         release(undefined, true);
         if (!ensureVisible(index)) return;
-        const point = local(event),
-          dx = point.x - body.position.x,
-          dy = point.y - body.position.y;
+        const point = local(event);
+        const grip = createSkillDrag(matter!, body, point);
         drag = {
           pointer: event.pointerId,
-          index,
           body,
-          offsetX: dx,
-          offsetY: dy,
+          grip,
           element: event.currentTarget,
           startX: point.x,
           startY: point.y,
-          x: point.x,
-          y: point.y,
-          time: performance.now(),
-          velocityX: 0,
-          velocityY: 0,
           moved: false,
+          releasedAt: null,
         };
-        // Lift only this label out of the collision plane. Keeping it in the
-        // engine made a buried label act like an immovable part of the pile.
-        Composite.remove(engine.world, body);
-        Body.setVelocity(body, { x: 0, y: 0 });
-        Body.setAngularVelocity(body, 0);
         event.currentTarget.dataset.held = "true";
         event.currentTarget.setPointerCapture(event.pointerId);
         event.preventDefault();
@@ -630,29 +600,19 @@ export default function SkillsSandbox({
         start();
       },
       move(event) {
-        if (!drag || drag.pointer !== event.pointerId) return;
-        const point = local(event),
-          now = performance.now(),
-          delta = Math.max(8, now - drag.time);
-        drag.velocityX =
-          drag.velocityX * 0.4 + ((point.x - drag.x) / delta) * STEP * 0.6;
-        drag.velocityY =
-          drag.velocityY * 0.4 + ((point.y - drag.y) / delta) * STEP * 0.6;
+        if (!drag || drag.releasedAt !== null || drag.pointer !== event.pointerId) return;
+        const point = local(event);
         drag.moved ||=
           Math.hypot(point.x - drag.startX, point.y - drag.startY) > 5;
-        drag.x = clamp(point.x, 8, width - 8);
-        drag.y = clamp(point.y, 8, height - 8);
-        drag.time = now;
-        positionHeldSkillBody(matter!, drag.body, {
-          x: drag.x - drag.offsetX, y: drag.y - drag.offsetY,
-        }, width, height);
-        draw();
+        drag.grip.target = point;
         event.preventDefault();
         start();
       },
       release,
     };
     controllerRef.current = controller;
+    const cancelGrip = () => release(undefined, true);
+    window.addEventListener("blur", cancelGrip);
     let fontsReady = false;
     let measureFrame = 0;
     const scheduleRebuild = () => {
@@ -682,6 +642,7 @@ export default function SkillsSandbox({
       release(undefined, true);
       stop();
       resize.disconnect();
+      window.removeEventListener("blur", cancelGrip);
       cancelAnimationFrame(measureFrame);
       document.fonts.removeEventListener("loadingdone", measureLoadedFonts);
       if (controllerRef.current === controller) controllerRef.current = null;
@@ -711,7 +672,6 @@ export default function SkillsSandbox({
   function pillKeys(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     if (event.key === "Escape") {
       setGrabbed(null);
-      pendingTouchRef.current = null;
       controllerRef.current?.release(undefined, true);
       return;
     }
@@ -741,34 +701,13 @@ export default function SkillsSandbox({
   }
   function pointerDown(event: PillPointer, index: number) {
     if (!ready || still) return;
-    if (event.pointerType === "mouse" || grabbed === index) {
-      setSelected(index);
-      controllerRef.current?.grab(index, event);
-    } else
-      pendingTouchRef.current = {
-        pointer: event.pointerId,
-        index,
-        x: event.clientX,
-        y: event.clientY,
-      };
+    setSelected(index);
+    controllerRef.current?.grab(index, event);
   }
   function pointerMove(event: PillPointer) {
-    const pending = pendingTouchRef.current;
-    if (pending?.pointer === event.pointerId) {
-      const dx = Math.abs(event.clientX - pending.x),
-        dy = Math.abs(event.clientY - pending.y);
-      if (dy > 8 && dy > dx) pendingTouchRef.current = null;
-      else if (dx > 8 && dx > dy * 1.2) {
-        pendingTouchRef.current = null;
-        setSelected(pending.index);
-        setGrabbed(pending.index);
-        controllerRef.current?.grab(pending.index, event);
-      }
-    }
     controllerRef.current?.move(event);
   }
   function pointerUp(event: PillPointer, cancelled = false) {
-    pendingTouchRef.current = null;
     if (controllerRef.current?.release(event, cancelled)) {
       suppressClickRef.current = performance.now() + 250;
       setGrabbed(null);
@@ -794,7 +733,7 @@ export default function SkillsSandbox({
         {skills.length} skills across {skillGroups.length} categories.{" "}
         {still
           ? "A settled view of every skill. Use arrow keys to browse."
-          : "Drag and release a label, or tap to pick it up before dragging on touch. Scroll inside the board to reach every label. The filters above highlight matching skills."}
+          : "Drag a label to move it and bump the pile. Scroll empty space in the board to reach every label. The filters above highlight matching skills."}
       </p>
       <div className="skill-physics-toolbar">
         {status}
@@ -889,7 +828,7 @@ export default function SkillsSandbox({
               onLostPointerCapture={(event) => pointerUp(event, true)}
             >
               <svg className="skill-silhouette" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-                <path d={tilePaths[tileForm(index)]} vectorEffect="non-scaling-stroke" />
+                <path d={skillTilePaths[tileForm(index)]} vectorEffect="non-scaling-stroke" />
               </svg>
               <span>{skill.label}</span>
             </button>

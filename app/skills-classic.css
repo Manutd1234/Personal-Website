@@ -109,23 +109,25 @@
 }
 
 .skills-classic-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 1.15fr 1.1fr 0.95fr 1.25fr 1.05fr;
+  gap: 7px;
   margin-top: 22px;
 }
 
 .skills-classic-filters > button {
   display: inline-flex;
+  min-width: 0;
   min-height: 44px;
   align-items: center;
-  gap: 9px;
-  padding: 8px 12px;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 9px;
   border: 1px solid #ccdfce;
   border-radius: 999px;
   background: #ffffffd9;
   color: #345347;
-  font: 500 12px/1.5 var(--classic-display);
+  font: 500 11.5px/1.4 var(--classic-display);
   text-align: left;
   transition:
     color 0.18s,
@@ -135,6 +137,7 @@
 
 .skills-classic-filters > button > span {
   display: inline-grid;
+  flex-shrink: 0;
   min-width: 22px;
   height: 22px;
   place-items: center;

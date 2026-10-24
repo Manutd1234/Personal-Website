@@ -14,12 +14,6 @@
   --book-width: clamp(170px, 21cqw, 238px);
   --book-height: calc(var(--book-width) * 1.42);
   --open-book-scale: 1.12;
-  --open-book-left: calc(
-    50% + var(--book-width) * var(--open-book-scale) * 0.5
-  );
-  --open-book-offset-y: calc(var(--book-height) * 0.22);
-  --open-cover-angle: -180deg;
-  --open-leaf-angle: 0deg;
   position: relative;
   overflow: hidden;
   padding: 28px 34px 24px;
@@ -507,14 +501,6 @@
     cubic-bezier(0.22, 0.7, 0.15, 1);
   backface-visibility: hidden;
 }
-.book-carousel .book-stage[data-open="true"] .book-under-leaf-first {
-  transform: translateZ(calc(var(--page-half-depth) + 0.2px)) rotateY(-2deg);
-  transition-delay: 380ms;
-}
-.book-carousel .book-stage[data-open="true"] .book-under-leaf-second {
-  transform: translateZ(calc(var(--page-half-depth) + 0.4px)) rotateY(-5deg);
-  transition-delay: 460ms;
-}
 .book-carousel .book-leaf-front,
 .book-carousel .book-leaf-back {
   position: absolute;
@@ -719,12 +705,10 @@
   display: grid;
   grid-template-rows: 1fr;
   opacity: 1;
-  transition:
-    grid-template-rows 380ms cubic-bezier(0.22, 0.7, 0.15, 1),
-    opacity 220ms ease;
+  overflow: hidden;
 }
 .book-carousel .book-stage[data-open="true"] .book-browse-controls-shell {
-  grid-template-rows: 0fr;
+  height: 0;
   opacity: 0;
   pointer-events: none;
 }
@@ -848,93 +832,34 @@
 .book-carousel .book-close:hover {
   border-color: var(--book-lime);
 }
+/* The reversible opening timeline owns only the selected book's transforms.
+   Background books retain their original cover faces and orbit positions. */
 .book-carousel
   .book-stage:is([data-open="true"], [data-returning="true"])
-  .book-orbit-item {
-  transition:
-    transform 900ms cubic-bezier(0.4, 0, 0.2, 1),
-    left 900ms cubic-bezier(0.4, 0, 0.2, 1),
-    visibility 0s;
+  :is(.book-orbit-item, .book-click, .book-object, .book-cover-hinge, .book-page-leaf, .book-under-leaf) {
+  transition: none;
 }
-.book-carousel
-  .book-stage:is([data-open="true"], [data-returning="true"])
-  .book-object {
-  transition: transform 900ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-.book-carousel .book-stage[data-open="true"] .book-theatre-flow {
-  min-height: max(500px, calc(var(--book-height) * 1.85));
-}
-.book-carousel
-  .book-stage:is([data-open="true"], [data-returning="true"])
-  .book-click {
-  transition: transform 900ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-.book-carousel
-  .book-stage[data-open="true"]
-  .book-orbit-item[data-selected="true"]
-  .book-click {
-  transform: rotateY(0deg);
-}
-.book-carousel
-  .book-stage[data-open="true"]
-  .book-orbit-item:not([data-selected="true"]) {
-  transform: translate3d(var(--orbit-x), 430px, calc(var(--orbit-z) - 100px));
-  pointer-events: none;
+.book-carousel .book-stage[data-open="true"] .book-scene {
   visibility: hidden;
-  transition:
-    transform 480ms cubic-bezier(0.22, 0.7, 0.15, 1),
-    visibility 0s 480ms;
-}
-.book-carousel
-  .book-stage[data-open="true"]
-  .book-orbit-item[data-selected="true"] {
-  left: var(--open-book-left);
-  transform: translate3d(0, var(--open-book-offset-y), 0);
-}
-.book-carousel
-  .book-stage[data-open="true"]
-  .book-orbit-item[data-selected="true"]
-  .book-object {
-  transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg)
-    scale(var(--open-book-scale));
-}
-.book-carousel
-  .book-stage[data-open="true"]
-  .book-orbit-item[data-selected="true"]
-  .book-cover-hinge {
-  transform: translateZ(calc(var(--book-half-depth) - 1px))
-    rotateY(var(--open-cover-angle));
-  transition: transform 1100ms 100ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-.book-carousel
-  .book-stage[data-open="true"]
-  .book-orbit-item[data-selected="true"]
-  .book-page-leaf {
-  transform: translateZ(calc(var(--page-half-depth) + 0.6px))
-    rotateY(var(--open-leaf-angle));
-  transition: transform 1000ms 240ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
 }
 .book-carousel .book-details {
   position: relative;
   align-self: center;
   min-width: 0;
-  width: 40%;
+  width: 100%;
   flex-shrink: 0;
-  margin-left: 58%;
-  padding: 34px 0 38px;
+  margin: 0;
+  padding: 20px 8px 12px;
   outline: none;
   opacity: 0;
-  transform: translateY(14px);
+  transform: none;
   pointer-events: none;
-  transition:
-    opacity 220ms ease,
-    transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .book-carousel .book-stage[data-open="true"] .book-details {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
   pointer-events: auto;
-  transition-delay: 0ms;
 }
 .book-carousel .book-details[hidden] {
   display: none;
@@ -1040,10 +965,6 @@
 }
 @container project-books (max-width: 760px) {
   .book-carousel .book-stage {
-    --open-book-left: calc(
-      50% + var(--book-width) * var(--open-book-scale) * 0.5
-    );
-    --open-book-offset-y: calc(var(--book-height) * 0.16);
     --book-width: clamp(166px, 28cqw, 210px);
     padding: 20px 22px;
   }
@@ -1068,22 +989,10 @@
   .book-carousel .book-theatre-flow {
     display: block;
     min-height: 370px;
-    padding-top: 370px;
-  }
-  .book-carousel .book-stage[data-open="true"] .book-theatre-flow {
-    min-height: max(430px, calc(var(--book-height) * 1.65));
-    padding-top: max(430px, calc(var(--book-height) * 1.65));
   }
   .book-carousel .book-scene {
     bottom: auto;
     height: 370px;
-  }
-  .book-carousel
-    .book-stage[data-open="true"]
-    .book-orbit-item[data-selected="true"]
-    .book-object {
-    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg)
-      scale(var(--open-book-scale));
   }
   .book-carousel .book-details {
     width: 100%;
@@ -1123,7 +1032,6 @@
 @container project-books (max-width: 480px) {
   .book-carousel .book-stage {
     --book-width: 166px;
-    --open-book-offset-y: 24px;
     padding-inline: 17px;
     border-radius: 12px;
   }
@@ -1142,18 +1050,6 @@
   }
   .book-carousel .book-theatre-flow {
     min-height: 330px;
-    padding-top: 330px;
-  }
-  .book-carousel .book-stage[data-open="true"] .book-theatre-flow {
-    min-height: 390px;
-    padding-top: 390px;
-  }
-  .book-carousel
-    .book-stage[data-open="true"]
-    .book-orbit-item[data-selected="true"]
-    .book-object {
-    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg)
-      scale(var(--open-book-scale));
   }
   .book-carousel .book-inside-cover {
     padding: 18px 12px;
@@ -1448,74 +1344,10 @@
   }
 }
 
-/* Fade only the flat reader. Opacity on a preserve-3d ancestor flattens its
-   children, causing rear covers to paint over the centered book on return. */
-.book-carousel
-  .book-stage:is([data-open="true"], [data-returning="true"])
-  .book-details {
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  padding: 20px 8px 12px;
-}
-.book-carousel
-  .book-stage:is([data-open="true"], [data-returning="true"])
-  .book-theatre-flow {
-  padding-top: 0;
+/* Preserve the same paper layout throughout both directions. Only the flat
+   reader may fade; opacity on a preserve-3d ancestor hides its cover artwork. */
+.book-carousel .book-theatre-flow {
   align-items: flex-start;
-}
-.book-carousel .book-stage[data-open="true"] .book-details {
-  transform-origin: 50% var(--reader-arrival-origin-y, 50%);
-  animation: book-reader-arrive var(--book-open-duration) cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-.book-carousel .book-stage[data-open="true"] .book-scene {
-  pointer-events: none;
-  animation: book-object-depart var(--book-open-duration) ease both;
-}
-.book-carousel .book-stage[data-returning="true"] .book-details {
-  animation: book-reader-leave 240ms ease both;
-}
-.book-carousel .book-stage[data-returning="true"] :is(.book-orbit-item, .book-object, .book-click) {
-  transition-duration: var(--book-return-duration);
-}
-.book-carousel .book-stage[data-returning="true"] .book-cover-hinge,
-.book-carousel .book-stage[data-returning="true"] .book-page-leaf,
-.book-carousel .book-stage[data-returning="true"] .book-under-leaf {
-  transition-duration: 540ms;
-  transition-delay: 0ms;
-}
-/* The paper first replaces the open leaves at their actual size. Only after
-   that handoff does it expand, so there is never a full-size reader over a
-   separate, smaller book. Visibility keeps the 3D scene unflattened. */
-@keyframes book-object-depart {
-  0%, 67% { visibility: visible; }
-  67.01%, 100% { visibility: hidden; }
-}
-@keyframes book-reader-arrive {
-  0%, 55% {
-    opacity: 0;
-    transform: translate(var(--reader-arrival-x, 0px), var(--reader-arrival-y, 0px))
-      scale(var(--reader-arrival-scale-x, 0.5), var(--reader-arrival-scale-y, 0.5));
-  }
-  67% {
-    opacity: 1;
-    transform: translate(var(--reader-arrival-x, 0px), var(--reader-arrival-y, 0px))
-      scale(var(--reader-arrival-scale-x, 0.5), var(--reader-arrival-scale-y, 0.5));
-  }
-  100% {
-    opacity: 1;
-    transform: translate(0, 0) scale(1);
-  }
-}
-@keyframes book-reader-leave {
-  from {
-    opacity: var(--reader-exit-opacity, 1);
-    transform: translateY(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(6px) scale(0.99);
-  }
 }
 .book-carousel .book-orbit-item:not([data-current="true"]) .book-click {
   pointer-events: none;
@@ -1589,7 +1421,6 @@
   .book-stage[data-open="true"]
   .book-scene {
   visibility: hidden;
-  opacity: 0;
   animation: none;
 }
 .book-carousel[data-reduced-motion="true"]

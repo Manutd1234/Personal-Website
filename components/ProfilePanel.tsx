@@ -118,11 +118,6 @@ export default function ProfilePanel({
             and a minor in Economics. I enjoy following a problem all the way
             from raw data to something people can use.
           </p>
-          <p>
-            Before NUS, I served as a signals commander in the RSAF. Outside
-            work, I’m usually at the gym, planning a trip, or finding somewhere
-            good to eat.
-          </p>
         </div>
       </section>
       <BuildJourney openProjects={openProjects} />

@@ -1,4 +1,4 @@
-/* An automatic, illustrated software-building story. Chapter labels are passive. */
+/* An automatic desk session with directly selectable chapters. */
 .builder-workbench {
   margin-top: 54px;
   font-family: var(--classic-display);
@@ -64,23 +64,36 @@
   list-style: none;
 }
 .journey-chapters li {
+  min-width: 0;
+  border-radius: 12px;
+  color: var(--classic-muted);
+  transition: color 0.3s, background 0.3s;
+}
+.journey-chapters li button {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
+  width: 100%;
+  min-height: 58px;
   padding: 10px;
   border-radius: 12px;
-  color: var(--classic-muted);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
   font: 500 12px/1.35 var(--classic-display);
   transition:
     color 0.3s,
     background 0.3s;
 }
-.journey-chapters li > span:last-child {
+.journey-chapters li button > span:last-child {
   display: flex;
   flex-direction: column;
   gap: 4px;
   white-space: nowrap;
+}
+.journey-chapters li button:hover {
+  background: #d9e6ce55;
 }
 .journey-chapters small {
   font: 500 10px var(--classic-display);
@@ -168,11 +181,6 @@
   fill: #688062;
   font: 500 8px var(--classic-display);
 }
-.scene-tile-label {
-  fill: #46634c;
-  font: 600 7px var(--font-mono);
-  letter-spacing: 0.03em;
-}
 .scene-work-code {
   fill: #e1ebd7;
   font: 9px var(--font-mono);
@@ -181,7 +189,7 @@
   fill: #c2d6b3;
 }
 .scene-workspace [data-rig-check],
-.scene-workspace [data-rig-stack-row],
+.scene-workspace [data-rig-choice],
 .scene-workspace .scene-work-result {
   transition: opacity 0.28s ease;
 }
@@ -360,8 +368,7 @@
   color: #9cae8f;
 }
 @media (prefers-reduced-motion: no-preference) {
-  /* Both workspace layers meet in a short crossfade. The room and person
-     stay mounted, and hands rest throughout the handoff. */
+  /* Only the monitor changes views. The desk and person stay continuous. */
   .journey-scene-action {
     transition: opacity 0.22s ease, visibility 0s linear 0.22s;
   }
@@ -376,16 +383,15 @@
     transform: none;
     transition: none;
   }
-  [data-hand-open],
-  [data-hand-carry] {
-    transition: opacity 0.14s ease;
-  }
-  /* A shared clock drives the authored poses and work. Only natural blinking
-     loops independently, and it pauses with the rest of the scene. */
+  /* The body and work share one clock. Blinks and the editor caret pause
+     with the scene; hands stay in contact with their physical inputs. */
   .scene-builder-eyes {
     transform-box: fill-box;
     transform-origin: center;
     animation: scene-blink 6.5s infinite;
+  }
+  .scene-code-caret {
+    animation: scene-caret 1.1s steps(1) infinite;
   }
   /* Pausing holds the current pose and partially typed line, just like
      scrolling away. Reduced motion still renders the completed chapter. */
@@ -402,6 +408,10 @@
     transition: none;
   }
 }
+@keyframes scene-caret {
+  0%, 55% { opacity: 1; }
+  56%, 100% { opacity: 0; }
+}
 @keyframes scene-blink {
   0%,
   43%,
@@ -417,7 +427,7 @@
   .journey-chapters {
     padding-inline: 18px;
   }
-  .journey-chapters li {
+  .journey-chapters li button {
     gap: 7px;
     padding: 8px 5px;
     font-size: 11px;
@@ -449,7 +459,7 @@
     padding: 16px 10px 0;
     gap: 2px;
   }
-  .journey-chapters li {
+  .journey-chapters li button {
     flex-direction: column;
     gap: 7px;
     padding: 8px 0;
@@ -513,7 +523,7 @@
   .journey-stage {
     padding: 16px;
   }
-  .journey-chapters li {
+  .journey-chapters li button {
     font-size: 9px;
   }
 }
