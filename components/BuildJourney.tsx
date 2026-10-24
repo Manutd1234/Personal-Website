@@ -19,74 +19,74 @@ const STEP_DURATION_MS = 5500;
 
 const steps = [
   {
-    title: "Start with the right question.",
-    short: "Understand",
+    title: "Define correctness before code.",
+    short: "Specify",
     icon: Lightbulb,
-    question: "Who is this for, and what should the system make possible?",
-    body: "I start with the people, the problem and the outcome. I turn what I learn into clear requirements, define how to measure success and identify limits such as time, cost and performance.",
+    question: "What must stay true for this system to be useful and correct?",
+    body: "I start with the user action and the guarantees the system needs to make. I turn examples into acceptance criteria, name the invariants—rules that must stay true—and define what should happen with bad input, missing data or a failed dependency.",
     decisions: [
-      "User needs and acceptance criteria",
-      "Performance, cost and data constraints",
-      "The smallest useful first version",
+      "Acceptance criteria, edge cases and failure cases",
+      "Data integrity, latency, cost and access constraints",
+      "A first version scoped around the main risks",
     ],
-    artifact: "A clear problem and requirements I can test.",
-    scene: "A useful question. A testable goal.",
+    artifact: "A problem statement with behavior I can test.",
+    scene: "Clear requirements. Testable behavior.",
   },
   {
-    title: "Choose tools with a reason.",
-    short: "Plan",
+    title: "Choose the stack around the workload.",
+    short: "Stack",
     icon: Blocks,
-    question: "What does the problem need from the tools we choose?",
-    body: "I choose the stack around the work: the interface, the logic and the data. I weigh speed, complexity and maintainability, then try the uncertain parts before building too much around them.",
+    question: "Which choices reduce risk without adding needless complexity?",
+    body: "I compare the data shape, compute needs, latency and deployment constraints before choosing tools. I weigh development speed against operating cost and maintenance, then prototype the riskiest integration. A simple baseline helps show whether extra complexity earns its place.",
     decisions: [
-      "Tools that fit the workload",
-      "Clear tradeoffs and dependencies",
-      "A small prototype for the riskiest part",
+      "Workload → language, storage and deployment",
+      "Speed, resource use and maintenance tradeoffs",
+      "A prototype to test the riskiest dependency",
     ],
-    artifact: "A practical stack and a plan for the first version.",
-    scene: "The right pieces, for the right reasons.",
+    artifact: "An explained stack choice, with its tradeoffs.",
+    scene: "Choose the tools. Explain the tradeoffs.",
   },
   {
-    title: "Make the pieces fit together.",
-    short: "Design",
+    title: "Make boundaries and ownership explicit.",
+    short: "Architect",
     icon: GitBranch,
-    question: "How does an action move through the whole system?",
-    body: "I follow the user journey from the interface through the API to the data and back. I give each part a clear responsibility, define what they exchange and plan for mistakes and failures.",
+    question: "Who owns each decision, each record and each failure?",
+    body: "I trace a request from the UI through the API and domain logic to stored data. I define request and response contracts, who owns each piece of state and where permissions are enforced. Invalid input, missing records and failed dependencies need deliberate responses.",
     decisions: [
-      "UI, API and data flow",
-      "Clear boundaries and data structures",
-      "Permissions, error handling and recovery",
+      "Typed contracts and focused domain responsibilities",
+      "Schemas, data ownership and authorization",
+      "Explicit error responses and recovery paths",
     ],
-    artifact: "A system design that is clear enough to build.",
-    scene: "Connect the parts. Follow the flow.",
+    artifact: "An architecture with clear contracts and failure behavior.",
+    scene: "Connect the parts. Define the contracts.",
   },
   {
-    title: "Make one complete path work.",
-    short: "Build",
+    title: "Build one verified vertical slice.",
+    short: "Implement",
     icon: Braces,
-    question: "Can someone use this to complete a real task?",
-    body: "I connect the interface, logic and storage in small working steps. I validate inputs, handle loading and errors, and keep changes easy to review so each version gives me something real to improve.",
+    question: "Can a real action travel from input to a reliable result?",
+    body: "I implement one complete path before expanding: validate the input, apply the rules and persist the result. I model loading, empty and error states explicitly. When something fails, I reproduce it, trace the data across layers and make a small, reviewable fix.",
     decisions: [
-      "Working code from input to result",
-      "Validation and clear user feedback",
-      "Small changes, reviewed along the way",
+      "Input validation → domain logic → persistence",
+      "Explicit async state and reproducible debugging",
+      "Small commits with a clear reason to exist",
     ],
-    artifact: "Working software people can try and build on.",
-    scene: "A little code. A working connection.",
+    artifact: "An end-to-end feature with behavior I can explain.",
+    scene: "One complete path, checked at the boundaries.",
   },
   {
-    title: "Test it. Ship it. Learn.",
-    short: "Improve",
+    title: "Test, release and close the loop.",
+    short: "Ship & learn",
     icon: Rocket,
-    question: "Does it work in real use, and what should improve next?",
-    body: "I test the parts and the complete user journey, automate release checks and verify the deployment. Once it is live, I watch errors and performance and use feedback to guide the next version.",
+    question: "What evidence says this release works, and what happens next?",
+    body: "I test the domain logic, the boundaries and the complete user journey. CI checks catch regressions and build failures before deployment. After release, I verify the critical path and inspect errors, logs and performance. Feedback becomes the next test or improvement.",
     decisions: [
-      "Unit, integration and user journey tests",
-      "Automated checks and a verified deployment",
-      "Monitoring, feedback and steady improvement",
+      "Unit, integration and browser regression tests",
+      "CI checks, deployment and a smoke test",
+      "Logs, performance signals and user feedback",
     ],
-    artifact: "A verified release—and a direction for what comes next.",
-    scene: "Test the build. Then let it take flight.",
+    artifact: "A checked release and evidence for the next iteration.",
+    scene: "Test. Deploy. Observe. Improve.",
   },
 ] as const;
 
@@ -160,7 +160,7 @@ function BuilderScene({
                 <g className="scene-arrive scene-delay-one">
                   <circle cx="247" cy="164" r="5" fill="#dfb857" />
                   <text x="263" y="169" className="scene-label">
-                    Who needs this?
+                    User & goal
                   </text>
                   <path
                     d="M263 181h159"
@@ -172,7 +172,7 @@ function BuilderScene({
                 <g className="scene-arrive scene-delay-two">
                   <circle cx="247" cy="209" r="5" fill="#dfb857" />
                   <text x="263" y="214" className="scene-label">
-                    What must work?
+                    Rules & limits
                   </text>
                   <path
                     d="M263 226h129"
@@ -190,7 +190,7 @@ function BuilderScene({
                     strokeLinejoin="round"
                   />
                   <text x="263" y="257" className="scene-label">
-                    A testable goal
+                    Acceptance tests
                   </text>
                 </g>
                 <g transform="translate(42 0)">
@@ -232,7 +232,7 @@ function BuilderScene({
                     Data & storage
                   </text>
                   <text x="259" y="284" className="scene-note">
-                    structure · reliability
+                    schema · consistency
                   </text>
                 </g>
                 <g className="scene-stack-lift">
@@ -247,10 +247,10 @@ function BuilderScene({
                     strokeWidth="2"
                   />
                   <text x="276" y="195" className="scene-label">
-                    Logic & services
+                    Runtime & APIs
                   </text>
                   <text x="276" y="214" className="scene-note">
-                    capabilities · tradeoffs
+                    compute · dependencies
                   </text>
                 </g>
                 <g className="scene-stack scene-plan-finish">
@@ -265,10 +265,10 @@ function BuilderScene({
                     strokeWidth="2"
                   />
                   <text x="259" y="125" className="scene-label">
-                    Interface
+                    UI & delivery
                   </text>
                   <text x="259" y="144" className="scene-note">
-                    clarity · speed
+                    latency · deployment
                   </text>
                 </g>
                 <g className="scene-arrive scene-delay-three">
@@ -321,7 +321,7 @@ function BuilderScene({
                     UI
                   </text>
                   <text x="218" y="157" className="scene-note">
-                    input & feedback
+                    user action
                   </text>
                 </g>
                 <g className="scene-arrive scene-delay-one">
@@ -339,7 +339,7 @@ function BuilderScene({
                     API
                   </text>
                   <text x="400" y="227" className="scene-note">
-                    validate · process
+                    auth · domain
                   </text>
                 </g>
                 <g className="scene-arrive scene-delay-two">
@@ -374,7 +374,7 @@ function BuilderScene({
                     strokeWidth="2"
                   />
                   <text x="390" y="95" className="scene-note">
-                    Handle errors
+                    error → response
                   </text>
                 </g>
                 <circle cx="215" cy="169" r="5" fill="#dce9cd" stroke="#688062" strokeWidth="2" />
@@ -422,7 +422,7 @@ function BuilderScene({
                 </g>
                 <g className="scene-code-line scene-delay-one">
                   <text x="226" y="181" className="scene-code">
-                    await checkAccess(user);
+                    await authorize(user);
                   </text>
                 </g>
                 <g className="scene-code-line scene-delay-two">
@@ -432,11 +432,11 @@ function BuilderScene({
                 </g>
                 <g className="scene-code-line scene-delay-three">
                   <text x="226" y="241" className="scene-code">
-                    return result;
+                    return respond(result);
                   </text>
                   <rect
                     className="scene-cursor"
-                    x="331"
+                    x="388"
                     y="229"
                     width="7"
                     height="15"
@@ -504,9 +504,9 @@ function BuilderScene({
                 />
                 <path d="M196 195h202" stroke="#ced8bd" strokeWidth="2" />
                 <text x="213" y="184" className="scene-mono">
-                  Test → deploy → observe
+                  release-checks.yml
                 </text>
-                {["unit + integration", "user journey", "release checks"].map(
+                {["unit + integration", "browser journey", "build + deploy"].map(
                   (label, index) => (
                     <g
                       key={label}
@@ -826,8 +826,8 @@ export default function BuildJourney({
 
   useEffect(() => {
     if (outgoing === null) return;
-    // Preserve the outgoing scene's animated state until its dissolve ends.
-    const timer = window.setTimeout(() => setOutgoing(null), 750);
+    // Retain the outgoing pose until the 440 ms fade-out/fade-in sequence ends.
+    const timer = window.setTimeout(() => setOutgoing(null), 500);
     return () => window.clearTimeout(timer);
   }, [outgoing]);
 
@@ -863,6 +863,10 @@ export default function BuildJourney({
           <h2 id={`${prefix}-title`}>
             From a question to a <em>working system.</em>
           </h2>
+          <p className="journey-mindset">
+            I make assumptions explicit, test the boundaries and connect each
+            engineering decision to a working, observable system.
+          </p>
         </div>
         {!reduced ? (
           <button
