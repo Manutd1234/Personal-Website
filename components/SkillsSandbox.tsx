@@ -9,7 +9,7 @@ import type {
 import { ArrowDown, List, RotateCcw } from "lucide-react";
 import { skillGroups } from "@/content/portfolio";
 import { useMotionPreference } from "./useMotionPreference";
-import { containSkillBody, createSkillWalls } from "./skill-physics";
+import { containSkillBody, createSkillWalls, layoutSkillRows } from "./skill-physics";
 import "@/app/skills-blocks.css";
 import "@/app/skills-atelier.css";
 
@@ -262,7 +262,7 @@ export default function SkillsSandbox({
       } else {
         const size = sizes[index];
         // A little tilt keeps the pile playful without turning labels sideways.
-        const angle = (Math.random() - 0.5) * 0.32;
+        const angle = (Math.random() - 0.5) * 0.2;
         const halfWidth =
           (Math.abs(Math.cos(angle)) * size.width +
             Math.abs(Math.sin(angle)) * size.height) /
@@ -437,19 +437,20 @@ export default function SkillsSandbox({
         (total, size) => total + size.width * size.height,
         0,
       );
-      // The visible frame stays compact. Only its inner world grows when
-      // all measured labels need more space, so every label stays reachable.
+      // Smaller measured tiles and compact rows fit the full desktop set.
+      // Narrow screens can still grow vertically without shrinking readable text.
+      const packed = layoutSkillRows(sizes, width);
       height = Math.ceil(
         Math.max(
-          viewportRef.current?.clientHeight ?? 500,
-          world!.scrollHeight,
+          viewportRef.current?.clientHeight ?? 550,
+          packed.height,
           area / Math.max(1, (width - 24) * 0.72) + 28,
         ),
       );
       world!.style.height = `${height}px`;
-      homes = elements.map((element, index) => ({
-        x: element.offsetLeft + sizes[index].width / 2,
-        y: element.offsetTop + sizes[index].height / 2,
+      homes = packed.positions.map((position) => ({
+        x: position.x,
+        y: position.y + (height - packed.height) / 2,
       }));
       Composite.add(engine.world, createSkillWalls(matter!, width, height));
       bodies = sizes.map((size, index) => {

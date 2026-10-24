@@ -195,7 +195,7 @@
 .award-app-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  grid-auto-rows: minmax(184px, auto);
+  grid-auto-rows: minmax(210px, auto);
   gap: 18px 18px;
   min-width: 0;
   margin: 0;
@@ -238,7 +238,7 @@
   position: relative;
   width: 100%;
   min-width: 0;
-  min-height: 184px;
+  min-height: 210px;
   height: 100%;
   align-items: center;
   flex-direction: column;
@@ -355,20 +355,20 @@
   content: none;
 }
 .award-app-icon[data-artwork="poster"] {
-  padding: 9px;
+  padding: 5px;
   background: #fff;
 }
-/* A brand-only window into the original poster: sponsors, event name and
-   subtitle. The registration details and QR code remain outside the window. */
+/* The authentic poster's upper branding panel fills the white icon. This
+   720 × 510 window excludes the lower registration and QR-code section. */
 .award-app-icon[data-artwork="poster"] .award-app-preview {
   height: auto;
-  aspect-ratio: 3;
+  aspect-ratio: 24 / 17;
   overflow: hidden;
   border-radius: 3px;
 }
 .award-app-icon[data-artwork="poster"] .award-app-preview > img {
   position: absolute;
-  top: -112.5%;
+  top: 0;
   width: 100%;
   height: auto;
   max-height: none;
@@ -390,19 +390,30 @@
   box-shadow: 0 2px 5px #0d2a2033;
 }
 .award-app-label {
-  display: -webkit-box;
-  max-width: 160px;
+  display: grid;
+  width: 100%;
+  max-width: 170px;
+  gap: 4px;
   margin-top: 4px;
-  overflow: hidden;
   color: #f8fbf0;
-  font: 550 12px/1.45 var(--classic-display);
+  font: 600 12px/1.4 var(--classic-display);
   overflow-wrap: anywhere;
   text-wrap: balance;
   text-shadow: 0 1px 4px #062b2180;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+}
+.award-app-organisation {
+  display: block;
+  min-height: 2.8em;
+}
+.award-app-recognition {
+  display: block;
+  color: #dcebd1;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.45;
 }
 .award-app-date {
+  min-height: 14px;
   margin-top: auto;
   color: #d4e3cb;
   font: 400 9px/1.5 var(--font-mono);
@@ -862,7 +873,7 @@
     font-size: 8px;
   }
   .award-app-grid {
-    grid-auto-rows: minmax(170px, auto);
+    grid-auto-rows: minmax(190px, auto);
   }
   .award-app-icon {
     width: 82px;
@@ -887,12 +898,15 @@
     height: 34px;
   }
   .award-app-button {
-    min-height: 170px;
+    min-height: 190px;
     padding-inline: 2px;
     gap: 6px;
   }
   .award-app-label {
     font-size: 11px;
+  }
+  .award-app-recognition {
+    font-size: 10px;
   }
   .award-app-date {
     font-size: 8px;

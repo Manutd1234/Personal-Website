@@ -4,6 +4,36 @@ type MatterLibrary = typeof import("matter-js");
 export type SkillSize = { width: number; height: number };
 export const SKILL_WORLD_INSET = 8;
 
+// Pack the measured rectangles into short rows instead of giving every row
+// the height of its tallest decorative seal. DOM/keyboard order stays intact.
+export function layoutSkillRows(sizes: readonly SkillSize[], width: number) {
+  const inset = 12;
+  const gap = 4;
+  const usable = Math.max(1, width - inset * 2);
+  const rows: { indices: number[]; width: number; height: number }[] = [];
+  const ordered = sizes.map((size, index) => ({ ...size, index }))
+    .sort((a, b) => b.height - a.height || b.width - a.width || a.index - b.index);
+  for (const size of ordered) {
+    const row = rows.find((item) => item.width + gap + size.width <= usable);
+    if (row) {
+      row.indices.push(size.index);
+      row.width += gap + size.width;
+    } else rows.push({ indices: [size.index], width: size.width, height: size.height });
+  }
+  const positions: Vector[] = sizes.map(() => ({ x: 0, y: 0 }));
+  let y = inset;
+  for (const row of rows) {
+    let x = (width - row.width) / 2;
+    for (const index of row.indices) {
+      const size = sizes[index];
+      positions[index] = { x: x + size.width / 2, y: y + row.height / 2 };
+      x += size.width + gap;
+    }
+    y += row.height + gap;
+  }
+  return { positions, height: y - (rows.length ? gap : 0) + inset };
+}
+
 export function createSkillWalls(
   matter: MatterLibrary,
   width: number,

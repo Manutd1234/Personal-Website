@@ -46,6 +46,7 @@ import {
 import { achievementGroups, certifications } from "@/content/portfolio";
 import { certificateFiles, projectMedia, teamMoments } from "@/content/media";
 import { awardAppIcons, awardIconPreviews } from "@/content/award-icon-previews";
+import { awardAppLabel } from "@/content/award-app-labels";
 import { credentialProviders } from "@/content/credential-providers";
 import { asset } from "@/content/paths";
 import { trophies, type Trophy as TrophyRecord } from "@/content/trophies";
@@ -527,6 +528,8 @@ function AchievementApp({
   const Icon = iconForAchievement(record);
   const preview = previewForAchievement(record);
   const appIcon = awardAppIcons[record.title];
+  const label = awardAppLabel(record);
+  const appTitle = `${label.organisation} — ${label.recognition}`;
   const photographic = /photo|patch|screenshot/i.test(preview.kind ?? "");
   const emblem = appIcon?.artwork === "emblem" || (!appIcon && /emblem/i.test(preview.kind ?? ""));
   const imageSource = appIcon?.src ?? awardIconPreviews[preview.src] ?? preview.src;
@@ -535,8 +538,8 @@ function AchievementApp({
       <button
         type="button"
         className="award-app-button"
-        aria-label={`View achievement: ${record.title}, ${record.issuer}${/Expired/i.test(record.detail ?? "") ? ", expired credential" : ""}`}
-        title={record.title}
+        aria-label={`View achievement: ${appTitle}${record.year ? `, ${record.year}` : ""}${/Expired/i.test(record.detail ?? "") ? ", expired credential" : ""}`}
+        title={appTitle}
         aria-haspopup="dialog"
         onClick={(event) => onOpen(record, event.currentTarget)}
       >
@@ -568,9 +571,12 @@ function AchievementApp({
             <Icon className="award-app-glyph" size={38} strokeWidth={1.65} />
           )}
         </span>
-        <span className="award-app-label">{record.title}</span>
+        <span className="award-app-label">
+          <span className="award-app-organisation">{label.organisation}</span>
+          <span className="award-app-recognition">{label.recognition}</span>
+        </span>
         <span className="award-app-date">
-          {record.year ?? record.categoryLabel}
+          {record.year}
         </span>
         {/Expired/i.test(record.detail ?? "") ? (
           <span className="award-app-expired">Expired</span>
@@ -598,7 +604,7 @@ export default function TrophyRoom() {
   const matches = useMemo(
     () =>
       collection.filter((record) =>
-        `${record.title} ${record.issuer} ${record.detail ?? ""} ${record.year ?? ""} ${record.categoryLabel}`
+        `${record.title} ${record.issuer} ${record.detail ?? ""} ${record.year ?? ""} ${record.categoryLabel} ${awardAppLabel(record).organisation} ${awardAppLabel(record).recognition}`
           .toLowerCase()
           .includes(search),
       ),

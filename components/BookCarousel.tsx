@@ -11,8 +11,8 @@ import type {
 import { asset } from "@/content/paths";
 import "@/app/book-carousel.css";
 
-const BOOK_OPEN_MS = 620;
-const BOOK_RETURN_MS = 480;
+const BOOK_OPEN_MS = 1800;
+const BOOK_RETURN_MS = 640;
 
 export type ProjectSource = {
   url: string;
@@ -371,7 +371,8 @@ export default function BookCarousel({
   const lastRequestRef = useRef<string | null>(null);
   const uniqueId = useId();
   const current = count ? mod(currentState, count) : 0;
-  const displayedBook = count ? mod(destination ?? current, count) : 0;
+  const displayedBook = current;
+  const browsing = destination !== null || dragging;
   const isOpen = opened !== null && opened < count;
   const detailIndex = opened ?? (returning ? lastOpenedRef.current : null);
   const openedProject =
@@ -510,33 +511,32 @@ export default function BookCarousel({
     rotateTo(angleRef.current + distance, focusBook, onSettled);
   }
 
-  function intendedBook(fallback = currentRef.current) {
-    return count && animationRef.current !== null
-      ? mod(Math.round(-targetAngleRef.current / step), count)
-      : fallback;
+  function isCenteredBook(index: number) {
+    const distance = mod(index * step + angleRef.current + 180, 360) - 180;
+    return (
+      index === currentRef.current &&
+      animationRef.current === null &&
+      Math.abs(distance) < 0.15
+    );
+  }
+
+  function revealBook(index: number) {
+    if (!canInteract() || index < 0 || index >= count || !isCenteredBook(index))
+      return;
+    setHovered(null);
+    cancelGesture();
+    returnFocusRef.current = false;
+    lastOpenedRef.current = index;
+    setReturning(false);
+    setReaderReady(false);
+    setOpened(index);
+    setOpening((previous) => previous + 1);
   }
 
   function openBook(index: number) {
-    if (!canInteract() || index < 0 || index >= count) return;
-    setHovered(null);
-    stopAnimation();
-    cancelGesture();
-    const reveal = () => {
-      if (!canInteract()) return;
-      returnFocusRef.current = false;
-      lastOpenedRef.current = index;
-      setReturning(false);
-      setReaderReady(false);
-      setOpened(index);
-      // An opening is an event even if this exact book was already open in a
-      // hidden Projects tab. Keep focus in sync when React batches the same index.
-      setOpening((previous) => previous + 1);
-    };
-    const distance = mod(-index * step - angleRef.current + 180, 360) - 180;
-    // Take a book from the front of the carousel before opening its cover.
-    // Closing then returns it to the same place, including side-cover clicks.
-    if (!isOpen && Math.abs(distance) > 0.15) choose(index, false, reveal);
-    else reveal();
+    // Manual activation never selects a side book or queues a future book.
+    if (isOpen || returning || gestureRef.current?.moved) return;
+    revealBook(index);
   }
 
   function closeBook() {
@@ -569,12 +569,14 @@ export default function BookCarousel({
       cancelGesture();
       setReturning(false);
       setReducedMotion(query.matches);
+      updateAngle(Math.round(angleRef.current / step) * step);
     };
     const pause = () => {
       stageRef.current?.toggleAttribute("data-suspended", document.hidden);
       if (document.hidden) {
         stopAnimation();
         cancelGesture();
+        updateAngle(Math.round(angleRef.current / step) * step);
       }
     };
     sync();
@@ -588,7 +590,7 @@ export default function BookCarousel({
       query.removeEventListener("change", sync);
       document.removeEventListener("visibilitychange", pause);
     };
-  }, [cancelGesture, stopAnimation]);
+  }, [cancelGesture, stopAnimation, step, updateAngle]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -659,7 +661,8 @@ export default function BookCarousel({
         animation = theatre.animate(
           [{ height: `${from}px` }, { height: `${next}px` }],
           {
-            duration: Math.min(440, 260 + Math.abs(next - from) * 0.24),
+            duration:
+              stageRef.current?.dataset.open === "true" ? 1000 : BOOK_RETURN_MS,
             easing: "cubic-bezier(.22,.7,.15,1)",
           },
         );
@@ -729,8 +732,9 @@ export default function BookCarousel({
       setHovered(null);
       stopAnimation();
       cancelGesture();
+      updateAngle(Math.round(angleRef.current / step) * step);
     }
-  }, [active, cancelGesture, stopAnimation]);
+  }, [active, cancelGesture, stopAnimation, step, updateAngle]);
 
   useEffect(() => {
     stopAnimation();
@@ -758,38 +762,29 @@ export default function BookCarousel({
     lastRequestRef.current = request;
     setOpened(null);
     setReturning(false);
-    choose(index, false, () => openBook(index));
+    choose(index, false, () => revealBook(index));
     // A request is an event; later renders must not restart its spring.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, requestedProject, requestKey]);
 
   function bookAtPoint(x: number, y: number) {
-    // Pick the visible book by depth, not the browser's overlapping 3D hit stack.
-    // The stationary front plane keeps hover stable as the cover swings away.
-    const hitBooks = bookRefs.current.flatMap((button, index) => {
-      if (!button || button.disabled) return [];
-      const hit = ["[data-book-hover-corner]", "[data-book-hit-corner]"].some(
-        (selector) => {
-          const points = [
-            ...button.querySelectorAll<HTMLElement>(selector),
-          ].map((corner) => {
+    // Only the settled front cover can preview or open. The surrounding books
+    // remain a drag surface, without relying on the browser's 3D hit order.
+    const index = currentRef.current;
+    const button = bookRefs.current[index];
+    if (!button || button.disabled || !isCenteredBook(index)) return undefined;
+    const hit = ["[data-book-hover-corner]", "[data-book-hit-corner]"].some(
+      (selector) => {
+        const points = [...button.querySelectorAll<HTMLElement>(selector)].map(
+          (corner) => {
             const rect = corner.getBoundingClientRect();
-            return {
-              x: rect.left + rect.width / 2,
-              y: rect.top + rect.height / 2,
-            };
-          });
-          return pointInsideCover(points, x, y);
-        },
-      );
-      if (!hit) return [];
-      const depth = parseFloat(
-        orbitRefs.current[index]?.style.getPropertyValue("--orbit-z") ?? "0",
-      );
-      return [{ index, depth }];
-    });
-    hitBooks.sort((a, b) => b.depth - a.depth);
-    return hitBooks[0]?.index;
+            return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+          },
+        );
+        return pointInsideCover(points, x, y);
+      },
+    );
+    return hit ? index : undefined;
   }
 
   function onPointerDown(event: PointerEvent<HTMLDivElement>) {
@@ -801,11 +796,11 @@ export default function BookCarousel({
       event.button !== 0
     )
       return;
+    const bookIndex = bookAtPoint(event.clientX, event.clientY);
     stopAnimation();
     cancelGesture();
     setReturning(false);
     setHovered(null);
-    const bookIndex = bookAtPoint(event.clientX, event.clientY);
     gestureRef.current = {
       pointer: event.pointerId,
       x: event.clientX,
@@ -869,7 +864,13 @@ export default function BookCarousel({
     cancelGesture();
     if (!canInteract()) return;
     if (!gesture.moved) {
-      if (gesture.book !== undefined) openBook(gesture.book);
+      if (
+        gesture.book !== undefined &&
+        bookAtPoint(event.clientX, event.clientY) === gesture.book
+      )
+        openBook(gesture.book);
+      else if (!isCenteredBook(currentRef.current))
+        rotateTo(Math.round(angleRef.current / step) * step);
       return;
     }
     const velocity =
@@ -937,7 +938,7 @@ export default function BookCarousel({
       event.target === sceneRef.current
     ) {
       event.preventDefault();
-      openBook(intendedBook());
+      openBook(currentRef.current);
     }
   }
 
@@ -977,7 +978,7 @@ export default function BookCarousel({
             </button>
           ) : (
             <span className="book-drag-hint">
-              Drag to browse · Hover to preview · Click to read
+              Drag to browse · Open the centered book
               <span className="book-keyboard-hint">
                 ← → / Home / End · Enter opens
               </span>
@@ -1041,11 +1042,14 @@ export default function BookCarousel({
                     aria-label={`Open ${project.title} project details`}
                     className="book-click"
                     data-book-index={index}
-                    data-hovered={hovered === index}
+                    data-hovered={current === index && hovered === index}
+                    aria-disabled={
+                      current !== index || browsing ? true : undefined
+                    }
                     disabled={isOpen || returning || !active}
                     onClick={(event) => {
                       if (event.detail === 0 && !isOpen)
-                        openBook(intendedBook(index));
+                        openBook(index);
                     }}
                     ref={(element) => {
                       bookRefs.current[index] = element;
@@ -1114,12 +1118,14 @@ export default function BookCarousel({
             </button>
             <div className="book-current">
               <button
-                disabled={returning || isOpen}
-                onClick={() => openBook(intendedBook())}
+                disabled={returning || isOpen || browsing}
+                onClick={() => openBook(currentRef.current)}
                 type="button"
                 aria-label={`Open project: ${projects[displayedBook].title}`}
               >
-                <span className="book-current-action">Open project</span>
+                <span className="book-current-action">
+                  {browsing ? "Centering book" : "Open project"}
+                </span>
                 <span className="book-current-name">
                   {projects[displayedBook].title}{" "}
                   <span aria-hidden="true">↗</span>

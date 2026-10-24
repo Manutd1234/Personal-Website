@@ -31,7 +31,7 @@
 }
 
 .skill-atelier .skill-physics-viewport {
-  height: 500px;
+  height: 550px;
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-gutter: stable;
@@ -48,9 +48,9 @@
 }
 
 .skill-atelier .skill-physics-world {
-  min-height: 498px;
-  gap: 5px 6px;
-  padding: 12px;
+  min-height: 548px;
+  gap: 4px;
+  padding: 10px;
   border: 0;
   border-radius: 0;
   background-color: var(--table-paper);
@@ -75,17 +75,17 @@
   --pill-fill: #e5ead6;
   --pill-ink: #294a35;
   --pill-edge: #a9b89a;
-  --tile-x: 8px;
+  --tile-x: 5px;
   --tile-y: 4px;
   --shape-pad: 0px;
   box-sizing: border-box;
   flex: 0 0 auto;
-  min-height: 27px;
+  min-height: 24px;
   max-width: calc(100% - 24px);
   align-items: center;
   justify-content: center;
   padding: var(--tile-y) calc(var(--tile-x) + var(--shape-pad));
-  font: 550 12px/1.35 var(--skill-label-font);
+  font: 550 11px/1.35 var(--skill-label-font);
   letter-spacing: -0.015em;
   font-synthesis: none;
   text-align: center;
@@ -104,47 +104,47 @@
 }
 
 .skill-atelier .skill-pill[data-size="medium"] {
-  --tile-x: 9px;
-  --tile-y: 5px;
-  min-height: 30px;
-  font-size: 13px;
+  --tile-x: 6px;
+  --tile-y: 4px;
+  min-height: 26px;
+  font-size: 12px;
   font-weight: 600;
 }
 
 .skill-atelier .skill-pill[data-size="large"] {
-  --tile-x: 11px;
-  --tile-y: 6px;
-  min-height: 34px;
-  font-size: 16px;
+  --tile-x: 7px;
+  --tile-y: 5px;
+  min-height: 29px;
+  font-size: 14px;
   font-weight: 650;
 }
 
 /* Real silhouettes, not corner-radius variations. Padding protects the text. */
 .skill-atelier .skill-pill[data-shape="ellipse"] {
-  --shape-pad: 8px;
-  --tile-y: 9px;
+  --shape-pad: 6px;
+  --tile-y: 6px;
 }
 .skill-atelier .skill-pill[data-shape="hexagon"],
 .skill-atelier .skill-pill[data-shape="pennant"] {
-  --shape-pad: 12px;
-  --tile-y: 8px;
+  --shape-pad: 8px;
+  --tile-y: 5px;
 }
 .skill-atelier .skill-pill[data-shape="ticket"] {
-  --shape-pad: 9px;
-  --tile-y: 7px;
+  --shape-pad: 7px;
+  --tile-y: 5px;
 }
 .skill-atelier .skill-pill[data-shape="pebble"] {
-  --shape-pad: 9px;
-  --tile-y: 10px;
+  --shape-pad: 7px;
+  --tile-y: 6px;
 }
 .skill-atelier .skill-pill[data-shape="cloud"] {
-  --shape-pad: 13px;
-  --tile-y: 14px;
+  --shape-pad: 9px;
+  --tile-y: 8px;
 }
 .skill-atelier .skill-pill[data-shape="seal"] {
-  --shape-pad: 17px;
-  --tile-y: 20px;
-  min-width: 66px;
+  --shape-pad: 11px;
+  --tile-y: 11px;
+  min-width: 50px;
 }
 
 .skill-atelier .skill-pill[data-long="true"] {
@@ -251,28 +251,26 @@
 }
 @media (max-width: 620px) {
   .skill-atelier .skill-physics-viewport {
-    height: 420px;
+    height: 462px;
   }
   .skill-atelier .skill-physics-world {
-    min-height: 418px;
+    min-height: 460px;
     gap: 5px;
   }
   .skill-atelier .skill-pill {
-    --tile-x: 8px;
-    --tile-y: 5px;
-    min-height: 29px;
+    --tile-x: 5px;
+    min-height: 26px;
+    font-size: 12px;
   }
   .skill-atelier .skill-pill[data-size="medium"] {
-    --tile-x: 9px;
-    --tile-y: 5px;
-    min-height: 31px;
+    --tile-x: 6px;
+    min-height: 28px;
     font-size: 13px;
   }
   .skill-atelier .skill-pill[data-size="large"] {
-    --tile-x: 10px;
-    --tile-y: 6px;
-    min-height: 34px;
-    font-size: 15px;
+    --tile-x: 7px;
+    min-height: 29px;
+    font-size: 14px;
   }
 }
 
@@ -323,12 +321,12 @@
 .dark .skill-atelier .skill-pill[data-filtering="true"][data-lit="true"] .skill-silhouette {
   stroke: #e2edbb;
 }
-.skill-atelier .skill-pill[data-shape="cloud"] { padding-block: 14px; }
-.skill-atelier .skill-pill[data-shape="seal"] { padding-block: 20px; }
+.skill-atelier .skill-pill[data-shape="cloud"] { padding-block: 8px; }
+.skill-atelier .skill-pill[data-shape="seal"] { padding-block: 11px; }
 .skill-atelier .skill-pill[data-shape="ellipse"],
-.skill-atelier .skill-pill[data-shape="pebble"] { padding-block: 10px; }
+.skill-atelier .skill-pill[data-shape="pebble"] { padding-block: 6px; }
 .skill-atelier .skill-pill[data-shape="hexagon"],
-.skill-atelier .skill-pill[data-shape="pennant"] { padding-block: 8px; }
+.skill-atelier .skill-pill[data-shape="pennant"] { padding-block: 5px; }
 @media (prefers-reduced-motion: reduce) {
   .skill-atelier .skill-silhouette { transition: none; }
 }
