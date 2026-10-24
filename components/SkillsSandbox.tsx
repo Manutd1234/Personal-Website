@@ -15,7 +15,8 @@ import {
   isSkillPileStill,
   limitSkillVelocity,
   moveSkillBody,
-  steerSkillBody,
+  positionHeldSkillBody,
+  placeReleasedSkillBody,
   SKILL_COLLISION_PADDING,
   SKILL_DROP_BLOCKED_MS,
   SKILL_PACKING_DENSITY,
@@ -285,7 +286,7 @@ export default function SkillsSandbox({
         const y = halfHeight + 10 + Math.random() * 22;
         const entering = bodies.filter(
           (other, otherIndex) =>
-            spawned[otherIndex] && other.bounds.min.y < y + halfHeight + 8,
+            spawned[otherIndex] && other !== drag?.body && other.bounds.min.y < y + halfHeight + 8,
         );
         let clear = false;
         Body.setAngle(body, angle);
@@ -324,6 +325,15 @@ export default function SkillsSandbox({
       contain(body);
       return true;
     }
+    function growWorld(extraHeight: number) {
+      height += extraHeight;
+      world!.style.height = `${height}px`;
+      if (width >= 700 && viewportRef.current)
+        viewportRef.current.style.height = `${height}px`;
+      walls.forEach((wall) => Composite.remove(engine.world, wall));
+      walls = createSkillWalls(matter!, width, height);
+      Composite.add(engine.world, walls);
+    }
     function releaseNextPill() {
       while (nextDrop < dropOrder.length && spawned[dropOrder[nextDrop]])
         nextDrop += 1;
@@ -346,13 +356,7 @@ export default function SkillsSandbox({
         // Make room below a crowded pile without moving or arranging labels.
         // Gravity carries the existing pile down to the new floor naturally.
         if (!drag && elapsed - blockedSince > SKILL_DROP_BLOCKED_MS) {
-          height += 64;
-          world!.style.height = `${height}px`;
-          if (width >= 700 && viewportRef.current)
-            viewportRef.current.style.height = `${height}px`;
-          walls.forEach((wall) => Composite.remove(engine.world, wall));
-          walls = createSkillWalls(matter!, width, height);
-          Composite.add(engine.world, walls);
+          growWorld(64);
           blockedSince = null;
         }
         nextDropAt = elapsed + 40;
@@ -383,10 +387,6 @@ export default function SkillsSandbox({
       accumulator += delta;
       releaseNextPill();
       while (accumulator >= SKILL_PHYSICS_STEP) {
-        if (drag) steerSkillBody(matter!, drag.body, {
-          x: drag.x - drag.offsetX,
-          y: drag.y - drag.offsetY,
-        }, bodies.filter((_, index) => spawned[index]), width, height);
         bodies.forEach((body, index) => {
           if (spawned[index]) limitSkillVelocity(matter!, body);
         });
@@ -423,6 +423,18 @@ export default function SkillsSandbox({
       const current = drag;
       drag = null;
       delete current.element.dataset.held;
+      if (!placeReleasedSkillBody(matter!, current.body,
+        bodies.filter((_, index) => spawned[index]), width, height)) {
+        // A nearly full narrow board may have no gap in the released pose.
+        // Add empty space underneath; gravity will settle everything naturally.
+        const bodyHeight = current.body.bounds.max.y - current.body.bounds.min.y;
+        growWorld(Math.max(64, Math.ceil(bodyHeight) + 24));
+        positionHeldSkillBody(matter!, current.body, {
+          x: current.body.position.x, y: height - bodyHeight / 2 - 12,
+        }, width, height);
+      }
+      Composite.add(engine.world, current.body);
+      draw();
       if (!cancel && current.moved && performance.now() - current.time < 100) {
         Body.setVelocity(current.body, {
           x: clamp(current.velocityX, -SKILL_MAX_VELOCITY, SKILL_MAX_VELOCITY),
@@ -555,6 +567,7 @@ export default function SkillsSandbox({
         start();
       },
       nudge(index, key, large) {
+        release(undefined, true);
         const body = bodies[index];
         if (!body || !enabled) return;
         if (!ensureVisible(index)) return;
@@ -602,6 +615,11 @@ export default function SkillsSandbox({
           velocityY: 0,
           moved: false,
         };
+        // Lift only this label out of the collision plane. Keeping it in the
+        // engine made a buried label act like an immovable part of the pile.
+        Composite.remove(engine.world, body);
+        Body.setVelocity(body, { x: 0, y: 0 });
+        Body.setAngularVelocity(body, 0);
         event.currentTarget.dataset.held = "true";
         event.currentTarget.setPointerCapture(event.pointerId);
         event.preventDefault();
@@ -623,6 +641,10 @@ export default function SkillsSandbox({
         drag.x = clamp(point.x, 8, width - 8);
         drag.y = clamp(point.y, 8, height - 8);
         drag.time = now;
+        positionHeldSkillBody(matter!, drag.body, {
+          x: drag.x - drag.offsetX, y: drag.y - drag.offsetY,
+        }, width, height);
+        draw();
         event.preventDefault();
         start();
       },

@@ -208,9 +208,9 @@
 }
 .skill-atelier .skill-pill[data-grabbed="true"],
 .skill-atelier .skill-pill[data-held="true"] {
-  z-index: 3;
+  z-index: 6;
   cursor: grabbing;
-  --tile-shadow: drop-shadow(0 6px 5px #263a2730);
+  --tile-shadow: drop-shadow(0 8px 6px #263a2740);
 }
 .dark .skill-physics.skill-atelier {
   --table-paper: #1d2b23;

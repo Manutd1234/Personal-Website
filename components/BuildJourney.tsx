@@ -14,7 +14,7 @@ import {
 import { type CSSProperties, useEffect, useId, useRef, useState } from "react";
 import { useMotionPreference } from "./useMotionPreference";
 import { useVisiblePlayback } from "./useVisiblePlayback";
-import { getBuilderElbow, sampleBuilderChoreography } from "./builder-choreography";
+import { sampleBuilderChoreography } from "./builder-choreography";
 
 const STEP_DURATION_MS = 7500;
 
@@ -91,13 +91,8 @@ const steps = [
   },
 ] as const;
 
-/** Original vector artwork: a little builder assembling a software system. */
-function BuilderScene({
-  stage,
-  outgoing,
-  running,
-  settled,
-}: {
+/** One continuous workspace, with short, authored reaches over the desk. */
+function BuilderScene({ stage, outgoing, running, settled }: {
   stage: number;
   outgoing: number | null;
   running: boolean;
@@ -110,100 +105,65 @@ function BuilderScene({
     const svg = sceneRef.current;
     if (!svg) return;
     if (clock.current.stage !== stage) clock.current = { stage, elapsed: 0 };
-    const actor = svg.querySelector<SVGGElement>(".scene-builder-position");
     const head = svg.querySelector<SVGGElement>(".scene-builder-head");
-    const arms = ["right", "left"].map((side) => ({
+    const pupils = svg.querySelector<SVGGElement>(".scene-builder-gaze");
+    const arms = ["right", "left"].map(side => ({
       arm: svg.querySelector<SVGPathElement>(`[data-rig-arm="${side}"]`),
-      hand: svg.querySelector<SVGCircleElement>(`[data-rig-hand="${side}"]`),
+      sleeve: svg.querySelector<SVGPathElement>(`[data-rig-sleeve="${side}"]`),
+      hand: svg.querySelector<SVGGElement>(`[data-rig-hand="${side}"]`),
     }));
-    const pencil = svg.querySelector<SVGGElement>(".scene-builder-pencil");
-    const plug = svg.querySelector<SVGGElement>(".scene-builder-plug");
     const action = svg.querySelector<SVGGElement>(`[data-rig-stage="${stage}"]`);
     const blocks = action?.querySelectorAll<SVGGElement>("[data-rig-block]");
+    const stackRows = action?.querySelectorAll<SVGGElement>("[data-rig-stack-row]");
     const wires = action?.querySelectorAll<SVGPathElement>("[data-rig-wire]");
-    const looseWires = action?.querySelectorAll<SVGPathElement>("[data-rig-loose-wire]");
-    const sockets = action?.querySelectorAll<SVGGElement>("[data-rig-socket]");
-    const checks = action?.querySelectorAll<SVGPathElement>("[data-rig-check]");
-    const requirements = action?.querySelectorAll<SVGGElement>("[data-rig-requirement]");
+    const cables = action?.querySelectorAll<SVGPathElement>("[data-rig-cable]");
+    const plugs = action?.querySelectorAll<SVGGElement>("[data-rig-plug]");
+    const checks = action?.querySelectorAll<SVGGElement>("[data-rig-check]");
     const code = action?.querySelectorAll<SVGGElement>(".scene-code-line");
     const keys = action?.querySelectorAll<SVGRectElement>(".scene-key-flash");
-    const packet = action?.querySelector<SVGCircleElement>(".scene-packet");
-    const wireLength = wires?.[0]?.getTotalLength() ?? 0;
-    const rocket = action?.querySelector<SVGGElement>(".scene-rocket");
-    const flame = action?.querySelector<SVGPathElement>(".scene-flame");
-    const deployed = action?.querySelector<SVGGElement>(".scene-share-finish");
-    const result = action?.querySelector<SVGGElement>(".scene-build-finish");
-    const launchButton = action?.querySelector<SVGRectElement>(".scene-launch-button");
-    const stackComplete = action?.querySelector<SVGGElement>(".scene-stack-complete");
+    const pencil = action?.querySelector<SVGGElement>(".scene-builder-pencil");
+    const result = action?.querySelector<SVGGElement>(".scene-work-result");
+    const releaseBar = action?.querySelector<SVGRectElement>(".scene-release-progress");
+    const runButton = action?.querySelector<SVGRectElement>(".scene-run-button");
+    const shipButton = action?.querySelector<SVGRectElement>(".scene-ship-button");
 
-    // One clock drives hands and their objects. Updating the few SVG attributes
-    // keeps the illustration smooth without rendering the whole chapter per frame.
     const paint = (progress: number) => {
       const pose = sampleBuilderChoreography(stage, progress);
-      actor?.setAttribute("transform", `translate(${pose.bodyX} 0)`);
-      head?.setAttribute("transform", `rotate(${pose.headTilt} 111 218)`);
-      [pose.right, pose.left].forEach(([worldX, y], index) => {
-        const x = worldX - pose.bodyX;
-        const shoulderX = index === 0 ? 148 : 73;
-        const [elbowX, elbowY] = getBuilderElbow([shoulderX, 254], [x, y]);
-        arms[index].arm?.setAttribute("d", `M${shoulderX} 254L${elbowX} ${elbowY}L${x} ${y}`);
-        arms[index].hand?.setAttribute("cx", String(x));
-        arms[index].hand?.setAttribute("cy", String(y));
+      head?.setAttribute("transform", `rotate(${pose.headTilt} 163 193)`);
+      pupils?.setAttribute("transform", `translate(${pose.gaze[0]} ${pose.gaze[1]})`);
+      [pose.right, pose.left].forEach(({ shoulder: [sx, sy], elbow: [ex, ey], hand: [hx, hy] }, index) => {
+        arms[index].arm?.setAttribute("d", `M${sx} ${sy}L${ex} ${ey}L${hx} ${hy}`);
+        arms[index].sleeve?.setAttribute("d", `M${sx} ${sy}L${sx + (ex - sx) * .62} ${sy + (ey - sy) * .62}`);
+        arms[index].hand?.setAttribute("transform", `translate(${hx} ${hy})`);
       });
-      const handTransform = `translate(${pose.right[0] - pose.bodyX} ${pose.right[1]})`;
-      pencil?.setAttribute("transform", handTransform);
-      pencil?.setAttribute("visibility", stage === 0 ? "visible" : "hidden");
-      plug?.setAttribute("transform", `${handTransform} rotate(${progress >= 0.44 ? 90 : 0})`);
-      const carryingPlug = progress < 0.25 || (progress >= 0.44 && progress < 0.6);
-      plug?.setAttribute("visibility", stage === 2 && carryingPlug ? "visible" : "hidden");
-      blocks?.forEach((block, index) => {
-        const [x, y] = pose.blocks[index];
-        block.setAttribute("transform", `translate(${x} ${y})`);
-        block.style.opacity = progress >= [0.08, 0.32, 0.56][index] ? "1" : "0";
+      pencil?.setAttribute("transform", `translate(${pose.right.hand[0]} ${pose.right.hand[1]})`);
+      blocks?.forEach((block, index) => block.setAttribute("transform", `translate(${pose.blocks[index][0]} ${pose.blocks[index][1]})`));
+      stackRows?.forEach((row, index) => { row.style.opacity = progress >= [.295, .555, .815][index] ? "1" : ".28"; });
+      wires?.forEach((wire, index) => { wire.style.strokeDashoffset = String(1 - pose.wires[index]); });
+      cables?.forEach((cable, index) => {
+        const hand = pose.right.hand;
+        const point = index === 0
+          ? progress < .12 ? [244, 246] : progress < .26 ? hand : [238, 238]
+          : progress < .44 ? [266, 242] : progress < .62 ? hand : [262, 238];
+        const [x, y] = point;
+        cable.setAttribute("d", `M${405 + index * 16} 252C${350 + index * 15} 278 ${x + 30} 277 ${x} ${y + 9}`);
+        plugs?.[index]?.setAttribute("transform", `translate(${x} ${y})`);
       });
-      wires?.forEach((wire, index) => {
-        wire.style.strokeDashoffset = String(1 - pose.wires[index]);
-      });
-      sockets?.forEach((socket, index) => {
-        socket.style.opacity = progress >= [0.25, 0.6][index] ? "1" : "0";
-      });
-      looseWires?.forEach((wire, index) => {
-        const visible = index === 0 ? progress < 0.25 : progress >= 0.44 && progress < 0.6;
-        wire.style.opacity = visible ? "1" : "0";
-        const [x, y] = pose.right;
-        wire.setAttribute("d", index === 0
-          ? `M387 215C330 240 ${x + 34} ${y + 40} ${x} ${y}`
-          : `M447 254C470 340 ${x + 55} 345 ${x} ${y}`);
-      });
-      checks?.forEach((check, index) => { check.style.opacity = pose.checks > index ? "1" : "0"; });
-      requirements?.forEach((item, index) => {
-        item.style.opacity = progress >= [0.2, 0.45, 0.68][index] ? "1" : "0";
-      });
+      checks?.forEach((check, index) => { check.style.opacity = pose.checks > index ? "1" : ".16"; });
       code?.forEach((line, index) => {
-        const amount = Math.min(1, Math.max(0, (progress - (0.13 + index * 0.12)) / 0.11));
+        const amount = Math.min(1, Math.max(0, (progress - (.18 + index * .14)) / .11));
         line.style.clipPath = `inset(0 ${(1 - amount) * 100}% 0 0)`;
       });
       keys?.forEach((key, index) => {
-        const hand = index === 0 ? pose.left : pose.right;
-        key.style.opacity = pose.typing && hand[1] >= 293 ? "1" : "0";
+        const hand = index === 0 ? pose.left.hand : pose.right.hand;
+        key.style.opacity = pose.typing && hand[1] > 250.6 ? "1" : "0";
       });
-      if (packet && wires?.[0]) {
-        const point = wires[0].getPointAtLength(((Math.max(0, progress - 0.4) / 0.24) % 1) * wireLength);
-        packet.setAttribute("cx", String(point.x));
-        packet.setAttribute("cy", String(point.y));
-        packet.style.opacity = progress >= 0.4 ? "1" : "0";
-      }
-      rocket?.setAttribute("transform", `translate(0 ${34 - pose.launch * 85})`);
-      if (flame) flame.style.opacity = pose.launch > 0.02 ? "1" : "0";
-      if (deployed) deployed.style.opacity = pose.launch > 0.65 ? "1" : "0";
-      if (result) result.style.opacity = progress >= 0.72 ? "1" : "0";
-      if (stackComplete) stackComplete.style.opacity = progress >= 0.82 ? "1" : "0";
-      launchButton?.setAttribute("fill", progress >= 0.66 ? "#008363" : "#dfb857");
+      releaseBar?.setAttribute("width", String(pose.launch * 154));
+      if (result) result.style.opacity = stage === 4 ? pose.launch >= .98 ? "1" : "0" : progress >= .76 ? "1" : "0";
+      runButton?.setAttribute("fill", progress >= .23 ? "#008363" : "#d6dfc4");
+      shipButton?.setAttribute("fill", progress >= .69 ? "#008363" : "#d6dfc4");
     };
-    if (settled) {
-      paint(1);
-      return;
-    }
+    if (settled) { paint(1); return; }
     paint(clock.current.elapsed / STEP_DURATION_MS);
     if (!running) return;
     const startedAt = performance.now() - clock.current.elapsed;
@@ -214,604 +174,142 @@ function BuilderScene({
       if (clock.current.elapsed < STEP_DURATION_MS) frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(frame); };
+    return () => cancelAnimationFrame(frame);
   }, [stage, running, settled]);
 
   return (
     <div className="journey-cartoon" data-scene={stage} aria-hidden="true">
-      <div className="journey-scene-label">
-        <span>A little idea, taking shape</span>
-        <span>{steps[stage].short}</span>
-      </div>
-      <svg ref={sceneRef} viewBox="0 0 560 380" fill="none" className="journey-scene-svg">
-        <path
-          d="M31 329H529"
-          stroke="#a8b797"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <ellipse cx="155" cy="329" rx="64" ry="8" fill="#d5dfc8" />
-        <ellipse cx="365" cy="329" rx="145" ry="9" fill="#d5dfc8" />
-        <path
-          d="M47 83h12m-6-6v12M496 120h10m-5-5v10M461 48h12m-6-6v12"
-          stroke="#a4b98e"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <circle cx="199" cy="69" r="3" fill="#d4bb77" />
-        <circle cx="511" cy="241" r="3" fill="#a4b98e" />
-        {steps.map((step, sceneIndex) => (
-          <g
-            className="journey-scene-action"
-            key={step.short}
-            data-active={stage === sceneIndex}
-            data-outgoing={outgoing === sceneIndex}
-            data-rig-stage={sceneIndex}
-          >
-            {sceneIndex === 0 ? (
-              <>
-                <path
-                  d="M259 294l-15 36m200-36 15 36"
-                  stroke="#516a53"
-                  strokeWidth="7"
-                  strokeLinecap="round"
-                />
-                <rect
-                  x="219"
-                  y="86"
-                  width="266"
-                  height="212"
-                  rx="14"
-                  fill="#fffdf4"
-                  stroke="#688062"
-                  strokeWidth="2"
-                />
-                <rect
-                  x="235"
-                  y="103"
-                  width="235"
-                  height="34"
-                  rx="6"
-                  fill="#e6eddb"
-                />
-                <text x="250" y="125" className="scene-mono">
-                  requirements.md
-                </text>
-                <g data-rig-requirement="0">
-                  <circle cx="247" cy="164" r="5" fill="#dfb857" />
-                  <text x="263" y="169" className="scene-label">
-                    User & goal
-                  </text>
-                  <path
-                    d="M263 181h159"
-                    stroke="#d1d9c5"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                  />
-                </g>
-                <g data-rig-requirement="1">
-                  <circle cx="247" cy="209" r="5" fill="#dfb857" />
-                  <text x="263" y="214" className="scene-label">
-                    Rules & limits
-                  </text>
-                  <path
-                    d="M263 226h129"
-                    stroke="#d1d9c5"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                  />
-                </g>
-                <g data-rig-requirement="2">
-                  <path
-                    d="m241 253 5 5 10-12"
-                    stroke="#008363"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <text x="263" y="257" className="scene-label">
-                    Acceptance tests
-                  </text>
-                </g>
-                <g transform="translate(42 0)">
-                  <g className="scene-thought">
-                    <path
-                      d="M94 160c-17-1-29-12-29-27s13-29 32-28c8-19 39-18 49 0 20-2 34 9 34 26s-14 28-34 29H94Z"
-                      fill="#fffdf4"
-                      stroke="#a4b98e"
-                      strokeWidth="2"
-                    />
-                    <text x="112" y="144" className="scene-question">
-                      ?
-                    </text>
-                    <circle cx="108" cy="175" r="4" fill="#d1d9c5" />
-                  </g>
-                </g>
-              </>
-            ) : null}
-            {sceneIndex === 1 ? (
-              <>
-                <path
-                  d="M225 300h268"
-                  stroke="#698261"
-                  strokeWidth="6"
-                  strokeLinecap="round"
-                />
-                <g data-rig-block="0">
-                  <rect
-                    x="240"
-                    y="240"
-                    width="237"
-                    height="57"
-                    rx="8"
-                    fill="#dfc88b"
-                    stroke="#71815c"
-                    strokeWidth="2"
-                  />
-                  <text x="259" y="265" className="scene-label">
-                    Data & storage
-                  </text>
-                  <text x="259" y="284" className="scene-note">
-                    schema · consistency
-                  </text>
-                </g>
-                <g data-rig-block="1">
-                  <rect
-                    x="257"
-                    y="183"
-                    width="220"
-                    height="57"
-                    rx="8"
-                    fill="#bddcc7"
-                    stroke="#71815c"
-                    strokeWidth="2"
-                  />
-                  <text x="276" y="208" className="scene-label">
-                    Runtime & APIs
-                  </text>
-                  <text x="276" y="227" className="scene-note">
-                    compute · dependencies
-                  </text>
-                </g>
-                <g data-rig-block="2">
-                  <rect
-                    x="240"
-                    y="126"
-                    width="237"
-                    height="57"
-                    rx="8"
-                    fill="#c9dce3"
-                    stroke="#71815c"
-                    strokeWidth="2"
-                  />
-                  <text x="259" y="151" className="scene-label">
-                    UI & delivery
-                  </text>
-                  <text x="259" y="170" className="scene-note">
-                    latency · deployment
-                  </text>
-                </g>
-                <g className="scene-stack-complete">
-                  <path
-                    d="M464 66c9-20 24-27 39-20-2 23-16 38-36 40"
-                    fill="#d9e9bf"
-                    stroke="#698261"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="m469 68 6 6 15-18"
-                    stroke="#008363"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </g>
-              </>
-            ) : null}
-            {sceneIndex === 2 ? (
-              <>
-                <g stroke="#88a67a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <path data-rig-wire="0" pathLength="1" strokeDasharray="1" d="M215 169V215H387" />
-                  <path data-rig-wire="1" pathLength="1" strokeDasharray="1" d="M447 254V326H285V278H305" />
-                  <path data-rig-loose-wire="0" d="M387 215Q300 280 240 245" />
-                  <path data-rig-loose-wire="1" d="M447 254Q400 340 260 245" />
-                </g>
-                <g className="scene-arrive">
-                  <rect
-                    x="195"
-                    y="90"
-                    width="124"
-                    height="79"
-                    rx="10"
-                    fill="#fffdf4"
-                    stroke="#688062"
-                    strokeWidth="2"
-                  />
-                  <rect
-                    x="205"
-                    y="100"
-                    width="104"
-                    height="14"
-                    rx="4"
-                    fill="#dce9cd"
-                  />
-                  <text x="246" y="139" className="scene-label">
-                    UI
-                  </text>
-                  <text x="218" y="157" className="scene-note">
-                    user action
-                  </text>
-                </g>
-                <g className="scene-arrive scene-delay-one">
-                  <rect
-                    x="387"
-                    y="173"
-                    width="120"
-                    height="81"
-                    rx="10"
-                    fill="#e7d9b3"
-                    stroke="#688062"
-                    strokeWidth="2"
-                  />
-                  <text x="425" y="206" className="scene-label">
-                    API
-                  </text>
-                  <text x="400" y="227" className="scene-note">
-                    auth · domain
-                  </text>
-                </g>
-                <g className="scene-arrive scene-delay-two">
-                  <path
-                    d="M305 258v42c0 19 105 19 105 0v-42"
-                    fill="#c8dfcb"
-                    stroke="#688062"
-                    strokeWidth="2"
-                  />
-                  <ellipse
-                    cx="357.5"
-                    cy="258"
-                    rx="52.5"
-                    ry="14"
-                    fill="#e7efda"
-                    stroke="#688062"
-                    strokeWidth="2"
-                  />
-                  <text x="338" y="293" className="scene-label">
-                    Data
-                  </text>
-                </g>
-                <g className="scene-arrive scene-delay-three">
-                  <rect
-                    x="375"
-                    y="69"
-                    width="126"
-                    height="42"
-                    rx="10"
-                    fill="#fffdf4"
-                    stroke="#b1c09c"
-                    strokeWidth="2"
-                  />
-                  <text x="390" y="95" className="scene-note">
-                    error → response
-                  </text>
-                </g>
-                <circle cx="215" cy="169" r="5" fill="#dce9cd" stroke="#688062" strokeWidth="2" />
-                <circle cx="305" cy="278" r="5" fill="#dce9cd" stroke="#688062" strokeWidth="2" />
-                <g data-rig-socket="0" transform="translate(215 169)">
-                  <rect x="-5" y="2" width="10" height="14" rx="3" fill="#dfb857" stroke="#89793f" strokeWidth="1.5" />
-                  <path d="M-2 2V0m4 2V0" stroke="#46664e" strokeWidth="2" />
-                </g>
-                <g data-rig-socket="1" transform="translate(305 278) rotate(90)">
-                  <rect x="-5" y="2" width="10" height="14" rx="3" fill="#dfb857" stroke="#89793f" strokeWidth="1.5" />
-                  <path d="M-2 2V0m4 2V0" stroke="#46664e" strokeWidth="2" />
-                </g>
-                <g className="scene-connect-spark" stroke="#dfb857" strokeWidth="3" strokeLinecap="round">
-                  <path d="M205 175l-5 5m25-5 5 5m-15-25v-6" />
-                </g>
-                <circle
-                  className="scene-packet"
-                  cx="215"
-                  cy="169"
-                  r="6"
-                  fill="#008363"
-                />
-              </>
-            ) : null}
-            {sceneIndex === 3 ? (
-              <>
-                <path
-                  d="M245 312h234"
-                  stroke="#698261"
-                  strokeWidth="7"
-                  strokeLinecap="round"
-                />
-                <rect
-                  x="206"
-                  y="85"
-                  width="295"
-                  height="211"
-                  rx="12"
-                  fill="#224b3d"
-                  stroke="#688062"
-                  strokeWidth="2"
-                />
-                <path d="M207 119h293" stroke="#61816a" strokeWidth="1.5" />
-                <circle cx="224" cy="102" r="4" fill="#dfb857" />
-                <circle cx="237" cy="102" r="4" fill="#9dc898" />
-                <circle cx="250" cy="102" r="4" fill="#bfdbb6" />
-                <text x="307" y="106" className="scene-mono scene-code-muted">
-                  one-working-path.ts
-                </text>
-                <g className="scene-code-line">
-                  <text x="226" y="151" className="scene-code">
-                    const input = validate(req);
-                  </text>
-                </g>
-                <g className="scene-code-line scene-delay-one">
-                  <text x="226" y="181" className="scene-code">
-                    await authorize(user);
-                  </text>
-                </g>
-                <g className="scene-code-line scene-delay-two">
-                  <text x="226" y="211" className="scene-code">
-                    const result = await run(input);
-                  </text>
-                </g>
-                <g className="scene-code-line scene-delay-three">
-                  <text x="226" y="241" className="scene-code">
-                    return respond(result);
-                  </text>
-                  <rect
-                    className="scene-cursor"
-                    x="388"
-                    y="229"
-                    width="7"
-                    height="15"
-                    fill="#d9e9bf"
-                  />
-                </g>
-                <g className="scene-keyboard">
-                  <path
-                    d="M198 285h57l10 19h-78Z"
-                    fill="#dce9cd"
-                    stroke="#688062"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M203 291h47m-51 6h57m-45-9v12m10-12v12m10-12v12m10-12v12"
-                    stroke="#8da77e"
-                    strokeWidth="1.5"
-                  />
-                  <rect
-                    className="scene-key-flash"
-                    x="203"
-                    y="292"
-                    width="9"
-                    height="5"
-                    rx="1"
-                    fill="#dfb857"
-                  />
-                  <rect className="scene-key-flash" x="235" y="294" width="9" height="5" rx="1" fill="#dfb857" />
-                </g>
-                <g className="scene-build-finish">
-                  <rect
-                    x="273"
-                    y="268"
-                    width="166"
-                    height="39"
-                    rx="8"
-                    fill="#e7efda"
-                    stroke="#688062"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="m287 286 5 5 10-12"
-                    stroke="#008363"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <text x="312" y="292" className="scene-note">
-                    UI → API → data
-                  </text>
-                </g>
-              </>
-            ) : null}
-            {sceneIndex === 4 ? (
-              <>
-                <rect
-                  x="196"
-                  y="163"
-                  width="202"
-                  height="147"
-                  rx="12"
-                  fill="#fffdf4"
-                  stroke="#688062"
-                  strokeWidth="2"
-                />
-                <path d="M196 195h202" stroke="#ced8bd" strokeWidth="2" />
-                <text x="213" y="184" className="scene-mono">
-                  release-checks.yml
-                </text>
-                {["unit + integration", "browser journey", "build + deploy"].map(
-                  (label, index) => (
-                    <g
-                      key={label}
-                    >
-                      <circle
-                        cx="218"
-                        cy={216 + index * 34}
-                        r="9"
-                        fill="#dce9cd"
-                      />
-                      <path
-                        data-rig-check={index}
-                        d={`m213 ${216 + index * 34} 4 4 7-8`}
-                        stroke="#008363"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <text x="238" y={221 + index * 34} className="scene-note">
-                        {label}
-                      </text>
-                    </g>
-                  ),
-                )}
-                <rect className="scene-launch-button" x="204" y="310" width="28" height="16" rx="6" fill="#dfb857" stroke="#688062" strokeWidth="2" />
-                <path d="m214 318 4-4 4 4m-4-4v8" stroke="#fffdf4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <g className="scene-rocket">
-                  <path
-                    d="M424 192c-23-35-16-88 18-119 34 31 41 84 18 119Z"
-                    fill="#fffdf4"
-                    stroke="#557455"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M423 163c-20 6-26 22-24 43l25-14m36-29c20 6 26 22 24 43l-25-14"
-                    fill="#b9d8bf"
-                    stroke="#557455"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                  />
-                  <path d="M424 101q18-21 36 0l-18-28Z" fill="#008363" />
-                  <circle
-                    cx="442"
-                    cy="137"
-                    r="13"
-                    fill="#d7e5ef"
-                    stroke="#557455"
-                    strokeWidth="2"
-                  />
-                  <path
-                    className="scene-flame"
-                    d="M430 193q-5 24 12 41 17-17 12-41"
-                    fill="#dfb857"
-                  />
-                  <path d="M431 187h22v10h-22z" fill="#557455" />
-                </g>
-                <g className="scene-share-finish">
-                  <rect
-                    x="409"
-                    y="272"
-                    width="87"
-                    height="32"
-                    rx="16"
-                    fill="#dce9cd"
-                  />
-                  <circle cx="426" cy="288" r="4" fill="#008363" />
-                  <text x="438" y="293" className="scene-note">
-                    deployed
-                  </text>
-                </g>
-              </>
-            ) : null}
-          </g>
-        ))}
-        <g className="scene-builder-position" transform="translate(42 0)">
-          <g className="scene-builder">
-            <path
-              d="M84 300v24H70m65-24v24h14"
-              stroke="#46664e"
-              strokeWidth="11"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <rect
-              x="71"
-              y="242"
-              width="80"
-              height="65"
-              rx="19"
-              fill="#008363"
-              stroke="#355c43"
-              strokeWidth="2"
-            />
-            <path d="M91 243v43h40v-43" stroke="#d7e6b8" strokeWidth="3" />
-            <rect x="99" y="264" width="25" height="16" rx="4" fill="#c9dcad" />
-            <path
-              d="m106 270-4 3 4 3m11-6 4 3-4 3"
-              stroke="#355c43"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <g stroke="#8da77e" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round">
-              <path data-rig-arm="left" d="M73 254L58 281L72 289" />
-              <path data-rig-arm="right" d="M148 254L166 270L173 270" />
-            </g>
-            <circle data-rig-hand="left" cx="72" cy="289" r="6" fill="#e4eccc" />
-            <circle data-rig-hand="right" cx="173" cy="270" r="6" fill="#e4eccc" />
-            <g className="scene-builder-pencil" visibility="hidden">
-              <path d="M0 0L6-7" stroke="#dfb857" strokeWidth="7" strokeLinecap="round" />
-              <path d="M6-7L8-10" stroke="#46664e" strokeWidth="3" strokeLinecap="round" />
-            </g>
-            <g className="scene-builder-plug" visibility="hidden">
-              <rect x="-5" y="2" width="10" height="14" rx="3" fill="#dfb857" stroke="#89793f" strokeWidth="1.5" />
-              <path d="M-2 2V0m4 2V0" stroke="#46664e" strokeWidth="2" strokeLinecap="round" />
-            </g>
-            <g className="scene-builder-head">
-              <rect
-                x="77"
-                y="193"
-                width="69"
-                height="53"
-                rx="17"
-                fill="#e4eccc"
-                stroke="#557455"
-                strokeWidth="2"
-              />
-              <g className="scene-builder-eyes">
-                <circle cx="98" cy="218" r="4" fill="#355c43" />
-                <circle cx="127" cy="218" r="4" fill="#355c43" />
-              </g>
-              <path
-                d="M105 231q8 6 15-1"
-                stroke="#557455"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-              <path
-                d="M74 198c0-21 13-34 37-34s37 13 37 34"
-                fill="#dfb857"
-                stroke="#89793f"
-                strokeWidth="2"
-              />
-              <path
-                d="M105 167v22m12-22v22"
-                stroke="#b99b49"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <path
-                d="M68 199h87"
-                stroke="#89793f"
-                strokeWidth="6"
-                strokeLinecap="round"
-              />
-            </g>
-          </g>
-        </g>
-        <path
-          d="M36 326v-28m0 16c-17-4-17-17-17-17 16 0 17 17 17 17m0-7c15-5 15-18 15-18-15 3-15 18-15 18"
-          stroke="#8da77e"
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-      </svg>
-      <div className="journey-scene-captions">
+      <div className="journey-scene-label"><span>At the workbench</span><span>{steps[stage].short}</span></div>
+      <svg ref={sceneRef} viewBox="0 0 560 380" fill="none" className="journey-scene-svg scene-workspace">
+        {/* The room, person and desk persist; only the work on the desk changes. */}
+        <path d="M42 347H526" stroke="#bac5af" strokeWidth="1.5" />
+        <ellipse cx="299" cy="349" rx="209" ry="8" fill="#dce4d1" />
+        <rect x="45" y="86" width="73" height="108" rx="5" fill="#dde7d6" stroke="#b5c7ab" strokeWidth="2" />
+        <path d="M51 92H112V188H51Z" fill="#eef2e6" />
+        <path d="M81 92V188M51 137H112" stroke="#fafbf3" strokeWidth="4" />
+        <path d="M51 178C70 143 88 176 112 148V188H51Z" fill="#cfddc6" />
+        <path d="M65 196H118" stroke="#a7b99d" strokeWidth="5" strokeLinecap="round" />
+        <path d="M328 61H506" stroke="#a8b99a" strokeWidth="5" strokeLinecap="round" />
+        <path d="M342 59V35H353V59M359 59V28H371V59M377 59V38H387V59" fill="#d1ddc5" stroke="#91a689" strokeWidth="1.5" />
+        <path d="M468 59L465 40H485L482 59" fill="#c8bc94" />
+        <path d="M475 42V28M475 34C462 32 459 22 459 22C470 20 475 34 475 34M475 29C477 16 489 15 489 15C487 27 475 29 475 29" stroke="#76996e" strokeWidth="2" strokeLinecap="round" />
+
+        {/* Chair and legs, behind the workbench. */}
+        <path d="M125 209C106 197 96 209 99 230L107 274" stroke="#748879" strokeWidth="18" strokeLinecap="round" />
+        <path d="M112 279H173" stroke="#677f70" strokeWidth="16" strokeLinecap="round" />
+        <path d="M143 282V331M112 343L143 332L181 343" stroke="#6b8073" strokeWidth="5" strokeLinecap="round" />
+        <circle cx="111" cy="344" r="4" fill="#496458" /><circle cx="182" cy="344" r="4" fill="#496458" />
+        <path d="M145 268L181 292L170 329" stroke="#597467" strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M171 269L208 294L205 329" stroke="#70887a" strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M160 330L184 335L184 341H158Z" fill="#36584a" /><path d="M195 330L220 335L224 341H194Z" fill="#36584a" />
+        <path d="M120 274L113 345M494 274L506 345" stroke="#8da080" strokeWidth="9" strokeLinecap="round" />
+        <path d="M93 259H519L529 269H92Z" fill="#e1d4af" stroke="#a3ab8f" strokeWidth="1.5" />
+        <path d="M93 269H527V278H93Z" fill="#cbbb96" />
+
+        {/* A seated, three-quarter developer, with a relaxed shoulder line. */}
+        <path d="M147 196L174 197L177 213H143Z" fill="#d8b58c" />
+        <path d="M143 204C126 207 120 223 126 244L132 272C152 279 176 276 193 269L195 227C195 214 182 205 173 204L161 215Z" fill="#23866a" stroke="#3b6751" strokeWidth="1.5" />
+        <path d="M146 204L161 215L173 204L169 218L159 222Z" fill="#eef0d7" />
+        <path d="M153 220L148 263" stroke="#60a187" strokeWidth="1.5" />
+        <path d="M169 237H184V252H169Z" fill="#187658" stroke="#73ad91" strokeWidth="1" />
+        <path d="M173 243L176 246L181 240" stroke="#d7e6c7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+
+        {/* The monitor never disappears between chapters. */}
+        <rect x="295" y="82" width="224" height="161" rx="11" fill="#63796b" stroke="#486451" strokeWidth="2" />
+        <rect x="302" y="89" width="210" height="145" rx="6" fill="#f7f8ed" />
+        <path d="M302 111H512" stroke="#d7dfcd" />
+        <circle cx="314" cy="100" r="2.5" fill="#c9b76f" /><circle cx="323" cy="100" r="2.5" fill="#a0bd8b" /><circle cx="332" cy="100" r="2.5" fill="#8eac9d" />
+        <path d="M400 243V258M374 260H437" stroke="#7b9080" strokeWidth="7" strokeLinecap="round" />
+
         {steps.map((step, index) => (
-          <p
-            key={step.short}
-            className="journey-scene-caption"
-            data-active={stage === index}
-          >
-            {step.scene}
-          </p>
+          <g className="journey-scene-action" key={step.short} data-active={stage === index} data-outgoing={outgoing === index} data-rig-stage={index}>
+            {index === 0 && <>
+              <text x="348" y="103" className="scene-work-mono">requirements.md</text>
+              <text x="316" y="129" className="scene-work-title">Define the behavior</text>
+              {[['User & goal', 'Who needs this?'], ['Rules & limits', 'What must stay true?'], ['Acceptance tests', 'How do I prove it?']].map(([title, detail], row) => (
+                <g data-rig-check={row} key={title}>
+                  <path d={`M316 ${148 + row * 29}l3 3 6-7`} stroke="#168567" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <text x="332" y={150 + row * 29} className="scene-work-label">{title}</text>
+                  <text x="332" y={161 + row * 29} className="scene-work-small">{detail}</text>
+                </g>
+              ))}
+              <path d="M203 240Q222 235 242 241Q260 236 278 241L282 262Q260 257 243 263Q223 258 200 262Z" fill="#fffdf2" stroke="#a0af91" strokeWidth="1.5" />
+              <path d="M242 241L243 263M208 246L232 246M207 251L234 251M252 246L272 246M253 251L274 251" stroke="#c7d2b9" strokeWidth="1" />
+              <g className="scene-builder-pencil"><path d="M-4-9L6 7" stroke="#d5af52" strokeWidth="4" strokeLinecap="round" /><path d="M6 7L8 10" stroke="#4f6451" strokeWidth="2" strokeLinecap="round" /></g>
+            </>}
+            {index === 1 && <>
+              <text x="348" y="103" className="scene-work-mono">stack decisions</text>
+              <text x="316" y="129" className="scene-work-title">Fit the workload</text>
+              {[
+                ['Data & storage', 'schema · consistency', '#e5d6a4'],
+                ['Runtime & APIs', 'compute · dependencies', '#c7dfcd'],
+                ['UI & delivery', 'latency · deployment', '#cbdfe4'],
+              ].map(([title, detail, color], row) => <g key={title} data-rig-stack-row={row}>
+                <rect x="315" y={139 + row * 29} width="184" height="25" rx="4" fill={color} />
+                <text x="324" y={150 + row * 29} className="scene-work-label">{title}</text>
+                <text x="324" y={159 + row * 29} className="scene-work-small">{detail}</text>
+              </g>)}
+              <path d="M179 257H277" stroke="#a8b69a" strokeWidth="4" strokeLinecap="round" />
+              {['DATA', 'API', 'UI'].map((title, row) => <g key={title} data-rig-block={row}>
+                <rect x="232" y={238 - row * 16} width="38" height="16" rx="3" fill={['#e5d6a4', '#c7dfcd', '#cbdfe4'][row]} stroke="#7d9672" strokeWidth="1.4" />
+                <path d={`M237 ${242 - row * 16}H264`} stroke="#fffef7" strokeWidth="1" opacity=".6" />
+                <text x="251" y={249 - row * 16} textAnchor="middle" className="scene-tile-label">{title}</text>
+              </g>)}
+            </>}
+            {index === 2 && <>
+              <text x="348" y="103" className="scene-work-mono">system boundaries</text>
+              <path data-rig-wire="0" d="M367 140H394" pathLength="1" strokeDasharray="1" stroke="#168567" strokeWidth="2.5" />
+              <path data-rig-wire="1" d="M442 156V180" pathLength="1" strokeDasharray="1" stroke="#168567" strokeWidth="2.5" />
+              <rect x="315" y="125" width="52" height="31" rx="5" fill="#e4ecd7" stroke="#a6ba98" /><text x="341" y="143" textAnchor="middle" className="scene-work-label">UI</text>
+              <rect x="394" y="125" width="103" height="31" rx="5" fill="#e5d6a4" stroke="#b8aa78" /><text x="445" y="138" textAnchor="middle" className="scene-work-label">API · domain</text><text x="445" y="149" textAnchor="middle" className="scene-work-small">validate · authorize</text>
+              <rect x="394" y="180" width="103" height="31" rx="5" fill="#c7dfcd" stroke="#93b499" /><text x="445" y="193" textAnchor="middle" className="scene-work-label">Data</text><text x="445" y="204" textAnchor="middle" className="scene-work-small">schema · ownership</text>
+              <text x="315" y="194" className="scene-work-small">Clear contracts.</text><text x="315" y="206" className="scene-work-small">Explicit failures.</text>
+              {[0, 1].map(wire => <path key={wire} data-rig-cable={wire} stroke={wire ? '#bba969' : '#7caa91'} strokeWidth="2.5" strokeLinecap="round" />)}
+              <path d="M218 234H279L283 260H215Z" fill="#e5e9da" stroke="#99ac8b" strokeWidth="1.5" />
+              <circle cx="238" cy="244" r="5" fill="#839d85" /><circle cx="262" cy="244" r="5" fill="#b3a16d" />
+              <path d="M227 254H247M253 254H273" stroke="#b1bfa4" strokeWidth="1.5" />
+              {[0, 1].map(wire => <g key={wire} data-rig-plug={wire}><rect x="-4" y="0" width="8" height="10" rx="2" fill={wire ? '#cfb66a' : '#a5c4ad'} stroke="#6d8368" strokeWidth="1" /><path d="M-2 8V11M2 8V11" stroke="#65785d" strokeWidth="1.2" /></g>)}
+            </>}
+            {index === 3 && <>
+              <path d="M302 112H512V228Q512 234 506 234H308Q302 234 302 228Z" fill="#234b3e" />
+              <text x="348" y="103" className="scene-work-mono">one-working-path.ts</text>
+              {['validate(input);', 'authorize(user);', 'await persist(result);', 'respond(result);'].map((line, row) => <g key={line} className="scene-code-line"><text x="316" y={134 + row * 23} className="scene-work-code"><tspan fill="#80a596">{row + 1} </tspan>{line}</text></g>)}
+              <g className="scene-work-result"><circle cx="320" cy="222" r="3" fill="#add399" /><text x="330" y="225" className="scene-work-small scene-work-success">One complete path</text></g>
+              <path d="M210 241H283L293 262H203Z" fill="#dde5d2" stroke="#8ca17e" strokeWidth="1.5" />
+              <path d="M216 247H281M212 253H285M222 244L219 258M233 244L232 258M245 244V258M257 244L258 258M269 244L272 258" stroke="#b0bfa4" strokeWidth="1" />
+              <rect className="scene-key-flash" x="223" y="250" width="8" height="4" rx="1" fill="#d5b85b" /><rect className="scene-key-flash" x="253" y="250" width="8" height="4" rx="1" fill="#d5b85b" />
+            </>}
+            {index === 4 && <>
+              <text x="348" y="103" className="scene-work-mono">release checks</text>
+              <text x="316" y="129" className="scene-work-title">Prove it. Then ship.</text>
+              {['Unit & integration', 'Browser journey', 'Production build'].map((title, row) => <g key={title} data-rig-check={row}><path d={`M317 ${145 + row * 22}l3 3 6-7`} stroke="#168567" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><text x="333" y={148 + row * 22} className="scene-work-label">{title}</text></g>)}
+              <rect x="316" y="204" width="154" height="5" rx="2.5" fill="#d7e1cc" /><rect className="scene-release-progress" x="316" y="204" width="0" height="5" rx="2.5" fill="#168567" />
+              <g className="scene-work-result"><circle cx="320" cy="221" r="3" fill="#168567" /><text x="330" y="224" className="scene-work-small">Live · observe & improve</text></g>
+              <path d="M218 241H271L277 263H213Z" fill="#e4e9d7" stroke="#8ca17e" strokeWidth="1.5" />
+              <rect className="scene-run-button" x="222" y="247" width="17" height="9" rx="3" fill="#d6dfc4" /><rect className="scene-ship-button" x="251" y="247" width="17" height="9" rx="3" fill="#d6dfc4" />
+              <path d="M228 249L232 252L228 254ZM257 254V249M255 251L257 249L259 251" stroke="#69855c" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            </>}
+          </g>
         ))}
-      </div>
+
+        {/* Each arm is an authored shoulder–elbow–wrist path; no inverse rig. */}
+        {(['left', 'right'] as const).map(side => <g key={side} strokeLinecap="round" strokeLinejoin="round">
+          <path data-rig-arm={side} d={side === 'right' ? 'M190 214L212 244L244 246' : 'M166 211L184 244L218 246'} stroke={side === 'right' ? '#e5c7a1' : '#cfad87'} strokeWidth="10" />
+          <path data-rig-sleeve={side} d={side === 'right' ? 'M190 214L204 233' : 'M166 211L177 231'} stroke={side === 'right' ? '#23866a' : '#28795e'} strokeWidth="17" />
+          <g data-rig-hand={side} transform={side === 'right' ? 'translate(244 246)' : 'translate(218 246)'}><ellipse rx="5" ry="4" fill={side === 'right' ? '#e5c7a1' : '#cfad87'} /><path d="M1 1L4 3" stroke={side === 'right' ? '#e5c7a1' : '#cfad87'} strokeWidth="4" /></g>
+        </g>)}
+        <g className="scene-builder-head">
+          <path d="M140 149C140 134 149 126 164 127C184 128 190 140 188 158L196 170L188 175L186 187C182 198 164 202 151 191L144 174Z" fill="#e5c7a1" stroke="#a58b68" strokeWidth="1.2" />
+          <path d="M141 170C133 164 133 149 137 138C142 123 158 119 176 125C189 129 195 139 190 151L184 145L180 137C167 143 154 140 149 153L146 174Z" fill="#38574a" />
+          <path d="M144 134C154 127 167 127 178 133" stroke="#5b7362" strokeWidth="2" strokeLinecap="round" />
+          <ellipse cx="147" cy="170" rx="6" ry="8" fill="#dfbc94" /><path d="M149 166Q143 166 147 174" stroke="#b39772" strokeWidth="1" strokeLinecap="round" />
+          <path d="M173 154L181 155" stroke="#4f5f48" strokeWidth="2" strokeLinecap="round" />
+          <g className="scene-builder-eyes"><g className="scene-builder-gaze"><ellipse cx="178" cy="163" rx="2.3" ry="2.5" fill="#385346" /></g></g>
+          <path d="M179 184Q184 185 187 181" stroke="#9d7c5b" strokeWidth="1.5" strokeLinecap="round" />
+        </g>
+        <path d="M472 248V232H491V248Q482 254 472 248Z" fill="#ecdfbb" stroke="#a9ae8e" strokeWidth="1.3" /><path d="M491 235H495Q501 240 494 245H491" stroke="#a9ae8e" strokeWidth="1.6" />
+      </svg>
+      <div className="journey-scene-captions">{steps.map((step, index) => <p key={step.short} className="journey-scene-caption" data-active={stage === index}>{step.scene}</p>)}</div>
     </div>
   );
 }

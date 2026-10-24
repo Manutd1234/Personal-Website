@@ -127,14 +127,19 @@ const positionBefore = { ...contained.position };
 physics.containSkillBody(Matter, contained, 980, 603);
 assert.deepEqual(contained.position, positionBefore, "Containment must ignore predictive bounds");
 
-// A free label follows the pointer, then stops at a real neighbour instead of
-// being pinned in place or passing through it when the pointer jumps far away.
+// Pointer pickup must pass freely over another label, then re-enter only in
+// clear space. The old drag sweep stopped at its neighbour, trapping buried
+// labels in a pile. Keyboard nudges deliberately retain that conservative rule.
 const draggable = makeBody({ width: 80, height: 30 }, { x: 100, y: 100 }, 0);
-for (let step = 0; step < 30; step += 1) physics.steerSkillBody(Matter, draggable, { x: 200, y: 100 }, [draggable], 980, 603);
-assert.ok(Math.abs(draggable.position.x - 200) < 0.1, "A free label must follow the pointer");
 const blocker = makeBody({ width: 80, height: 30 }, { x: 300, y: 100 }, 1);
-for (let step = 0; step < 100; step += 1) physics.steerSkillBody(Matter, draggable, { x: 800, y: 100 }, [draggable, blocker], 980, 603);
-assert.ok(draggable.position.x > 200 && draggable.position.x <= 300 - 80 - physics.SKILL_COLLISION_PADDING * 2 + 0.1, "Dragging must approach and stop at its neighbour");
+physics.positionHeldSkillBody(Matter, draggable, { x: 300, y: 100 }, 980, 603);
+assert.ok(Math.abs(draggable.position.x - 300) < 0.1, "A lifted label must reach the pointer even above an occupied label");
+assert.ok(physics.placeReleasedSkillBody(Matter, draggable, [draggable, blocker], 980, 603), "A lifted label must find free space on release");
+assert.ok(draggable.position.y < blocker.bounds.min.y, "Releasing above another label must place it on top of the pile");
+checkBodies([draggable, blocker], [{ width: 80, height: 30 }, { width: 80, height: 30 }], 980, 603, "pointer release");
+Matter.Body.setPosition(draggable, { x: 200, y: 100 });
+for (let step = 0; step < 100; step += 1) physics.moveSkillBody(Matter, draggable, { x: 12, y: 0 }, [draggable, blocker], 980, 603);
+assert.ok(draggable.position.x > 200 && draggable.position.x <= 300 - 80 - physics.SKILL_COLLISION_PADDING * 2 + 0.1, "Keyboard nudging must stop at its neighbour");
 
 // A lone label must reach the floor, and a previously resting label must fall
 // when its support is removed. These fail when Matter leaves it asleep in air.
@@ -263,14 +268,39 @@ for (const [name, width, frameHeight, scale] of [["desktop", 980, 603, 1], ["nar
     const pileHeight = height - physics.SKILL_WORLD_INSET - Math.min(...dropped.flatMap((body) => body.vertices.map((vertex) => vertex.y)));
     const naturalUpsideDown = dropped.filter((body) => Math.cos(body.angle) < 0).length;
 
-    // Stress a complete natural pile with fast pointer targets and a fling.
+    // Extract a genuinely buried label from a complete natural pile. Its held
+    // visual is intentionally above the other labels, outside the collision
+    // plane; every unheld label must remain non-overlapping throughout.
+    const held = dropped.reduce((lowest, body) => body.position.y > lowest.position.y ? body : lowest);
+    const buriedY = held.position.y;
+    Matter.Composite.remove(engine.world, held);
+    physics.positionHeldSkillBody(Matter, held, { x: width / 2, y: Math.max(100, buriedY - 300) }, width, height);
+    assert.ok(held.position.y < buriedY - 250, `${context}: a buried label must lift immediately, not wait for neighbours to move`);
+    assert.equal(Matter.Composite.allBodies(engine.world).includes(held), false, "The held label must be outside the collision plane");
     for (let step = 0; step < 1200; step += 1) {
-      if (step < 600) physics.steerSkillBody(Matter, dropped[4], {
+      if (step < 600) physics.positionHeldSkillBody(Matter, held, {
         x: width * (0.1 + 0.8 * Math.sin(step / 80) ** 2), y: height - 18,
-      }, dropped, width, height);
-      if (step === 600) Matter.Body.setVelocity(dropped[4], { x: 30, y: -30 });
+      }, width, height);
+      if (step === 600) {
+        if (!physics.placeReleasedSkillBody(Matter, held, dropped, width, height)) {
+          const bodyHeight = held.bounds.max.y - held.bounds.min.y;
+          Matter.Composite.remove(engine.world, walls);
+          height += Math.max(64, Math.ceil(bodyHeight) + 24);
+          walls = physics.createSkillWalls(Matter, width, height);
+          Matter.Composite.add(engine.world, walls);
+          physics.positionHeldSkillBody(Matter, held, {
+            x: held.position.x, y: height - bodyHeight / 2 - 12,
+          }, width, height);
+        }
+        checkBodies(dropped, sizes, width, height, `${context}: before reinsertion`);
+        Matter.Composite.add(engine.world, held);
+        Matter.Body.setVelocity(held, { x: 30, y: -30 });
+      }
       update(engine, dropped, width, height);
-      if (step % 2 === 0) worst = Math.max(worst, checkBodies(dropped, sizes, width, height, `${context}: drag/fling ${step}`));
+      if (step % 2 === 0) worst = Math.max(worst, checkBodies(
+        step < 600 ? dropped.filter((body) => body !== held) : dropped,
+        sizes, width, height, `${context}: pickup/release/fling ${step}`,
+      ));
     }
     // Every label receives four large keyboard moves into its neighbours.
     for (const body of dropped) {

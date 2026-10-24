@@ -158,7 +158,9 @@ const recordsFor = (title: string): readonly AwardRecord[] =>
 // Keep the historical milestones in the source records, while the app
 // collection follows Ian's selection of awards to feature here.
 const hiddenSchoolApps = new Set(["Piano Grade 3 · Merit", "SwimSafer Gold"]);
-const hiddenCredentialProviders = new Set(["Anthropic", "Databricks Academy", "Cisco"]);
+const hiddenCredentialProviders = new Set([
+  "Anthropic", "Databricks Academy", "Cisco", "DataCamp",
+]);
 const schoolRecords = recordsFor("Academic & sporting awards").filter(
   (record) => !hiddenSchoolApps.has(record.title),
 );
@@ -209,6 +211,7 @@ const categories: readonly {
     records: certifications.filter((record) => !hiddenCredentialProviders.has(record.issuer)),
   },
 ];
+const displayedCategories = categories.filter((category) => category.records.length > 0);
 const slug = (text: string) =>
   text
     .normalize("NFKD")
@@ -621,7 +624,11 @@ export default function TrophyRoom() {
       setSelected(null);
       const next = hashFilters[window.location.hash.toLowerCase()];
       if (next) {
-        setFilter(next);
+        setFilter(
+          next === "all" || displayedCategories.some((category) => category.id === next)
+            ? next
+            : "all",
+        );
         setQuery("");
         appsRef.current?.scrollTo({ top: 0, behavior: "instant" });
       }
@@ -824,7 +831,7 @@ export default function TrophyRoom() {
           </div>
           <nav className="award-tablet-dock" aria-label="Filter the award apps">
             {(
-              [{ id: "all", label: "All", icon: Award }, ...categories] as const
+              [{ id: "all", label: "All", icon: Award }, ...displayedCategories] as const
             ).map((category) => {
               const Icon = category.icon;
               const count =

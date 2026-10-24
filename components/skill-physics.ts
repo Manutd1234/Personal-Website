@@ -134,20 +134,63 @@ export function limitSkillVelocity(matter: MatterLibrary, body: Body) {
     });
 }
 
-// Sweep toward the pointer through free space. Repeatedly forcing velocity or
-// a mouse constraint into an immovable pile compresses neighbouring cards.
-export function steerSkillBody(
+// A picked-up paper label lives above the pile until release. Its body is
+// temporarily removed from the engine by the controller, so a buried label can
+// follow the pointer without having to push every supporting label out first.
+export function positionHeldSkillBody(
   matter: MatterLibrary,
   body: Body,
   target: Vector,
+  width: number,
+  height: number,
+) {
+  const halfWidth = (Math.max(...body.vertices.map((point) => point.x)) -
+    Math.min(...body.vertices.map((point) => point.x))) / 2;
+  const halfHeight = (Math.max(...body.vertices.map((point) => point.y)) -
+    Math.min(...body.vertices.map((point) => point.y))) / 2;
+  const inset = SKILL_WORLD_INSET + 1;
+  matter.Body.setVelocity(body, { x: 0, y: 0 });
+  matter.Body.setAngularVelocity(body, 0);
+  matter.Body.setPosition(body, {
+    x: Math.max(inset + halfWidth, Math.min(width - inset - halfWidth, target.x)),
+    y: Math.max(inset + halfHeight, Math.min(height - inset - halfHeight, target.y)),
+  });
+}
+
+// Rejoin the physical pile only in empty space. Releasing over other labels
+// first tries the pointer's column, above the nearby contacts, then the free
+// space along the top. No existing label is moved or rearranged by this search.
+// A full board returns false so its floor can be extended before reinsertion.
+export function placeReleasedSkillBody(
+  matter: MatterLibrary,
+  body: Body,
   obstacles: readonly Body[],
   width: number,
   height: number,
 ) {
-  const dx = target.x - body.position.x;
-  const dy = target.y - body.position.y;
-  const scale = Math.min(1, 4 / Math.max(1, Math.hypot(dx, dy)));
-  moveSkillBody(matter, body, { x: dx * scale, y: dy * scale }, obstacles, width, height);
+  const others = obstacles.filter((other) => other !== body);
+  positionHeldSkillBody(matter, body, body.position, width, height);
+  const target = { ...body.position };
+  const halfWidth = (body.bounds.max.x - body.bounds.min.x) / 2;
+  const halfHeight = (body.bounds.max.y - body.bounds.min.y) / 2;
+  const top = SKILL_WORLD_INSET + halfHeight + 1;
+  const left = SKILL_WORLD_INSET + halfWidth + 1;
+  const right = width - left;
+  const clear = (x: number, y: number) => {
+    matter.Body.setPosition(body, { x, y });
+    return matter.Query.collides(body, others).every((hit) => hit.depth <= 0.1);
+  };
+  const heights = [target.y, top, ...others.map((other) => other.bounds.min.y - halfHeight - 1)]
+    .filter((y) => y >= top && y <= target.y)
+    .sort((a, b) => b - a);
+  for (const y of heights) if (clear(target.x, y)) return true;
+  const columns = [left, right, ...others.flatMap((other) => [
+    other.bounds.min.x - halfWidth - 1, other.bounds.max.x + halfWidth + 1,
+  ])].filter((x) => x >= left && x <= right)
+    .sort((a, b) => Math.abs(a - target.x) - Math.abs(b - target.x));
+  for (const x of columns) if (clear(x, top)) return true;
+  matter.Body.setPosition(body, target);
+  return false;
 }
 
 // Keyboard movement is swept in small increments, stopping at another card
