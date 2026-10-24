@@ -6,7 +6,7 @@ import type {
   Body as PhysicsBody,
   Constraint as PhysicsConstraint,
 } from "matter-js";
-import { ArrowDown, ChevronDown, List, RotateCcw } from "lucide-react";
+import { ArrowDown, List, RotateCcw } from "lucide-react";
 import { skillGroups } from "@/content/portfolio";
 import { useMotionPreference } from "./useMotionPreference";
 import { containSkillBody, createSkillWalls } from "./skill-physics";
@@ -27,10 +27,6 @@ const skills = skillGroups
   .sort(
     (a, b) => a.itemIndex - b.itemIndex || a.categoryIndex - b.categoryIndex,
   );
-// Stable forms keep labels recognisable between drops; only their placement changes.
-const paperForms = ["scrap", "ticket", "pebble", "tag"] as const;
-const paperForm = (index: number) =>
-  paperForms[(index * 7 + Math.floor(index / 5)) % paperForms.length];
 const STEP = 1000 / 60;
 const clamp = (value: number, low: number, high: number) =>
   Math.min(high, Math.max(low, value));
@@ -249,7 +245,8 @@ export default function SkillsSandbox({
         Body.setAngle(body, 0);
       } else {
         const size = sizes[index];
-        const angle = (Math.random() - 0.5) * 0.58;
+        // A little tilt keeps the pile playful without turning labels sideways.
+        const angle = (Math.random() - 0.5) * 0.32;
         const halfWidth =
           (Math.abs(Math.cos(angle)) * size.width +
             Math.abs(Math.sin(angle)) * size.height) /
@@ -290,7 +287,7 @@ export default function SkillsSandbox({
         }
         if (!clear) return false;
       }
-      Body.setAngularVelocity(body, atHome ? 0 : (Math.random() - 0.5) * 0.012);
+      Body.setAngularVelocity(body, 0);
       Body.setVelocity(body, {
         x: atHome ? 0 : (Math.random() - 0.5) * 0.9,
         y: 0,
@@ -424,18 +421,17 @@ export default function SkillsSandbox({
       }));
       Composite.add(engine.world, createSkillWalls(matter!, width, height));
       bodies = sizes.map((size, index) => {
-        const form = paperForm(index);
-        const softness =
-          form === "pebble" ? 0.9 : form === "tag" ? 0.45 : 0.15;
         return Bodies.rectangle(
           homes[index].x,
           homes[index].y,
           size.width,
           size.height,
           {
-            chamfer: { radius: Math.max(3, (size.height / 2 - 1) * softness) },
+            chamfer: { radius: 8 },
+            // Free translation and gentle collisions; stable text orientation.
+            inertia: Infinity,
             density: 0.0011 + (index % 5) * 0.00008,
-            restitution: 0.04 + softness * 0.055,
+            restitution: 0.06,
             friction: 0.52 + (index % 4) * 0.035,
             frictionStatic: 0.82,
             frictionAir: 0.018 + (index % 5) * 0.002,
@@ -713,7 +709,7 @@ export default function SkillsSandbox({
       <p className="sr-only" id={`${prefix}-instructions`}>
         {skills.length} skills across {skillGroups.length} categories.{" "}
         {still
-          ? "A settled view of every skill. Use arrow keys to browse, or open the full list below."
+          ? "A settled view of every skill. Use arrow keys to browse."
           : "Drag and release a label, or tap to pick it up before dragging on touch. The filters above highlight matching skills."}
       </p>
       <div className="skill-physics-toolbar">
@@ -769,7 +765,6 @@ export default function SkillsSandbox({
               pillRefs.current[index] = element;
             }}
             data-tone={skill.categoryIndex}
-            data-paper={paperForm(index)}
             data-long={skill.label.length > 18}
             data-lit={matchingIndices.has(index)}
             data-filtering={filtering}
@@ -807,32 +802,11 @@ export default function SkillsSandbox({
           </button>
         ))}
       </div>
-      <details className="skill-physics-help">
-        <summary>Keyboard controls</summary>
-        <p className="skill-physics-keyboard" id={`${prefix}-keyboard`}>
-          {still
-            ? "Arrow keys browse skills. Page Up / Page Down choose the previous or next label."
-            : "Tab into the board. Arrow keys move a skill; Shift moves it further. Page Up / Page Down switch skills. Esc releases."}
-        </p>
-      </details>
-      <details className="skill-physics-list">
-        <summary>
-          Read all {skills.length} skills{" "}
-          <ChevronDown size={17} aria-hidden="true" />
-        </summary>
-        <div>
-          {skillGroups.map((group, groupIndex) => (
-            <section key={group.label} data-tone={groupIndex}>
-              <h4>{group.label}</h4>
-              <ul>
-                {group.items.map((label) => (
-                  <li key={label}>{label}</li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
-      </details>
+      <p className="sr-only" id={`${prefix}-keyboard`}>
+        {still
+          ? "Arrow keys browse skills. Page Up / Page Down choose the previous or next label."
+          : "Tab into the board. Arrow keys move a skill; Shift moves it further. Page Up / Page Down switch skills. Esc releases. Use Lay them out for a neatly arranged view."}
+      </p>
       <span className="sr-only" role="status" aria-live="polite">
         {announcement}
       </span>

@@ -6,7 +6,7 @@ export const awardIconPreviews: Readonly<Record<string, string | undefined>> = {
     "images/award-icons/hack-the-future-event.webp",
   "images/portfolio/dealmachine-pipeline.webp":
     "images/award-icons/dealmachine-pipeline.webp",
-  "images/logos/sunnyhacks.webp": "images/award-icons/sunnyhacks.webp",
+  "images/logos/sunnyhacks-original.webp": "images/award-icons/sunnyhacks-hq.webp",
   "images/portfolio/signmeup-gesture-demo.webp":
     "images/award-icons/signmeup-gesture-demo.webp",
   "images/logos/moe.webp": "images/award-icons/moe.webp",

@@ -179,93 +179,11 @@
   outline: 3px solid #174d30;
   outline-offset: 2px;
 }
-.skill-physics-help {
-  margin-top: 8px;
-  color: #627452;
-  font: 400 11px/1.8 var(--classic-display);
-}
-.skill-physics-help > summary {
-  display: flex;
-  min-height: 44px;
-  width: fit-content;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  list-style: none;
-}
-.skill-physics-help > summary::-webkit-details-marker {
-  display: none;
-}
-.skill-physics-help > summary::after {
-  content: "+";
-  font-size: 15px;
-}
-.skill-physics-help[open] > summary::after {
-  content: "−";
-}
-.skill-physics-keyboard {
-  margin-top: 0;
-  margin-bottom: 10px;
-  color: #627452;
-  font: 400 10px/1.8 var(--classic-display);
-}
-.skill-physics-list {
-  margin-top: 20px;
-  border-top: 1px solid #c7dabb;
-}
-.skill-physics-list > summary {
-  display: flex;
-  min-height: 56px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
-  color: #2f6340;
-  font: 650 13px/1.5 var(--classic-display);
-}
-.skill-physics-list > summary > svg {
-  transition: transform 0.2s;
-}
-.skill-physics-list[open] > summary > svg {
-  transform: rotate(180deg);
-}
-.skill-physics-list > div {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 22px;
-  padding: 9px 0;
-}
-.skill-physics-list section {
-  min-width: 0;
-}
-.skill-physics-list h4 {
-  color: #315b3c;
-  font: 700 13px/1.5 var(--classic-display);
-}
-.skill-physics-list ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 8px;
-  margin-top: 10px;
-  padding: 0;
-  list-style: none;
-}
-.skill-physics-list li {
-  padding: 4px 7px;
-  border: 1px solid #c1d6b9;
-  border-radius: 5px;
-  background: #f9fff2;
-  color: #3d5e37;
-  font: 500 10px/1.6 var(--font-mono);
-}
 .dark .skill-physics {
   border-color: #527044;
   background: #1d3020;
   color: #d8e6ca;
   box-shadow: 0 5px 0 #15271a;
-}
-.dark .skill-physics-help,
-.dark .skill-physics-keyboard {
-  color: #a6bb93;
 }
 .dark .skill-physics-toolbar button {
   border-color: #58734b;
@@ -298,24 +216,9 @@
 .dark .skill-physics .skill-pill:focus-visible {
   outline-color: #e7f6bd;
 }
-.dark .skill-physics-list {
-  border-color: #48633d;
-}
-.dark .skill-physics-list > summary,
-.dark .skill-physics-list h4 {
-  color: #c1dca4;
-}
-.dark .skill-physics-list li {
-  border-color: #48633d;
-  background: #293f27;
-  color: #cde2ba;
-}
 @media (max-width: 620px) {
   .skill-physics {
     padding: 16px;
-  }
-  .skill-physics-list > div {
-    grid-template-columns: minmax(0, 1fr);
   }
   .skill-physics-world {
     gap: 6px;

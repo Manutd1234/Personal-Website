@@ -22,6 +22,7 @@ export const cardTypes: Readonly<Record<CardType, { label: string }>> = {
 
 // Highlights condense real résumé bullets. Real results are marked **like this**.
 export type CardMove = { name: string; text: string };
+type FiveSkills = readonly [string, string, string, string, string];
 
 // Official logos, saved locally under public/images/logos from the source noted
 // above each entry. A logo drawn for dark backgrounds sets `dark` so its panel
@@ -137,7 +138,7 @@ export type TradingCardData = {
   moves: readonly CardMove[];
   summary?: string;
   bullets: readonly string[];
-  tags: readonly string[];
+  skills: FiveSkills;
   note?: string;
   certificates: readonly string[];
 };
@@ -662,7 +663,122 @@ const details: Readonly<Record<string, CardDetails>> = {
   },
 };
 
-// Notes and tags from the original role browser now sit on the card backs.
+// Skills are curated per record rather than guessed from keywords. Work skills
+// use the résumé and LinkedIn's role associations reviewed on 24 October 2026.
+// Education, CCA and service skills describe practice in the documented courses
+// and activities; they are not claims of certification or expert proficiency.
+const skillsLearned: Readonly<Record<string, FiveSkills>> = {
+  "Caerus Global Management": [
+    "Python", "Quantitative research", "Data analysis", "Financial markets", "ETL pipelines",
+  ],
+  "Stealth Startup": [
+    "React Native", "TypeScript", "Production engineering", "Software testing", "Grafana",
+  ],
+  "CTES Consulting": [
+    "Python", "TypeScript", "Node.js", "SQL", "AWS",
+  ],
+  Accenture: [
+    "Python", "Retrieval-augmented generation", "Java", "PEGA", "Power Automate",
+  ],
+  "D+A Strategies": [
+    "Python", "Backtrader", "Time-series forecasting", "Backtesting", "Risk analysis",
+  ],
+  "Republic of Singapore Air Force": [
+    "Leadership", "Project management", "Radio communications", "Equipment readiness", "Cross-team coordination",
+  ],
+  "Singapore Army": [
+    "IP networking", "Cisco networking", "Leadership", "Tactical communications", "Teamwork",
+  ],
+  "National University of Singapore": [
+    "Programming methodology", "Data structures & algorithms", "Discrete mathematics", "Linear algebra", "Probability & statistics",
+  ],
+  "Eunoia Junior College": [
+    "Mathematics", "Physics", "Chemistry", "Economics", "Collaborative project work",
+  ],
+  "School of Science and Technology, Singapore": [
+    "Mathematical reasoning", "Scientific inquiry", "Problem solving", "Presentation", "Teamwork",
+  ],
+  "Bukit Timah Primary School": [
+    "Numeracy", "Logical reasoning", "Problem solving", "Teamwork", "Learning discipline",
+  ],
+  "NUS Student Investment Fund": [
+    "Python / NumPy", "Portfolio risk modelling", "Terraform / AWS", "Data visualisation", "Technical collaboration",
+  ],
+  "NUS MedTech · PneuRelief": [
+    "React Native / Expo", "TypeScript", "BLE integration", "FastAPI", "Technical collaboration",
+  ],
+  "Google Developer Group @ NUS Computing": [
+    "React / TypeScript", "FastAPI / Pydantic", "PostgreSQL", "Regression testing", "Technical collaboration",
+  ],
+  "NUS Fintech Society": [
+    "scikit-learn", "Data preprocessing", "Model evaluation", "Reproducible experiments", "Analytical reasoning",
+  ],
+  "NUS Games Development Group": [
+    "Unity", "C#", "Procedural rendering", "State management", "Technical collaboration",
+  ],
+  "NUSSU VENtures": [
+    "Event planning", "Venue coordination", "Resource planning", "Stakeholder communication", "Teamwork",
+  ],
+  "RunNUS · NUS Sports Club": [
+    "Budgeting", "Financial tracking", "Vendor procurement", "Event administration", "Team coordination",
+  ],
+  "SunNUS · NUS Sports Club": [
+    "Tournament scheduling", "Event logistics", "Venue coordination", "Team communication", "Organisation",
+  ],
+  "NUS Varsity Christian Fellowship": [
+    "Active listening", "Peer communication", "Community participation", "Mutual support", "Collaboration",
+  ],
+  "Eunoia Junior College · Softball": [
+    "Softball fundamentals", "Teamwork", "On-field communication", "Training discipline", "Resilience",
+  ],
+  "School of Science and Technology · Class leadership": [
+    "Leadership", "Class coordination", "Peer communication", "Responsibility", "Teamwork",
+  ],
+  "School of Science and Technology · Football": [
+    "Football fundamentals", "Teamwork", "On-field communication", "Training discipline", "Sportsmanship",
+  ],
+  "School of Science and Technology · Mathematics Society": [
+    "Mathematical reasoning", "Pattern recognition", "Problem decomposition", "Time management", "Perseverance",
+  ],
+  "Bukit Timah Primary School · Mathematics Olympiad": [
+    "Logical reasoning", "Numerical fluency", "Pattern recognition", "Problem solving", "Learning discipline",
+  ],
+  "Bukit Timah Primary School · Football": [
+    "Football fundamentals", "Teamwork", "Communication", "Discipline", "Sportsmanship",
+  ],
+  "Project BHID · NUS Community Service Club": [
+    "Empathy", "Inclusive programme design", "Volunteer mentoring", "Adaptable communication", "Team leadership",
+  ],
+  "Project CUP · NUS Rotaract Club": [
+    "Activity facilitation", "Clear communication", "Patience", "Adaptability", "Teamwork",
+  ],
+  "Programming for Kids · Youth Corps Singapore": [
+    "Teaching", "Simplifying concepts", "Patience", "Adaptable communication", "Learner encouragement",
+  ],
+  "EJC Softball VIA · Tembusu Home for the Aged": [
+    "Empathy", "Remote facilitation", "Communication", "Teamwork", "Adaptability",
+  ],
+  "Promote Literacy for Children in CARE SG": [
+    "Clear communication", "Active listening", "Patience", "Learner encouragement", "Activity facilitation",
+  ],
+  "MINDS · Secondary 3 Service Learning": [
+    "Empathy", "Inclusive communication", "Patience", "Activity facilitation", "Teamwork",
+  ],
+  "Willing Hearts": [
+    "Teamwork", "Reliability", "Attention to detail", "Time management", "Community awareness",
+  ],
+  "#SST-ACTvocates": [
+    "Teamwork", "Communication", "Responsibility", "Community awareness", "Reflection",
+  ],
+  "Dwen An Social Welfare Foundation · Taiwan": [
+    "Cross-cultural communication", "Cultural awareness", "Adaptability", "Teamwork", "Empathy",
+  ],
+  "West Coast Park beach cleanup": [
+    "Teamwork", "Environmental awareness", "Responsibility", "Attention to detail", "Community participation",
+  ],
+};
+
+// Context from the original role browser remains on the card backs.
 const engineeringNotes: Readonly<Record<string, string>> = {
   "Caerus Global Management":
     "Research started with sequence-checked, recoverable market data.",
@@ -679,34 +795,6 @@ const engineeringNotes: Readonly<Record<string, string>> = {
   "Singapore Army":
     "Leadership training was paired with tactical networking and signals work.",
 };
-
-const technologyMatchers: readonly { label: string; pattern: RegExp }[] = [
-  { label: "Python", pattern: /\bpython\b/i },
-  { label: "TypeScript", pattern: /\btypescript\b/i },
-  { label: "React Native", pattern: /react native/i },
-  { label: "React", pattern: /react\//i },
-  { label: "Playwright", pattern: /playwright/i },
-  { label: "SQL", pattern: /\bsql\b/i },
-  { label: "PostgreSQL", pattern: /postgresql/i },
-  { label: "Express", pattern: /express/i },
-  { label: "AWS", pattern: /\baws\b/i },
-  { label: "Cognito", pattern: /cognito/i },
-  { label: "Grafana", pattern: /grafana/i },
-  { label: "Azure DevOps", pattern: /azure devops/i },
-  { label: "BM25", pattern: /bm25/i },
-  { label: "Backtrader", pattern: /backtrader/i },
-  { label: "pandas / NumPy", pattern: /pandas\/numpy/i },
-  { label: "Market data", pattern: /market-data|l2 books/i },
-  { label: "Backtesting", pattern: /backtest/i },
-  { label: "Feed recovery", pattern: /feed recovery/i },
-  { label: "Communications", pattern: /communications/i },
-  { label: "Tactical networking", pattern: /tactical networking/i },
-];
-const technologiesIn = (text: string) =>
-  technologyMatchers
-    .filter(({ pattern }) => pattern.test(text))
-    .map(({ label }) => label)
-    .slice(0, 6);
 
 type SourceRecord = {
   org: string;
@@ -750,7 +838,10 @@ function buildDeck(
     label,
     cards: records.map((record, index) => {
       const card = details[record.org] ?? fallbackDetails(id, record);
-      const text = `${record.summary ?? ""} ${record.bullets.join(" ")}`;
+      const skills = skillsLearned[record.org];
+      if (!skills) {
+        throw new Error(`Add five evidence-based skills for ${record.org}.`);
+      }
       return {
         id: `${id}-${index}`,
         number: index + 1,
@@ -765,7 +856,7 @@ function buildDeck(
         moves: card.moves,
         summary: record.summary,
         bullets: record.bullets,
-        tags: id === "work" ? technologiesIn(text) : [],
+        skills,
         note: engineeringNotes[record.org],
         certificates: card.certificates ?? [],
       };

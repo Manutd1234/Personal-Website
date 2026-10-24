@@ -369,21 +369,22 @@ export default function TradingCard({
                 tabIndex={tabbable ? 0 : -1}
                 aria-label={`${card.org} details`}
               >
+                <section
+                  className="tcg-skills"
+                  aria-label={`${card.org}: skills learned`}
+                >
+                  <h4>Skills learned</h4>
+                  <ul className="tcg-skill-list">
+                    {card.skills.map((skill) => (
+                      <li key={skill}>{skill}</li>
+                    ))}
+                  </ul>
+                </section>
                 {card.summary || card.bullets.length ? (
                   <ul className="tcg-back-list" aria-label="What I did">
                     {card.summary ? <li>{card.summary}</li> : null}
                     {card.bullets.map((bullet) => (
                       <li key={bullet}>{bullet}</li>
-                    ))}
-                  </ul>
-                ) : null}
-                {card.tags.length ? (
-                  <ul
-                    className="tcg-back-tags"
-                    aria-label={`${card.org} tools and practices`}
-                  >
-                    {card.tags.map((tag) => (
-                      <li key={tag}>{tag}</li>
                     ))}
                   </ul>
                 ) : null}

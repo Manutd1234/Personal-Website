@@ -1,9 +1,10 @@
-/* Readable paper spreads; the 3D object lives in the companion inspection view. */
+/* Full-width paper spreads with a single, continuous reading interaction. */
 .project-book-reader {
   --reader-paper: #fffaf0;
   --reader-ink: #213f32;
   --reader-muted: #66745f;
   color: var(--reader-ink);
+  position: relative;
   width: 100%;
   min-width: 0;
   max-width: 1080px;
@@ -24,12 +25,38 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+.reader-contents {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  color: var(--leaf-text-muted, #66745f);
+  font: 11px/1.5 var(--font-body, sans-serif);
+}
+.reader-contents select {
+  max-width: min(70%, 290px);
+  min-height: 38px;
+  padding: 7px 30px 7px 11px;
+  border: 1px solid #94a48070;
+  border-radius: 5px;
+  color: var(--leaf-text, #2d523e);
+  background: #fffaf0;
+  font: 11px/1.5 var(--font-mono, monospace);
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.reader-contents select:focus-visible {
+  outline: 2px solid #337754;
+  outline-offset: 3px;
+}
 .reader-spread {
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   isolation: isolate;
   perspective: 2400px;
+  touch-action: pan-y;
   border-radius: 4px 10px 10px 4px;
   background: #d4c5a5;
   box-shadow:
@@ -141,14 +168,23 @@
   list-style: none;
 }
 .reader-highlights li {
-  display: grid;
-  grid-template-columns: 26px minmax(0, 1fr);
-  gap: 10px;
-  margin-bottom: 25px;
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 26px;
 }
-.reader-highlights li > span {
-  color: #929b75;
-  font: 10px/1.9 var(--font-mono, monospace);
+.reader-highlights li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.65em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7f9669;
+}
+.reader-highlights strong {
+  font-weight: 650;
+  color: #244c37;
 }
 .reader-highlights p {
   margin: 0;
@@ -247,7 +283,7 @@
   transform-style: preserve-3d;
   transform-origin: left center;
   pointer-events: none;
-  animation: reader-turn-forward 720ms cubic-bezier(0.36, 0.05, 0.23, 1) both;
+  animation: reader-turn-forward 560ms cubic-bezier(0.36, 0.05, 0.23, 1) both;
 }
 .reader-turning-leaf[data-direction="previous"] {
   inset: 0 50% 0 0;
@@ -412,4 +448,21 @@
 }
 .dark .project-book-reader .reader-page-count > span {
   opacity: 0.8;
+}
+
+/* Measure the next spread before turning, so long bullets never clip a leaf. */
+.project-book-reader .reader-measure-spread {
+  position: absolute;
+  inset: 0 0 auto;
+  visibility: hidden;
+  pointer-events: none;
+  box-shadow: none;
+}
+.dark .project-book-reader .reader-contents {
+  color: #b8c9a6;
+}
+.dark .project-book-reader .reader-contents select {
+  color: #e0e9c8;
+  background: #163c30;
+  border-color: #a3b19080;
 }

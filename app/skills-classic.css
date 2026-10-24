@@ -176,8 +176,7 @@
 
 .skills-classic-result-bar p {
   color: #66705f;
-  font: 400 14px/1.6 var(--classic-serif);
-  font-style: italic;
+  font: 500 13px/1.65 var(--portfolio-sans), "Avenir Next", Arial, sans-serif;
 }
 
 .skills-classic-result-bar strong {

@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useId, useRef, useState } from "react";
-import type { KeyboardEvent, ReactNode } from "react";
+import { useEffect, useId, useReducer, useRef, useState } from "react";
+import type { KeyboardEvent, PointerEvent, ReactNode } from "react";
 import type {
   Project,
   ProjectMedia,
@@ -167,23 +167,35 @@ function chaptersFor(project: Project, media?: ProjectMedia): Chapter[] {
     },
   ];
   const highlights = project.highlights ?? [];
-  for (let offset = 0; offset < highlights.length; offset += 2) {
+  const highlightPages: string[][] = [];
+  for (const point of highlights) {
+    const current = highlightPages.at(-1);
+    const words = [...(current ?? []), point].join(" ").split(/\s+/).length;
+    if (!current || current.length === 2 || words > 120)
+      highlightPages.push([point]);
+    else current.push(point);
+  }
+  highlightPages.forEach((points, index) => {
     pages.push({
-      title: offset === 0 ? "What went into it" : "Under the surface",
+      title: index === 0 ? "What I built" : "Implementation notes",
       content: (
         <ul className="reader-highlights">
-          {highlights.slice(offset, offset + 2).map((point, index) => (
-            <li key={point}>
-              <span aria-hidden="true">
-                {String(offset + index + 1).padStart(2, "0")}
-              </span>
-              <p>{point}</p>
-            </li>
-          ))}
+          {points.map((point) => {
+            const labelEnd = point.indexOf(":");
+            const hasLabel = labelEnd > 0 && labelEnd < 48;
+            return (
+              <li key={point}>
+                <p>
+                  {hasLabel ? <strong>{point.slice(0, labelEnd + 1)} </strong> : null}
+                  {hasLabel ? point.slice(labelEnd + 1).trim() : point}
+                </p>
+              </li>
+            );
+          })}
         </ul>
       ),
     });
-  }
+  });
   if (note)
     pages.push({
       title: "Decisions along the way",
@@ -282,6 +294,69 @@ function chaptersFor(project: Project, media?: ProjectMedia): Chapter[] {
   return pages;
 }
 
+type PageTurn = {
+  from: number;
+  to: number;
+  direction: "next" | "previous";
+  height: number;
+};
+
+type ReaderState = {
+  page: number;
+  target: number;
+  single: boolean;
+  turn: PageTurn | null;
+};
+
+type ReaderAction =
+  | { type: "navigate"; direction: number; pageCount: number }
+  | { type: "jump"; page: number; pageCount: number }
+  | { type: "resize"; single: boolean; pageCount: number }
+  | { type: "start"; height: number }
+  | { type: "finish"; from: number; to: number }
+  | { type: "settle" };
+
+function readerReducer(state: ReaderState, action: ReaderAction): ReaderState {
+  if (action.type === "navigate" || action.type === "jump") {
+    const last = action.pageCount - (state.single ? 1 : 2);
+    const requested = action.type === "jump"
+      ? action.page
+      : state.target + action.direction * (state.single ? 1 : 2);
+    const target = Math.max(0, Math.min(last,
+      state.single ? requested : Math.floor(requested / 2) * 2,
+    ));
+    return target === state.target ? state : { ...state, target };
+  }
+  if (action.type === "resize") {
+    if (state.single === action.single && !state.turn) return state;
+    // Preserve the requested destination when crossing the one-/two-page
+    // breakpoint, including a resize in the middle of a page turn.
+    const page = Math.min(
+      action.pageCount - (action.single ? 1 : 2),
+      action.single ? state.target : Math.floor(state.target / 2) * 2,
+    );
+    return { single: action.single, page, target: page, turn: null };
+  }
+  if (action.type === "start") {
+    if (state.turn || state.target === state.page) return state;
+    return {
+      ...state,
+      turn: {
+        from: state.page,
+        to: state.target,
+        direction: state.target > state.page ? "next" : "previous",
+        height: action.height,
+      },
+    };
+  }
+  if (action.type === "finish") {
+    if (state.turn?.from !== action.from || state.turn.to !== action.to)
+      return state;
+    return { ...state, page: action.to, turn: null };
+  }
+  return { ...state, page: state.target, turn: null };
+}
+
 export default function ProjectBookReader({
   project,
   media,
@@ -290,22 +365,20 @@ export default function ProjectBookReader({
   media?: ProjectMedia;
 }) {
   const pages = chaptersFor(project, media);
-  const [page, setPage] = useState(0);
-  const [single, setSingle] = useState(false);
+  const [{ page, target, single, turn }, dispatch] = useReducer(readerReducer, {
+    page: 0,
+    target: 0,
+    single: false,
+    turn: null,
+  });
   const [reduced, setReduced] = useState(true);
-  const [turn, setTurn] = useState<{
-    from: number;
-    to: number;
-    direction: "next" | "previous";
-    height: number;
-  } | null>(null);
-  const [announcement, setAnnouncement] = useState("");
   const root = useRef<HTMLDivElement>(null);
-  const pending = useRef(false);
+  const spread = useRef<HTMLDivElement>(null);
+  const targetSpread = useRef<HTMLDivElement>(null);
+  const swipe = useRef<{ pointer: number; x: number; y: number } | null>(null);
   const id = useId();
-  const perSpread = single ? 1 : 2;
-  const last = single ? pages.length - 1 : pages.length - 2;
-  const destinationTitle = turn ? pages[turn.to].title : "";
+  const last = pages.length - (single ? 1 : 2);
+  const turning = Boolean(turn) || target !== page;
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -318,48 +391,48 @@ export default function ProjectBookReader({
   useEffect(() => {
     const element = root.current;
     if (!element) return;
-    let previousNarrow: boolean | undefined;
+    let previousWidth = 0;
     const observer = new ResizeObserver(([entry]) => {
-      if (!entry || entry.contentRect.width === 0) return;
-      const narrow = entry.contentRect.width < 680;
-      if (narrow === previousNarrow) return;
-      previousNarrow = narrow;
-      setSingle(narrow);
-      setPage((current) => (narrow ? current : Math.floor(current / 2) * 2));
-      setTurn(null);
-      pending.current = false;
+      if (!entry || entry.contentRect.width === 0 || Math.abs(entry.contentRect.width - previousWidth) < 1) return;
+      previousWidth = entry.contentRect.width;
+      dispatch({ type: "resize", single: previousWidth < 680, pageCount: pages.length });
     });
     observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [pages.length]);
+
+  useEffect(() => {
+    if (target === page || turn) return;
+    if (reduced) {
+      dispatch({ type: "settle" });
+      return;
+    }
+    dispatch({
+      type: "start",
+      height: Math.max(
+        spread.current?.getBoundingClientRect().height ?? 0,
+        targetSpread.current?.getBoundingClientRect().height ?? 0,
+      ),
+    });
+  }, [target, page, turn, reduced]);
 
   useEffect(() => {
     if (!turn) return;
-    const finish = () => {
-      setPage(turn.to);
-      setTurn(null);
-      pending.current = false;
-      setAnnouncement(
-        `${destinationTitle}. Page ${turn.to + 1}${single ? "" : ` to ${turn.to + 2}`} of ${pages.length}.`,
-      );
-    };
-    const timer = window.setTimeout(finish, reduced ? 0 : 720);
+    // animationend normally commits the turn. The fallback also handles a
+    // backgrounded tab, changed motion preference, or interrupted animation.
+    const timer = window.setTimeout(
+      () => dispatch({ type: "finish", from: turn.from, to: turn.to }),
+      reduced ? 0 : 640,
+    );
     return () => window.clearTimeout(timer);
-  }, [turn, reduced, single, pages.length, destinationTitle]);
+  }, [turn, reduced]);
 
-  function goTo(next: number) {
-    if (pending.current) return;
-    const target = Math.max(0, Math.min(last, next));
-    if (target === page) return;
-    pending.current = true;
-    setTurn({
-      from: page,
-      to: target,
-      direction: target > page ? "next" : "previous",
-      height:
-        root.current?.querySelector(".reader-spread")?.getBoundingClientRect()
-          .height ?? 0,
-    });
+  function navigate(direction: number) {
+    dispatch({ type: "navigate", direction, pageCount: pages.length });
+  }
+
+  function jump(next: number) {
+    dispatch({ type: "jump", page: next, pageCount: pages.length });
   }
 
   function onKeys(event: KeyboardEvent<HTMLDivElement>) {
@@ -371,10 +444,30 @@ export default function ProjectBookReader({
     if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
       event.preventDefault();
       event.stopPropagation();
-      if (event.key === "Home") goTo(0);
-      else if (event.key === "End") goTo(last);
-      else goTo(page + (event.key === "ArrowRight" ? perSpread : -perSpread));
+      if (event.key === "Home") jump(0);
+      else if (event.key === "End") jump(last);
+      else navigate(event.key === "ArrowRight" ? 1 : -1);
     }
+  }
+
+  function startSwipe(event: PointerEvent<HTMLDivElement>) {
+    if (
+      event.pointerType !== "touch" || !event.isPrimary ||
+      !(event.target instanceof Element) ||
+      event.target.closest("a, button, input, select, textarea, summary")
+    ) return;
+    swipe.current = { pointer: event.pointerId, x: event.clientX, y: event.clientY };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function endSwipe(event: PointerEvent<HTMLDivElement>) {
+    const gesture = swipe.current;
+    if (!gesture || gesture.pointer !== event.pointerId) return;
+    swipe.current = null;
+    const dx = event.clientX - gesture.x;
+    const dy = event.clientY - gesture.y;
+    if (Math.abs(dx) >= 55 && Math.abs(dx) > Math.abs(dy) * 1.5)
+      navigate(dx < 0 ? 1 : -1);
   }
 
   function leaf(index: number, extraClass = "") {
@@ -401,18 +494,10 @@ export default function ProjectBookReader({
   const baseLeft = turn && turn.direction === "previous" ? turn.to : page;
   const baseRight = turn && turn.direction === "next" ? turn.to + 1 : page + 1;
   const front = turn
-    ? single
-      ? turn.from
-      : turn.direction === "next"
-        ? turn.from + 1
-        : turn.from
+    ? single ? turn.from : turn.direction === "next" ? turn.from + 1 : turn.from
     : 0;
   const back = turn
-    ? single
-      ? turn.to
-      : turn.direction === "next"
-        ? turn.to
-        : turn.to + 1
+    ? single ? turn.to : turn.direction === "next" ? turn.to : turn.to + 1
     : 0;
 
   return (
@@ -430,18 +515,42 @@ export default function ProjectBookReader({
         <span>Project notes</span>
         <span>{project.category}</span>
       </div>
+      <label className="reader-contents" htmlFor={`${id}-contents`}>
+        <span>Contents</span>
+        <select id={`${id}-contents`} value={target} onChange={(event) => jump(Number(event.target.value))}>
+          {pages.map((chapter, index) => single || index % 2 === 0 ? (
+            <option key={index} value={index}>
+              {String(index + 1).padStart(2, "0")} · {chapter.title}
+              {!single && pages[index + 1]?.title !== chapter.title
+                ? ` / ${pages[index + 1].title}`
+                : ""}
+            </option>
+          ) : null)}
+        </select>
+      </label>
+      {target !== page && !turn ? (
+        <div aria-hidden="true" className="reader-spread reader-measure-spread" inert ref={targetSpread}>
+          <div className="reader-static-page reader-static-left">{leaf(target)}</div>
+          {!single ? <div className="reader-static-page reader-static-right">{leaf(target + 1)}</div> : null}
+        </div>
+      ) : null}
       <div
-        aria-label={`${project.title}, pages ${page + 1}${single ? "" : `–${page + 2}`}`}
+        aria-busy={turning}
+        aria-label={`${project.title}, page${single ? "" : "s"} ${page + 1}${single ? "" : `–${page + 2}`}`}
         className="reader-spread"
         id={`${id}-pages`}
+        onPointerDown={startSwipe}
+        onPointerUp={endSwipe}
+        onPointerCancel={() => { swipe.current = null; }}
+        ref={spread}
         role="group"
         style={turn ? { minHeight: turn.height } : undefined}
       >
-        <div className="reader-static-page reader-static-left">
+        <div className="reader-static-page reader-static-left" inert={Boolean(turn)}>
           {leaf(single && turn ? turn.to : baseLeft)}
         </div>
         {!single ? (
-          <div className="reader-static-page reader-static-right">
+          <div className="reader-static-page reader-static-right" inert={Boolean(turn)}>
             {leaf(baseRight)}
           </div>
         ) : null}
@@ -452,40 +561,40 @@ export default function ProjectBookReader({
             data-direction={turn.direction}
             inert
             key={`${turn.from}-${turn.to}`}
+            onAnimationEnd={(event) => {
+              if (event.target === event.currentTarget)
+                dispatch({ type: "finish", from: turn.from, to: turn.to });
+            }}
           >
             <div className="reader-turn-front">{leaf(front)}</div>
             <div className="reader-turn-back">{leaf(back)}</div>
           </div>
         ) : null}
       </div>
-      <nav
-        aria-label={`${project.title} page navigation`}
-        className="reader-navigation"
-      >
+      <nav aria-label={`${project.title} page navigation`} className="reader-navigation">
         <button
           aria-controls={`${id}-pages`}
-          aria-disabled={page === 0 || Boolean(turn)}
-          onClick={() => goTo(page - perSpread)}
+          aria-disabled={target === 0}
+          onClick={() => navigate(-1)}
           type="button"
         >
           <span aria-hidden="true">←</span> Previous
         </button>
         <span className="reader-page-count">
-          {page + 1}
-          {single ? "" : `–${page + 2}`} <span>/ {pages.length}</span>
+          {page + 1}{single ? "" : `–${page + 2}`} <span>/ {pages.length}</span>
         </span>
         <button
           aria-controls={`${id}-pages`}
-          aria-disabled={page >= last || Boolean(turn)}
-          onClick={() => goTo(page + perSpread)}
+          aria-disabled={target >= last}
+          onClick={() => navigate(1)}
           type="button"
         >
           Next <span aria-hidden="true">→</span>
         </button>
       </nav>
-      <p className="reader-key-hint">Turn a page with ← →</p>
+      <p className="reader-key-hint">{single ? "Swipe or use ← → to turn a page" : "Turn a page with ← →"}</p>
       <span className="book-screenreader-status" role="status">
-        {announcement}
+        {!turning ? `${pages[page].title}. Page ${page + 1}${single ? "" : ` to ${page + 2}`} of ${pages.length}.` : ""}
       </span>
     </div>
   );

@@ -121,7 +121,7 @@ const achievementPhotos: Readonly<Record<string, CertificateFile | undefined>> =
     caption: "The team's assistive-interpreter demo. The certificate below records the recognition.",
   },
   "SunnyHacks 2026": {
-    src: "images/logos/sunnyhacks.webp",
+    src: "images/logos/sunnyhacks-original.webp",
     title: "SunnyHacks organizer emblem",
     kind: "Representative emblem",
     representative: true,

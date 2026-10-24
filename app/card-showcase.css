@@ -639,21 +639,37 @@
 .tcg-back-list li::marker {
   color: var(--tcg-mark);
 }
-.tcg-back-tags {
+.tcg-skills {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--tcg-line);
+}
+.tcg-skills h4 {
+  margin: 0 0 9px;
+  color: var(--tcg-ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.tcg-skill-list {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin: 14px 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
-.tcg-back-tags li {
-  padding: 4px 8px;
+.tcg-skill-list li {
+  max-width: 100%;
+  padding: 5px 9px;
   border: 1px solid var(--tcg-line);
-  border-radius: 5px;
+  border-radius: 7px;
   color: var(--tcg-ink);
   background: #fffdf7;
-  font: 500 10px/1.5 var(--font-mono);
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 .tcg-back-note {
   margin: 14px 0 0;
