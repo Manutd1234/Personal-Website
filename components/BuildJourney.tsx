@@ -14,6 +14,7 @@ import {
 import { type CSSProperties, useEffect, useId, useRef, useState } from "react";
 import { useMotionPreference } from "./useMotionPreference";
 import { useVisiblePlayback } from "./useVisiblePlayback";
+import { sampleBuilderChoreography } from "./builder-choreography";
 
 const STEP_DURATION_MS = 5500;
 
@@ -94,17 +95,140 @@ const steps = [
 function BuilderScene({
   stage,
   outgoing,
+  running,
+  settled,
 }: {
   stage: number;
   outgoing: number | null;
+  running: boolean;
+  settled: boolean;
 }) {
+  const sceneRef = useRef<SVGSVGElement>(null);
+  const clock = useRef({ stage, elapsed: 0 });
+
+  useEffect(() => {
+    const svg = sceneRef.current;
+    if (!svg) return;
+    if (clock.current.stage !== stage) clock.current = { stage, elapsed: 0 };
+    const actor = svg.querySelector<SVGGElement>(".scene-builder-position");
+    const head = svg.querySelector<SVGGElement>(".scene-builder-head");
+    const arms = ["right", "left"].map((side) => ({
+      arm: svg.querySelector<SVGPathElement>(`[data-rig-arm="${side}"]`),
+      hand: svg.querySelector<SVGCircleElement>(`[data-rig-hand="${side}"]`),
+    }));
+    const pencil = svg.querySelector<SVGGElement>(".scene-builder-pencil");
+    const plug = svg.querySelector<SVGGElement>(".scene-builder-plug");
+    const action = svg.querySelector<SVGGElement>(`[data-rig-stage="${stage}"]`);
+    const blocks = action?.querySelectorAll<SVGGElement>("[data-rig-block]");
+    const wires = action?.querySelectorAll<SVGPathElement>("[data-rig-wire]");
+    const looseWires = action?.querySelectorAll<SVGPathElement>("[data-rig-loose-wire]");
+    const sockets = action?.querySelectorAll<SVGGElement>("[data-rig-socket]");
+    const checks = action?.querySelectorAll<SVGPathElement>("[data-rig-check]");
+    const requirements = action?.querySelectorAll<SVGGElement>("[data-rig-requirement]");
+    const code = action?.querySelectorAll<SVGGElement>(".scene-code-line");
+    const keys = action?.querySelectorAll<SVGRectElement>(".scene-key-flash");
+    const packet = action?.querySelector<SVGCircleElement>(".scene-packet");
+    const wireLength = wires?.[0]?.getTotalLength() ?? 0;
+    const rocket = action?.querySelector<SVGGElement>(".scene-rocket");
+    const flame = action?.querySelector<SVGPathElement>(".scene-flame");
+    const deployed = action?.querySelector<SVGGElement>(".scene-share-finish");
+    const result = action?.querySelector<SVGGElement>(".scene-build-finish");
+    const launchButton = action?.querySelector<SVGRectElement>(".scene-launch-button");
+    const stackComplete = action?.querySelector<SVGGElement>(".scene-stack-complete");
+
+    // One clock drives hands and their objects. Updating the few SVG attributes
+    // keeps the illustration smooth without rendering the whole chapter per frame.
+    const paint = (progress: number) => {
+      const pose = sampleBuilderChoreography(stage, progress);
+      actor?.setAttribute("transform", `translate(${pose.bodyX} 0)`);
+      head?.setAttribute("transform", `rotate(${pose.headTilt} 111 218)`);
+      [pose.right, pose.left].forEach(([worldX, y], index) => {
+        const x = worldX - pose.bodyX;
+        const shoulderX = index === 0 ? 148 : 73;
+        const dx = x - shoulderX;
+        const dy = y - 254;
+        const distance = Math.max(1, Math.hypot(dx, dy));
+        const bend = Math.min(28, Math.sqrt(Math.max(0, 62 ** 2 - (distance / 2) ** 2)));
+        const elbowX = (shoulderX + x) / 2 - (dy / distance) * bend;
+        const elbowY = (254 + y) / 2 + (dx / distance) * bend;
+        arms[index].arm?.setAttribute("d", `M${shoulderX} 254L${elbowX} ${elbowY}L${x} ${y}`);
+        arms[index].hand?.setAttribute("cx", String(x));
+        arms[index].hand?.setAttribute("cy", String(y));
+      });
+      const handTransform = `translate(${pose.right[0] - pose.bodyX} ${pose.right[1]})`;
+      pencil?.setAttribute("transform", handTransform);
+      pencil?.setAttribute("visibility", stage === 0 ? "visible" : "hidden");
+      plug?.setAttribute("transform", `${handTransform} rotate(${progress >= 0.44 ? 90 : 0})`);
+      const carryingPlug = progress < 0.25 || (progress >= 0.44 && progress < 0.6);
+      plug?.setAttribute("visibility", stage === 2 && carryingPlug ? "visible" : "hidden");
+      blocks?.forEach((block, index) => {
+        const [x, y] = pose.blocks[index];
+        block.setAttribute("transform", `translate(${x} ${y})`);
+        block.style.opacity = progress >= [0.08, 0.32, 0.56][index] ? "1" : "0";
+      });
+      wires?.forEach((wire, index) => {
+        wire.style.strokeDashoffset = String(1 - pose.wires[index]);
+      });
+      sockets?.forEach((socket, index) => {
+        socket.style.opacity = progress >= [0.25, 0.6][index] ? "1" : "0";
+      });
+      looseWires?.forEach((wire, index) => {
+        const visible = index === 0 ? progress < 0.25 : progress >= 0.44 && progress < 0.6;
+        wire.style.opacity = visible ? "1" : "0";
+        const [x, y] = pose.right;
+        wire.setAttribute("d", index === 0
+          ? `M387 215C330 240 ${x + 34} ${y + 40} ${x} ${y}`
+          : `M447 254C470 340 ${x + 55} 345 ${x} ${y}`);
+      });
+      checks?.forEach((check, index) => { check.style.opacity = pose.checks > index ? "1" : "0"; });
+      requirements?.forEach((item, index) => {
+        item.style.opacity = progress >= [0.2, 0.45, 0.68][index] ? "1" : "0";
+      });
+      code?.forEach((line, index) => {
+        const amount = Math.min(1, Math.max(0, (progress - (0.13 + index * 0.12)) / 0.11));
+        line.style.clipPath = `inset(0 ${(1 - amount) * 100}% 0 0)`;
+      });
+      keys?.forEach((key, index) => {
+        const hand = index === 0 ? pose.left : pose.right;
+        key.style.opacity = pose.typing && hand[1] >= 293 ? "1" : "0";
+      });
+      if (packet && wires?.[0]) {
+        const point = wires[0].getPointAtLength(((Math.max(0, progress - 0.4) / 0.24) % 1) * wireLength);
+        packet.setAttribute("cx", String(point.x));
+        packet.setAttribute("cy", String(point.y));
+        packet.style.opacity = progress >= 0.4 ? "1" : "0";
+      }
+      rocket?.setAttribute("transform", `translate(0 ${34 - pose.launch * 85})`);
+      if (flame) flame.style.opacity = pose.launch > 0.02 ? "1" : "0";
+      if (deployed) deployed.style.opacity = pose.launch > 0.65 ? "1" : "0";
+      if (result) result.style.opacity = progress >= 0.72 ? "1" : "0";
+      if (stackComplete) stackComplete.style.opacity = progress >= 0.82 ? "1" : "0";
+      launchButton?.setAttribute("fill", progress >= 0.66 ? "#008363" : "#dfb857");
+    };
+    if (settled) {
+      paint(1);
+      return;
+    }
+    paint(clock.current.elapsed / STEP_DURATION_MS);
+    if (!running) return;
+    const startedAt = performance.now() - clock.current.elapsed;
+    let frame = 0;
+    const tick = (now: number) => {
+      clock.current.elapsed = Math.min(STEP_DURATION_MS, now - startedAt);
+      paint(clock.current.elapsed / STEP_DURATION_MS);
+      if (clock.current.elapsed < STEP_DURATION_MS) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(frame); };
+  }, [stage, running, settled]);
+
   return (
     <div className="journey-cartoon" data-scene={stage} aria-hidden="true">
       <div className="journey-scene-label">
         <span>A little idea, taking shape</span>
         <span>{steps[stage].short}</span>
       </div>
-      <svg viewBox="0 0 560 380" fill="none" className="journey-scene-svg">
+      <svg ref={sceneRef} viewBox="0 0 560 380" fill="none" className="journey-scene-svg">
         <path
           d="M31 329H529"
           stroke="#a8b797"
@@ -127,6 +251,7 @@ function BuilderScene({
             key={step.short}
             data-active={stage === sceneIndex}
             data-outgoing={outgoing === sceneIndex}
+            data-rig-stage={sceneIndex}
           >
             {sceneIndex === 0 ? (
               <>
@@ -157,7 +282,7 @@ function BuilderScene({
                 <text x="250" y="125" className="scene-mono">
                   requirements.md
                 </text>
-                <g className="scene-arrive scene-delay-one">
+                <g data-rig-requirement="0">
                   <circle cx="247" cy="164" r="5" fill="#dfb857" />
                   <text x="263" y="169" className="scene-label">
                     User & goal
@@ -169,7 +294,7 @@ function BuilderScene({
                     strokeLinecap="round"
                   />
                 </g>
-                <g className="scene-arrive scene-delay-two">
+                <g data-rig-requirement="1">
                   <circle cx="247" cy="209" r="5" fill="#dfb857" />
                   <text x="263" y="214" className="scene-label">
                     Rules & limits
@@ -181,7 +306,7 @@ function BuilderScene({
                     strokeLinecap="round"
                   />
                 </g>
-                <g className="scene-arrive scene-delay-three">
+                <g data-rig-requirement="2">
                   <path
                     d="m241 253 5 5 10-12"
                     stroke="#008363"
@@ -212,12 +337,12 @@ function BuilderScene({
             {sceneIndex === 1 ? (
               <>
                 <path
-                  d="M225 305h268"
+                  d="M225 300h268"
                   stroke="#698261"
                   strokeWidth="6"
                   strokeLinecap="round"
                 />
-                <g className="scene-arrive">
+                <g data-rig-block="0">
                   <rect
                     x="240"
                     y="240"
@@ -235,10 +360,10 @@ function BuilderScene({
                     schema · consistency
                   </text>
                 </g>
-                <g className="scene-stack-lift">
+                <g data-rig-block="1">
                   <rect
                     x="257"
-                    y="170"
+                    y="183"
                     width="220"
                     height="57"
                     rx="8"
@@ -246,17 +371,17 @@ function BuilderScene({
                     stroke="#71815c"
                     strokeWidth="2"
                   />
-                  <text x="276" y="195" className="scene-label">
+                  <text x="276" y="208" className="scene-label">
                     Runtime & APIs
                   </text>
-                  <text x="276" y="214" className="scene-note">
+                  <text x="276" y="227" className="scene-note">
                     compute · dependencies
                   </text>
                 </g>
-                <g className="scene-stack scene-plan-finish">
+                <g data-rig-block="2">
                   <rect
                     x="240"
-                    y="100"
+                    y="126"
                     width="237"
                     height="57"
                     rx="8"
@@ -264,14 +389,14 @@ function BuilderScene({
                     stroke="#71815c"
                     strokeWidth="2"
                   />
-                  <text x="259" y="125" className="scene-label">
+                  <text x="259" y="151" className="scene-label">
                     UI & delivery
                   </text>
-                  <text x="259" y="144" className="scene-note">
+                  <text x="259" y="170" className="scene-note">
                     latency · deployment
                   </text>
                 </g>
-                <g className="scene-arrive scene-delay-three">
+                <g className="scene-stack-complete">
                   <path
                     d="M464 66c9-20 24-27 39-20-2 23-16 38-36 40"
                     fill="#d9e9bf"
@@ -290,14 +415,12 @@ function BuilderScene({
             ) : null}
             {sceneIndex === 2 ? (
               <>
-                <path
-                  className="scene-wire"
-                  pathLength="100"
-                  d="M319 133h40v82h28M447 254v37h-37"
-                  stroke="#88a67a"
-                  strokeWidth="3"
-                  strokeDasharray="6 6"
-                />
+                <g stroke="#88a67a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <path data-rig-wire="0" pathLength="1" strokeDasharray="1" d="M215 169V215H387" />
+                  <path data-rig-wire="1" pathLength="1" strokeDasharray="1" d="M447 254V326H285V278H305" />
+                  <path data-rig-loose-wire="0" d="M387 215Q300 280 240 245" />
+                  <path data-rig-loose-wire="1" d="M447 254Q400 340 260 245" />
+                </g>
                 <g className="scene-arrive">
                   <rect
                     x="195"
@@ -378,13 +501,22 @@ function BuilderScene({
                   </text>
                 </g>
                 <circle cx="215" cy="169" r="5" fill="#dce9cd" stroke="#688062" strokeWidth="2" />
+                <circle cx="305" cy="278" r="5" fill="#dce9cd" stroke="#688062" strokeWidth="2" />
+                <g data-rig-socket="0" transform="translate(215 169)">
+                  <rect x="-5" y="2" width="10" height="14" rx="3" fill="#dfb857" stroke="#89793f" strokeWidth="1.5" />
+                  <path d="M-2 2V0m4 2V0" stroke="#46664e" strokeWidth="2" />
+                </g>
+                <g data-rig-socket="1" transform="translate(305 278) rotate(90)">
+                  <rect x="-5" y="2" width="10" height="14" rx="3" fill="#dfb857" stroke="#89793f" strokeWidth="1.5" />
+                  <path d="M-2 2V0m4 2V0" stroke="#46664e" strokeWidth="2" />
+                </g>
                 <g className="scene-connect-spark" stroke="#dfb857" strokeWidth="3" strokeLinecap="round">
                   <path d="M205 175l-5 5m25-5 5 5m-15-25v-6" />
                 </g>
                 <circle
                   className="scene-packet"
-                  cx="319"
-                  cy="133"
+                  cx="215"
+                  cy="169"
                   r="6"
                   fill="#008363"
                 />
@@ -458,15 +590,16 @@ function BuilderScene({
                   />
                   <rect
                     className="scene-key-flash"
-                    x="216"
-                    y="288"
+                    x="203"
+                    y="292"
                     width="9"
                     height="5"
                     rx="1"
                     fill="#dfb857"
                   />
+                  <rect className="scene-key-flash" x="235" y="294" width="9" height="5" rx="1" fill="#dfb857" />
                 </g>
-                <g className="scene-arrive scene-build-finish">
+                <g className="scene-build-finish">
                   <rect
                     x="273"
                     y="268"
@@ -510,7 +643,6 @@ function BuilderScene({
                   (label, index) => (
                     <g
                       key={label}
-                      className={`scene-arrive scene-delay-${["one", "two", "three"][index]}`}
                     >
                       <circle
                         cx="218"
@@ -519,6 +651,7 @@ function BuilderScene({
                         fill="#dce9cd"
                       />
                       <path
+                        data-rig-check={index}
                         d={`m213 ${216 + index * 34} 4 4 7-8`}
                         stroke="#008363"
                         strokeWidth="2"
@@ -531,6 +664,8 @@ function BuilderScene({
                     </g>
                   ),
                 )}
+                <rect className="scene-launch-button" x="204" y="310" width="28" height="16" rx="6" fill="#dfb857" stroke="#688062" strokeWidth="2" />
+                <path d="m214 318 4-4 4 4m-4-4v8" stroke="#fffdf4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 <g className="scene-rocket">
                   <path
                     d="M424 192c-23-35-16-88 18-119 34 31 41 84 18 119Z"
@@ -562,7 +697,7 @@ function BuilderScene({
                   />
                   <path d="M431 187h22v10h-22z" fill="#557455" />
                 </g>
-                <g className="scene-arrive scene-share-finish">
+                <g className="scene-share-finish">
                   <rect
                     x="409"
                     y="272"
@@ -580,7 +715,7 @@ function BuilderScene({
             ) : null}
           </g>
         ))}
-        <g transform="translate(42 0)">
+        <g className="scene-builder-position" transform="translate(42 0)">
           <g className="scene-builder">
             <path
               d="M84 300v24H70m65-24v24h14"
@@ -608,132 +743,60 @@ function BuilderScene({
               strokeLinecap="round"
               strokeLinejoin="round"
             />
-            <path
-              className="scene-builder-left-arm"
-              d="m73 254-15 27 14 8"
-              stroke="#8da77e"
-              strokeWidth="11"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            {steps.map((step, index) => (
-              <g
-                key={step.short}
-                className="scene-builder-pose"
-                data-active={stage === index}
-                data-outgoing={outgoing === index}
-              >
-                {index === 0 ? (
-                  <g className="scene-builder-ask">
-                    <path
-                      d="m148 254 24-15 21-17"
-                      stroke="#8da77e"
-                      strokeWidth="11"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path d="m193 222 9-10" stroke="#dfb857" strokeWidth="7" strokeLinecap="round" />
-                    <path d="m202 212 3-3" stroke="#46664e" strokeWidth="3" strokeLinecap="round" />
-                  </g>
-                ) : null}
-                {index === 1 ? (
-                  <g className="scene-builder-lift">
-                    <path
-                      d="m148 254 36-17 31-17"
-                      stroke="#8da77e"
-                      strokeWidth="11"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path d="m213 220 6-3" stroke="#e4eccc" strokeWidth="9" strokeLinecap="round" />
-                  </g>
-                ) : null}
-                {index === 2 ? (
-                  <g className="scene-builder-connect">
-                    <path
-                      d="m148 254 17-31 8-37"
-                      stroke="#8da77e"
-                      strokeWidth="11"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <rect
-                      x="168"
-                      y="175"
-                      width="10"
-                      height="14"
-                      rx="3"
-                      fill="#dfb857"
-                      stroke="#89793f"
-                      strokeWidth="1.5"
-                    />
-                    <path d="M171 175v-6m4 6v-6" stroke="#46664e" strokeWidth="2" strokeLinecap="round" />
-                  </g>
-                ) : null}
-                {index === 3 ? (
-                  <g className="scene-builder-type">
-                    <path
-                      d="m148 254 16 15 16 15"
-                      stroke="#8da77e"
-                      strokeWidth="11"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path d="m177 284 6 3" stroke="#e4eccc" strokeWidth="8" strokeLinecap="round" />
-                  </g>
-                ) : null}
-                {index === 4 ? (
-                  <g className="scene-builder-launch">
-                    <path
-                      d="m148 254 15 14 13 11"
-                      stroke="#8da77e"
-                      strokeWidth="11"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path d="m176 278v6" stroke="#e4eccc" strokeWidth="8" strokeLinecap="round" />
-                  </g>
-                ) : null}
-              </g>
-            ))}
-            <rect
-              x="77"
-              y="193"
-              width="69"
-              height="53"
-              rx="17"
-              fill="#e4eccc"
-              stroke="#557455"
-              strokeWidth="2"
-            />
-            <g className="scene-builder-eyes">
-              <circle cx="98" cy="218" r="4" fill="#355c43" />
-              <circle cx="127" cy="218" r="4" fill="#355c43" />
+            <g stroke="#8da77e" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round">
+              <path data-rig-arm="left" d="M73 254L58 281L72 289" />
+              <path data-rig-arm="right" d="M148 254L166 270L173 270" />
             </g>
-            <path
-              d="M105 231q8 6 15-1"
-              stroke="#557455"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-            <path
-              d="M74 198c0-21 13-34 37-34s37 13 37 34"
-              fill="#dfb857"
-              stroke="#89793f"
-              strokeWidth="2"
-            />
-            <path
-              d="M105 167v22m12-22v22"
-              stroke="#b99b49"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-            <path
-              d="M68 199h87"
-              stroke="#89793f"
-              strokeWidth="6"
-              strokeLinecap="round"
-            />
+            <circle data-rig-hand="left" cx="72" cy="289" r="6" fill="#e4eccc" />
+            <circle data-rig-hand="right" cx="173" cy="270" r="6" fill="#e4eccc" />
+            <g className="scene-builder-pencil" visibility="hidden">
+              <path d="M0 0L6-7" stroke="#dfb857" strokeWidth="7" strokeLinecap="round" />
+              <path d="M6-7L8-10" stroke="#46664e" strokeWidth="3" strokeLinecap="round" />
+            </g>
+            <g className="scene-builder-plug" visibility="hidden">
+              <rect x="-5" y="2" width="10" height="14" rx="3" fill="#dfb857" stroke="#89793f" strokeWidth="1.5" />
+              <path d="M-2 2V0m4 2V0" stroke="#46664e" strokeWidth="2" strokeLinecap="round" />
+            </g>
+            <g className="scene-builder-head">
+              <rect
+                x="77"
+                y="193"
+                width="69"
+                height="53"
+                rx="17"
+                fill="#e4eccc"
+                stroke="#557455"
+                strokeWidth="2"
+              />
+              <g className="scene-builder-eyes">
+                <circle cx="98" cy="218" r="4" fill="#355c43" />
+                <circle cx="127" cy="218" r="4" fill="#355c43" />
+              </g>
+              <path
+                d="M105 231q8 6 15-1"
+                stroke="#557455"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <path
+                d="M74 198c0-21 13-34 37-34s37 13 37 34"
+                fill="#dfb857"
+                stroke="#89793f"
+                strokeWidth="2"
+              />
+              <path
+                d="M105 167v22m12-22v22"
+                stroke="#b99b49"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+              <path
+                d="M68 199h87"
+                stroke="#89793f"
+                strokeWidth="6"
+                strokeLinecap="round"
+              />
+            </g>
           </g>
         </g>
         <path
@@ -911,7 +974,12 @@ export default function BuildJourney({
           })}
         </ol>
         <div className="journey-stage" aria-hidden="true">
-          <BuilderScene stage={active} outgoing={outgoing} />
+          <BuilderScene
+            stage={active}
+            outgoing={outgoing}
+            running={running}
+            settled={settledChapter === active || !playing || reduced}
+          />
           <div className="journey-copy-stack">
             {steps.map((step, index) => (
               <div
