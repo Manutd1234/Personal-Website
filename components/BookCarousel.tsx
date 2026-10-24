@@ -11,6 +11,9 @@ import type {
 import { asset } from "@/content/paths";
 import "@/app/book-carousel.css";
 
+const BOOK_OPEN_MS = 620;
+const BOOK_RETURN_MS = 480;
+
 export type ProjectSource = {
   url: string;
   label?: string;
@@ -472,7 +475,9 @@ export default function BookCarousel({
       previous = now;
       // Exact critically damped spring: preserve velocity when a new command
       // arrives, without restarting an ease-out curve at zero speed.
-      const omega = 12;
+      // A selected cover should arrive promptly; browsing keeps its softer
+      // momentum while a click-to-read uses a slightly firmer spring.
+      const omega = onSettled ? 17 : 14;
       const distance = position - target;
       const coupling = velocity + omega * distance;
       const decay = Math.exp(-omega * dt);
@@ -481,8 +486,8 @@ export default function BookCarousel({
       velocityRef.current = velocity;
       updateAngle(position);
       if (
-        (Math.abs(position - target) < 0.015 && Math.abs(velocity) < 0.12) ||
-        now - start > 2200
+        (Math.abs(position - target) < 0.045 && Math.abs(velocity) < 0.5) ||
+        now - start > 1600
       )
         finish();
       else animationRef.current = requestAnimationFrame(frame);
@@ -539,6 +544,18 @@ export default function BookCarousel({
     setHovered(null);
     stopAnimation();
     cancelGesture();
+    if (detailRef.current) {
+      detailRef.current.style.setProperty(
+        "--reader-exit-opacity",
+        getComputedStyle(detailRef.current).opacity,
+      );
+    }
+    if (sceneRef.current) {
+      sceneRef.current.style.setProperty(
+        "--scene-return-opacity",
+        getComputedStyle(sceneRef.current).opacity,
+      );
+    }
     returnFocusRef.current = true;
     setReturning(!reducedMotion);
     setReaderReady(false);
@@ -626,13 +643,15 @@ export default function BookCarousel({
     if (!theatre || !flow) return;
     let animation: Animation | null = null;
     let measured = false;
+    let lastHeight = 0;
     const resize = () => {
       const next = Math.ceil(
         stageRef.current?.dataset.open === "true"
           ? flow.getBoundingClientRect().height
           : parseFloat(getComputedStyle(flow).minHeight),
       );
-      if (!next) return;
+      if (!next || Math.abs(next - lastHeight) < 1) return;
+      lastHeight = next;
       const from = theatre.getBoundingClientRect().height;
       animation?.cancel();
       theatre.style.height = `${next}px`;
@@ -640,7 +659,7 @@ export default function BookCarousel({
         animation = theatre.animate(
           [{ height: `${from}px` }, { height: `${next}px` }],
           {
-            duration: 560,
+            duration: Math.min(440, 260 + Math.abs(next - from) * 0.24),
             easing: "cubic-bezier(.22,.7,.15,1)",
           },
         );
@@ -682,7 +701,9 @@ export default function BookCarousel({
       setReaderReady(true);
       return;
     }
-    const timer = window.setTimeout(() => setReaderReady(true), 840);
+    // The animation event opens interaction; this fallback also covers a
+    // backgrounded tab or animation interrupted by a preference change.
+    const timer = window.setTimeout(() => setReaderReady(true), BOOK_OPEN_MS + 80);
     return () => window.clearTimeout(timer);
   }, [opened, opening, reducedMotion]);
 
@@ -722,7 +743,7 @@ export default function BookCarousel({
 
   useEffect(() => {
     if (!returning) return undefined;
-    const timeout = window.setTimeout(() => setReturning(false), 660);
+    const timeout = window.setTimeout(() => setReturning(false), BOOK_RETURN_MS + 80);
     return () => window.clearTimeout(timeout);
   }, [returning]);
 
@@ -928,6 +949,10 @@ export default function BookCarousel({
       className="book-carousel"
       data-reduced-motion={reducedMotion}
       inert={!active}
+      style={{
+        "--book-open-duration": `${BOOK_OPEN_MS}ms`,
+        "--book-return-duration": `${BOOK_RETURN_MS}ms`,
+      } as CSSProperties}
     >
       <section
         aria-label="Project library"
@@ -966,6 +991,10 @@ export default function BookCarousel({
             aria-hidden={isOpen ? true : undefined}
             inert={isOpen || returning}
             className="book-scene"
+            onAnimationEnd={(event) => {
+              if (event.target === event.currentTarget && event.animationName === "book-object-return")
+                setReturning(false);
+            }}
             onLostPointerCapture={onPointerCancel}
             onPointerCancel={onPointerCancel}
             onPointerDown={onPointerDown}
@@ -1044,6 +1073,10 @@ export default function BookCarousel({
                   : "Project details"
               }
               className="book-details"
+              onAnimationEnd={(event) => {
+                if (event.target === event.currentTarget && event.animationName === "book-reader-arrive" && isOpen)
+                  setReaderReady(true);
+              }}
               hidden={!isOpen && !returning}
               aria-hidden={!isOpen || !readerReady ? true : undefined}
               inert={!isOpen || !readerReady}
@@ -1064,12 +1097,16 @@ export default function BookCarousel({
             </div>
           </div>
         </div>
-        {!isOpen ? (
+        <div
+          className="book-browse-controls-shell"
+          aria-hidden={isOpen ? true : undefined}
+          inert={isOpen || returning}
+        >
           <div className="book-browse-controls">
             <button
               aria-label="Rotate to previous book"
               className="book-arrow"
-              disabled={count < 2 || returning}
+              disabled={count < 2 || returning || isOpen}
               onClick={() => browse(-1)}
               type="button"
             >
@@ -1077,7 +1114,7 @@ export default function BookCarousel({
             </button>
             <div className="book-current">
               <button
-                disabled={returning}
+                disabled={returning || isOpen}
                 onClick={() => openBook(intendedBook())}
                 type="button"
                 aria-label={`Open project: ${projects[displayedBook].title}`}
@@ -1092,14 +1129,14 @@ export default function BookCarousel({
             <button
               aria-label="Rotate to next book"
               className="book-arrow"
-              disabled={count < 2 || returning}
+              disabled={count < 2 || returning || isOpen}
               onClick={() => browse(1)}
               type="button"
             >
               →
             </button>
           </div>
-        ) : null}
+        </div>
         <span className="book-screenreader-status" role="status">
           {!isOpen && !dragging
             ? `Selected project: ${projects[displayedBook].title}. ${displayedBook + 1} of ${count}.`

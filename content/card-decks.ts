@@ -71,16 +71,16 @@ const logos: Readonly<Record<string, Logo>> = {
     file: "images/logos/nussu.webp",
     alt: "NUS Students’ Union (NUSSU) logo",
   },
-  // SST Football artwork supplied by Ian.
+  // SST Football artwork supplied by Ian; HD clarity restoration, see README.
   "sst-football": {
-    file: "images/logos/sst-football.webp",
+    file: "images/logos/sst-football-hd.webp",
     alt: "SST Football logo",
     layout: "football",
   },
   // https://www.sst.edu.sg/about-sst/sst-identity/school-symbols/
   sst: { file: "images/logos/sst.webp" },
-  // Current official horizontal wordmark: https://www.bukittimahpri.moe.edu.sg/.
-  btps: { file: "images/logos/btps.webp", layout: "wide" },
+  // HD clarity restoration of the official wordmark; see README for provenance.
+  btps: { file: "images/logos/btps-hd.webp", layout: "wide" },
   // https://nussif.com/
   nussif: { file: "images/logos/nussif.webp" },
   // https://linktr.ee/nusmedtech

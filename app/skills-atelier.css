@@ -85,16 +85,11 @@
   align-items: center;
   justify-content: center;
   padding: var(--tile-y) calc(var(--tile-x) + var(--shape-pad));
-  border-width: 1px;
-  border-radius: 6px;
-  background-color: var(--pill-fill);
-  background-image: linear-gradient(115deg, #ffffff38, transparent 56%, #29452906);
-  box-shadow: 0 1px 1px #263a2712, 1px 3px 4px #263a2714, inset 0 1px 0 #ffffff80;
   font: 550 12px/1.35 var(--skill-label-font);
   letter-spacing: -0.015em;
   font-synthesis: none;
   text-align: center;
-  transition: opacity 180ms ease, background-color 180ms, border-color 180ms, color 180ms, box-shadow 180ms;
+  transition: opacity 180ms ease, color 180ms;
 }
 
 .skill-atelier .skill-pill > span {
@@ -124,20 +119,32 @@
   font-weight: 650;
 }
 
-/* Shape-specific padding keeps the label inside the curved corners. */
-.skill-atelier .skill-pill[data-shape="capsule"] {
-  --shape-pad: 3px;
-  border-radius: 999px;
+/* Real silhouettes, not corner-radius variations. Padding protects the text. */
+.skill-atelier .skill-pill[data-shape="ellipse"] {
+  --shape-pad: 8px;
+  --tile-y: 9px;
 }
-
-.skill-atelier .skill-pill[data-shape="tag"] {
-  --shape-pad: 3px;
-  border-radius: 18px 5px 5px 18px;
+.skill-atelier .skill-pill[data-shape="hexagon"],
+.skill-atelier .skill-pill[data-shape="pennant"] {
+  --shape-pad: 12px;
+  --tile-y: 8px;
 }
-
-.skill-atelier .skill-pill[data-shape="lozenge"] {
-  --shape-pad: 2px;
-  border-radius: 5px 13px 5px 13px;
+.skill-atelier .skill-pill[data-shape="ticket"] {
+  --shape-pad: 9px;
+  --tile-y: 7px;
+}
+.skill-atelier .skill-pill[data-shape="pebble"] {
+  --shape-pad: 9px;
+  --tile-y: 10px;
+}
+.skill-atelier .skill-pill[data-shape="cloud"] {
+  --shape-pad: 13px;
+  --tile-y: 14px;
+}
+.skill-atelier .skill-pill[data-shape="seal"] {
+  --shape-pad: 17px;
+  --tile-y: 20px;
+  min-width: 66px;
 }
 
 .skill-atelier .skill-pill[data-long="true"] {
@@ -188,18 +195,14 @@
 }
 
 .skill-atelier .skill-pill[data-filtering="true"][data-lit="false"] {
-  background-color: #eae9e0;
-  border-color: #c9cbbd;
+  --tile-shadow: drop-shadow(0 1px 1px #263a270c);
   color: #646b5c;
-  box-shadow: 0 1px 2px #263a270c;
 }
 .skill-atelier .skill-pill[data-filtering="true"][data-lit="true"] {
-  border-color: #507744;
-  box-shadow: 0 0 0 1px #5077445c, 0 3px 7px #304d2926;
+  --tile-shadow: drop-shadow(0 3px 3px #304d2926);
 }
 .skill-atelier .skill-pill:hover {
-  border-color: var(--pill-ink);
-  box-shadow: 0 3px 8px #263a2729, inset 0 1px 0 #ffffff9c;
+  --tile-shadow: drop-shadow(0 3px 4px #263a2729);
 }
 .skill-atelier .skill-pill[data-grabbed="true"],
 .skill-atelier .skill-pill[data-held="true"] {
@@ -207,7 +210,7 @@
   cursor: grabbing;
   outline: 2px solid #476a3e;
   outline-offset: 3px;
-  box-shadow: 0 7px 13px #263a2730;
+  --tile-shadow: drop-shadow(0 6px 5px #263a2730);
 }
 .dark .skill-physics.skill-atelier {
   --table-paper: #1d2b23;
@@ -230,20 +233,15 @@
   border-color: #839776;
 }
 .dark .skill-atelier .skill-pill {
-  background-color: color-mix(in srgb, var(--pill-fill) 92%, #425443);
+  --tile-shadow: drop-shadow(0 2px 3px #030c0759);
   color: var(--pill-ink);
-  border-color: color-mix(in srgb, var(--pill-edge) 65%, #56654b);
-  box-shadow: 0 2px 5px #030c0759, inset 0 1px 0 #ffffff4d;
 }
 .dark .skill-atelier .skill-pill[data-filtering="true"][data-lit="false"] {
-  background: #2a382d;
+  --tile-shadow: drop-shadow(0 1px 1px #0000001f);
   color: #a1ab97;
-  border-color: #4d5b46;
-  box-shadow: 0 1px 2px #0000001f;
 }
 .dark .skill-atelier .skill-pill[data-filtering="true"][data-lit="true"] {
-  border-color: #e2edbb;
-  box-shadow: 0 0 0 1px #e2edbb80, 0 3px 8px #030c0759;
+  --tile-shadow: drop-shadow(0 3px 4px #030c0759);
 }
 .dark .skill-atelier .skill-pill[data-grabbed="true"],
 .dark .skill-atelier .skill-pill[data-held="true"],
@@ -282,4 +280,55 @@
   .skill-atelier .skill-pill {
     transition: none;
   }
+}
+
+/* Outrank the inherited pill states, so transparent cut-outs stay clear in
+   every category, hover and drag state. Only the SVG paints the shape. */
+.skill-physics.skill-atelier .skill-pill,
+.dark .skill-physics.skill-atelier .skill-pill {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 50%;
+}
+.skill-atelier .skill-silhouette {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  fill: var(--pill-fill);
+  stroke: var(--pill-edge);
+  stroke-width: 1px;
+  filter: var(--tile-shadow, drop-shadow(0 2px 1px #263a2726));
+  transition: fill 180ms, stroke 180ms;
+}
+.skill-atelier .skill-pill:hover .skill-silhouette {
+  stroke: var(--pill-ink);
+  stroke-width: 1.5px;
+}
+.skill-atelier .skill-pill[data-filtering="true"][data-lit="false"] .skill-silhouette {
+  fill: #eae9e0;
+  stroke: #c9cbbd;
+}
+.skill-atelier .skill-pill[data-filtering="true"][data-lit="true"] .skill-silhouette {
+  stroke: #507744;
+  stroke-width: 2px;
+}
+.dark .skill-atelier .skill-pill[data-filtering="true"][data-lit="false"] .skill-silhouette {
+  fill: #2a382d;
+  stroke: #4d5b46;
+}
+.dark .skill-atelier .skill-pill[data-filtering="true"][data-lit="true"] .skill-silhouette {
+  stroke: #e2edbb;
+}
+.skill-atelier .skill-pill[data-shape="cloud"] { padding-block: 14px; }
+.skill-atelier .skill-pill[data-shape="seal"] { padding-block: 20px; }
+.skill-atelier .skill-pill[data-shape="ellipse"],
+.skill-atelier .skill-pill[data-shape="pebble"] { padding-block: 10px; }
+.skill-atelier .skill-pill[data-shape="hexagon"],
+.skill-atelier .skill-pill[data-shape="pennant"] { padding-block: 8px; }
+@media (prefers-reduced-motion: reduce) {
+  .skill-atelier .skill-silhouette { transition: none; }
 }

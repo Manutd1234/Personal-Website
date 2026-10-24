@@ -6,6 +6,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type KeyboardEvent,
@@ -18,8 +19,7 @@ type Collection = Readonly<Record<DeckId, readonly number[]>>;
 type TrackView = {
   nearest: number;
   visible: readonly number[];
-  atStart: boolean;
-  atEnd: boolean;
+  exposed: readonly number[];
 };
 
 const emptyCollection: Collection = {
@@ -66,6 +66,20 @@ function nearestCard(
   return nearest;
 }
 
+// Move focus to the equivalent control before its old physical instance is
+// hidden. This also preserves a scrolled story while crossing the loop seam.
+function transferCardFocus(from: HTMLElement, to: HTMLElement) {
+  const controls = "a, button, [tabindex]";
+  const index = Array.from(from.querySelectorAll<HTMLElement>(controls))
+    .indexOf(document.activeElement as HTMLElement);
+  to.inert = false;
+  to.removeAttribute("aria-hidden");
+  const oldBody = from.querySelector<HTMLElement>(".tcg-back-body");
+  const newBody = to.querySelector<HTMLElement>(".tcg-back-body");
+  if (oldBody && newBody) newBody.scrollTop = oldBody.scrollTop;
+  to.querySelectorAll<HTMLElement>(controls)[index]?.focus({ preventScroll: true });
+}
+
 function DeckTrack({
   deck,
   dealt,
@@ -81,10 +95,12 @@ function DeckTrack({
   onCollect: (deck: DeckId, index: number) => void;
   active: boolean;
 }) {
+  const cards = deck.cards;
+  const count = cards.length;
   const groupRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLUListElement>(null);
   const slotRefs = useRef<(HTMLLIElement | null)[]>([]);
-  const loopRefs = useRef<(HTMLLIElement | null)[]>([]);
+  const initialized = useRef(false);
   const autoMoving = useRef(false);
   const idleUntil = useRef(0);
   const lastIdleSignal = useRef(-Infinity);
@@ -93,34 +109,26 @@ function DeckTrack({
   const [view, setView] = useState<TrackView>({
     nearest: 0,
     visible: [],
-    atStart: true,
-    atEnd: false,
+    exposed: cards.map((_, index) => count + index),
   });
-  const [focusIndex, setFocusIndex] = useState(0);
+  const [focusIndex, setFocusIndex] = useState(count);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const [pressed, setPressed] = useState(false);
+  // All three physical instances share one record's state. Recentring the rail
+  // must never turn a story back over or replace it with an inert imitation.
   const [reading, setReading] = useState<ReadonlySet<string>>(() => new Set());
   const [visible, setVisible] = useState(false);
   const [interaction, setInteraction] = useState(0);
   const onScreen = useInView(groupRef, { amount: 0.2 });
-  const cards = deck.cards;
   const trackId = useId();
   const canAutoplay =
-    active &&
-    dealt &&
-    onScreen &&
-    visible &&
-    !reduced &&
-    !hovered &&
-    !focused &&
-    !pressed &&
-    reading.size === 0;
+    active && dealt && onScreen && visible && !reduced &&
+    !hovered && !focused && !pressed && reading.size === 0;
 
   const idle = useCallback(() => {
     const now = performance.now();
     idleUntil.current = now + MANUAL_IDLE;
-    // Wheel streams update the deadline without rendering every browser frame.
     if (now - lastIdleSignal.current > 250) {
       lastIdleSignal.current = now;
       setInteraction((value) => value + 1);
@@ -141,6 +149,144 @@ function DeckTrack({
     });
   }, []);
 
+  const geometry = useCallback(() => {
+    const track = trackRef.current;
+    const first = slotRefs.current[0];
+    const middle = slotRefs.current[count];
+    if (!track || !first || !middle || !track.clientWidth) return null;
+    const width = middle.offsetLeft - first.offsetLeft;
+    if (width <= 0) return null;
+    const inset = parseFloat(getComputedStyle(track).scrollPaddingLeft) || 0;
+    return { track, width, start: middle.offsetLeft - inset };
+  }, [count]);
+
+  // Keep one accessible instance of every logical record. A visible instance
+  // wins over its offscreen twin, and keyboard focus is never hidden from AT.
+  const measure = useCallback(() => {
+    const track = trackRef.current;
+    if (!track || !initialized.current) return;
+    const bounds = track.getBoundingClientRect();
+    const activeElement = document.activeElement as HTMLElement | null;
+    const activeSlot = activeElement?.closest<HTMLElement>("[data-rail-index]");
+    const activeIndex = activeSlot && track.contains(activeSlot)
+      ? Number(activeSlot.dataset.railIndex) : null;
+    const exposed = cards.map((_, index) => {
+      let best = count + index;
+      let bestVisible = 0;
+      let focusedVisible = 0;
+      for (let cycle = 0; cycle < 3; cycle += 1) {
+        const physical = cycle * count + index;
+        const slot = slotRefs.current[physical];
+        if (!slot) continue;
+        const box = slot.getBoundingClientRect();
+        const overlap = Math.max(0, Math.min(box.right, bounds.right) - Math.max(box.left, bounds.left));
+        if (physical === activeIndex) focusedVisible = overlap;
+        if (overlap > bestVisible) {
+          best = physical;
+          bestVisible = overlap;
+        }
+      }
+      // During keyboard scrolling keep its destination focused. Otherwise an
+      // offscreen focused twin must not make a visible card unclickable.
+      if (activeIndex !== null && activeIndex % count === index &&
+          (focusedVisible > 0 || pending.current === activeIndex || bestVisible === 0))
+        return activeIndex;
+      return best;
+    });
+    if (activeSlot && activeIndex !== null) {
+      const destinationIndex = exposed[activeIndex % count];
+      const destination = slotRefs.current[destinationIndex];
+      if (destination && destinationIndex !== activeIndex) {
+        transferCardFocus(activeSlot, destination);
+        setFocusIndex(destinationIndex);
+      }
+    }
+    // Update inert before the next pointer event, rather than waiting for a
+    // React render after a scroll. State below keeps the declarative DOM in sync.
+    slotRefs.current.forEach((slot, physical) => {
+      if (!slot) return;
+      const duplicate = exposed[physical % count] !== physical;
+      if (slot.inert !== duplicate) slot.inert = duplicate;
+      if (duplicate && !slot.hasAttribute("aria-hidden")) slot.setAttribute("aria-hidden", "true");
+      else if (!duplicate && slot.hasAttribute("aria-hidden")) slot.removeAttribute("aria-hidden");
+    });
+    const fullyVisible = exposed.flatMap((physical, logical) => {
+      const box = slotRefs.current[physical]?.getBoundingClientRect();
+      return box && box.left >= bounds.left - 2 && box.right <= bounds.right + 2 ? [logical] : [];
+    });
+    const physical = nearestCard(track, slotRefs.current);
+    if (!track.contains(document.activeElement)) setFocusIndex(physical);
+    const next = { nearest: physical % count, visible: fullyVisible, exposed };
+    setView((previous) =>
+      previous.nearest === next.nearest &&
+      previous.visible.join() === next.visible.join() &&
+      previous.exposed.join() === next.exposed.join()
+        ? previous : next,
+    );
+  }, [cards, count]);
+
+  // The centre cycle leaves a complete buffer on either side. Moving by an
+  // exact cycle is visually identical, in both directions and after any lap.
+  const recenter = useCallback(() => {
+    const layout = geometry();
+    if (!layout || !initialized.current) return 0;
+    const { track, width, start } = layout;
+    const cycle = Math.floor((track.scrollLeft - start + 0.5) / width);
+    if (cycle === 0) return 0;
+    const shift = cycle * count;
+    const activeElement = document.activeElement as HTMLElement | null;
+    const activeSlot = activeElement?.closest<HTMLElement>("[data-rail-index]");
+    const activeIndex = activeSlot && track.contains(activeSlot)
+      ? Number(activeSlot.dataset.railIndex) : null;
+    track.scrollLeft -= cycle * width;
+    if (pending.current !== null) pending.current -= shift;
+    if (activeIndex !== null) {
+      const destination = slotRefs.current[activeIndex - shift];
+      if (destination && activeSlot) {
+        transferCardFocus(activeSlot, destination);
+        setFocusIndex(activeIndex - shift);
+      }
+    }
+    measure();
+    return shift;
+  }, [count, geometry, measure]);
+
+  useLayoutEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    let frame = 0;
+    let settle = 0;
+    const resizeTrack = () => {
+      const layout = geometry();
+      if (!layout) return;
+      if (!initialized.current) {
+        track.scrollLeft = layout.start;
+        initialized.current = true;
+      }
+      recenter();
+      measure();
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(() => { frame = 0; measure(); });
+      window.clearTimeout(settle);
+      settle = window.setTimeout(() => {
+        pending.current = null;
+        if (!autoMoving.current) recenter();
+      }, 150);
+    };
+    const resize = new ResizeObserver(resizeTrack);
+    resize.observe(track);
+    resizeTrack();
+    track.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(settle);
+      window.clearTimeout(pendingTimer.current);
+      resize.disconnect();
+      track.removeEventListener("scroll", onScroll);
+    };
+  }, [geometry, measure, recenter]);
+
   useEffect(() => {
     const sync = () => setVisible(document.visibilityState === "visible");
     sync();
@@ -158,12 +304,8 @@ function DeckTrack({
     };
   }, [pressed, releasePointer]);
 
-  // Keep a slow, constant reading-room drift. The inert copies at the end
-  // match the beginning, so subtracting one exact cycle never changes the
-  // visible cards. Only scrollLeft changes per frame; React owns no clock.
   useEffect(() => {
-    const track = trackRef.current;
-    if (!track || !canAutoplay || cards.length < 2) return;
+    if (!canAutoplay || count < 2) return;
     let timer = 0;
     let frame = 0;
     let disposed = false;
@@ -173,43 +315,26 @@ function DeckTrack({
         timer = window.setTimeout(begin, idleUntil.current - performance.now());
         return;
       }
-      let position = track.scrollLeft;
       let previous = performance.now();
-      let cycleWidth = 0;
-      let loopStart = 0;
+      let remainder = 0;
       autoMoving.current = true;
-      track.setAttribute("data-auto-moving", "true");
+      trackRef.current?.setAttribute("data-auto-moving", "true");
       const drift = (now: number) => {
         if (disposed) return;
-        // A wheel/touch stream can extend the deadline between React renders.
         if (now < idleUntil.current) {
           autoMoving.current = false;
-          track.removeAttribute("data-auto-moving");
+          trackRef.current?.removeAttribute("data-auto-moving");
           timer = window.setTimeout(begin, idleUntil.current - now);
           return;
         }
-        const first = slotRefs.current[0];
-        const loop = loopRefs.current[0];
-        if (first && loop) {
-          const nextCycle = loop.offsetLeft - first.offsetLeft;
-          // Continue from the browser's actual position after a responsive
-          // width change instead of replaying the old width's coordinates.
-          if (nextCycle !== cycleWidth) {
-            cycleWidth = nextCycle;
-            position = track.scrollLeft;
-            const inset =
-              parseFloat(getComputedStyle(track).scrollPaddingLeft) || 0;
-            loopStart = loop.offsetLeft - inset;
-          }
-          if (cycleWidth > 0) {
-            const delta = Math.min(
-              MAX_FRAME_DELTA,
-              Math.max(0, now - previous),
-            );
-            position += (AUTO_SPEED * delta) / 1000;
-            if (position >= loopStart) position -= cycleWidth;
-            track.scrollLeft = position;
-          }
+        const layout = geometry();
+        if (layout && initialized.current) {
+          const delta = Math.min(MAX_FRAME_DELTA, Math.max(0, now - previous));
+          const requested = layout.track.scrollLeft + (AUTO_SPEED * delta) / 1000 + remainder;
+          layout.track.scrollLeft = requested;
+          // Preserve fractional pixels on browsers with integral scrollLeft.
+          remainder = requested - layout.track.scrollLeft;
+          recenter();
         }
         previous = now;
         frame = requestAnimationFrame(drift);
@@ -222,40 +347,24 @@ function DeckTrack({
       window.clearTimeout(timer);
       cancelAnimationFrame(frame);
       autoMoving.current = false;
-      track.removeAttribute("data-auto-moving");
+      trackRef.current?.removeAttribute("data-auto-moving");
     };
-  }, [canAutoplay, cards.length, interaction]);
+  }, [canAutoplay, count, geometry, interaction, recenter]);
 
-  // A card is collected once it has stayed mostly on screen for a moment, so
-  // swiping quickly past a card does not count. "Mostly" is measured against
-  // what can fit, so short landscape screens can still collect tall cards.
-  // Only visible cards animate; that attribute is written directly.
   useEffect(() => {
     const timers = new Map<Element, number>();
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          const slot = entry.target as HTMLElement;
-          slot.toggleAttribute("data-live", entry.isIntersecting);
-          window.clearTimeout(timers.get(slot));
-          const box = entry.boundingClientRect;
-          const seen = entry.intersectionRect;
-          const fits = Math.min(
-            box.height,
-            entry.rootBounds?.height ?? box.height,
-          );
-          if (seen.width >= box.width * 0.6 && seen.height >= fits * 0.6)
-            timers.set(
-              slot,
-              window.setTimeout(
-                () => onCollect(deck.id, Number(slot.dataset.index)),
-                350,
-              ),
-            );
-        }
-      },
-      { threshold: [0, 0.25, 0.5, 0.6, 0.75, 1] },
-    );
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        const slot = entry.target as HTMLElement;
+        slot.toggleAttribute("data-live", entry.isIntersecting);
+        window.clearTimeout(timers.get(slot));
+        const box = entry.boundingClientRect;
+        const seen = entry.intersectionRect;
+        const fits = Math.min(box.height, entry.rootBounds?.height ?? box.height);
+        if (seen.width >= box.width * 0.6 && seen.height >= fits * 0.6)
+          timers.set(slot, window.setTimeout(() => onCollect(deck.id, Number(slot.dataset.index)), 350));
+      }
+    }, { threshold: [0, 0.25, 0.5, 0.6, 0.75, 1] });
     slotRefs.current.forEach((slot) => slot && observer.observe(slot));
     return () => {
       observer.disconnect();
@@ -263,135 +372,55 @@ function DeckTrack({
     };
   }, [deck.id, onCollect]);
 
-  useEffect(() => {
+  function scrollToCard(physical: number) {
     const track = trackRef.current;
-    if (!track) return;
-    let frame = 0;
-    let settle = 0;
-    const measure = () => {
-      frame = 0;
-      const bounds = track.getBoundingClientRect();
-      const visible = slotRefs.current.flatMap((slot, index) => {
-        const box = slot?.getBoundingClientRect();
-        return box &&
-          box.left >= bounds.left - 2 &&
-          box.right <= bounds.right + 2
-          ? [index]
-          : [];
-      });
-      const next = {
-        nearest: nearestCard(track, slotRefs.current),
-        visible,
-        atStart: track.scrollLeft <= 2,
-        atEnd:
-          track.scrollLeft >=
-          (slotRefs.current[cards.length - 1]?.offsetLeft ?? 0) -
-            (parseFloat(getComputedStyle(track).scrollPaddingLeft) || 0) -
-            2,
-      };
-      // Enter the card currently in view after pointer browsing; keep an
-      // existing keyboard focus stable while the track settles around it.
-      if (!track.contains(document.activeElement)) setFocusIndex(next.nearest);
-      setView((previous) =>
-        previous.nearest === next.nearest &&
-        previous.visible.join() === next.visible.join() &&
-        previous.atStart === next.atStart &&
-        previous.atEnd === next.atEnd
-          ? previous
-          : next,
-      );
-    };
-    const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(measure);
-    };
-    // A queued arrow target only lives while the track is moving.
-    const onScroll = () => {
-      schedule();
-      window.clearTimeout(settle);
-      settle = window.setTimeout(() => {
-        pending.current = null;
-        const first = slotRefs.current[0];
-        const loop = loopRefs.current[0];
-        const inset =
-          parseFloat(getComputedStyle(track).scrollPaddingLeft) || 0;
-        if (
-          !autoMoving.current &&
-          first &&
-          loop &&
-          track.scrollLeft >= loop.offsetLeft - inset - 2
-        ) {
-          track.scrollLeft -= loop.offsetLeft - first.offsetLeft;
-          schedule();
-        }
-      }, 150);
-    };
-    // The section mounts hidden behind another tab, so re-measure when the
-    // track gains a size, not only on scroll.
-    const resize = new ResizeObserver(schedule);
-    resize.observe(track);
-    track.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      cancelAnimationFrame(frame);
-      window.clearTimeout(settle);
-      window.clearTimeout(pendingTimer.current);
-      resize.disconnect();
-      track.removeEventListener("scroll", onScroll);
-    };
-  }, [cards.length]);
-
-  function scrollToCard(index: number) {
-    const track = trackRef.current;
-    const slot = slotRefs.current[index];
+    const slot = slotRefs.current[physical];
     if (!track || !slot) return;
     const inset = parseFloat(getComputedStyle(track).scrollPaddingLeft) || 0;
-    track.scrollTo({
-      left: slot.offsetLeft - inset,
-      behavior: reduced ? "auto" : "smooth",
-    });
-  }
-  function goTo(index: number) {
-    pending.current = index;
+    pending.current = physical;
     window.clearTimeout(pendingTimer.current);
-    pendingTimer.current = window.setTimeout(() => {
-      pending.current = null;
-    }, 900);
-    scrollToCard(index);
+    pendingTimer.current = window.setTimeout(() => { pending.current = null; }, 900);
+    track.scrollTo({ left: slot.offsetLeft - inset, behavior: reduced ? "auto" : "smooth" });
   }
-  // Rapid presses continue from the card already being scrolled to.
+  function goTo(logical: number) {
+    const track = trackRef.current;
+    if (!track) return;
+    recenter();
+    const from = pending.current ?? nearestCard(track, slotRefs.current);
+    const candidates = [logical, count + logical, count * 2 + logical];
+    const target = candidates.reduce((best, current) => Math.abs(current - from) < Math.abs(best - from) ? current : best);
+    scrollToCard(target);
+  }
   function step(delta: number) {
     const track = trackRef.current;
     if (!track) return;
+    recenter();
     const from = pending.current ?? nearestCard(track, slotRefs.current);
-    goTo(Math.min(cards.length - 1, Math.max(0, from + delta)));
+    scrollToCard(Math.max(0, Math.min(count * 3 - 1, from + delta)));
   }
-  const inView = (index: number) =>
-    view.visible.length ? view.visible.includes(index) : index === view.nearest;
-  function focusCard(index: number) {
-    setFocusIndex(index);
-    const controls = slotRefs.current[index]?.querySelectorAll<HTMLElement>(
-      "[data-card-control]",
-    );
-    const control = Array.from(controls ?? []).find(
-      (element) => !element.closest("[inert]"),
-    );
+  const inView = (index: number) => view.visible.length ? view.visible.includes(index) : index === view.nearest;
+
+  function focusCard(physical: number) {
+    const slot = slotRefs.current[physical];
+    if (!slot) return;
+    slot.inert = false;
+    slot.removeAttribute("aria-hidden");
+    const control = Array.from(slot.querySelectorAll<HTMLElement>("[data-card-control]"))
+      .find((element) => !element.closest("[inert]"));
+    scrollToCard(physical);
     control?.focus({ preventScroll: true });
-    if (!inView(index)) goTo(index);
+    setFocusIndex(physical);
+    measure();
   }
   function deckKeys(event: KeyboardEvent<HTMLUListElement>) {
     if (!(event.target as HTMLElement).matches("[data-card-control]")) return;
-    const next =
-      event.key === "Home"
-        ? 0
-        : event.key === "End"
-          ? cards.length - 1
-          : event.key === "ArrowRight"
-            ? focusIndex + 1
-            : event.key === "ArrowLeft"
-              ? focusIndex - 1
-              : null;
-    if (next === null || next < 0 || next >= cards.length) return;
+    const key = event.key;
+    if (!["Home", "End", "ArrowRight", "ArrowLeft"].includes(key)) return;
     event.preventDefault();
-    focusCard(next);
+    const shift = recenter();
+    const current = focusIndex - shift;
+    const next = key === "Home" ? count : key === "End" ? count * 2 - 1 : current + (key === "ArrowRight" ? 1 : -1);
+    focusCard(Math.max(0, Math.min(count * 3 - 1, next)));
   }
 
   return (
@@ -399,28 +428,13 @@ function DeckTrack({
       ref={groupRef}
       className="deck-track-group"
       data-autoplay={canAutoplay ? "running" : "paused"}
-      onPointerEnter={(event) => {
-        if (event.pointerType === "mouse") setHovered(true);
-      }}
-      onPointerLeave={(event) => {
-        if (event.pointerType === "mouse") {
-          setHovered(false);
-          idle();
-        }
-      }}
-      onPointerDownCapture={() => {
-        setPressed(true);
-        idle();
-      }}
+      onPointerEnter={(event) => { if (event.pointerType === "mouse") setHovered(true); }}
+      onPointerLeave={(event) => { if (event.pointerType === "mouse") { setHovered(false); idle(); } }}
+      onPointerDownCapture={() => { setPressed(true); idle(); }}
       onPointerUpCapture={releasePointer}
       onPointerCancelCapture={releasePointer}
       onFocusCapture={() => setFocused(true)}
-      onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          setFocused(false);
-          idle();
-        }
-      }}
+      onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) { setFocused(false); idle(); } }}
       onKeyDownCapture={idle}
       onWheelCapture={idle}
     >
@@ -431,117 +445,63 @@ function DeckTrack({
         tabIndex={-1}
         data-deck-track
         data-continuous={!reduced}
-        data-at-start={view.atStart}
-        data-at-end={view.atEnd}
+        data-at-start={false}
+        data-at-end={false}
         aria-label={`${deck.label} records`}
         onKeyDown={deckKeys}
       >
-        {cards.map((card, index) => (
-          <motion.li
-            key={card.id}
-            ref={(slot) => {
-              slotRefs.current[index] = slot;
-            }}
-            className="deck-slot min-h-[600px] w-[min(340px,calc(100vw_-_58px))] flex-shrink-0 sm:w-[420px]"
-            data-deck-card
-            data-index={index}
-            initial={
-              reduced
-                ? false
-                : { opacity: 0, y: 24, rotate: index % 2 ? 1.5 : -1.5 }
-            }
-            animate={dealt ? { opacity: 1, y: 0, rotate: 0 } : undefined}
-            transition={
-              reduced
-                ? { duration: 0 }
-                : {
-                    type: "spring",
-                    stiffness: 250,
-                    damping: 26,
-                    delay: Math.min(index, 5) * 0.06,
-                  }
-            }
-            onFocusCapture={() => setFocusIndex(index)}
-          >
-            <TradingCard
-              card={card}
-              reduced={reduced}
-              tabbable={index === focusIndex}
-              onFlipChange={recordFlip}
-            />
-          </motion.li>
-        ))}
-        {cards.slice(0, 3).map((card, index) => (
-          <li
-            key={`${card.id}-loop`}
-            ref={(slot) => {
-              loopRefs.current[index] = slot;
-            }}
-            className="deck-slot deck-loop-slot min-h-[600px] w-[min(340px,calc(100vw_-_58px))] flex-shrink-0 sm:w-[420px]"
-            aria-hidden="true"
-            inert
-          >
-            <TradingCard card={card} reduced tabbable={false} />
-          </li>
-        ))}
+        {[0, 1, 2].flatMap((cycle) => cards.map((card, index) => {
+          const physical = cycle * count + index;
+          const exposed = view.exposed[index] === physical;
+          return (
+            <motion.li
+              key={`${card.id}-${cycle}`}
+              ref={(slot) => { slotRefs.current[physical] = slot; }}
+              className="deck-slot min-h-[600px] w-[min(340px,calc(100vw_-_58px))] flex-shrink-0 sm:w-[420px]"
+              data-deck-card
+              data-index={index}
+              data-rail-index={physical}
+              aria-posinset={index + 1}
+              aria-setsize={count}
+              aria-hidden={exposed ? undefined : true}
+              inert={!exposed}
+              initial={reduced ? false : { opacity: 0, y: 24, rotate: index % 2 ? 1.5 : -1.5 }}
+              animate={dealt ? { opacity: 1, y: 0, rotate: 0 } : undefined}
+              transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 250, damping: 26, delay: Math.min(index, 5) * 0.06 }}
+              onFocusCapture={() => setFocusIndex(physical)}
+            >
+              <TradingCard
+                card={card}
+                reduced={reduced}
+                tabbable={exposed && physical === focusIndex}
+                flipped={reading.has(card.id)}
+                onFlipChange={recordFlip}
+              />
+            </motion.li>
+          );
+        }))}
       </ul>
       <div className="deck-controls">
         <div className="deck-nav">
-          {/* aria-disabled keeps a focused arrow focusable at either end. */}
-          <button
-            type="button"
-            className="deck-arrow"
-            aria-label="Previous record"
-            aria-controls={trackId}
-            aria-disabled={view.atStart}
-            onClick={() => {
-              if (!view.atStart) step(-1);
-            }}
-          >
+          <button type="button" className="deck-arrow" aria-label="Previous record" aria-controls={trackId} onClick={() => step(-1)}>
             <ChevronLeft size={18} aria-hidden="true" />
           </button>
           <div className="deck-dots" aria-hidden="true">
             {cards.map((card, index) => (
-              <button
-                type="button"
-                tabIndex={-1}
-                key={card.id}
-                data-collected={collected.includes(index)}
-                data-visible={inView(index)}
-                onClick={() => goTo(index)}
-              />
+              <button type="button" tabIndex={-1} key={card.id} data-collected={collected.includes(index)} data-visible={inView(index)} onClick={() => goTo(index)} />
             ))}
           </div>
-          <button
-            type="button"
-            className="deck-arrow"
-            aria-label="Next record"
-            aria-controls={trackId}
-            aria-disabled={view.atEnd}
-            onClick={() => {
-              if (!view.atEnd) step(1);
-            }}
-          >
+          <button type="button" className="deck-arrow" aria-label="Next record" aria-controls={trackId} onClick={() => step(1)}>
             <ChevronRight size={18} aria-hidden="true" />
           </button>
         </div>
-        <p className="deck-position">
-          <span>
-            {view.nearest + 1} / {cards.length}
-          </span>
-          {cards[view.nearest]?.org}
-        </p>
+        <p className="deck-position"><span>{view.nearest + 1} / {count}</span>{cards[view.nearest]?.org}</p>
         <p className="deck-hint">
           <span className="deck-hint-pointer">
             Click to turn a card{reduced ? "" : " · hover to pause"}
-            <span className="sr-only">
-              {" "}
-              · Use the left and right arrow keys to browse.
-            </span>
+            <span className="sr-only"> · Use the left and right arrow keys to browse.</span>
           </span>
-          <span className="deck-hint-touch">
-            Swipe to browse · tap to turn a card
-          </span>
+          <span className="deck-hint-touch">Swipe to browse · tap to turn a card</span>
         </p>
       </div>
     </div>

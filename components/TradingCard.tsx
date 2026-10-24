@@ -25,7 +25,6 @@ import {
   useEffect,
   useId,
   useRef,
-  useState,
   type MouseEvent,
   type PointerEvent,
 } from "react";
@@ -94,14 +93,15 @@ export default function TradingCard({
   card,
   reduced,
   tabbable,
+  flipped,
   onFlipChange,
 }: {
   card: TradingCardData;
   reduced: boolean;
   tabbable: boolean;
-  onFlipChange?: (id: string, flipped: boolean) => void;
+  flipped: boolean;
+  onFlipChange: (id: string, flipped: boolean) => void;
 }) {
-  const [flipped, setFlipped] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const frontButton = useRef<HTMLButtonElement>(null);
   const backButton = useRef<HTMLButtonElement>(null);
@@ -201,8 +201,7 @@ export default function TradingCard({
   function flip() {
     const next = !flipped;
     const hadFocus = rootRef.current?.contains(document.activeElement);
-    setFlipped(next);
-    onFlipChange?.(card.id, next);
+    onFlipChange(card.id, next);
     settle();
     // The face that held focus becomes inert, so hand focus to the other side.
     if (focusFrame.current !== null) cancelAnimationFrame(focusFrame.current);
@@ -306,6 +305,7 @@ export default function TradingCard({
               <div
                 className="tcg-picture"
                 data-logo-layout={card.logo?.layout}
+                data-logo={card.logo?.file.endsWith("/pneurelief.webp") ? "medtech" : undefined}
                 data-tone={
                   (card.logo ? card.logo.dark : card.stealth) ? "dark" : "light"
                 }

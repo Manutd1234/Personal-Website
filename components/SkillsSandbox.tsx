@@ -27,8 +27,21 @@ const skills = skillGroups
   .sort(
     (a, b) => a.itemIndex - b.itemIndex || a.categoryIndex - b.categoryIndex,
   );
-const tileForms = ["capsule", "card", "tag", "lozenge"] as const;
-const tileForm = (index: number) => tileForms[(index * 7 + Math.floor(index / 5)) % tileForms.length];
+// Each silhouette has a generous central writing area; short names can use seals.
+const tilePaths = {
+  ellipse: "M98 50A48 47 0 1 1 2 50A48 47 0 1 1 98 50Z",
+  hexagon: "M12 3H88L99 50L88 97H12L1 50Z",
+  ticket: "M6 3H94Q99 3 99 11V35Q90 50 99 65V89Q99 97 94 97H6Q1 97 1 89V65Q10 50 1 35V11Q1 3 6 3Z",
+  pebble: "M25 5C40 0 55 9 72 5C93 1 99 23 98 49C99 78 85 97 64 95C47 93 33 100 17 91C0 82 0 62 3 41C5 18 10 9 25 5Z",
+  cloud: "M15 27C16 6 34 1 43 17C52 0 73 5 76 24C96 17 104 46 94 63C103 85 85 100 69 90C59 103 43 96 37 87C20 103 2 86 7 68C-2 54 1 32 15 27Z",
+  pennant: "M2 3H85L99 50L85 97H2L10 50Z",
+  seal: "M50 2L60 12L74 8L79 23L94 27L90 43L99 54L88 65L90 81L74 85L66 98L51 91L37 98L28 85L12 81L14 65L2 54L11 42L7 27L23 22L28 8L42 12Z",
+} as const;
+const tileForms = ["ellipse", "hexagon", "ticket", "pebble", "cloud", "pennant"] as const;
+function tileForm(index: number): keyof typeof tilePaths {
+  if (skills[index].label.length <= 8 && index % 4 === 0) return "seal";
+  return tileForms[(index * 5 + Math.floor(index / 7)) % tileForms.length];
+}
 const STEP = 1000 / 60;
 const clamp = (value: number, low: number, high: number) =>
   Math.min(high, Math.max(low, value));
@@ -442,13 +455,11 @@ export default function SkillsSandbox({
       bodies = sizes.map((size, index) => {
         const curve = Math.max(4, size.height / 2 - 1);
         const form = tileForm(index);
-        const cornerRadius = form === "capsule"
+        // Conservative rounded collision bounds keep even the concave paper
+        // shapes apart without allowing another label through their writing area.
+        const cornerRadius = form === "ellipse" || form === "pebble"
           ? curve
-          : form === "tag"
-            ? [curve, 5, 5, curve]
-            : form === "lozenge"
-              ? [5, 12, 5, 12]
-              : 6;
+          : Math.min(6, size.height / 4);
         return Bodies.rectangle(
           homes[index].x,
           homes[index].y,
@@ -860,6 +871,9 @@ export default function SkillsSandbox({
               onPointerCancel={(event) => pointerUp(event, true)}
               onLostPointerCapture={(event) => pointerUp(event, true)}
             >
+              <svg className="skill-silhouette" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                <path d={tilePaths[tileForm(index)]} vectorEffect="non-scaling-stroke" />
+              </svg>
               <span>{skill.label}</span>
             </button>
           ))}

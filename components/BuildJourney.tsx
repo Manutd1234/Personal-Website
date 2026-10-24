@@ -10,7 +10,6 @@ import {
   Pause,
   Play,
   Rocket,
-  RotateCcw,
 } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { useMotionPreference } from "./useMotionPreference";
@@ -91,572 +90,175 @@ const steps = [
   },
 ] as const;
 
-/** Original vector artwork: a little builder assembling a software system. */
+/** Original vector studio scene; all motion is CSS and stops with playback. */
 function BuilderScene({ stage }: { stage: number }) {
+  const artId = useId();
   return (
     <div className="journey-cartoon" data-scene={stage} aria-hidden="true">
       <div className="journey-scene-label">
-        <span>A little idea, taking shape</span>
+        <span>At the workbench</span>
         <span>{steps[stage].short}</span>
       </div>
-      <svg viewBox="0 0 560 380" fill="none" className="journey-scene-svg">
-        <path
-          d="M31 329H529"
-          stroke="#a8b797"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <ellipse cx="113" cy="329" rx="64" ry="8" fill="#d5dfc8" />
-        <ellipse cx="365" cy="329" rx="145" ry="9" fill="#d5dfc8" />
-        <path
-          d="M47 83h12m-6-6v12M496 120h10m-5-5v10M461 48h12m-6-6v12"
-          stroke="#a4b98e"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <circle cx="199" cy="69" r="3" fill="#d4bb77" />
-        <circle cx="511" cy="241" r="3" fill="#a4b98e" />
-        {steps.map((step, sceneIndex) => (
-          <g
-            className="journey-scene-action"
-            key={step.short}
-            data-active={stage === sceneIndex}
-          >
-            {sceneIndex === 0 ? (
-              <>
-                <path
-                  d="M259 294l-15 36m200-36 15 36"
-                  stroke="#516a53"
-                  strokeWidth="7"
-                  strokeLinecap="round"
-                />
-                <rect
-                  x="219"
-                  y="86"
-                  width="266"
-                  height="212"
-                  rx="14"
-                  fill="#fffdf4"
-                  stroke="#688062"
-                  strokeWidth="2"
-                />
-                <rect
-                  x="235"
-                  y="103"
-                  width="235"
-                  height="34"
-                  rx="6"
-                  fill="#e6eddb"
-                />
-                <text x="250" y="125" className="scene-mono">
-                  problem-statement.md
-                </text>
-                <g className="scene-arrive scene-delay-one">
-                  <circle cx="247" cy="164" r="5" fill="#dfb857" />
-                  <text x="263" y="169" className="scene-label">
-                    Who needs this?
-                  </text>
-                  <path
-                    d="M263 181h159"
-                    stroke="#d1d9c5"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                  />
-                </g>
-                <g className="scene-arrive scene-delay-two">
-                  <circle cx="247" cy="209" r="5" fill="#dfb857" />
-                  <text x="263" y="214" className="scene-label">
-                    What must hold?
-                  </text>
-                  <path
-                    d="M263 226h129"
-                    stroke="#d1d9c5"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                  />
-                </g>
-                <g className="scene-arrive scene-delay-three">
-                  <path
-                    d="m241 253 5 5 10-12"
-                    stroke="#008363"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <text x="263" y="257" className="scene-label">
-                    Success = testable
-                  </text>
-                </g>
-                <g className="scene-thought">
-                  <path
-                    d="M94 160c-17-1-29-12-29-27s13-29 32-28c8-19 39-18 49 0 20-2 34 9 34 26s-14 28-34 29H94Z"
-                    fill="#fffdf4"
-                    stroke="#a4b98e"
-                    strokeWidth="2"
-                  />
-                  <text x="112" y="144" className="scene-question">
-                    ?
-                  </text>
-                  <circle cx="108" cy="175" r="4" fill="#d1d9c5" />
-                </g>
-              </>
-            ) : null}
-            {sceneIndex === 1 ? (
-              <>
-                <path
-                  d="M225 305h268"
-                  stroke="#698261"
-                  strokeWidth="6"
-                  strokeLinecap="round"
-                />
-                <g className="scene-arrive">
-                  <rect
-                    x="240"
-                    y="240"
-                    width="237"
-                    height="57"
-                    rx="8"
-                    fill="#dfc88b"
-                    stroke="#71815c"
-                    strokeWidth="2"
-                  />
-                  <text x="259" y="265" className="scene-label">
-                    PostgreSQL
-                  </text>
-                  <text x="259" y="284" className="scene-note">
-                    relationships · transactions
-                  </text>
-                </g>
-                <g className="scene-stack scene-delay-one">
-                  <rect
-                    x="257"
-                    y="170"
-                    width="220"
-                    height="57"
-                    rx="8"
-                    fill="#bddcc7"
-                    stroke="#71815c"
-                    strokeWidth="2"
-                  />
-                  <text x="276" y="195" className="scene-label">
-                    Python
-                  </text>
-                  <text x="276" y="214" className="scene-note">
-                    models · data · APIs
-                  </text>
-                </g>
-                <g className="scene-stack scene-delay-two">
-                  <rect
-                    x="240"
-                    y="100"
-                    width="237"
-                    height="57"
-                    rx="8"
-                    fill="#c9dce3"
-                    stroke="#71815c"
-                    strokeWidth="2"
-                  />
-                  <text x="259" y="125" className="scene-label">
-                    TypeScript
-                  </text>
-                  <text x="259" y="144" className="scene-note">
-                    interface · typed contracts
-                  </text>
-                </g>
-                <g className="scene-arrive scene-delay-three">
-                  <path
-                    d="M464 66c9-20 24-27 39-20-2 23-16 38-36 40"
-                    fill="#d9e9bf"
-                    stroke="#698261"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="m469 68 6 6 15-18"
-                    stroke="#008363"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </g>
-                <path
-                  d="M160 173c22-28 43-31 68-29"
-                  stroke="#9cad8b"
-                  strokeWidth="2"
-                  strokeDasharray="4 6"
-                />
-                <path
-                  d="m218 136 10 8-11 5"
-                  stroke="#9cad8b"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </>
-            ) : null}
-            {sceneIndex === 2 ? (
-              <>
-                <path
-                  className="scene-wire"
-                  pathLength="100"
-                  d="M319 133h40v82h28M447 254v37h-37"
-                  stroke="#88a67a"
-                  strokeWidth="3"
-                  strokeDasharray="6 6"
-                />
-                <g className="scene-arrive">
-                  <rect
-                    x="195"
-                    y="90"
-                    width="124"
-                    height="79"
-                    rx="10"
-                    fill="#fffdf4"
-                    stroke="#688062"
-                    strokeWidth="2"
-                  />
-                  <rect
-                    x="205"
-                    y="100"
-                    width="104"
-                    height="14"
-                    rx="4"
-                    fill="#dce9cd"
-                  />
-                  <text x="225" y="139" className="scene-label">
-                    Client
-                  </text>
-                  <text x="218" y="157" className="scene-note">
-                    typed request
-                  </text>
-                </g>
-                <g className="scene-arrive scene-delay-one">
-                  <rect
-                    x="387"
-                    y="173"
-                    width="120"
-                    height="81"
-                    rx="10"
-                    fill="#e7d9b3"
-                    stroke="#688062"
-                    strokeWidth="2"
-                  />
-                  <text x="425" y="206" className="scene-label">
-                    API
-                  </text>
-                  <text x="400" y="227" className="scene-note">
-                    validate · auth
-                  </text>
-                </g>
-                <g className="scene-arrive scene-delay-two">
-                  <path
-                    d="M305 258v42c0 19 105 19 105 0v-42"
-                    fill="#c8dfcb"
-                    stroke="#688062"
-                    strokeWidth="2"
-                  />
-                  <ellipse
-                    cx="357.5"
-                    cy="258"
-                    rx="52.5"
-                    ry="14"
-                    fill="#e7efda"
-                    stroke="#688062"
-                    strokeWidth="2"
-                  />
-                  <text x="328" y="293" className="scene-label">
-                    Store
-                  </text>
-                </g>
-                <g className="scene-arrive scene-delay-three">
-                  <rect
-                    x="375"
-                    y="69"
-                    width="126"
-                    height="42"
-                    rx="10"
-                    fill="#fffdf4"
-                    stroke="#b1c09c"
-                    strokeWidth="2"
-                  />
-                  <text x="390" y="95" className="scene-note">
-                    explicit errors
-                  </text>
-                </g>
-                <circle
-                  className="scene-packet"
-                  cx="319"
-                  cy="133"
-                  r="6"
-                  fill="#008363"
-                />
-              </>
-            ) : null}
-            {sceneIndex === 3 ? (
-              <>
-                <path
-                  d="M245 312h234"
-                  stroke="#698261"
-                  strokeWidth="7"
-                  strokeLinecap="round"
-                />
-                <rect
-                  x="206"
-                  y="85"
-                  width="295"
-                  height="211"
-                  rx="12"
-                  fill="#224b3d"
-                  stroke="#688062"
-                  strokeWidth="2"
-                />
-                <path d="M207 119h293" stroke="#61816a" strokeWidth="1.5" />
-                <circle cx="224" cy="102" r="4" fill="#dfb857" />
-                <circle cx="237" cy="102" r="4" fill="#9dc898" />
-                <circle cx="250" cy="102" r="4" fill="#bfdbb6" />
-                <text x="307" y="106" className="scene-mono scene-code-muted">
-                  one-complete-path.ts
-                </text>
-                <g className="scene-code-line">
-                  <text x="226" y="151" className="scene-code">
-                    const input = validate(req);
-                  </text>
-                </g>
-                <g className="scene-code-line scene-delay-one">
-                  <text x="226" y="181" className="scene-code">
-                    await checkAccess(user);
-                  </text>
-                </g>
-                <g className="scene-code-line scene-delay-two">
-                  <text x="226" y="211" className="scene-code">
-                    const row = await save(input);
-                  </text>
-                </g>
-                <g className="scene-code-line scene-delay-three">
-                  <text x="226" y="241" className="scene-code">
-                    return respond(row);
-                  </text>
-                  <rect
-                    className="scene-cursor"
-                    x="432"
-                    y="229"
-                    width="7"
-                    height="15"
-                    fill="#d9e9bf"
-                  />
-                </g>
-                <g className="scene-arrive scene-delay-three">
-                  <rect
-                    x="273"
-                    y="268"
-                    width="166"
-                    height="39"
-                    rx="8"
-                    fill="#e7efda"
-                    stroke="#688062"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="m287 286 5 5 10-12"
-                    stroke="#008363"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <text x="312" y="292" className="scene-note">
-                    UI → API → data
-                  </text>
-                </g>
-              </>
-            ) : null}
-            {sceneIndex === 4 ? (
-              <>
-                <rect
-                  x="196"
-                  y="163"
-                  width="202"
-                  height="147"
-                  rx="12"
-                  fill="#fffdf4"
-                  stroke="#688062"
-                  strokeWidth="2"
-                />
-                <path d="M196 195h202" stroke="#ced8bd" strokeWidth="2" />
-                <text x="213" y="184" className="scene-mono">
-                  release-checks.yml
-                </text>
-                {["unit + integration", "browser flow", "production build"].map(
-                  (label, index) => (
-                    <g
-                      key={label}
-                      className={`scene-arrive scene-delay-${["one", "two", "three"][index]}`}
-                    >
-                      <circle
-                        cx="218"
-                        cy={216 + index * 34}
-                        r="9"
-                        fill="#dce9cd"
-                      />
-                      <path
-                        d={`m213 ${216 + index * 34} 4 4 7-8`}
-                        stroke="#008363"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <text x="238" y={221 + index * 34} className="scene-note">
-                        {label}
-                      </text>
-                    </g>
-                  ),
-                )}
-                <g className="scene-rocket">
-                  <path
-                    d="M424 192c-23-35-16-88 18-119 34 31 41 84 18 119Z"
-                    fill="#fffdf4"
-                    stroke="#557455"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M423 163c-20 6-26 22-24 43l25-14m36-29c20 6 26 22 24 43l-25-14"
-                    fill="#b9d8bf"
-                    stroke="#557455"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                  />
-                  <path d="M424 101q18-21 36 0l-18-28Z" fill="#008363" />
-                  <circle
-                    cx="442"
-                    cy="137"
-                    r="13"
-                    fill="#d7e5ef"
-                    stroke="#557455"
-                    strokeWidth="2"
-                  />
-                  <path
-                    className="scene-flame"
-                    d="M430 193q-5 24 12 41 17-17 12-41"
-                    fill="#dfb857"
-                  />
-                  <path d="M431 187h22v10h-22z" fill="#557455" />
-                </g>
-                <g className="scene-arrive scene-delay-three">
-                  <rect
-                    x="409"
-                    y="272"
-                    width="87"
-                    height="32"
-                    rx="16"
-                    fill="#dce9cd"
-                  />
-                  <circle cx="426" cy="288" r="4" fill="#008363" />
-                  <text x="438" y="293" className="scene-note">
-                    deployed
-                  </text>
-                </g>
-              </>
-            ) : null}
-          </g>
-        ))}
-        <g className="scene-builder">
-          <path
-            d="M84 300v24H70m65-24v24h14"
-            stroke="#46664e"
-            strokeWidth="11"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <rect
-            x="71"
-            y="242"
-            width="80"
-            height="65"
-            rx="19"
-            fill="#008363"
-            stroke="#355c43"
-            strokeWidth="2"
-          />
-          <path d="M91 243v43h40v-43" stroke="#d7e6b8" strokeWidth="3" />
-          <rect x="99" y="264" width="25" height="16" rx="4" fill="#c9dcad" />
-          <path
-            d="m106 270-4 3 4 3m11-6 4 3-4 3"
-            stroke="#355c43"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="m73 254-15 27 14 8"
-            stroke="#8da77e"
-            strokeWidth="11"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <g className="scene-builder-arm">
-            <path
-              d="m148 254 23-15 8-21"
-              stroke="#8da77e"
-              strokeWidth="11"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="m174 219 8-18"
-              stroke="#dfb857"
-              strokeWidth="7"
-              strokeLinecap="round"
-            />
-            <path
-              d="m180 203 4-8"
-              stroke="#46664e"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-          </g>
-          <rect
-            x="77"
-            y="193"
-            width="69"
-            height="53"
-            rx="17"
-            fill="#e4eccc"
-            stroke="#557455"
-            strokeWidth="2"
-          />
-          <g className="scene-builder-eyes">
-            <circle cx="98" cy="218" r="4" fill="#355c43" />
-            <circle cx="127" cy="218" r="4" fill="#355c43" />
-          </g>
-          <path
-            d="M105 231q8 6 15-1"
-            stroke="#557455"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-          <path
-            d="M74 198c0-21 13-34 37-34s37 13 37 34"
-            fill="#dfb857"
-            stroke="#89793f"
-            strokeWidth="2"
-          />
-          <path
-            d="M105 167v22m12-22v22"
-            stroke="#b99b49"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <path
-            d="M68 199h87"
-            stroke="#89793f"
-            strokeWidth="6"
-            strokeLinecap="round"
-          />
+      <svg viewBox="0 0 560 410" fill="none" className="journey-scene-svg">
+        <defs>
+          <linearGradient id={`${artId}-wall`} x1="64" y1="34" x2="476" y2="349" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#fbfaf1" /><stop offset="1" stopColor="#e1e8d8" />
+          </linearGradient>
+          <linearGradient id={`${artId}-skin`} x1="190" y1="113" x2="246" y2="167" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#edc3a1" /><stop offset="1" stopColor="#c58f70" />
+          </linearGradient>
+          <linearGradient id={`${artId}-shirt`} x1="181" y1="187" x2="249" y2="271" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#829b89" /><stop offset="1" stopColor="#416756" />
+          </linearGradient>
+          <linearGradient id={`${artId}-metal`} x1="348" y1="273" x2="352" y2="297" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#d6ded6" /><stop offset="1" stopColor="#8c9f94" />
+          </linearGradient>
+          <clipPath id={`${artId}-screen`}><rect x="307" y="135" width="201" height="130" rx="4" /></clipPath>
+        </defs>
+        {/* A quiet room gives the work a real setting and a consistent light source. */}
+        <path d="M34 33h491v319H34z" fill={`url(#${artId}-wall)`} />
+        <path d="M34 352h491" stroke="#bbc9b2" strokeWidth="2" />
+        <path d="M53 352 230 139h88L157 352Z" fill="#fffdf3" opacity=".42" />
+        <rect x="54" y="56" width="107" height="150" rx="5" fill="#d2ded3" stroke="#b7c9b6" strokeWidth="2" />
+        <rect x="61" y="63" width="93" height="136" rx="2" fill="#e9f1e9" />
+        <path d="M62 165c26-31 48-19 92-51v85H62Z" fill="#d0dfcb" />
+        <path d="M107 63v136M61 126h93" stroke="#fafaf1" strokeWidth="5" />
+        <path d="M50 206h115" stroke="#a8bca6" strokeWidth="6" strokeLinecap="round" />
+        <path d="M352 72h151" stroke="#95aa91" strokeWidth="5" strokeLinecap="round" />
+        <path d="M363 72V45h11v27m5 0V39h11v33m6 0V48h8v24" fill="#b0c1a6" stroke="#8a9e7f" />
+        <rect x="412" y="39" width="30" height="28" rx="2" fill="#f6f5e9" stroke="#b5c1a8" />
+        <path d="m418 58 6-8 6 5 6-10" stroke="#87a284" strokeWidth="2" strokeLinecap="round" />
+        <path d="M476 48v-9m0 5c-12 0-17-9-17-9 12-4 17 9 17 9m0-2c11-3 15-16 15-16-14 0-15 16-15 16" stroke="#6e8e6d" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M464 48h24l-4 24h-16Z" fill="#bdad8c" />
+        <ellipse cx="280" cy="382" rx="211" ry="10" fill="#bccbb3" opacity=".36" />
+        {/* Chair, bent legs and weighted feet establish a believable seated posture. */}
+        <g className="studio-chair">
+          <path d="M157 187c-13 1-20 13-17 29l10 65h45l-11-76c-2-14-11-20-27-18Z" fill="#304c43" />
+          <path d="M148 201c-6 13 3 61 7 69" stroke="#547565" strokeWidth="3" strokeLinecap="round" />
+          <path d="M151 282h90" stroke="#314d42" strokeWidth="13" strokeLinecap="round" />
+          <path d="M187 289v65m-37 16 37-16 39 16" stroke="#6d8273" strokeWidth="7" strokeLinecap="round" />
+          <path d="M187 354v19" stroke="#6d8273" strokeWidth="6" />
+          <circle cx="149" cy="374" r="6" fill="#344e43" /><circle cx="188" cy="376" r="6" fill="#344e43" /><circle cx="228" cy="374" r="6" fill="#344e43" />
         </g>
-        <path
-          d="M36 326v-28m0 16c-17-4-17-17-17-17 16 0 17 17 17 17m0-7c15-5 15-18 15-18-15 3-15 18-15 18"
-          stroke="#8da77e"
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
+        <path d="M191 260c13 1 26 5 40 18l13 28-25 56-20-5 17-50-31-17Z" fill="#455d63" />
+        <path d="M216 264c20 0 43 7 64 22 7 5 9 13 4 23l-26 56-22-7 21-55-38-11c-17-5-25-13-27-24Z" fill="#587077" />
+        <path d="m223 281 41 16-21 52m-25-43 12 6" stroke="#789093" strokeWidth="2" strokeLinecap="round" />
+        <path d="m201 353 19 6-3 15h-28c-5-1-6-5-2-8Z" fill="#e6e8dc" stroke="#7f9185" strokeWidth="1.5" />
+        <path d="m238 355 21 6 21 8c6 2 7 8 2 10h-46c-5-1-5-5-3-9Z" fill="#e6e8dc" stroke="#7f9185" strokeWidth="1.5" />
+        <path d="M188 374h29m18 3h49m-31-13-5 4m11-2-5 4" stroke="#7f9185" strokeWidth="1.5" strokeLinecap="round" />
+        {/* Desk, notebook and mug sit on a single plane beneath the laptop. */}
+        <path d="M134 294h387l-7 13H140Z" fill="#b7aa8b" />
+        <path d="M146 307h11l-9 73h-9Zm346 0h11l13 73h-9Z" fill="#72836f" />
+        <path d="M151 307h345" stroke="#a09479" strokeWidth="3" />
+        <path d="m429 281 63 2-12 10-65-2Z" fill="#f9f5e9" stroke="#b9c0a9" />
+        <path d="m439 285 39 1m-43 3 30 1" stroke="#acb8a2" strokeWidth="1.2" />
+        <path d="m470 278 28 3" stroke="#45745f" strokeWidth="3" strokeLinecap="round" />
+        <path d="M483 257h22v26c-4 6-18 6-22 0Z" fill="#e6dfc6" stroke="#a5aa8e" strokeWidth="1.5" />
+        <path d="M505 262c15-2 14 17 0 16" stroke="#a5aa8e" strokeWidth="3" />
+        <g className="studio-steam" stroke="#9bac91" strokeWidth="1.4" strokeLinecap="round"><path d="M490 250c-7-9 6-10 1-20" /><path d="M498 248c-5-7 6-10 1-17" /></g>
+        {/* The body has a slight breathing cycle; the head glances between screen and keys. */}
+        <g className="studio-person">
+          <path d="m211 159-3 22 20 11 12-13-12-24Z" fill="#cf9b7b" />
+          <path d="m208 177 14 7 15-8 10 25-24 57-27-53Z" fill="#ece9da" />
+          <path d="M207 177c-18-1-29 10-32 34l-5 54c16 15 47 13 69 6l9-62c1-17-7-29-19-33l-7 34Z" fill={`url(#${artId}-shirt)`} />
+          <path d="m206 179-11 19 13 9 14-23m7-7 13 21-11 9-9-23m-3 29-4 49m-32-15-5 16m53-42-4 26" stroke="#395e4b" strokeWidth="1.6" strokeLinecap="round" />
+          <path d="M186 211h15v18h-15z" stroke="#b4c2a6" strokeWidth="1.3" />
+          <circle cx="218" cy="224" r="1.5" fill="#c1ceb4" /><circle cx="216" cy="243" r="1.5" fill="#c1ceb4" />
+          <g className="studio-head">
+            <path d="M191 126c-6-31 39-43 52-17l-2 24 7 13-9 4c1 12-4 21-15 22-14-1-27-11-29-25Z" fill={`url(#${artId}-skin)`} />
+            <path d="M238 151c-4 0-7-1-10-2m8 9-8 1" stroke="#9c6d55" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M190 141c-12-8-14-26-7-40 4-10 15-17 30-15 14-3 27 5 31 16 2 8 0 15-3 19l-6-15c-10 4-21 2-28-1-1 12-8 19-17 24Z" fill="#293b35" />
+            <path d="M188 104c10-13 23-15 38-9m-31 14c9-7 18-9 28-7" stroke="#53614e" strokeWidth="2" strokeLinecap="round" />
+            <path d="M198 132c-2-9-13-10-14-1-1 8 5 15 12 12" fill="#dba987" />
+            <path d="M191 129c-4 1-3 7 1 8" stroke="#aa775c" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="m227 121 10 1" stroke="#3d4134" strokeWidth="2.2" strokeLinecap="round" />
+            <g className="studio-eyes"><path d="m230 128 6 1" stroke="#373d33" strokeWidth="2.5" strokeLinecap="round" /></g>
+            <path d="m237 131 1 9-4 1" stroke="#b17f62" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M200 157c4 5 9 8 15 10" stroke="#ba8b6f" strokeWidth="1.3" strokeLinecap="round" />
+          </g>
+          {/* Far forearm rests lower; nearer sleeve and wrist reach the keyboard. */}
+          <path d="M200 204c-4 15 5 37 20 47l54 25 7-12-45-28-16-37" fill="#6c8876" />
+          <path d="m269 261 17 8 11-1 8 4-3 8-18 1-15-7Z" fill="#ce9c7e" />
+          <path d="M238 193c-13-1-17 12-12 25l19 32 24 7 6-17-16-9-7-25c-3-9-7-13-14-13Z" fill="#87a08b" />
+          <path d="m245 243 24 9m-36-45 6 25" stroke="#4e715b" strokeWidth="1.6" strokeLinecap="round" />
+          <path d="m270 246 25 15 16 7-5 12-20-7-23-13Z" fill="#e1b28e" />
+          <path d="m267 248 6 3-6 12-6-3Z" fill="#35564c" /><path d="m267 252 3 2-3 6-3-2Z" fill="#d1dcce" />
+        </g>
+        {/* The laptop scales around the resting wrists, with a readable screen
+            and enough desk space for the notebook and mug. */}
+        <g transform="translate(300 285) scale(.82) translate(-300 -285)">
+        <rect x="299" y="125" width="217" height="149" rx="8" fill="#53695f" />
+        <rect x="302" y="128" width="211" height="141" rx="6" fill="#253e35" />
+        <circle cx="407" cy="131" r="1.5" fill="#7c9486" />
+        <g clipPath={`url(#${artId}-screen)`}>
+          <rect x="307" y="135" width="201" height="130" fill="#183d31" />
+          <path d="M307 153h201" stroke="#3a5f4c" />
+          <circle cx="317" cy="144" r="2" fill="#d4b771" /><circle cx="325" cy="144" r="2" fill="#7cae8a" /><circle cx="333" cy="144" r="2" fill="#afcba0" />
+          {steps.map((step, sceneIndex) => (
+            <g className="journey-scene-action" key={step.short} data-active={stage === sceneIndex}>
+              <text x="344" y="147" className="studio-screen-file">{["brief.md", "stack.config", "request-flow", "feature.ts", "release.yml"][sceneIndex]}</text>
+              {sceneIndex === 0 ? <>
+                <text x="319" y="173" className="studio-screen-heading">Start with the user.</text>
+                {["Understand the friction", "Define the smallest version", "Agree how to measure success"].map((label, i) => <g key={label} className={`scene-arrive scene-delay-${["one", "two", "three"][i]}`}>
+                  <rect x="319" y={185 + i * 23} width="7" height="7" rx="1.5" stroke="#a8c6a2" /><path d={`m320 ${188 + i * 23} 2 2 4-5`} stroke="#b9dca5" strokeWidth="1.1" />
+                  <text x="333" y={192 + i * 23} className="studio-screen-label">{label}</text>
+                </g>)}
+              </> : null}
+              {sceneIndex === 1 ? <>
+                <text x="319" y="172" className="studio-screen-heading">Tools for the workload</text>
+                {[["TS", "Interface + contracts"], ["Py", "Models + data"], ["SQL", "Storage + transactions"]].map(([tool, label], i) => <g key={tool} className={`scene-arrive scene-delay-${["one", "two", "three"][i]}`}>
+                  <rect x="318" y={181 + i * 25} width="27" height="19" rx="4" fill={["#b7d1d4", "#c2d5a7", "#deca94"][i]} /><text x="331.5" y={194 + i * 25} textAnchor="middle" className="studio-tool-label">{tool}</text>
+                  <text x="353" y={194 + i * 25} className="studio-screen-label">{label}</text>
+                </g>)}
+              </> : null}
+              {sceneIndex === 2 ? <>
+                <text x="319" y="172" className="studio-screen-heading">One request, end to end</text>
+                <path className="scene-wire" d="M358 202h20m45 0h20M466 217v22H337v-22" stroke="#8cae8e" strokeWidth="1.6" strokeDasharray="3 3" />
+                {[["UI", 317], ["API", 382], ["Data", 447]].map(([label, x], i) => <g key={label} className={`scene-arrive scene-delay-${["one", "two", "three"][i]}`}>
+                  <rect x={x} y="187" width="39" height="30" rx="5" fill="#d2dfc3" /><text x={Number(x) + 19.5} y="206" className="studio-tool-label" textAnchor="middle">{label}</text>
+                </g>)}
+                <circle className="studio-packet" cx="358" cy="202" r="3" fill="#e7c778" />
+                <text x="354" y="254" className="studio-screen-note">validate · authorize · observe</text>
+              </> : null}
+              {sceneIndex === 3 ? <>
+                {["const input = validate(req);", "await authorize(user);", "const row = await save(input);", "return respond(row);"].map((line, i) => <g key={line} className={`scene-code-line scene-delay-${["zero", "one", "two", "three"][i]}`}>
+                  <text x="314" y={176 + i * 20} className="studio-line-number">{i + 1}</text><text x="326" y={176 + i * 20} className="studio-screen-code">{line}</text>
+                </g>)}
+                <rect className="scene-cursor" x="438" y="229" width="4" height="9" fill="#d2e2b5" />
+                <text x="319" y="254" className="studio-screen-note">UI → API → data</text>
+              </> : null}
+              {sceneIndex === 4 ? <>
+                {["Unit + integration", "Browser journey", "Production build"].map((label, i) => <g key={label} className={`scene-arrive scene-delay-${["one", "two", "three"][i]}`}>
+                  <path d={`m319 ${169 + i * 23} 3 3 6-7`} stroke="#badb98" strokeWidth="1.5" strokeLinecap="round" /><text x="336" y={172 + i * 23} className="studio-screen-label">{label}</text><text x="475" y={172 + i * 23} className="studio-screen-note">PASS</text>
+                </g>)}
+                <g className="scene-arrive scene-delay-three"><rect x="319" y="236" width="177" height="18" rx="4" fill="#b9d4a5" /><circle className="studio-live-dot" cx="331" cy="245" r="3" fill="#327351" /><text x="341" y="248" className="studio-tool-label">Deployed · monitoring</text></g>
+              </> : null}
+            </g>
+          ))}
+          <path d="m487 135-56 130h26l51-119v-11Z" fill="#eff9e9" opacity=".025" />
+        </g>
+        <path d="M299 274h217l13 16c0 4-3 6-8 6H275c-5 0-8-2-8-5Z" fill={`url(#${artId}-metal)`} stroke="#84998b" strokeWidth="1" />
+        <path d="m305 277 199 1 8 8H294Z" fill="#50685e" />
+        {[0, 1, 2].map((row) => <path key={row} d={`M${303 - row * 3} ${279 + row * 2.2}h${200 + row * 4}`} stroke="#b4c2b5" strokeWidth=".6" />)}
+        {Array.from({ length: 18 }, (_, i) => <path key={i} d={`m${307 + i * 10.7} 278-3 8`} stroke="#b4c2b5" strokeWidth=".6" />)}
+        <path d="M374 288h48l5 4h-57Z" stroke="#859c8e" strokeWidth=".8" />
+        <path d="M270 292h255" stroke="#e8eee3" strokeWidth="1.2" />
+        </g>
+        {/* Each wrist and finger moves independently, with alternating key presses. */}
+        <g className="studio-hand studio-hand-far">
+          <path d="m281 267 12-1 12 4 6 6-4 2-9-5-9 4-11-5Z" fill="#d3a181" stroke="#ad7d63" strokeWidth=".8" />
+          <path className="studio-finger" d="m296 270 8 2 5 5" stroke="#d3a181" strokeWidth="3" strokeLinecap="round" />
+          <path className="studio-finger studio-finger-two" d="m291 272 8 3 3 4" stroke="#d3a181" strokeWidth="3" strokeLinecap="round" />
+        </g>
+        <g className="studio-hand studio-hand-near">
+          <path d="m303 267 14 1 8 6-2 5-12-2-9 3-5-8Z" fill="#e3b491" stroke="#b58568" strokeWidth=".8" />
+          <path className="studio-finger" d="m316 271 11 3 5 6" stroke="#e3b491" strokeWidth="3.4" strokeLinecap="round" />
+          <path className="studio-finger studio-finger-two" d="m312 275 11 3 3 4" stroke="#e3b491" strokeWidth="3.3" strokeLinecap="round" />
+          <path className="studio-finger studio-finger-three" d="m307 277 9 3 3 3" stroke="#dba988" strokeWidth="3" strokeLinecap="round" />
+          <path d="m302 272 8 2" stroke="#edc2a1" strokeWidth="1.2" strokeLinecap="round" />
+        </g>
+        <path d="M282 297h43" stroke="#ab9d7f" strokeWidth="1.2" opacity=".6" />
+        <path d="M438 307v48c0 12 12 13 12 27" stroke="#81937d" strokeWidth="1.5" />
       </svg>
       <p className="journey-scene-caption">{steps[stage].scene}</p>
     </div>
@@ -797,10 +399,6 @@ export default function BuildJourney({
           ))}
         </ol>
         <footer className="journey-footer">
-          <span>
-            <RotateCcw size={15} aria-hidden="true" />
-            Build. Learn. Make the next version better.
-          </span>
           <button type="button" onClick={() => openProjects()}>
             Explore the projects <ArrowUpRight size={16} aria-hidden="true" />
           </button>

@@ -715,12 +715,30 @@
   outline: 3px solid var(--book-lime);
   outline-offset: 7px;
 }
+.book-carousel .book-browse-controls-shell {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows 380ms cubic-bezier(0.22, 0.7, 0.15, 1),
+    opacity 220ms ease;
+}
+.book-carousel .book-stage[data-open="true"] .book-browse-controls-shell {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+}
 .book-carousel .book-browse-controls {
   display: flex;
   position: relative;
+  min-height: 0;
+  overflow: hidden;
   align-items: center;
   justify-content: center;
   gap: 24px;
+}
+.book-carousel .book-browse-controls button:focus-visible {
+  outline-offset: -4px;
 }
 .book-carousel .book-arrow {
   display: grid;
@@ -834,15 +852,15 @@
   .book-stage:is([data-open="true"], [data-returning="true"])
   .book-orbit-item {
   transition:
-    transform 620ms cubic-bezier(0.22, 0.7, 0.15, 1),
-    left 620ms cubic-bezier(0.22, 0.7, 0.15, 1),
+    transform 460ms cubic-bezier(0.22, 0.7, 0.15, 1),
+    left 460ms cubic-bezier(0.22, 0.7, 0.15, 1),
     opacity 320ms,
     visibility 0s;
 }
 .book-carousel
   .book-stage:is([data-open="true"], [data-returning="true"])
   .book-object {
-  transition: transform 620ms cubic-bezier(0.22, 0.7, 0.15, 1);
+  transition: transform 460ms cubic-bezier(0.22, 0.7, 0.15, 1);
 }
 .book-carousel .book-stage[data-open="true"] .book-theatre-flow {
   min-height: max(500px, calc(var(--book-height) * 1.85));
@@ -850,7 +868,7 @@
 .book-carousel
   .book-stage:is([data-open="true"], [data-returning="true"])
   .book-click {
-  transition: transform 620ms cubic-bezier(0.22, 0.7, 0.15, 1);
+  transition: transform 460ms cubic-bezier(0.22, 0.7, 0.15, 1);
 }
 .book-carousel
   .book-stage[data-open="true"]
@@ -866,9 +884,9 @@
   pointer-events: none;
   visibility: hidden;
   transition:
-    transform 650ms cubic-bezier(0.22, 0.7, 0.15, 1),
-    opacity 350ms,
-    visibility 0s 350ms;
+    transform 480ms cubic-bezier(0.22, 0.7, 0.15, 1),
+    opacity 260ms,
+    visibility 0s 260ms;
 }
 .book-carousel
   .book-stage[data-open="true"]
@@ -889,7 +907,7 @@
   .book-cover-hinge {
   transform: translateZ(calc(var(--book-half-depth) - 1px))
     rotateY(var(--open-cover-angle));
-  transition: transform 520ms 70ms cubic-bezier(0.22, 0.7, 0.15, 1);
+  transition: transform 420ms 20ms cubic-bezier(0.22, 0.7, 0.15, 1);
 }
 .book-carousel
   .book-stage[data-open="true"]
@@ -897,7 +915,7 @@
   .book-page-leaf {
   transform: translateZ(calc(var(--page-half-depth) + 0.6px))
     rotateY(var(--open-leaf-angle));
-  transition: transform 420ms 180ms cubic-bezier(0.22, 0.7, 0.15, 1);
+  transition: transform 340ms 90ms cubic-bezier(0.22, 0.7, 0.15, 1);
 }
 .book-carousel .book-details {
   position: relative;
@@ -919,7 +937,7 @@
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
-  transition-delay: 480ms;
+  transition-delay: 0ms;
 }
 .book-carousel .book-details[hidden] {
   display: none;
@@ -1433,7 +1451,7 @@
   }
 }
 
-/* Open the selected cover, then settle into a full-width reading spread. */
+/* Hand the opening cover into the paper spread without an empty waiting beat. */
 .book-carousel
   .book-stage:is([data-open="true"], [data-returning="true"])
   .book-details {
@@ -1449,18 +1467,32 @@
   align-items: flex-start;
 }
 .book-carousel .book-stage[data-open="true"] .book-details {
-  animation: book-reader-arrive 840ms cubic-bezier(0.2, 0.65, 0.2, 1) both;
+  transform-origin: 50% 25%;
+  animation: book-reader-arrive var(--book-open-duration) cubic-bezier(0.2, 0.65, 0.2, 1) both;
 }
 .book-carousel .book-stage[data-open="true"] .book-scene {
   pointer-events: none;
-  animation: book-object-depart 840ms ease both;
+  animation: book-object-depart var(--book-open-duration) ease both;
+}
+.book-carousel .book-stage[data-returning="true"] .book-details {
+  animation: book-reader-leave 240ms ease both;
+}
+.book-carousel .book-stage[data-returning="true"] .book-scene {
+  animation: book-object-return var(--book-return-duration) ease both;
+}
+.book-carousel .book-stage[data-returning="true"] .book-cover-hinge,
+.book-carousel .book-stage[data-returning="true"] .book-page-leaf,
+.book-carousel .book-stage[data-returning="true"] .book-under-leaf {
+  transition-duration: 360ms;
+  transition-delay: 0ms;
 }
 @keyframes book-object-depart {
   0%,
-  68% {
+  30% {
     opacity: 1;
     visibility: visible;
   }
+  72%,
   100% {
     opacity: 0;
     visibility: hidden;
@@ -1468,14 +1500,28 @@
 }
 @keyframes book-reader-arrive {
   0%,
-  62% {
+  24% {
     opacity: 0;
-    transform: translateY(18px) scale(0.975);
+    transform: translateY(10px) scale(0.985);
   }
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+@keyframes book-reader-leave {
+  from {
+    opacity: var(--reader-exit-opacity, 1);
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+}
+@keyframes book-object-return {
+  from { opacity: var(--scene-return-opacity, 0); }
+  45%, to { opacity: 1; }
 }
 /* Keep cover and leaf preview under one motion/visibility guard. */
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
@@ -1547,6 +1593,13 @@
   .book-details {
   animation: none;
 }
+.book-carousel[data-reduced-motion="true"] .book-browse-controls-shell {
+  transition: none;
+}
+.book-carousel[data-reduced-motion="true"]
+  .book-stage[data-returning="true"] :is(.book-scene, .book-details) {
+  animation: none;
+}
 .book-carousel .book-stage[data-suspended] *,
 .book-carousel[aria-hidden="true"] * {
   animation-play-state: paused !important;
@@ -1558,6 +1611,12 @@
     animation: none;
   }
   .book-carousel .book-stage[data-open="true"] .book-details {
+    animation: none;
+  }
+  .book-carousel .book-browse-controls-shell {
+    transition: none;
+  }
+  .book-carousel .book-stage[data-returning="true"] :is(.book-scene, .book-details) {
     animation: none;
   }
 }

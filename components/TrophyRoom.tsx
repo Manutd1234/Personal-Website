@@ -65,6 +65,7 @@ type CertificateFile = {
   src: string;
   originalSrc?: string;
   title: string;
+  alt?: string;
   kind?: string;
   representative?: boolean;
   caption?: string;
@@ -333,6 +334,186 @@ function previewForAchievement(record: Achievement): CertificateFile {
       : undefined) ??
     record.certificates.find((file) => !file.representative) ??
     record.preview
+  );
+}
+
+type MediaLayout = "document" | "photo" | "project" | "emblem";
+function mediaLayout(file: CertificateFile): MediaLayout {
+  if (/emblem|patch/i.test(file.kind ?? "")) return "emblem";
+  if (/screenshot|dashboard|demo|diagram/i.test(file.kind ?? "")) return "project";
+  if (/photo/i.test(file.kind ?? "")) return "photo";
+  return "document";
+}
+
+function AchievementMedia({
+  file,
+  layout = mediaLayout(file),
+  additionalCaption,
+}: {
+  file: CertificateFile;
+  layout?: MediaLayout;
+  additionalCaption?: string;
+}) {
+  const description = file.caption?.replace(
+    /(the) (certificate|transcript excerpt) below/gi,
+    (_, article: string, record: string) => `${article} ${record} in the award record`,
+  );
+  return (
+    <figure className="achievement-media" data-layout={layout}>
+      <a
+        className="achievement-media-frame"
+        href={asset(file.src)}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={`${file.title} — open full image in a new tab`}
+      >
+        <img src={asset(file.src)} alt={file.alt ?? file.title} loading="lazy" decoding="async" />
+      </a>
+      <figcaption>
+        <span className="achievement-media-kind">{previewKind(file)}</span>
+        <strong>{file.title}</strong>
+        {description ? <p>{description}</p> : null}
+        {additionalCaption && additionalCaption !== file.caption ? <p>{additionalCaption}</p> : null}
+        <div className="achievement-media-actions">
+          <a href={asset(file.src)} target="_blank" rel="noreferrer">
+            View full size <ArrowUpRight size={14} aria-hidden="true" />
+            <span className="sr-only">, opens in a new tab</span>
+          </a>
+          {file.originalSrc ? (
+            <a href={asset(file.originalSrc)} target="_blank" rel="noreferrer">
+              Original photo <ArrowUpRight size={14} aria-hidden="true" />
+              <span className="sr-only">, opens in a new tab</span>
+            </a>
+          ) : null}
+          {file.source ? (
+            <a href={file.source.url} target="_blank" rel="noreferrer">
+              {file.source.label} <ArrowUpRight size={14} aria-hidden="true" />
+              <span className="sr-only">, opens in a new tab</span>
+            </a>
+          ) : null}
+        </div>
+      </figcaption>
+    </figure>
+  );
+}
+
+function AchievementSections({ record }: { record: Achievement }) {
+  const projectTitle = relatedProjectTitles[record.title];
+  const projectPreview = projectPreviews[projectTitle];
+  const contextPhoto = achievementPhotos[record.title];
+  // Keep one rendering of each asset: Rockathon and The Merge use their
+  // project screenshot as contextual artwork as well as project evidence.
+  const media = [...new Map([
+    ...(contextPhoto ? [contextPhoto] : []),
+    ...(record.certificates.length ? record.certificates : [record.preview]),
+  ].map((file) => [file.src, file])).values()]
+    .filter((file) => file.src !== projectPreview?.src);
+  const documents = media.filter((file) => mediaLayout(file) === "document");
+  const photos = media.filter((file) => ["photo", "project"].includes(mediaLayout(file)));
+  const emblems = media.filter((file) => mediaLayout(file) === "emblem");
+  const projectNotes = record.project?.strategy ?? [];
+  const recognitionNotes = !record.project?.built ? record.project?.notes ?? [] : [];
+
+  return (
+    <div className="achievement-detail-body">
+      <section className="achievement-overview" aria-label="Achievement summary">
+        <dl className="achievement-facts">
+          {record.detail ? (
+            <div className="achievement-fact-wide achievement-result">
+              <dt>{record.category === "certificates" ? "Credential status" : "Recognition"}</dt>
+              <dd>{record.detail}</dd>
+            </div>
+          ) : null}
+          <div><dt>Issued by</dt><dd>{record.issuer}</dd></div>
+          {record.year ? <div><dt>Date</dt><dd>{record.year}</dd></div> : null}
+        </dl>
+        {recognitionNotes.length ? (
+          <div className="achievement-context">
+            {recognitionNotes.map((point) => <p key={point}>{point}</p>)}
+          </div>
+        ) : null}
+        {record.verificationUrl ? (
+          <a className="achievement-verification" href={record.verificationUrl} target="_blank" rel="noreferrer">
+            <ShieldCheck size={17} aria-hidden="true" />
+            Verify completion on {record.issuer}
+            <ArrowUpRight size={15} aria-hidden="true" />
+            <span className="sr-only">, opens in a new tab</span>
+          </a>
+        ) : null}
+      </section>
+
+      {record.project?.built || projectPreview ? (
+        <section className="achievement-section achievement-project-notes" aria-label="Project behind the award">
+          <div className="achievement-section-heading">
+            <p className="trophy-eyebrow">Project behind the award</p>
+            <h3>{record.project?.built ?? projectTitle}</h3>
+          </div>
+          {projectNotes.length ? (
+            <ul className="achievement-project-points">
+              {projectNotes.map((point) => <li key={point}>{point}</li>)}
+            </ul>
+          ) : null}
+          {record.project?.stack.length ? (
+            <ul className="achievement-stack" aria-label="Project tools">
+              {record.project.stack.map((tool) => <li key={tool}>{tool}</li>)}
+            </ul>
+          ) : null}
+          {record.project?.source ? (
+            <a className="achievement-source" href={record.project.source.url} target="_blank" rel="noreferrer">
+              {record.project.source.label ?? "Project repository"}
+              <ArrowUpRight size={15} aria-hidden="true" />
+              <span className="sr-only">, opens in a new tab</span>
+            </a>
+          ) : null}
+          {projectPreview ? (
+            <AchievementMedia
+              file={contextPhoto?.src === projectPreview.src ? contextPhoto : {
+                src: projectPreview.src,
+                title: projectTitle,
+                alt: projectPreview.alt,
+                kind: projectPreview.kind,
+                caption: projectPreview.caption,
+              }}
+              layout="project"
+              additionalCaption={contextPhoto?.src === projectPreview.src ? projectPreview.caption : undefined}
+            />
+          ) : null}
+        </section>
+      ) : null}
+
+      {documents.length ? (
+        <section className="achievement-section achievement-certificates" aria-label="Certificates and official records">
+          <div className="achievement-section-heading">
+            <h3>{record.category === "certificates" ? "Completion record" : "Award record"}</h3>
+            <p>{documents.length > 1 ? "Certificates and records, organised in one place." : "Certificate or official record of the recognition."} Select an image to read it at full size.</p>
+          </div>
+          <div className="achievement-media-grid" data-count={documents.length}>
+            {documents.map((file) => <AchievementMedia key={file.src} file={file} />)}
+          </div>
+        </section>
+      ) : null}
+
+      {photos.length ? (
+        <section className="achievement-section" aria-label="Photos and moments">
+          <div className="achievement-section-heading">
+            <h3>Photos & moments</h3>
+            <p>From the event, team, or award collection.</p>
+          </div>
+          <div className="achievement-media-grid" data-count={photos.length}>
+            {photos.map((file) => <AchievementMedia key={file.src} file={file} />)}
+          </div>
+        </section>
+      ) : null}
+
+      {emblems.length ? (
+        <section className="achievement-section" aria-label="Representative artwork and image credits">
+          <div className="achievement-section-heading"><h3>About the image</h3></div>
+          <div className="achievement-emblems">
+            {emblems.map((file) => <AchievementMedia key={file.src} file={file} />)}
+          </div>
+        </section>
+      ) : null}
+    </div>
   );
 }
 
@@ -712,189 +893,7 @@ export default function TrophyRoom() {
                 <X size={21} aria-hidden="true" />
               </button>
             </header>
-            <dl className="achievement-facts">
-              <div>
-                <dt>Issuer</dt>
-                <dd>{selected.issuer}</dd>
-              </div>
-              {selected.year ? (
-                <div>
-                  <dt>Date</dt>
-                  <dd>{selected.year}</dd>
-                </div>
-              ) : null}
-              {selected.detail ? (
-                <div className="achievement-fact-wide">
-                  <dt>
-                    {selected.category === "certificates"
-                      ? "Status"
-                      : "Recognition"}
-                  </dt>
-                  <dd>{selected.detail}</dd>
-                </div>
-              ) : null}
-            </dl>
-            {selected.verificationUrl ? (
-              <a
-                className="achievement-verification"
-                href={selected.verificationUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {credentialProviders[selected.issuer] ? (
-                  <span className="achievement-provider-mark">
-                    <img
-                      src={asset(credentialProviders[selected.issuer]!.src)}
-                      alt=""
-                      width={100}
-                      height={38}
-                      decoding="async"
-                    />
-                  </span>
-                ) : null}
-                Verify on {selected.issuer}
-                <ArrowUpRight size={16} aria-hidden="true" />
-                <span className="sr-only">, opens in a new tab</span>
-              </a>
-            ) : null}
-            {
-              <section
-                className="achievement-certificates"
-                aria-label="Award evidence and labelled representative images"
-              >
-                {[
-                  ...(achievementPhotos[selected.title]
-                    ? [achievementPhotos[selected.title]!]
-                    : []),
-                  ...(selected.certificates.length
-                    ? selected.certificates
-                    : [selected.preview]),
-                ].map((file) => (
-                  <figure key={file.src}>
-                    <a
-                      href={asset(file.src)}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={`${file.title} — open full ${previewKind(file).toLowerCase()} in a new tab`}
-                    >
-                      <img
-                        src={asset(file.src)}
-                        alt={file.title}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </a>
-                    <figcaption>
-                      <span>{file.title}</span>
-                      <a
-                        href={asset(file.src)}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Full {previewKind(file).toLowerCase()}{" "}
-                        <ArrowUpRight size={15} aria-hidden="true" />
-                        <span className="sr-only">, opens in a new tab</span>
-                      </a>
-                    </figcaption>
-                    {file.caption ? (
-                      <p className="achievement-preview-note">{file.caption}</p>
-                    ) : null}
-                    {file.originalSrc ? (
-                      <a
-                        className="achievement-preview-source"
-                        href={asset(file.originalSrc)}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        View original photo{" "}
-                        <ArrowUpRight size={14} aria-hidden="true" />
-                        <span className="sr-only">, opens in a new tab</span>
-                      </a>
-                    ) : null}
-                    {file.source ? (
-                      <a
-                        className="achievement-preview-source"
-                        href={file.source.url}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {file.source.label}
-                        <ArrowUpRight size={14} aria-hidden="true" />
-                        <span className="sr-only">, opens in a new tab</span>
-                      </a>
-                    ) : null}
-                  </figure>
-                ))}
-              </section>
-            }
-            {projectPreviews[relatedProjectTitles[selected.title]]
-              ? (() => {
-                  const preview =
-                    projectPreviews[relatedProjectTitles[selected.title]]!;
-                  return (
-                    <figure className="achievement-related-project">
-                      <p className="trophy-eyebrow">
-                        The project behind the award
-                      </p>
-                      <a
-                        href={asset(preview.src)}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`${relatedProjectTitles[selected.title]} — open project image in a new tab`}
-                      >
-                        <img
-                          src={asset(preview.src)}
-                          alt={preview.alt}
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      </a>
-                      <figcaption>
-                        <strong>{relatedProjectTitles[selected.title]}</strong>
-                        <span>{preview.caption}</span>
-                      </figcaption>
-                    </figure>
-                  );
-                })()
-              : null}
-            {selected.project ? (
-              <section
-                className="achievement-project-notes"
-                aria-label="Project and achievement notes"
-              >
-                {selected.project.built ? (
-                  <h3>{selected.project.built}</h3>
-                ) : (
-                  <h3>About this recognition</h3>
-                )}
-                {(
-                  selected.project.strategy ??
-                  selected.project.notes ??
-                  []
-                ).map((point) => (
-                  <p key={point}>{point}</p>
-                ))}
-                {selected.project.stack.length ? (
-                  <ul className="achievement-stack" aria-label="Project tools">
-                    {selected.project.stack.map((tool) => (
-                      <li key={tool}>{tool}</li>
-                    ))}
-                  </ul>
-                ) : null}
-                {selected.project.source ? (
-                  <a
-                    className="achievement-source"
-                    href={selected.project.source.url}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {selected.project.source.label ?? "Project repository"}
-                    <ArrowUpRight size={15} aria-hidden="true" />
-                    <span className="sr-only">, opens in a new tab</span>
-                  </a>
-                ) : null}
-              </section>
-            ) : null}
+            <AchievementSections record={selected} />
           </div>
         ) : null}
       </dialog>

@@ -25,31 +25,6 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-.reader-contents {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-  color: var(--leaf-text-muted, #66745f);
-  font: 11px/1.5 var(--font-body, sans-serif);
-}
-.reader-contents select {
-  max-width: min(70%, 290px);
-  min-height: 38px;
-  padding: 7px 30px 7px 11px;
-  border: 1px solid #94a48070;
-  border-radius: 5px;
-  color: var(--leaf-text, #2d523e);
-  background: #fffaf0;
-  font: 11px/1.5 var(--font-mono, monospace);
-  text-overflow: ellipsis;
-  cursor: pointer;
-}
-.reader-contents select:focus-visible {
-  outline: 2px solid #337754;
-  outline-offset: 3px;
-}
 .reader-spread {
   position: relative;
   display: grid;
@@ -481,12 +456,4 @@
   visibility: hidden;
   pointer-events: none;
   box-shadow: none;
-}
-.dark .project-book-reader .reader-contents {
-  color: #b8c9a6;
-}
-.dark .project-book-reader .reader-contents select {
-  color: #e0e9c8;
-  background: #163c30;
-  border-color: #a3b19080;
 }

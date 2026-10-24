@@ -551,19 +551,6 @@ export default function ProjectBookReader({
         <span>Project notes</span>
         <span>{project.category}</span>
       </div>
-      <label className="reader-contents" htmlFor={`${id}-contents`}>
-        <span>Contents</span>
-        <select id={`${id}-contents`} value={target} onChange={(event) => jump(Number(event.target.value))}>
-          {pages.map((chapter, index) => single || index % 2 === 0 ? (
-            <option key={index} value={index}>
-              {String(index + 1).padStart(2, "0")} · {chapter.title}
-              {!single && pages[index + 1]?.title !== chapter.title
-                ? ` / ${pages[index + 1].title}`
-                : ""}
-            </option>
-          ) : null)}
-        </select>
-      </label>
       {target !== page && !turn ? (
         <div aria-hidden="true" className="reader-spread reader-measure-spread" inert ref={targetSpread}>
           <div className="reader-static-page reader-static-left">{leaf(target)}</div>
