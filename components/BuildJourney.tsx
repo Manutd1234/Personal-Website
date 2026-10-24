@@ -716,7 +716,7 @@ export default function BuildJourney({
     >
       <header className="builder-workbench-heading">
         <div>
-          <p className="classic-kicker">At the workbench</p>
+          <p className="classic-kicker">How I build</p>
           <h2 id={`${prefix}-title`}>From a question to a working system.</h2>
         </div>
         {!reduced ? (
