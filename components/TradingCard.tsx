@@ -59,6 +59,37 @@ function Emphasis({ text }: { text: string }) {
     );
 }
 
+function CardSkills({ card }: { card: TradingCardData }) {
+  const groups = card.skillFocus
+    ? [
+        {
+          label: card.skillFocus.label,
+          skills: card.skills.slice(0, card.skillFocus.count),
+        },
+        ...(card.skillFocus.count < card.skills.length
+          ? [{ label: "Soft skills", skills: card.skills.slice(card.skillFocus.count) }]
+          : []),
+      ]
+    : [{ label: undefined, skills: card.skills }];
+
+  return (
+    <section className="tcg-skills" aria-label={`${card.org}: skills learned`}>
+      <h4>Skills learned</h4>
+      {groups.map((group) => (
+        <div className="tcg-skill-group" key={group.label ?? "skills"}>
+          {group.label ? <h5>{group.label}</h5> : null}
+          <ul
+            className="tcg-skill-list"
+            aria-label={group.label ? `${card.org}: ${group.label}` : undefined}
+          >
+            {group.skills.map((skill) => <li key={skill}>{skill}</li>)}
+          </ul>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 export default function TradingCard({
   card,
   reduced,
@@ -369,17 +400,7 @@ export default function TradingCard({
                 tabIndex={tabbable ? 0 : -1}
                 aria-label={`${card.org} details`}
               >
-                <section
-                  className="tcg-skills"
-                  aria-label={`${card.org}: skills learned`}
-                >
-                  <h4>Skills learned</h4>
-                  <ul className="tcg-skill-list">
-                    {card.skills.map((skill) => (
-                      <li key={skill}>{skill}</li>
-                    ))}
-                  </ul>
-                </section>
+                <CardSkills card={card} />
                 {card.summary || card.bullets.length ? (
                   <ul className="tcg-back-list" aria-label="What I did">
                     {card.summary ? <li>{card.summary}</li> : null}

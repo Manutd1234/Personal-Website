@@ -351,14 +351,26 @@
   overflow: hidden;
   background: #fff;
 }
-.award-app-icon[data-brand]::after {
+.award-app-icon[data-brand][data-artwork]::after {
   content: none;
 }
 .award-app-icon[data-artwork="poster"] {
   padding: 0;
   background: #190078;
 }
+/* A brand-only window into the original poster: sponsors, event name and
+   subtitle. The registration details and QR code remain outside the window. */
+.award-app-icon[data-artwork="poster"] .award-app-preview {
+  height: auto;
+  aspect-ratio: 3;
+  overflow: hidden;
+}
 .award-app-icon[data-artwork="poster"] .award-app-preview > img {
+  position: absolute;
+  top: -112.5%;
+  width: 100%;
+  height: auto;
+  max-height: none;
   border-radius: 0;
 }
 .award-app-topic-mark {

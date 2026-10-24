@@ -1010,7 +1010,7 @@ export const achievementGroups: readonly {
         certificateKeys: ["ejcSoftballTeam", "coloursAward2022"],
       },
       {
-        title: "Colours Award",
+        title: "SSSC Colours Award · Softball",
         issuer: "Singapore Schools Sports Council",
         detail: "Sporting excellence in softball",
         year: "23 Sep 2022",
@@ -1023,21 +1023,21 @@ export const achievementGroups: readonly {
         certificateKey: "sstTopPerformer2020",
       },
       {
-        title: "Best Business Pitch Award",
+        title: "Innofest · Best Business Pitch Award",
         issuer: "SST Changemakers Innofest",
         detail: "Active Elderly · Individual Strand",
         year: "2018",
         certificateKey: "sstBusinessPitch2018",
       },
       {
-        title: "Active Elderly Award",
+        title: "Innofest · Active Elderly Award",
         issuer: "SST Changemakers Innofest",
         detail: "2nd place · Individual Strand",
         year: "2018",
         certificateKey: "sstActiveElderly2018",
       },
       {
-        title: "Sports Day · Athletics",
+        title: "Sports Day - Athletics · SST",
         issuer: "School of Science and Technology, Singapore",
         detail: "1st, 4×100 m relay (2017, 2018); 3rd, 100 m (2018)",
         year: "2017–2018",
@@ -1057,19 +1057,19 @@ export const achievementGroups: readonly {
         certificateKey: "koobits2015",
       },
       {
-        title: "School athletics",
+        title: "Sports Day - Athletics",
         issuer: "Bukit Timah Primary School",
         detail: "1st, 4×100 m relay (2015); 3rd, 2×100 m relay (2014)",
         year: "2014–2015",
       },
       {
-        title: "SwimSafer",
+        title: "SwimSafer Gold",
         issuer: "Swimming proficiency",
         detail: "Gold",
         year: "2013",
       },
       {
-        title: "Grade 3 Piano",
+        title: "Piano Grade 3 · Merit",
         issuer: "Music achievement",
         detail: "Passed with Merit",
       },
@@ -1095,7 +1095,7 @@ export const achievementGroups: readonly {
         certificateKey: "cdfNationalEducationPhoto",
       },
       {
-        title: "Outstanding performance & conduct",
+        title: "National Service · Outstanding Performance & Conduct",
         issuer: "Singapore Armed Forces",
         detail:
           "Outstanding grades for both overall performance and overall conduct",

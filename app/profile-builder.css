@@ -1,6 +1,8 @@
 /* An automatic, illustrated software-building story. Chapter labels are passive. */
 .builder-workbench {
   margin-top: 54px;
+  font-family: var(--classic-display);
+  font-optical-sizing: auto;
 }
 .builder-workbench-heading {
   display: flex;
@@ -13,8 +15,12 @@
   margin-top: 12px;
   max-width: 730px;
   color: var(--ink);
-  font: 400 clamp(1.8rem, 3.7vw, 2.7rem)/1.18 var(--classic-serif);
+  font: 500 clamp(1.8rem, 3.7vw, 2.7rem)/1.18 var(--classic-serif);
   letter-spacing: -0.045em;
+}
+.builder-workbench-heading h2 em {
+  color: var(--classic-green);
+  font-weight: 400;
 }
 .journey-play {
   display: inline-flex;
@@ -27,7 +33,7 @@
   border: 1px solid #cad5c6;
   border-radius: 99px;
   color: var(--classic-muted);
-  font-size: 12px;
+  font: 500 12px/1.4 var(--classic-display);
 }
 .journey-play:hover {
   background: #dce9cd44;
@@ -38,7 +44,7 @@
   overflow: hidden;
   border: 1px solid var(--journey-line);
   border-radius: 20px;
-  background: #f2f4e9;
+  background: linear-gradient(135deg, #f3f5eb, #f8f8ef);
   box-shadow:
     0 4px 0 #e3e8d8,
     0 18px 45px #17352b07;
@@ -59,7 +65,7 @@
   padding: 10px;
   border-radius: 12px;
   color: var(--classic-muted);
-  font-size: 12px;
+  font: 500 12px/1.35 var(--classic-display);
   transition:
     color 0.3s,
     background 0.3s;
@@ -71,8 +77,9 @@
   white-space: nowrap;
 }
 .journey-chapters small {
-  font: 400 9px var(--font-mono);
-  opacity: 0.6;
+  font: 500 10px var(--classic-display);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.65;
 }
 .journey-step-icon {
   display: grid;
@@ -81,7 +88,7 @@
   width: 39px;
   height: 39px;
   border: 1px solid #c7d5bb;
-  border-radius: 12px 14px 11px 13px;
+  border-radius: 12px;
   background: #fcfcf4;
   transition:
     background 0.3s,
@@ -94,12 +101,12 @@
 .journey-chapters li[data-active="true"] .journey-step-icon {
   background: #d2e4bc;
   border-color: #95b68c;
-  transform: rotate(-5deg);
+  transform: translateY(-2px) rotate(-4deg);
 }
 .journey-stage {
   display: grid;
-  grid-template-columns: 1.16fr 1fr;
-  gap: clamp(24px, 4vw, 52px);
+  grid-template-columns: 1.08fr 1fr;
+  gap: clamp(28px, 4vw, 48px);
   align-items: center;
   padding: 32px;
 }
@@ -107,12 +114,12 @@
   align-self: center;
   min-width: 0;
   overflow: hidden;
-  padding: 18px 0 20px;
+  padding: 20px 0 23px;
   border: 1px solid #d4ddc4;
   border-radius: 14px 20px 16px 22px;
   background:
-    radial-gradient(#9eb18b29 1px, transparent 1px) 0 0/15px 15px,
-    #edf1df;
+    radial-gradient(#9eb18b29 1px, transparent 1px) 0 0/18px 18px,
+    linear-gradient(145deg, #fffef6, #edf1df);
   color: #355c43;
   box-shadow: 3px 5px 0 #dce3ce;
 }
@@ -121,9 +128,17 @@
   justify-content: space-between;
   gap: 10px;
   padding: 0 22px;
-  color: #78856b;
-  font: 400 8px/1.5 var(--font-mono);
-  letter-spacing: 0.1em;
+  align-items: center;
+  color: #687a5d;
+  font: 500 11px/1.5 var(--classic-display);
+}
+.journey-scene-label > span:last-child {
+  padding: 4px 9px;
+  border: 1px solid #d6dfc8;
+  border-radius: 99px;
+  background: #fffdf4;
+  color: #496349;
+  font-size: 10px;
 }
 .journey-scene-svg {
   display: block;
@@ -137,7 +152,11 @@
 }
 .scene-label {
   fill: #355c43;
-  font: 600 16px var(--classic-display);
+  font: 600 17px var(--classic-display);
+}
+.scene-note {
+  fill: #496349;
+  font: 500 12px var(--classic-display);
 }
 .scene-question {
   fill: #008363;
@@ -155,54 +174,73 @@
   margin: -2px 18px 0;
   text-align: center;
   color: #5f7657;
-  font: italic 400 clamp(14px, 1.6vw, 18px)/1.45 var(--classic-serif);
+  font: italic 400 clamp(15px, 1.6vw, 19px)/1.5 var(--classic-serif);
+  letter-spacing: -0.015em;
+}
+.journey-scene-action {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.journey-scene-action[data-active="true"] {
+  opacity: 1;
+  visibility: visible;
+}
+.journey-copy-stack {
+  display: grid;
+  min-width: 0;
 }
 .journey-copy {
+  grid-area: 1 / 1;
   min-width: 0;
-  min-height: 408px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.journey-copy[data-active="true"] {
+  opacity: 1;
+  visibility: visible;
 }
 .journey-step-number {
   color: var(--classic-green);
-  font: 400 9px/1.4 var(--font-mono);
-  letter-spacing: 0.12em;
+  font: 600 11px/1.4 var(--classic-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.055em;
 }
 .journey-copy h3,
 .journey-transcript h3 {
-  margin-top: 13px;
+  margin-top: 10px;
   color: var(--ink);
-  font: 400 clamp(26px, 3vw, 35px)/1.16 var(--classic-serif);
+  font: 500 clamp(27px, 3vw, 35px)/1.16 var(--classic-serif);
   letter-spacing: -0.04em;
+  text-wrap: balance;
 }
 .journey-question {
-  margin-top: 17px;
+  margin-top: 18px;
   color: var(--ink);
-  font-size: 14px;
-  font-weight: 550;
-  line-height: 1.6;
+  font: 600 14px/1.6 var(--classic-display);
 }
 .journey-body {
   margin-top: 11px;
   color: var(--classic-muted);
-  font-size: 13px;
-  line-height: 1.8;
+  font: 400 14px/1.75 var(--classic-display);
 }
 .journey-decisions {
   display: grid;
-  gap: 9px;
+  gap: 10px;
   list-style: none;
   padding: 0;
-  margin: 20px 0 0;
+  margin: 18px 0 0;
 }
 .journey-decisions li {
   display: flex;
   gap: 9px;
   align-items: start;
   color: var(--classic-muted);
-  font-size: 11px;
-  line-height: 1.55;
+  font: 400 12px/1.6 var(--classic-display);
 }
 .journey-decisions svg {
   flex: none;
@@ -210,18 +248,18 @@
   color: var(--classic-green);
 }
 .journey-artifact {
-  margin-top: 22px;
+  margin-top: 20px;
   padding: 12px 0 0;
   border-top: 1px dashed #bacbad;
   color: var(--classic-green);
-  font: italic 400 16px/1.45 var(--classic-serif);
+  font: italic 400 17px/1.5 var(--classic-serif);
 }
 .journey-artifact > span {
   display: block;
   margin-bottom: 6px;
-  color: #829073;
-  font: 400 8px var(--font-mono);
-  letter-spacing: 0.12em;
+  color: #728267;
+  font: 500 10px/1.5 var(--classic-display);
+  letter-spacing: 0.02em;
 }
 .journey-transcript {
   position: absolute;
@@ -250,8 +288,7 @@
   align-items: center;
   gap: 8px;
   color: var(--classic-muted);
-  font-size: 10px;
-  line-height: 1.6;
+  font: 400 11px/1.6 var(--classic-display);
 }
 .journey-footer > span svg {
   flex: none;
@@ -301,81 +338,108 @@
   color: #9cae8f;
 }
 @media (prefers-reduced-motion: no-preference) {
+  /* Keep the little builder on stage while one chapter dissolves into the next. */
   .journey-scene-action {
-    animation: scene-reveal 0.5s both;
+    transition:
+      opacity 0.4s ease,
+      visibility 0s linear 0.4s;
   }
-  .scene-arrive {
-    animation: scene-reveal 0.65s both;
+  .journey-scene-action[data-active="true"] {
+    transition:
+      opacity 0.5s ease 0.08s,
+      visibility 0s;
   }
-  .scene-stack {
-    animation: scene-place 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  .journey-copy {
+    transform: translateY(7px);
+    transition:
+      opacity 0.28s ease,
+      transform 0.4s ease,
+      visibility 0s linear 0.4s;
   }
-  .scene-code-line {
-    animation: scene-type 0.7s steps(18) both;
+  .journey-copy[data-active="true"] {
+    transform: none;
+    transition:
+      opacity 0.5s ease 0.12s,
+      transform 0.5s cubic-bezier(0.2, 0.7, 0.3, 1) 0.12s,
+      visibility 0s;
+  }
+  .journey-scene-action[data-active="true"] .scene-arrive {
+    animation: scene-reveal 0.6s cubic-bezier(0.2, 0.7, 0.3, 1)
+      var(--scene-delay, 0.15s) both;
+  }
+  .journey-scene-action[data-active="true"] .scene-stack {
+    transform-box: fill-box;
+    transform-origin: center bottom;
+    animation: scene-place 0.85s cubic-bezier(0.2, 0.8, 0.25, 1)
+      var(--scene-delay, 0.15s) both;
+  }
+  .journey-scene-action[data-active="true"] .scene-code-line {
+    animation: scene-type 0.65s steps(24) var(--scene-delay, 0.15s) both;
   }
   .scene-delay-one {
-    animation-delay: 0.5s;
+    --scene-delay: 0.55s;
   }
   .scene-delay-two {
-    animation-delay: 1s;
+    --scene-delay: 1.15s;
   }
   .scene-delay-three {
-    animation-delay: 1.5s;
+    --scene-delay: 1.8s;
   }
   .scene-builder {
     transform-box: fill-box;
     transform-origin: center bottom;
-    animation: scene-builder-bob 2s ease-in-out infinite;
+    animation: scene-builder-bob 3s ease-in-out infinite;
   }
   .scene-builder-arm {
     transform-box: fill-box;
     transform-origin: left bottom;
-    animation: scene-point 2s ease-in-out infinite;
+    animation: scene-point 3s ease-in-out infinite;
   }
   .scene-builder-eyes {
     transform-box: fill-box;
     transform-origin: center;
-    animation: scene-blink 4s infinite;
+    animation: scene-blink 5s infinite;
   }
-  .scene-thought {
+  .journey-scene-action[data-active="true"] .scene-thought {
     transform-box: fill-box;
     transform-origin: center;
-    animation: scene-think 2.5s ease-in-out infinite;
+    animation: scene-think 3s ease-in-out infinite;
   }
-  .scene-wire {
-    animation: scene-flow 2s linear infinite;
+  .journey-scene-action[data-active="true"] .scene-wire {
+    animation: scene-flow 3s linear infinite;
   }
   .scene-packet {
-    animation: scene-packet 2.4s ease-in-out infinite;
+    opacity: 0;
   }
-  .scene-cursor {
-    animation: scene-caret 1s step-end infinite;
+  .journey-scene-action[data-active="true"] .scene-packet {
+    animation: scene-packet 2.7s linear 1.8s infinite;
   }
-  .scene-rocket {
-    animation: scene-launch 5.8s ease-in-out both;
+  .journey-scene-action[data-active="true"] .scene-cursor {
+    animation: scene-caret 1.1s step-end infinite;
   }
-  .scene-flame {
+  .journey-scene-action[data-active="true"] .scene-rocket {
+    animation: scene-launch 6s cubic-bezier(0.35, 0, 0.2, 1) both;
+  }
+  .journey-scene-action[data-active="true"] .scene-flame {
     transform-box: fill-box;
     transform-origin: center top;
-    animation: scene-flame 0.3s ease-in-out infinite alternate;
+    animation: scene-flame 0.45s ease-in-out 2.6s infinite alternate;
   }
-  .journey-copy {
-    animation: scene-reveal 0.4s both;
-  }
-  /* A paused chapter remains readable even if paused before its entrance.
-     Only the decorative, repeating movement freezes at its current pose. */
-  .build-journey[data-running="false"]
-    :is(
-      .journey-scene-action,
-      .scene-arrive,
-      .scene-stack,
-      .scene-code-line,
-      .journey-copy
-    ) {
+  /* Pausing immediately reveals the whole chapter. Resuming keeps that
+     chapter settled; its entrances restart only when the next one arrives. */
+  .build-journey:is([data-running="false"], [data-entrance="false"])
+    .journey-scene-action[data-active="true"]
+    :is(.scene-arrive, .scene-stack, .scene-code-line) {
     animation: none;
     opacity: 1;
     transform: none;
     clip-path: none;
+  }
+  .build-journey[data-running="false"]
+    :is(.journey-scene-action, .journey-copy)[data-active="true"] {
+    transition: none;
+    opacity: 1;
+    transform: none;
   }
   .build-journey[data-running="false"]
     :is(
@@ -395,7 +459,7 @@
 @keyframes scene-reveal {
   from {
     opacity: 0;
-    transform: translateY(7px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -405,15 +469,18 @@
 @keyframes scene-place {
   from {
     opacity: 0;
-    transform: translateY(-45px);
+    transform: translate(12px, -34px) rotate(4deg);
   }
-  70% {
+  65% {
     opacity: 1;
-    transform: translateY(3px);
+    transform: translateY(3px) rotate(-1deg);
+  }
+  83% {
+    transform: translateY(-2px) rotate(0.4deg);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 @keyframes scene-type {
@@ -430,16 +497,21 @@
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
   }
 }
 @keyframes scene-point {
   0%,
+  15%,
   100% {
-    transform: rotate(-4deg);
+    transform: rotate(-3deg);
   }
-  50% {
-    transform: rotate(7deg);
+  40%,
+  60% {
+    transform: rotate(6deg);
+  }
+  75% {
+    transform: rotate(2deg);
   }
 }
 @keyframes scene-blink {
@@ -456,10 +528,10 @@
 @keyframes scene-think {
   0%,
   100% {
-    transform: translateY(0) rotate(-2deg);
+    transform: translateY(0) rotate(-1deg);
   }
   50% {
-    transform: translateY(-5px) rotate(2deg);
+    transform: translateY(-4px) rotate(1deg);
   }
 }
 @keyframes scene-flow {
@@ -468,21 +540,29 @@
   }
 }
 @keyframes scene-packet {
-  0%,
-  100% {
-    transform: translate(0, 0);
+  0% {
     opacity: 0;
+    transform: translate(0, 0);
   }
-  15% {
+  8% {
     opacity: 1;
+    transform: translate(0, 0);
   }
-  60% {
-    transform: translate(0, 82px);
+  30% {
     opacity: 1;
+    transform: translate(40px, 0);
   }
-  90% {
-    transform: translate(73px, 82px);
+  76% {
     opacity: 1;
+    transform: translate(40px, 82px);
+  }
+  92% {
+    opacity: 1;
+    transform: translate(68px, 82px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(68px, 82px);
   }
 }
 @keyframes scene-caret {
@@ -492,20 +572,28 @@
 }
 @keyframes scene-launch {
   0%,
-  35% {
-    transform: translateY(40px);
+  43% {
+    transform: translateY(34px);
   }
-  70%,
+  49% {
+    transform: translateY(38px);
+  }
+  77% {
+    transform: translateY(-20px);
+  }
+  90% {
+    transform: translateY(-14px);
+  }
   100% {
-    transform: translateY(-12px);
+    transform: translateY(-18px);
   }
 }
 @keyframes scene-flame {
   from {
-    transform: scaleY(0.75);
+    transform: scale(0.9, 0.8);
   }
   to {
-    transform: scaleY(1.12);
+    transform: scale(1.05, 1.18);
   }
 }
 @media (max-width: 900px) {
@@ -524,9 +612,6 @@
   .journey-stage {
     padding: 26px;
     gap: 24px;
-  }
-  .journey-copy {
-    min-height: 430px;
   }
 }
 @media (max-width: 700px) {
@@ -578,31 +663,28 @@
   }
   .journey-scene-label {
     padding-inline: 15px;
-    font-size: 7px;
+    font-size: 10px;
   }
   .journey-scene-caption {
     font-size: 15px;
   }
   .journey-copy {
-    min-height: 407px;
     justify-content: start;
   }
   .journey-copy h3 {
     font-size: 29px;
     max-width: 340px;
   }
-  .journey-question {
-    font-size: 13px;
-  }
+  .journey-question,
   .journey-body {
-    font-size: 12px;
+    font-size: 14px;
   }
   .journey-decisions {
     gap: 8px;
     margin-top: 18px;
   }
   .journey-decisions li {
-    font-size: 11px;
+    font-size: 12px;
   }
   .journey-footer {
     margin-inline: 20px;
@@ -616,9 +698,6 @@
 @media (max-width: 380px) {
   .journey-stage {
     padding: 16px;
-  }
-  .journey-copy {
-    min-height: 443px;
   }
   .journey-chapters li {
     font-size: 9px;

@@ -135,14 +135,14 @@ const achievementPhotos: Readonly<Record<string, CertificateFile | undefined>> =
     representative: true,
     caption: "A photo from Project BHID. The certificate below records the recognition.",
   },
-  "Outstanding performance & conduct": {
+  "National Service · Outstanding Performance & Conduct": {
     src: "images/life-originals-oct24/army-graduation-group.webp",
     title: "From my National Service years",
     kind: "Service photo",
     representative: true,
     caption: "A group photo from National Service. The transcript excerpt below records the assessment.",
   },
-  "Colours Award": {
+  "SSSC Colours Award · Softball": {
     ...certificateFiles.ejcSoftballTeam,
     representative: true,
     caption: "The softball team; the individual Colours Award is recorded in the certificate below.",

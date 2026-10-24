@@ -2,12 +2,28 @@
 export const awardAppIcons: Readonly<
   Record<string, { src: string; artwork: "emblem" | "poster" } | undefined>
 > = {
+  "National School Games A Division · Softball": {
+    src: "images/award-icons/sssc.webp",
+    artwork: "emblem",
+  },
+  "SSSC Colours Award · Softball": {
+    src: "images/award-icons/sssc.webp",
+    artwork: "emblem",
+  },
+  "Innofest · Best Business Pitch Award": {
+    src: "images/award-icons/innofest.webp",
+    artwork: "emblem",
+  },
+  "Innofest · Active Elderly Award": {
+    src: "images/award-icons/innofest.webp",
+    artwork: "emblem",
+  },
   "BrainHack TIL-AI 2026": {
     src: "images/award-icons/brainhack-til-ai.webp",
     artwork: "emblem",
   },
   "Hack the Future AI Hackathon 2026": {
-    src: "images/award-icons/hack-the-future-poster.webp",
+    src: "images/logos/hack-the-future-poster.webp",
     artwork: "poster",
   },
   "BügleRock Rockathon 2026": {
@@ -26,7 +42,7 @@ export const awardAppIcons: Readonly<
     src: "images/award-icons/nus-csc.webp",
     artwork: "emblem",
   },
-  "Outstanding performance & conduct": {
+  "National Service · Outstanding Performance & Conduct": {
     src: "images/award-icons/singapore-army.webp",
     artwork: "emblem",
   },

@@ -27,6 +27,8 @@ const skills = skillGroups
   .sort(
     (a, b) => a.itemIndex - b.itemIndex || a.categoryIndex - b.categoryIndex,
   );
+const tileForms = ["capsule", "card", "tag", "lozenge"] as const;
+const tileForm = (index: number) => tileForms[(index * 7 + Math.floor(index / 5)) % tileForms.length];
 const STEP = 1000 / 60;
 const clamp = (value: number, low: number, high: number) =>
   Math.min(high, Math.max(low, value));
@@ -401,10 +403,23 @@ export default function SkillsSandbox({
       world!.style.height = "";
       clearElementStyles();
       width = nextWidth;
-      sizes = elements.map((element) => ({
-        width: element.offsetWidth,
-        height: element.offsetHeight,
+      // Natural flex widths are fractional. Rounding offsetWidth down and then
+      // freezing height can wrap the text onto an extra line in the live world.
+      // Fix widths first, then measure their final wrapped heights.
+      const maxTileWidth = Math.max(1, width - 24);
+      const tileWidths = elements.map((element) =>
+        Math.min(maxTileWidth, Math.ceil(element.getBoundingClientRect().width) + 2),
+      );
+      elements.forEach((element, index) => {
+        element.style.width = `${tileWidths[index]}px`;
+      });
+      sizes = elements.map((element, index) => ({
+        width: tileWidths[index],
+        height: Math.ceil(element.getBoundingClientRect().height),
       }));
+      elements.forEach((element, index) => {
+        element.style.height = `${sizes[index].height}px`;
+      });
       const area = sizes.reduce(
         (total, size) => total + size.width * size.height,
         0,
@@ -425,13 +440,22 @@ export default function SkillsSandbox({
       }));
       Composite.add(engine.world, createSkillWalls(matter!, width, height));
       bodies = sizes.map((size, index) => {
+        const curve = Math.max(4, size.height / 2 - 1);
+        const form = tileForm(index);
+        const cornerRadius = form === "capsule"
+          ? curve
+          : form === "tag"
+            ? [curve, 5, 5, curve]
+            : form === "lozenge"
+              ? [5, 12, 5, 12]
+              : 6;
         return Bodies.rectangle(
           homes[index].x,
           homes[index].y,
           size.width,
           size.height,
           {
-            chamfer: { radius: 8 },
+            chamfer: { radius: cornerRadius },
             // Free translation and gentle collisions; stable text orientation.
             inertia: Infinity,
             density: 0.0011 + (index % 5) * 0.00008,
@@ -593,19 +617,37 @@ export default function SkillsSandbox({
       release,
     };
     controllerRef.current = controller;
+    let fontsReady = false;
+    let measureFrame = 0;
+    const scheduleRebuild = () => {
+      cancelAnimationFrame(measureFrame);
+      measureFrame = requestAnimationFrame(() => {
+        measureFrame = 0;
+        if (!cancelled) rebuild();
+      });
+    };
+    const measureLoadedFonts = () => {
+      document.fonts.ready.then(() => {
+        if (cancelled) return;
+        fontsReady = true;
+        scheduleRebuild();
+      });
+    };
     const resize = new ResizeObserver(() => {
-      if (world.clientWidth > 0 && world.clientWidth !== width) rebuild();
+      if (fontsReady && world.clientWidth > 0 && world.clientWidth !== width)
+        scheduleRebuild();
     });
     resize.observe(world);
-    document.fonts.ready.then(() => {
-      if (!cancelled) rebuild();
-    });
+    document.fonts.addEventListener("loadingdone", measureLoadedFonts);
+    measureLoadedFonts();
     return () => {
       cancelled = true;
       enabled = false;
       release(undefined, true);
       stop();
       resize.disconnect();
+      cancelAnimationFrame(measureFrame);
+      document.fonts.removeEventListener("loadingdone", measureLoadedFonts);
       if (controllerRef.current === controller) controllerRef.current = null;
       Composite.clear(engine.world, false);
       Engine.clear(engine);
@@ -777,6 +819,7 @@ export default function SkillsSandbox({
                 pillRefs.current[index] = element;
               }}
               data-tone={skill.categoryIndex}
+              data-shape={tileForm(index)}
               data-size={
                 skill.itemIndex < 2
                   ? "large"

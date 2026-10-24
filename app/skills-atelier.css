@@ -75,9 +75,16 @@
   --pill-fill: #e5ead6;
   --pill-ink: #294a35;
   --pill-edge: #a9b89a;
+  --tile-x: 8px;
+  --tile-y: 4px;
+  --shape-pad: 0px;
+  box-sizing: border-box;
+  flex: 0 0 auto;
   min-height: 27px;
   max-width: calc(100% - 24px);
-  padding: 4px 8px;
+  align-items: center;
+  justify-content: center;
+  padding: var(--tile-y) calc(var(--tile-x) + var(--shape-pad));
   border-width: 1px;
   border-radius: 6px;
   background-color: var(--pill-fill);
@@ -86,27 +93,51 @@
   font: 550 12px/1.35 var(--skill-label-font);
   letter-spacing: -0.015em;
   font-synthesis: none;
+  text-align: center;
   transition: opacity 180ms ease, background-color 180ms, border-color 180ms, color 180ms, box-shadow 180ms;
 }
 
 .skill-atelier .skill-pill > span {
   position: relative;
   z-index: 1;
+  display: block;
   min-width: 0;
+  max-width: 100%;
+  line-height: inherit;
+  text-align: center;
+  text-wrap: balance;
 }
 
 .skill-atelier .skill-pill[data-size="medium"] {
+  --tile-x: 9px;
+  --tile-y: 5px;
   min-height: 30px;
-  padding: 5px 9px;
   font-size: 13px;
   font-weight: 600;
 }
 
 .skill-atelier .skill-pill[data-size="large"] {
+  --tile-x: 11px;
+  --tile-y: 6px;
   min-height: 34px;
-  padding: 6px 11px;
   font-size: 16px;
   font-weight: 650;
+}
+
+/* Shape-specific padding keeps the label inside the curved corners. */
+.skill-atelier .skill-pill[data-shape="capsule"] {
+  --shape-pad: 3px;
+  border-radius: 999px;
+}
+
+.skill-atelier .skill-pill[data-shape="tag"] {
+  --shape-pad: 3px;
+  border-radius: 18px 5px 5px 18px;
+}
+
+.skill-atelier .skill-pill[data-shape="lozenge"] {
+  --shape-pad: 2px;
+  border-radius: 5px 13px 5px 13px;
 }
 
 .skill-atelier .skill-pill[data-long="true"] {
@@ -229,17 +260,20 @@
     gap: 5px;
   }
   .skill-atelier .skill-pill {
+    --tile-x: 8px;
+    --tile-y: 5px;
     min-height: 29px;
-    padding: 5px 8px;
   }
   .skill-atelier .skill-pill[data-size="medium"] {
+    --tile-x: 9px;
+    --tile-y: 5px;
     min-height: 31px;
-    padding: 5px 9px;
     font-size: 13px;
   }
   .skill-atelier .skill-pill[data-size="large"] {
+    --tile-x: 10px;
+    --tile-y: 6px;
     min-height: 34px;
-    padding: 6px 10px;
     font-size: 15px;
   }
 }

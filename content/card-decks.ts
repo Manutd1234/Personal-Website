@@ -23,6 +23,10 @@ export const cardTypes: Readonly<Record<CardType, { label: string }>> = {
 // Highlights condense real résumé bullets. Real results are marked **like this**.
 export type CardMove = { name: string; text: string };
 type FiveSkills = readonly [string, string, string, string, string];
+type SkillFocus = {
+  label: "Technical skills" | "Practical skills";
+  count: 1 | 2 | 3 | 4 | 5;
+};
 
 // Official logos, saved locally under public/images/logos from the source noted
 // above each entry. A logo drawn for dark backgrounds sets `dark` so its panel
@@ -139,6 +143,7 @@ export type TradingCardData = {
   summary?: string;
   bullets: readonly string[];
   skills: FiveSkills;
+  skillFocus?: SkillFocus;
   note?: string;
   certificates: readonly string[];
 };
@@ -669,25 +674,25 @@ const details: Readonly<Record<string, CardDetails>> = {
 // and activities; they are not claims of certification or expert proficiency.
 const skillsLearned: Readonly<Record<string, FiveSkills>> = {
   "Caerus Global Management": [
-    "Python", "Quantitative research", "Data analysis", "Financial markets", "ETL pipelines",
+    "Python / WebSockets", "L2 order-book reconstruction", "pandas / NumPy", "Market-data ETL", "Execution-aware backtesting",
   ],
   "Stealth Startup": [
-    "React Native", "TypeScript", "Production engineering", "Software testing", "Grafana",
+    "React Native / TypeScript", "React / Next.js", "Playwright E2E testing", "SQL / Grafana", "REST API validation",
   ],
   "CTES Consulting": [
-    "Python", "TypeScript", "Node.js", "SQL", "AWS",
+    "React / TypeScript", "Node.js / Express", "PostgreSQL / AWS Cognito", "Python / BM25 retrieval", "Docker / GitHub Actions",
   ],
   Accenture: [
-    "Python", "Retrieval-augmented generation", "Java", "PEGA", "Power Automate",
+    "Python / BGE / BM25", "Java / PEGA", "MCP / agent-assisted testing", "Git / Azure DevOps", "Flask / Playwright",
   ],
   "D+A Strategies": [
-    "Python", "Backtrader", "Time-series forecasting", "Backtesting", "Risk analysis",
+    "Python / Backtrader", "pandas / NumPy", "ARIMA / statsmodels", "Risk-adjusted backtesting", "ATR stop modelling",
   ],
   "Republic of Singapore Air Force": [
-    "Leadership", "Project management", "Radio communications", "Equipment readiness", "Cross-team coordination",
+    "Radio communications", "Signals equipment readiness", "Joint communications operations", "Team leadership", "Cross-unit coordination",
   ],
   "Singapore Army": [
-    "IP networking", "Cisco networking", "Leadership", "Tactical communications", "Teamwork",
+    "IP / Cisco networking", "Wireless communications", "Tactical networking", "Section leadership", "Teamwork",
   ],
   "National University of Singapore": [
     "Programming methodology", "Data structures & algorithms", "Discrete mathematics", "Linear algebra", "Probability & statistics",
@@ -702,49 +707,49 @@ const skillsLearned: Readonly<Record<string, FiveSkills>> = {
     "Numeracy", "Logical reasoning", "Problem solving", "Teamwork", "Learning discipline",
   ],
   "NUS Student Investment Fund": [
-    "Python / NumPy", "Portfolio risk modelling", "Terraform / AWS", "Data visualisation", "Technical collaboration",
+    "Python / NumPy risk models", "Terraform / AWS", "Streamlit dashboards", "Analytical reasoning", "Technical collaboration",
   ],
   "NUS MedTech · PneuRelief": [
-    "React Native / Expo", "TypeScript", "BLE integration", "FastAPI", "Technical collaboration",
+    "React Native / Expo", "TypeScript / BLE GATT", "FastAPI / Supabase", "Problem solving", "Technical collaboration",
   ],
   "Google Developer Group @ NUS Computing": [
-    "React / TypeScript", "FastAPI / Pydantic", "PostgreSQL", "Regression testing", "Technical collaboration",
+    "React / TypeScript", "FastAPI / PostgreSQL", "Pytest / Vitest", "Cross-stack collaboration", "Attention to detail",
   ],
   "NUS Fintech Society": [
-    "scikit-learn", "Data preprocessing", "Model evaluation", "Reproducible experiments", "Analytical reasoning",
+    "scikit-learn pipelines", "Credit-risk modelling", "Cross-validation / ROC-AUC", "Analytical reasoning", "Research discipline",
   ],
   "NUS Games Development Group": [
-    "Unity", "C#", "Procedural rendering", "State management", "Technical collaboration",
+    "Unity / C#", "Procedural 2D rendering", "Gameplay state management", "Problem solving", "Technical collaboration",
   ],
   "NUSSU VENtures": [
     "Event planning", "Venue coordination", "Resource planning", "Stakeholder communication", "Teamwork",
   ],
   "RunNUS · NUS Sports Club": [
-    "Budgeting", "Financial tracking", "Vendor procurement", "Event administration", "Team coordination",
+    "Event budgeting", "Financial tracking", "Vendor procurement", "Attention to detail", "Team coordination",
   ],
   "SunNUS · NUS Sports Club": [
-    "Tournament scheduling", "Event logistics", "Venue coordination", "Team communication", "Organisation",
+    "Tournament scheduling", "Venue setup", "Event logistics", "Team communication", "Organisation",
   ],
   "NUS Varsity Christian Fellowship": [
-    "Active listening", "Peer communication", "Community participation", "Mutual support", "Collaboration",
+    "Community participation", "Active listening", "Peer communication", "Mutual support", "Collaboration",
   ],
   "Eunoia Junior College · Softball": [
-    "Softball fundamentals", "Teamwork", "On-field communication", "Training discipline", "Resilience",
+    "Softball fundamentals", "Competitive match play", "Teamwork", "On-field communication", "Training discipline",
   ],
   "School of Science and Technology · Class leadership": [
-    "Leadership", "Class coordination", "Peer communication", "Responsibility", "Teamwork",
+    "Class coordination", "Peer representation", "Leadership", "Peer communication", "Responsibility",
   ],
   "School of Science and Technology · Football": [
-    "Football fundamentals", "Teamwork", "On-field communication", "Training discipline", "Sportsmanship",
+    "Football fundamentals", "Competitive match play", "Teamwork", "On-field communication", "Training discipline",
   ],
   "School of Science and Technology · Mathematics Society": [
     "Mathematical reasoning", "Pattern recognition", "Problem decomposition", "Time management", "Perseverance",
   ],
   "Bukit Timah Primary School · Mathematics Olympiad": [
-    "Logical reasoning", "Numerical fluency", "Pattern recognition", "Problem solving", "Learning discipline",
+    "Logical reasoning", "Numerical fluency", "Pattern recognition", "Perseverance", "Learning discipline",
   ],
   "Bukit Timah Primary School · Football": [
-    "Football fundamentals", "Teamwork", "Communication", "Discipline", "Sportsmanship",
+    "Football fundamentals", "Inter-school match play", "Teamwork", "Communication", "Sportsmanship",
   ],
   "Project BHID · NUS Community Service Club": [
     "Empathy", "Inclusive programme design", "Volunteer mentoring", "Adaptable communication", "Team leadership",
@@ -776,6 +781,34 @@ const skillsLearned: Readonly<Record<string, FiveSkills>> = {
   "West Coast Park beach cleanup": [
     "Teamwork", "Environmental awareness", "Responsibility", "Attention to detail", "Community participation",
   ],
+};
+
+// The first `count` labels are the role's technical or practical skills; the
+// remainder are soft skills. This keeps five skills per card without implying
+// that sports, event operations or community membership involved software work.
+const skillFocus: Readonly<Record<string, SkillFocus>> = {
+  "Caerus Global Management": { label: "Technical skills", count: 5 },
+  "Stealth Startup": { label: "Technical skills", count: 5 },
+  "CTES Consulting": { label: "Technical skills", count: 5 },
+  Accenture: { label: "Technical skills", count: 5 },
+  "D+A Strategies": { label: "Technical skills", count: 5 },
+  "Republic of Singapore Air Force": { label: "Technical skills", count: 3 },
+  "Singapore Army": { label: "Technical skills", count: 3 },
+  "NUS Student Investment Fund": { label: "Technical skills", count: 3 },
+  "NUS MedTech · PneuRelief": { label: "Technical skills", count: 3 },
+  "Google Developer Group @ NUS Computing": { label: "Technical skills", count: 3 },
+  "NUS Fintech Society": { label: "Technical skills", count: 3 },
+  "NUS Games Development Group": { label: "Technical skills", count: 3 },
+  "NUSSU VENtures": { label: "Practical skills", count: 3 },
+  "RunNUS · NUS Sports Club": { label: "Practical skills", count: 3 },
+  "SunNUS · NUS Sports Club": { label: "Practical skills", count: 3 },
+  "NUS Varsity Christian Fellowship": { label: "Practical skills", count: 1 },
+  "Eunoia Junior College · Softball": { label: "Practical skills", count: 2 },
+  "School of Science and Technology · Class leadership": { label: "Practical skills", count: 2 },
+  "School of Science and Technology · Football": { label: "Practical skills", count: 2 },
+  "School of Science and Technology · Mathematics Society": { label: "Practical skills", count: 3 },
+  "Bukit Timah Primary School · Mathematics Olympiad": { label: "Practical skills", count: 3 },
+  "Bukit Timah Primary School · Football": { label: "Practical skills", count: 2 },
 };
 
 // Context from the original role browser remains on the card backs.
@@ -839,8 +872,12 @@ function buildDeck(
     cards: records.map((record, index) => {
       const card = details[record.org] ?? fallbackDetails(id, record);
       const skills = skillsLearned[record.org];
+      const focus = skillFocus[record.org];
       if (!skills) {
         throw new Error(`Add five evidence-based skills for ${record.org}.`);
+      }
+      if ((id === "work" || id === "community") && !focus) {
+        throw new Error(`Group technical/practical and soft skills for ${record.org}.`);
       }
       return {
         id: `${id}-${index}`,
@@ -857,6 +894,7 @@ function buildDeck(
         summary: record.summary,
         bullets: record.bullets,
         skills,
+        skillFocus: focus,
         note: engineeringNotes[record.org],
         certificates: card.certificates ?? [],
       };
