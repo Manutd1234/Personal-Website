@@ -134,6 +134,21 @@ export function layoutSkillRows(sizes: readonly SkillSize[], width: number) {
   return { positions, height: y - (rows.length ? gap : 0) + inset };
 }
 
+// Size the worktable from the measured labels. Wide boards need less vertical
+// space; narrow screens keep a bounded viewport over a taller physics world.
+export function skillBoardHeight(sizes: readonly SkillSize[], width: number, viewportHeight: number) {
+  const area = sizes.reduce((total, size) => total +
+    (size.width + SKILL_COLLISION_PADDING * 2) * (size.height + SKILL_COLLISION_PADDING * 2), 0);
+  const restingRoom = width >= 700
+    ? Math.max(330, Math.min(428, area / Math.max(1, width * 0.92) + 72))
+    : viewportHeight;
+  return Math.ceil(Math.max(
+    restingRoom,
+    layoutSkillRows(sizes, width).height,
+    area / Math.max(1, (width - 24) * SKILL_PACKING_DENSITY) + 28,
+  ));
+}
+
 // Keep every body responsive to gravity. Per-body sleeping can strand a label
 // in midair when a neighbour is dragged out from under it.
 export function createSkillEngine(matter: MatterLibrary) {
@@ -274,7 +289,6 @@ export function updateSkillDrag(
   width: number,
   height: number,
   step = SKILL_PHYSICS_STEP / 8,
-  advance = true,
 ) {
   const { body, offset } = drag;
   const c = Math.cos(body.angle), s = Math.sin(body.angle);
@@ -282,18 +296,17 @@ export function updateSkillDrag(
     x: body.position.x + offset.x * c - offset.y * s,
     y: body.position.y + offset.x * s + offset.y * c,
   };
-  const minX = Math.min(...body.vertices.map((vertex) => vertex.x));
-  const maxX = Math.max(...body.vertices.map((vertex) => vertex.x));
-  const minY = Math.min(...body.vertices.map((vertex) => vertex.y));
-  const maxY = Math.max(...body.vertices.map((vertex) => vertex.y));
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const vertex of body.vertices) {
+    minX = Math.min(minX, vertex.x); maxX = Math.max(maxX, vertex.x);
+    minY = Math.min(minY, vertex.y); maxY = Math.max(maxY, vertex.y);
+  }
   const dx = Math.max(SKILL_WORLD_INSET - minX,
     Math.min(width - SKILL_WORLD_INSET - maxX, drag.target.x - anchor.x));
   const dy = Math.max(SKILL_WORLD_INSET - minY,
     Math.min(height - SKILL_WORLD_INSET - maxY, drag.target.y - anchor.y));
   const timeScale = step / (1000 / 60);
-  const ratio = advance
-    ? Math.min(1, SKILL_DRAG_MAX_VELOCITY * timeScale / Math.max(0.001, Math.hypot(dx, dy)))
-    : 0;
+  const ratio = Math.min(1, SKILL_DRAG_MAX_VELOCITY * timeScale / Math.max(0.001, Math.hypot(dx, dy)));
   const move = { x: dx * ratio, y: dy * ratio };
   drag.velocity = { x: move.x / timeScale, y: move.y / timeScale };
   matter.Body.setPosition(body, { x: body.position.x + move.x, y: body.position.y + move.y });
@@ -320,10 +333,12 @@ export function stepSkillPhysics(
   height: number,
   drag: SkillDrag | null = null,
 ) {
-  const fastest = Math.max(0, ...bodies.map((body) => {
+  let fastest = 0;
+  for (const body of bodies) {
     const radius: number = body.plugin.skillRadius ?? 0;
-    return Math.hypot(body.velocity.x, body.velocity.y) + Math.min(0.08, Math.abs(body.angularVelocity)) * radius;
-  }));
+    fastest = Math.max(fastest,
+      Math.hypot(body.velocity.x, body.velocity.y) + Math.min(0.08, Math.abs(body.angularVelocity)) * radius);
+  }
   let substeps = Math.min(4, Math.max(1, Math.ceil(fastest / 4)));
   if (drag) {
     const c = Math.cos(drag.body.angle), s = Math.sin(drag.body.angle);
@@ -332,23 +347,36 @@ export function stepSkillPhysics(
       drag.target.y - drag.body.position.y - drag.offset.x * s - drag.offset.y * c,
     );
     const travel = Math.max(Math.min(distance, SKILL_DRAG_MAX_VELOCITY / 2), fastest / 2);
-    substeps = Math.max(4, Math.min(24, Math.ceil(travel / 2)));
+    // Compact touch boards have denser contact chains and retain the finer
+    // sweep; desktop travel can use 3px steps without redundant world solves.
+    const sweep = width < 700 ? 2 : 3;
+    substeps = Math.max(4, Math.min(width < 700 ? 24 : 16, Math.ceil(travel / sweep)));
   }
   const maximum = drag ? SKILL_DRAG_MAX_VELOCITY : SKILL_MAX_VELOCITY;
   const iterations = engine.positionIterations;
   if (drag) engine.positionIterations = 28;
+  const neighbours = drag ? bodies.filter((body) => body !== drag.body) : [];
   for (let step = 0; step < substeps; step += 1) {
     const before = drag ? { ...drag.body.position } : null;
     if (drag) {
-      // Do not keep forcing a solid tile into a packed wall of neighbours.
-      // Give existing contacts a substep to clear before advancing the hand.
-      const crowded = engine.pairs.list.some((pair: Pair) => pair.isActive && pair.collision.depth > 0.8);
-      updateSkillDrag(matter, drag, width, height, SKILL_PHYSICS_STEP / substeps, !crowded);
+      // While pushing a connected pile, allow compressed contacts to clear.
+      // Compression elsewhere must never stall a free-space grab.
+      let touching = false, crowded = false;
+      for (const pair of engine.pairs.list as Pair[]) {
+        if (!pair.isActive) continue;
+        touching ||= pair.bodyA === drag.body || pair.bodyB === drag.body;
+        crowded ||= pair.collision.depth > 0.8;
+        if (touching && crowded) break;
+      }
+      if (touching && crowded) {
+        drag.velocity = { x: 0, y: 0 };
+        matter.Body.setVelocity(drag.body, drag.velocity);
+      } else updateSkillDrag(matter, drag, width, height, SKILL_PHYSICS_STEP / substeps);
     }
     for (const body of bodies) limitSkillVelocity(matter, body, body === drag?.body ? maximum : Math.min(maximum, 24));
     matter.Engine.update(engine, SKILL_PHYSICS_STEP / substeps);
     for (const body of bodies) containSkillBody(matter, body, width, height);
-    if (drag && before && matter.Query.collides(drag.body, bodies.filter((body) => body !== drag.body))
+    if (drag && before && matter.Query.collides(drag.body, neighbours)
       .some((collision) => collision.depth > 1.8)) {
       // A hand cannot force a solid tile through a tightly packed neighbour.
       // Keep the last physical position while the pushed contacts settle.
@@ -413,10 +441,15 @@ export function containSkillBody(
   width: number,
   height: number,
 ) {
-  const minX = Math.min(...body.vertices.map((vertex) => vertex.x));
-  const maxX = Math.max(...body.vertices.map((vertex) => vertex.x));
-  const minY = Math.min(...body.vertices.map((vertex) => vertex.y));
-  const maxY = Math.max(...body.vertices.map((vertex) => vertex.y));
+  // Predicted bounds enclose the real hull. Most bodies are already inside;
+  // only scan vertices near an edge, never every hull after every substep.
+  if (body.bounds.min.x >= 0 && body.bounds.max.x <= width &&
+    body.bounds.min.y >= 0 && body.bounds.max.y <= height) return;
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const vertex of body.vertices) {
+    minX = Math.min(minX, vertex.x); maxX = Math.max(maxX, vertex.x);
+    minY = Math.min(minY, vertex.y); maxY = Math.max(maxY, vertex.y);
+  }
   const inset = SKILL_WORLD_INSET;
   const dx = minX < 0 ? inset - minX : maxX > width ? width - inset - maxX : 0;
   const dy = minY < 0 ? inset - minY : maxY > height ? height - inset - maxY : 0;

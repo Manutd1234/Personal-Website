@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent, PointerEvent, ReactNode } from "react";
 import type { Body as PhysicsBody } from "matter-js";
-import { ArrowDown, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { skillGroups } from "@/content/portfolio";
 import { useMotionPreference } from "./useMotionPreference";
 import {
@@ -11,10 +11,10 @@ import {
   skillTilePaths,
   skillTileForm,
   skillBodyVisualCenter,
+  skillBoardHeight,
   createSkillBody,
   createSkillEngine,
   createSkillWalls,
-  layoutSkillRows,
   isSkillPileStill,
   moveSkillBody,
   createSkillDrag,
@@ -24,7 +24,6 @@ import {
   type SkillDrag,
   SKILL_COLLISION_PADDING,
   SKILL_DROP_BLOCKED_MS,
-  SKILL_PACKING_DENSITY,
   SKILL_PHYSICS_STEP,
 } from "./skill-physics";
 import "@/app/skills-blocks.css";
@@ -62,13 +61,11 @@ type Controller = {
 };
 
 export default function SkillsSandbox({
-  category = "all",
   search = "",
   id,
   active = true,
   status,
 }: {
-  category?: string;
   search?: string;
   id?: string;
   active?: boolean;
@@ -94,12 +91,11 @@ export default function SkillsSandbox({
   const reducedMotion = useMotionPreference();
   availableRef.current = active && available && !reducedMotion;
   const query = search.trim().toLocaleLowerCase();
-  const filtering = category !== "all" || Boolean(query);
+  const filtering = Boolean(query);
   const matching = skills
     .map((skill, index) => ({ skill, index }))
     .filter(
       ({ skill }) =>
-        (category === "all" || category === skill.category) &&
         (!query ||
           skill.label.toLocaleLowerCase().includes(query) ||
           skill.category.toLocaleLowerCase().includes(query)),
@@ -193,6 +189,8 @@ export default function SkillsSandbox({
     const { Body, Composite, Engine } = matter;
     const engine = createSkillEngine(matter);
     let bodies: PhysicsBody[] = [];
+    let liveBodies: PhysicsBody[] = [];
+    let paintedTransforms: string[] = [];
     let sizes: { width: number; height: number }[] = [];
     let walls: PhysicsBody[] = [];
     let stillSince: number | null = null;
@@ -241,8 +239,12 @@ export default function SkillsSandbox({
       bodies.forEach((body, index) => {
         if (!spawned[index]) return;
         const center = skillBodyVisualCenter(body);
-        elements[index].style.transform =
-          `translate3d(${center.x - sizes[index].width / 2}px, ${center.y - sizes[index].height / 2}px, 0) rotate(${body.angle}rad)`;
+        const transform =
+          `translate3d(${(center.x - sizes[index].width / 2).toFixed(2)}px, ${(center.y - sizes[index].height / 2).toFixed(2)}px, 0) rotate(${body.angle.toFixed(4)}rad)`;
+        if (paintedTransforms[index] !== transform) {
+          elements[index].style.transform = transform;
+          paintedTransforms[index] = transform;
+        }
       });
     }
     function spawn(index: number) {
@@ -301,6 +303,7 @@ export default function SkillsSandbox({
         y: 0,
       });
       Composite.add(engine.world, body);
+      liveBodies.push(body);
       spawned[index] = true;
       elements[index].style.opacity = "1";
       elements[index].style.pointerEvents = "";
@@ -311,7 +314,7 @@ export default function SkillsSandbox({
       height += extraHeight;
       world!.style.height = `${height}px`;
       if (width >= 700 && viewportRef.current)
-        viewportRef.current.style.height = `${height}px`;
+        viewportRef.current.style.height = `${height + 2}px`;
       walls.forEach((wall) => Composite.remove(engine.world, wall));
       walls = createSkillWalls(matter!, width, height);
       Composite.add(engine.world, walls);
@@ -370,7 +373,7 @@ export default function SkillsSandbox({
       releaseNextPill();
       while (accumulator >= SKILL_PHYSICS_STEP) {
         stepSkillPhysics(matter!, engine,
-          bodies.filter((_, index) => spawned[index]), width, height, drag?.grip);
+          liveBodies, width, height, drag?.grip);
         accumulator -= SKILL_PHYSICS_STEP;
       }
       draw();
@@ -469,27 +472,18 @@ export default function SkillsSandbox({
       elements.forEach((element, index) => {
         element.style.height = `${sizes[index].height}px`;
       });
-      const area = sizes.reduce(
-        (total, size) => total + (size.width + SKILL_COLLISION_PADDING * 2) * (size.height + SKILL_COLLISION_PADDING * 2),
-        0,
-      );
       // Estimate space from measured envelopes; this layout is only a sizing
       // calculation. Labels enter from the top and never snap to its positions.
-      const packed = layoutSkillRows(sizes, width);
-      height = Math.ceil(
-        Math.max(
-          viewportRef.current?.clientHeight ?? 540,
-          packed.height,
-          area / Math.max(1, (width - 24) * SKILL_PACKING_DENSITY) + 28,
-        ),
-      );
+      height = skillBoardHeight(sizes, width, viewportRef.current?.clientHeight ?? 428);
       world!.style.height = `${height}px`;
       if (width >= 700 && viewportRef.current)
-        viewportRef.current.style.height = `${height}px`;
+        viewportRef.current.style.height = `${height + 2}px`;
       walls = createSkillWalls(matter!, width, height);
       Composite.add(engine.world, walls);
       bodies = sizes.map((size, index) => createSkillBody(matter!, size, { x: width / 2, y: 0 }, index, tileForm(index)));
       spawned = bodies.map(() => false);
+      liveBodies = [];
+      paintedTransforms = [];
       dropOrder = bodies.map((_, index) => index);
       for (let index = dropOrder.length - 1; index > 1; index -= 1) {
         const other = 1 + Math.floor(Math.random() * index);
@@ -564,7 +558,7 @@ export default function SkillsSandbox({
                 ? distance
                 : 0,
           y: key === "ArrowUp" ? -distance : key === "ArrowDown" ? distance : 0,
-        }, bodies.filter((_, other) => spawned[other]), width, height);
+        }, liveBodies, width, height);
         draw();
         elements[index].scrollIntoView({ block: "nearest", inline: "nearest" });
         start();
@@ -714,9 +708,6 @@ export default function SkillsSandbox({
     }
     if (cancelled) setGrabbed(null);
   }
-  const matchAfter =
-    matching.find(({ index }) => index > selected) ?? matching[0];
-
   return (
     <section
       className="skill-physics skill-atelier"
@@ -733,7 +724,7 @@ export default function SkillsSandbox({
         {skills.length} skills across {skillGroups.length} categories.{" "}
         {still
           ? "A settled view of every skill. Use arrow keys to browse."
-          : "Drag a label to move it and bump the pile. Scroll empty space in the board to reach every label. The filters above highlight matching skills."}
+          : "Drag a label to move it and bump the pile. Scroll empty space in the board to reach every label. Search above to highlight matching skills."}
       </p>
       <div className="skill-physics-toolbar">
         {status}
@@ -750,17 +741,6 @@ export default function SkillsSandbox({
             <RotateCcw size={14} aria-hidden="true" />
             Drop again
           </button>
-          {filtering ? (
-            <button
-              type="button"
-              disabled={!matchAfter}
-              onClick={() => {
-                if (matchAfter) focusPill(matchAfter.index);
-              }}
-            >
-              Next match <ArrowDown size={14} aria-hidden="true" />
-            </button>
-          ) : null}
         </div>
       </div>
       <div

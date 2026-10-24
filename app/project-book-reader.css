@@ -1,8 +1,11 @@
 /* Full-width paper spreads with a single, continuous reading interaction. */
-.project-book-reader {
+.project-book-reader,
+.book-preview-page {
   --reader-paper: #fffaf0;
   --reader-ink: #213f32;
   --reader-muted: #66745f;
+}
+.project-book-reader {
   --reader-spread-height: clamp(520px, 62svh, 640px);
   color: var(--reader-ink);
   position: relative;
@@ -88,8 +91,8 @@
   border-radius: 0 10px 10px 0;
   box-shadow: inset 14px 0 22px -20px #6148248c;
 }
-.reader-page > header,
-.reader-page > footer {
+.reader-page-header,
+.reader-page-footer {
   display: flex;
   justify-content: space-between;
   gap: 14px;
@@ -97,18 +100,18 @@
   font: 9px/1.5 var(--font-mono, monospace);
   letter-spacing: 0.06em;
 }
-.reader-page > header,
-.reader-page > footer {
+.reader-page-header,
+.reader-page-footer {
   flex-shrink: 0;
 }
-.reader-page > header {
+.reader-page-header {
   padding-bottom: 15px;
   border-bottom: 1px solid #35563d20;
 }
-.reader-page > header > span:first-child {
+.reader-page-header > span:first-child {
   max-width: 85%;
 }
-.reader-page > footer {
+.reader-page-footer {
   margin-top: auto;
   padding-top: 18px;
 }
@@ -127,19 +130,25 @@
   outline: 2px solid #7e9d65;
   border-radius: 3px;
 }
-.book-carousel .book-details .reader-page h3 {
+.book-carousel .book-details .reader-page h3,
+.book-carousel .reader-page .reader-opening-title {
+  display: block;
   margin: 14px 0 24px;
   color: var(--reader-ink);
   font: 500 clamp(28px, 3.7cqw, 48px)/1.08 var(--font-serif, Georgia, serif);
   letter-spacing: -0.045em;
 }
-.reader-page h4 {
+.reader-page h4,
+.reader-chapter-title {
+  display: block;
   margin: 0 0 24px;
   color: var(--reader-ink);
   font: 500 clamp(24px, 2.7cqw, 34px)/1.17 var(--font-serif, Georgia, serif);
   letter-spacing: -0.025em;
 }
-.reader-page p {
+.reader-page p,
+.reader-paragraph {
+  display: block;
   margin: 0 0 20px;
 }
 .reader-category {
@@ -158,21 +167,24 @@
   font-size: 14px;
 }
 .reader-audience strong,
-.reader-context dt {
+.reader-context-term {
   display: block;
   margin-bottom: 7px;
   color: #244c37;
   font: 650 13px/1.5 var(--font-body, sans-serif);
 }
 .reader-context {
+  display: block;
   margin: 0;
 }
-.reader-context > div + div {
+.reader-context-block { display: block; }
+.reader-context-block + .reader-context-block {
   margin-top: 25px;
   padding-top: 25px;
   border-top: 1px solid #35563d20;
 }
-.reader-context dd {
+.reader-context-description {
+  display: block;
   margin: 0;
 }
 .reader-outcome {

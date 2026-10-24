@@ -88,6 +88,11 @@
   min-height: 430px;
   overflow: clip;
 }
+/* The selected cover rises above the shelf before opening. The outer stage
+   still contains the motion; the theatre must not cut off that upward arc. */
+.book-carousel .book-stage:is([data-open="true"], [data-returning="true"]) .book-theatre {
+  overflow: visible;
+}
 .book-carousel .book-theatre-flow {
   position: relative;
   display: flex;
@@ -228,14 +233,12 @@
 .book-carousel .book-inside-cover {
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 24px 20px;
-  border: 7px solid var(--cover);
+  display: block;
+  padding: 0;
+  border: 0;
   border-radius: 3px;
   color: #52614a;
-  background: linear-gradient(90deg, #efeedf, #e9e7d5 90%, #c9c8b3);
+  background: #fffaf0;
   box-shadow:
     inset -6px 0 12px #384b2b22,
     inset 0 0 0 1px #fff8;
@@ -243,12 +246,7 @@
   transform: rotateY(180deg) translateZ(1px);
   font: 0.45rem/1.6 var(--book-mono);
   overflow-wrap: anywhere;
-}
-.book-carousel .book-inside-title {
-  padding-block: 12px;
-  border-block: 1px solid #a9b39a;
-  font: italic 400 1.4rem/1.1 var(--book-serif);
-  white-space: pre-line;
+  overflow: hidden;
 }
 .book-carousel .book-cover-edge,
 .book-carousel .book-cover-hinge::before,
@@ -519,48 +517,39 @@
     rotateY(var(--preview-under-second-angle, 0deg));
 }
 .book-carousel .book-leaf-front {
-  background: linear-gradient(90deg, #ddd4bf, #f8f3e5 8%, #fcf8ec 75%, #f0e9d7);
+  display: block;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: #fffaf0;
   transform: translateZ(0.08px);
 }
 .book-carousel .book-leaf-back {
   transform: rotateY(180deg) translateZ(0.08px);
 }
-.book-carousel .book-leaf-eyebrow {
-  font: 0.37rem/1.7 var(--book-mono);
-  letter-spacing: 0.1em;
+/* Miniature versions of the reader's opening pages, using its full-size type
+   and layout before scaling onto the physical cover and first paper leaf. */
+.book-carousel .book-preview-page {
+  width: var(--preview-page-width, 480px);
+  height: var(--preview-page-height, 640px);
+  transform: scale(var(--preview-leaf-scale-x, .4), var(--preview-leaf-scale-y, .45));
+  transform-origin: 0 0;
+  pointer-events: none;
+  box-shadow: inset 14px 0 22px -20px #6148248c;
 }
-.book-carousel .book-leaf-title {
-  display: -webkit-box;
-  margin-top: 18px;
+.book-carousel .book-inside-cover .book-preview-page {
+  transform: scale(var(--preview-cover-scale-x, .4), var(--preview-cover-scale-y, .45));
+  box-shadow: inset -14px 0 22px -20px #6148248c;
+}
+.book-carousel .book-preview-page .reader-page-body {
+  display: block;
   overflow: hidden;
-  font: 400 clamp(0.95rem, 1.8cqw, 1.35rem)/1.13 var(--book-serif);
-  letter-spacing: -0.035em;
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
 }
-.book-carousel .book-leaf-category {
-  margin-top: 9px;
-  font: 0.43rem/1.6 var(--book-display);
+.book-carousel .book-stage[data-preview-single="true"] .book-preview-page {
+  padding: 24px;
 }
-.book-carousel .book-leaf-rule {
-  width: 35px;
-  height: 1px;
-  margin-block: 17px;
-  background: #a4b396;
-}
-.book-carousel .book-leaf-tools {
-  display: -webkit-box;
-  overflow: hidden;
-  font: 0.42rem/1.7 var(--book-mono);
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-.book-carousel .book-leaf-signature {
-  margin-top: auto;
-  padding-top: 14px;
-  font: italic 0.7rem/1.4 var(--book-serif);
+.book-carousel .book-stage[data-preview-single="true"] .book-preview-page .reader-opening-title {
+  font-size: clamp(29px, 7cqw, 42px);
 }
 .book-carousel .book-hover-surface {
   position: absolute;
@@ -997,6 +986,7 @@
   .book-carousel .book-details {
     width: 100%;
     margin-left: 0;
+    padding-inline: 1px;
     padding-top: 0;
     padding-bottom: 16px;
   }
@@ -1051,23 +1041,8 @@
   .book-carousel .book-theatre-flow {
     min-height: 330px;
   }
-  .book-carousel .book-inside-cover {
-    padding: 18px 12px;
-    border-width: 5px;
-  }
-  .book-carousel .book-inside-title {
-    font-size: 1.1rem;
-  }
-  .book-carousel .book-leaf-front,
   .book-carousel .book-leaf-back {
     padding: 19px 13px 14px;
-  }
-  .book-carousel .book-leaf-title {
-    margin-top: 13px;
-    font-size: 0.95rem;
-  }
-  .book-carousel .book-leaf-rule {
-    margin-block: 12px;
   }
   .book-carousel .book-details h3 {
     font-size: 2.15rem;

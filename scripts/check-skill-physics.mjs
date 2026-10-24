@@ -140,6 +140,29 @@ for (const shape of Object.keys(physics.skillTilePaths)) {
 }
 console.log("All seven silhouettes use bounded outline hulls and touch the floor — PASS");
 
+// A compressed contact elsewhere must not stop a label moving in free space.
+// Seed one unresolved remote contact, as can happen during vigorous stirring.
+{
+  const { engine } = createWorld(900, 400);
+  const held = makeBody({ width: 70, height: 30 }, { x: 110, y: 90 }, 0);
+  const remoteA = makeBody({ width: 80, height: 30 }, { x: 680, y: 300 }, 1);
+  const remoteB = makeBody({ width: 80, height: 30 }, { x: 700, y: 300 }, 2);
+  Matter.Composite.add(engine.world, [held, remoteA, remoteB]);
+  const iterations = engine.positionIterations;
+  engine.positionIterations = 0;
+  Matter.Engine.update(engine, physics.SKILL_PHYSICS_STEP);
+  engine.positionIterations = iterations;
+  assert.ok(engine.pairs.list.some((pair) => pair.isActive && pair.collision.depth > 0.8));
+  const start = held.position.x;
+  const grip = physics.createSkillDrag(Matter, held, held.position);
+  grip.target.x += physics.SKILL_DRAG_MAX_VELOCITY / 2;
+  update(engine, [held, remoteA, remoteB], 900, 400, grip);
+  assert.ok(held.position.x - start > physics.SKILL_DRAG_MAX_VELOCITY / 2 - 0.1,
+    "An unrelated compressed pair must not consume the free label's drag movement");
+  physics.releaseSkillDrag(Matter, grip);
+  Matter.Engine.clear(engine);
+}
+
 // Regression: predictive bounds cross the floor while actual vertices stay in
 // the world. Post-solver clamping must not shove this card into its neighbour.
 const contained = makeBody({ width: 80, height: 30 }, { x: 100, y: 575 }, 0);
@@ -243,11 +266,19 @@ function assertGrounded(bodies, floor, context) {
   assert.deepEqual(floating, [], `${context}: labels must connect through contacts to the floor, not float: ${floating.join(", ")}`);
 }
 
-for (const [name, width, frameHeight, scale] of [["desktop", 980, 538, 1], ["narrow", 340, 478, 1.1]]) {
+const layoutOnly = process.argv.includes("--layout");
+const dragOnly = process.argv.includes("--drag");
+const compactDesktop = layoutOnly || dragOnly;
+const scenarios = compactDesktop
+  ? [["1055px viewport", 924, 428, 1], ["1835px viewport", 1054, 428, 1]]
+  : [["desktop", 980, 538, 1], ["narrow", 340, 478, 1.1]];
+for (const [name, width, frameHeight, scale] of scenarios) {
   const sizes = desktopSizes.map((size) => ({ width: Math.ceil(size.width * scale), height: Math.ceil(size.height * scale) }));
   const area = sizes.reduce((sum, size) => sum + (size.width + physics.SKILL_COLLISION_PADDING * 2) * (size.height + physics.SKILL_COLLISION_PADDING * 2), 0);
-  for (const seed of [7, 42, 2026]) {
-    let height = Math.ceil(Math.max(frameHeight, area / ((width - 24) * physics.SKILL_PACKING_DENSITY) + 28));
+  for (const seed of compactDesktop ? [42] : [7, 42, 2026]) {
+    let height = compactDesktop
+      ? physics.skillBoardHeight(sizes, width, frameHeight)
+      : Math.ceil(Math.max(frameHeight, area / ((width - 24) * physics.SKILL_PACKING_DENSITY) + 28));
     let { engine, walls } = createWorld(width, height);
     const dropped = [], random = randomGenerator(seed);
     const waiting = sizes.map((size, index) => makeBody(size, { x: width / 2, y: 40 }, index));
@@ -316,6 +347,14 @@ for (const [name, width, frameHeight, scale] of [["desktop", 980, 538, 1], ["nar
     assertGrounded(dropped, walls[0], context);
     const pileHeight = height - physics.SKILL_WORLD_INSET - Math.min(...dropped.flatMap((body) => body.vertices.map((vertex) => vertex.y)));
     const naturalUpsideDown = dropped.filter((body) => Math.cos(body.angle) < 0).length;
+    if (layoutOnly) {
+      assert.equal(growths, 0, `${context}: all labels must fit without expanding the desktop board`);
+      assert.ok(height >= 330 && height <= 428, `${context}: desktop board must remain compact`);
+      assert.ok(height - pileHeight >= 40 && height - pileHeight <= 130, `${context}: leave modest room above the settled pile`);
+      console.log(`${context}: all ${catalogCount} labels fit ${width}×${height}, settled pile ${pileHeight.toFixed(1)}px, headroom ${(height - pileHeight).toFixed(1)}px — PASS`);
+      Matter.Engine.clear(engine);
+      continue;
+    }
 
     // A 100ms mouse sweep (300ms on the dense touch board) must lift a bottom label
     // hundreds of pixels while bumping the actual pile. Slow ploughing was broken drag.
@@ -327,7 +366,10 @@ for (const [name, width, frameHeight, scale] of [["desktop", 980, 538, 1], ["nar
       const to = { x: width * (from.x > width / 2 ? 0.25 : 0.75), y: Math.max(70, from.y - 300) };
       const fastGrip = physics.createSkillDrag(Matter, picked, from);
       let physicsMs = 0;
-      const gestureFrames = name === "desktop" ? 12 : 36;
+      let collisionSteps = 0;
+      const engineUpdate = Matter.Engine.update;
+      Matter.Engine.update = (...args) => { collisionSteps += 1; return engineUpdate(...args); };
+      const gestureFrames = width >= 700 ? 12 : 36;
       for (let frame = 1; frame <= gestureFrames; frame += 1) {
         fastGrip.target = { x: from.x + (to.x - from.x) * frame / gestureFrames, y: from.y + (to.y - from.y) * frame / gestureFrames };
         const started = performance.now();
@@ -335,6 +377,7 @@ for (const [name, width, frameHeight, scale] of [["desktop", 980, 538, 1], ["nar
         physicsMs += performance.now() - started;
         checkBodies(dropped, sizes, width, height, `${context}: fast diagonal grip ${frame}`, 6);
       }
+      Matter.Engine.update = engineUpdate;
       // Release may arrive between frames; complete its last pointer movement
       // for at most the same 200ms grace used by the UI controller.
       for (let frame = 0; frame < 24 && Math.hypot(picked.position.x - to.x, picked.position.y - to.y) >= 2; frame += 1)
@@ -343,7 +386,13 @@ for (const [name, width, frameHeight, scale] of [["desktop", 980, 538, 1], ["nar
       assert.ok(lag < 45, `${context}: a fast pickup must track the pointer (lag ${lag.toFixed(1)}px)`);
       physics.releaseSkillDrag(Matter, fastGrip);
       for (let frame = 0; frame < 480; frame += 1) update(engine, dropped, width, height);
-      console.log(`${context}: fast diagonal pickup lag ${lag.toFixed(1)}px, physics ${(physicsMs / (gestureFrames / 2)).toFixed(1)}ms per display frame — PASS`);
+      console.log(`${context}: fast diagonal pickup lag ${lag.toFixed(1)}px, physics ${(physicsMs / (gestureFrames / 2)).toFixed(1)}ms / ${(collisionSteps / (gestureFrames / 2)).toFixed(1)} solves per display frame — PASS`);
+    }
+    if (dragOnly) {
+      checkBodies(dropped, sizes, width, height, `${context}: released fast drag`);
+      assertGrounded(dropped, walls[0], `${context}: released fast drag`);
+      Matter.Engine.clear(engine);
+      continue;
     }
 
     // Pull a genuinely buried label through its settled neighbours, then sweep

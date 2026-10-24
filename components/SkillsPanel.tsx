@@ -24,47 +24,21 @@ const files: Readonly<
 
 export default function SkillsPanel({ active = true }: { active?: boolean }) {
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
   const searchId = useId();
-  const categoryId = useId();
   const resultsId = useId();
   const languagesId = useId();
   const credentialsId = useId();
   const searchRef = useRef<HTMLInputElement>(null);
   const query = search.trim().toLocaleLowerCase();
-  const matches = skillGroups.map((group, index) => ({
-    ...group,
-    index,
-    items:
-      !query || group.label.toLocaleLowerCase().includes(query)
-        ? group.items
-        : group.items.filter((item) =>
-            item.toLocaleLowerCase().includes(query),
-          ),
-  }));
-  const groups = matches.filter(
-    (group) =>
-      (category === "all" || category === group.label) &&
-      group.items.length > 0,
-  );
-  const count = groups.reduce((total, group) => total + group.items.length, 0);
-  const filtering = Boolean(query) || category !== "all";
-  const filters = [
-    {
-      value: "all",
-      label: "All",
-      count: matches.reduce((total, group) => total + group.items.length, 0),
-    },
-    ...matches.map((group) => ({
-      value: group.label,
-      label: group.label,
-      count: group.items.length,
-    })),
-  ];
+  const count = skillGroups.reduce((total, group) => total + (
+    !query || group.label.toLocaleLowerCase().includes(query)
+      ? group.items.length
+      : group.items.filter((item) => item.toLocaleLowerCase().includes(query)).length
+  ), 0);
+  const hasSearch = Boolean(query);
 
   function reset() {
     setSearch("");
-    setCategory("all");
     searchRef.current?.focus();
   }
 
@@ -83,67 +57,27 @@ export default function SkillsPanel({ active = true }: { active?: boolean }) {
               autoComplete="off"
               placeholder="Python, React, AWS…"
               aria-controls={resultsId}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                setCategory("all");
-              }}
+              onChange={(event) => setSearch(event.target.value)}
             />
             {search ? (
               <button
                 type="button"
                 aria-label="Clear skill search"
-                onClick={() => {
-                  setSearch("");
-                  searchRef.current?.focus();
-                }}
+                onClick={reset}
               >
                 ×
               </button>
             ) : null}
           </div>
         </div>
-        <div
-          className="skills-classic-filters"
-          role="group"
-          aria-label="Highlight skills by category"
-        >
-          {filters.map((filter) => (
-            <button
-              key={filter.value}
-              type="button"
-              aria-pressed={category === filter.value}
-              aria-controls={resultsId}
-              onClick={() => setCategory(filter.value)}
-            >
-              {filter.label}
-              <span>{filter.count}</span>
-            </button>
-          ))}
-        </div>
-        <div className="skills-classic-mobile-filter">
-          <label htmlFor={categoryId}>Category</label>
-          <select
-            id={categoryId}
-            aria-controls={resultsId}
-            value={category}
-            onChange={(event) => setCategory(event.target.value)}
-          >
-            {filters.map((filter) => (
-              <option key={filter.value} value={filter.value}>
-                {filter.label} ({filter.count})
-              </option>
-            ))}
-          </select>
-        </div>
         <SkillsSandbox
           id={resultsId}
-          category={category}
           search={search}
           active={active}
           status={
             <div className="skills-classic-result-bar">
               <p role="status" aria-live="polite">
-                {filtering ? (
+                {hasSearch ? (
                   count ? (
                     <>
                       <strong>{count}</strong> {count === 1 ? "skill" : "skills"}{" "}
@@ -153,12 +87,12 @@ export default function SkillsPanel({ active = true }: { active?: boolean }) {
                     "No matching skills. Try another search."
                   )
                 ) : (
-                  "Drag the labels around. Choose a category to bring it into focus."
+                  "Drag the labels to move them and bump the pile."
                 )}
               </p>
-              {filtering ? (
+              {hasSearch ? (
                 <button type="button" onClick={reset}>
-                  Clear filters
+                  Clear search
                 </button>
               ) : null}
             </div>

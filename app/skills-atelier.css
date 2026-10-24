@@ -2,7 +2,7 @@
 .skill-physics.skill-atelier {
   --table-paper: #f2f5ec;
   --table-edge: #c4d2c0;
-  --skill-tile-scale: 0.72;
+  --skill-tile-scale: 0.82;
   --skill-label-font: var(--portfolio-sans), "Avenir Next", Arial, sans-serif;
   padding: 0;
   border: 0;
@@ -50,7 +50,7 @@
 }
 
 .skill-atelier .skill-physics-viewport {
-  height: 540px;
+  height: 430px;
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-gutter: stable;
@@ -67,7 +67,7 @@
 }
 
 .skill-atelier .skill-physics-world {
-  min-height: 538px;
+  min-height: 330px;
   gap: 4px;
   padding: 10px;
   border: 0;
@@ -105,7 +105,7 @@
   justify-content: center;
   padding: calc(var(--tile-y) * var(--skill-tile-scale))
     calc((var(--tile-x) + var(--shape-pad)) * var(--skill-tile-scale));
-  font: 550 max(9px, calc(11px * var(--skill-tile-scale)))/1.35 var(--skill-label-font);
+  font: 550 max(10px, calc(11px * var(--skill-tile-scale)))/1.35 var(--skill-label-font);
   letter-spacing: -0.015em;
   font-synthesis: none;
   text-align: center;
@@ -127,7 +127,7 @@
   --tile-x: 6px;
   --tile-y: 4px;
   min-height: calc(26px * var(--skill-tile-scale));
-  font-size: max(10px, calc(12px * var(--skill-tile-scale)));
+  font-size: max(11px, calc(12px * var(--skill-tile-scale)));
   font-weight: 600;
 }
 
@@ -135,7 +135,7 @@
   --tile-x: 7px;
   --tile-y: 5px;
   min-height: calc(29px * var(--skill-tile-scale));
-  font-size: max(11px, calc(14px * var(--skill-tile-scale)));
+  font-size: max(12px, calc(14px * var(--skill-tile-scale)));
   font-weight: 650;
 }
 

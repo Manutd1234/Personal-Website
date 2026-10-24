@@ -13,6 +13,7 @@ import { projectStories } from "@/content/project-stories";
 import type { ProjectPoint } from "@/content/project-stories";
 import { teamMoments } from "@/content/media";
 import { asset } from "@/content/paths";
+import { OpeningContext, OpeningNotes, openingPageTitles } from "./ProjectBookOpening";
 import "@/app/project-book-reader.css";
 
 const isReport = (url: string) => /\.pdf(?:$|[?#])/i.test(url);
@@ -187,31 +188,15 @@ function chaptersFor(project: Project, media?: ProjectMedia): Chapter[] {
         : [];
   const pages: Chapter[] = [
     {
-      title: "Opening notes",
+      title: openingPageTitles[0],
       kind: "title",
-      content: (
-        <>
-          <p className="reader-category">{project.category}</p>
-          <h3>{project.title}</h3>
-          <p className="reader-intro">{story?.summary ?? project.description}</p>
-          {story ? <p className="reader-audience"><strong>Who it helps</strong>{story.audience}</p> : null}
-          {!story && project.outcome ? (
-            <p className="reader-outcome">{project.outcome}</p>
-          ) : null}
-          <p className="reader-signature">Ian Wangsa</p>
-        </>
-      ),
+      content: <OpeningNotes project={project} />,
     },
   ];
   if (story) {
     pages.push({
-      title: "The problem & my role",
-      content: (
-        <dl className="reader-context">
-          <div><dt>The problem</dt><dd>{story.problem}</dd></div>
-          <div><dt>My contribution</dt><dd>{story.contribution}</dd></div>
-        </dl>
-      ),
+      title: openingPageTitles[1],
+      content: <OpeningContext project={project} />,
     });
     story.sections.forEach((section) => {
       const chunks = pointPages(section.points);
@@ -517,7 +502,7 @@ export default function ProjectBookReader({
     if (!chapter) return null;
     return (
       <article className="reader-page" data-kind={chapter.kind}>
-        <header>
+        <header className="reader-page-header">
           <span>{project.title}</span>
           <span aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
         </header>
@@ -537,7 +522,7 @@ export default function ProjectBookReader({
           {chapter.kind !== "title" ? <h4>{chapter.title}</h4> : null}
           {chapter.content}
         </div>
-        <footer>
+        <footer className="reader-page-footer">
           <span>{chapter.title}</span>
           <span>{index + 1}</span>
         </footer>
