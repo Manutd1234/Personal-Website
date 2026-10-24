@@ -346,6 +346,21 @@
 .award-app-icon[data-artwork="emblem"] .award-app-preview {
   padding: 2px;
 }
+.award-app-icon[data-brand] {
+  padding: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+.award-app-icon[data-brand]::after {
+  content: none;
+}
+.award-app-icon[data-artwork="poster"] {
+  padding: 0;
+  background: #190078;
+}
+.award-app-icon[data-artwork="poster"] .award-app-preview > img {
+  border-radius: 0;
+}
 .award-app-topic-mark {
   display: grid;
   position: absolute;

@@ -61,6 +61,7 @@ export default function SkillsSandbox({
   const [matter, setMatter] = useState<MatterLibrary | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const rootRef = useRef<HTMLElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
   const pillRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const controllerRef = useRef<Controller | null>(null);
@@ -408,10 +409,13 @@ export default function SkillsSandbox({
         (total, size) => total + size.width * size.height,
         0,
       );
+      // The visible frame stays compact. Only its inner world grows when
+      // all measured labels need more space, so every label stays reachable.
       height = Math.ceil(
         Math.max(
-          world!.clientHeight + 45,
-          area / Math.max(1, (width - 28) * 0.62) + 90,
+          viewportRef.current?.clientHeight ?? 500,
+          world!.scrollHeight,
+          area / Math.max(1, (width - 24) * 0.72) + 28,
         ),
       );
       world!.style.height = `${height}px`;
@@ -514,6 +518,7 @@ export default function SkillsSandbox({
         Body.setVelocity(body, { x: 0, y: 0 });
         contain(body);
         draw();
+        elements[index].scrollIntoView({ block: "nearest", inline: "nearest" });
         start();
       },
       grab(index, event) {
@@ -710,7 +715,7 @@ export default function SkillsSandbox({
         {skills.length} skills across {skillGroups.length} categories.{" "}
         {still
           ? "A settled view of every skill. Use arrow keys to browse."
-          : "Drag and release a label, or tap to pick it up before dragging on touch. The filters above highlight matching skills."}
+          : "Drag and release a label, or tap to pick it up before dragging on touch. Scroll inside the board to reach every label. The filters above highlight matching skills."}
       </p>
       <div className="skill-physics-toolbar">
         <button
@@ -750,57 +755,72 @@ export default function SkillsSandbox({
         ) : null}
       </div>
       <div
-        className="skill-physics-world"
-        ref={worldRef}
-        role="group"
-        aria-label={`All ${skills.length} skill labels`}
-        aria-describedby={`${prefix}-keyboard`}
+        className="skill-physics-viewport"
+        ref={viewportRef}
+        tabIndex={0}
+        role="region"
+        aria-label="Scroll through the skills board"
       >
-        {skills.map((skill, index) => (
-          <button
-            className="skill-pill"
-            type="button"
-            key={skill.id}
-            ref={(element) => {
-              pillRefs.current[index] = element;
-            }}
-            data-tone={skill.categoryIndex}
-            data-long={skill.label.length > 18}
-            data-lit={matchingIndices.has(index)}
-            data-filtering={filtering}
-            data-selected={selected === index}
-            data-grabbed={grabbed === index}
-            aria-label={`${skill.label} · ${skill.category}${filtering ? (matchingIndices.has(index) ? " · highlighted" : " · outside current highlight") : ""}`}
-            aria-pressed={grabbed === index}
-            aria-describedby={`${prefix}-keyboard`}
-            tabIndex={selected === index ? 0 : -1}
-            onFocus={() => {
-              setSelected(index);
-              controllerRef.current?.reveal(index);
-            }}
-            onClick={() => {
-              if (performance.now() < suppressClickRef.current) return;
-              setSelected(index);
-              if (still) {
-                setGrabbed(null);
-                setAnnouncement(`${skill.label}, ${skill.category}.`);
-                return;
+        <div
+          className="skill-physics-world"
+          ref={worldRef}
+          role="group"
+          aria-label={`All ${skills.length} skill labels`}
+          aria-describedby={`${prefix}-keyboard`}
+        >
+          {skills.map((skill, index) => (
+            <button
+              className="skill-pill"
+              type="button"
+              key={skill.id}
+              ref={(element) => {
+                pillRefs.current[index] = element;
+              }}
+              data-tone={skill.categoryIndex}
+              data-size={
+                skill.itemIndex < 2
+                  ? "large"
+                  : (skill.itemIndex + skill.categoryIndex) % 3 === 0
+                    ? "medium"
+                    : "small"
               }
-              setGrabbed((current) => (current === index ? null : index));
-              setAnnouncement(
-                `${skill.label}${grabbed === index ? " released." : " selected. Drag to move, or use arrow keys."}`,
-              );
-            }}
-            onKeyDown={(event) => pillKeys(event, index)}
-            onPointerDown={(event) => pointerDown(event, index)}
-            onPointerMove={pointerMove}
-            onPointerUp={(event) => pointerUp(event)}
-            onPointerCancel={(event) => pointerUp(event, true)}
-            onLostPointerCapture={(event) => pointerUp(event, true)}
-          >
-            <span>{skill.label}</span>
-          </button>
-        ))}
+              data-long={skill.label.length > 18}
+              data-lit={matchingIndices.has(index)}
+              data-filtering={filtering}
+              data-selected={selected === index}
+              data-grabbed={grabbed === index}
+              aria-label={`${skill.label} · ${skill.category}${filtering ? (matchingIndices.has(index) ? " · highlighted" : " · outside current highlight") : ""}`}
+              aria-pressed={grabbed === index}
+              aria-describedby={`${prefix}-keyboard`}
+              tabIndex={selected === index ? 0 : -1}
+              onFocus={() => {
+                setSelected(index);
+                controllerRef.current?.reveal(index);
+              }}
+              onClick={() => {
+                if (performance.now() < suppressClickRef.current) return;
+                setSelected(index);
+                if (still) {
+                  setGrabbed(null);
+                  setAnnouncement(`${skill.label}, ${skill.category}.`);
+                  return;
+                }
+                setGrabbed((current) => (current === index ? null : index));
+                setAnnouncement(
+                  `${skill.label}${grabbed === index ? " released." : " selected. Drag to move, or use arrow keys."}`,
+                );
+              }}
+              onKeyDown={(event) => pillKeys(event, index)}
+              onPointerDown={(event) => pointerDown(event, index)}
+              onPointerMove={pointerMove}
+              onPointerUp={(event) => pointerUp(event)}
+              onPointerCancel={(event) => pointerUp(event, true)}
+              onLostPointerCapture={(event) => pointerUp(event, true)}
+            >
+              <span>{skill.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
       <p className="sr-only" id={`${prefix}-keyboard`}>
         {still

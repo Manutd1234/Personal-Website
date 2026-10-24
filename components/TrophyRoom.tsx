@@ -45,7 +45,7 @@ import {
 } from "react";
 import { achievementGroups, certifications } from "@/content/portfolio";
 import { certificateFiles, projectMedia, teamMoments } from "@/content/media";
-import { awardIconPreviews } from "@/content/award-icon-previews";
+import { awardAppIcons, awardIconPreviews } from "@/content/award-icon-previews";
 import { credentialProviders } from "@/content/credential-providers";
 import { asset } from "@/content/paths";
 import { trophies, type Trophy as TrophyRecord } from "@/content/trophies";
@@ -345,9 +345,10 @@ function AchievementApp({
 }) {
   const Icon = iconForAchievement(record);
   const preview = previewForAchievement(record);
+  const appIcon = awardAppIcons[record.title];
   const photographic = /photo|patch|screenshot/i.test(preview.kind ?? "");
-  const emblem = /emblem/i.test(preview.kind ?? "");
-  const imageSource = awardIconPreviews[preview.src] ?? preview.src;
+  const emblem = appIcon?.artwork === "emblem" || (!appIcon && /emblem/i.test(preview.kind ?? ""));
+  const imageSource = appIcon?.src ?? awardIconPreviews[preview.src] ?? preview.src;
   return (
     <li className="award-app" data-category={record.category}>
       <button
@@ -361,8 +362,9 @@ function AchievementApp({
         <span
           className="award-app-icon"
           data-provider={emblem ? record.issuer : undefined}
-          data-evidence={!emblem ? "true" : undefined}
-          data-artwork={photographic ? "photo" : emblem ? "emblem" : "document"}
+          data-evidence={!appIcon && !emblem ? "true" : undefined}
+          data-brand={appIcon ? "true" : undefined}
+          data-artwork={appIcon?.artwork ?? (photographic ? "photo" : emblem ? "emblem" : "document")}
           aria-hidden="true"
         >
           {imageSource ? (
@@ -375,9 +377,11 @@ function AchievementApp({
                   decoding="async"
                 />
               </span>
-              <span className="award-app-topic-mark">
-                <Icon size={14} strokeWidth={1.8} />
-              </span>
+              {!appIcon ? (
+                <span className="award-app-topic-mark">
+                  <Icon size={14} strokeWidth={1.8} />
+                </span>
+              ) : null}
             </>
           ) : (
             <Icon className="award-app-glyph" size={38} strokeWidth={1.65} />

@@ -1,4 +1,42 @@
-// Compact full-frame artwork for the award apps. Original evidence opens in details.
+// User-selected branding for the award apps; award evidence remains in details.
+export const awardAppIcons: Readonly<
+  Record<string, { src: string; artwork: "emblem" | "poster" } | undefined>
+> = {
+  "BrainHack TIL-AI 2026": {
+    src: "images/award-icons/brainhack-til-ai.webp",
+    artwork: "emblem",
+  },
+  "Hack the Future AI Hackathon 2026": {
+    src: "images/award-icons/hack-the-future-poster.webp",
+    artwork: "poster",
+  },
+  "BügleRock Rockathon 2026": {
+    src: "images/award-icons/buglerock.webp",
+    artwork: "emblem",
+  },
+  "SignMeUp · The Merge Hackathon 2026": {
+    src: "images/award-icons/devpost.webp",
+    artwork: "emblem",
+  },
+  "SunnyHacks 2026": {
+    src: "images/award-icons/devpost.webp",
+    artwork: "emblem",
+  },
+  "Certificate of Appreciation · Project BHID": {
+    src: "images/award-icons/nus-csc.webp",
+    artwork: "emblem",
+  },
+  "Outstanding performance & conduct": {
+    src: "images/award-icons/singapore-army.webp",
+    artwork: "emblem",
+  },
+  "Chief of Defence Force (CDF) National Education Excellence Award": {
+    src: "images/award-icons/160-squadron.webp",
+    artwork: "emblem",
+  },
+};
+
+// Compact full-frame artwork for the remaining award apps.
 export const awardIconPreviews: Readonly<Record<string, string | undefined>> = {
   "images/portfolio/brainhack-champion-team.webp":
     "images/award-icons/brainhack-champion-team.webp",
