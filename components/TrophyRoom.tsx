@@ -155,7 +155,12 @@ const projectRecords = new Map(
 );
 const recordsFor = (title: string): readonly AwardRecord[] =>
   achievementGroups.find((group) => group.title === title)?.items ?? [];
-const schoolRecords = recordsFor("Academic & sporting awards");
+// Keep the historical milestones in the source records, while the app
+// collection follows Ian's selection of awards to feature here.
+const hiddenSchoolApps = new Set(["Piano Grade 3 · Merit", "SwimSafer Gold"]);
+const schoolRecords = recordsFor("Academic & sporting awards").filter(
+  (record) => !hiddenSchoolApps.has(record.title),
+);
 const isSport = (record: AwardRecord) =>
   /Softball|Colours Award|Sports Day|School athletics|SwimSafer/i.test(
     record.title,
@@ -526,6 +531,7 @@ function AchievementApp({
   onOpen: (record: Achievement, opener: HTMLButtonElement) => void;
 }) {
   const Icon = iconForAchievement(record);
+  const CategoryIcon = categories.find((category) => category.id === record.category)?.icon ?? Award;
   const preview = previewForAchievement(record);
   const appIcon = awardAppIcons[record.title];
   const label = awardAppLabel(record);
@@ -538,7 +544,7 @@ function AchievementApp({
       <button
         type="button"
         className="award-app-button"
-        aria-label={`View achievement: ${appTitle}${record.year ? `, ${record.year}` : ""}${/Expired/i.test(record.detail ?? "") ? ", expired credential" : ""}`}
+        aria-label={`View achievement: ${appTitle}${record.year ? `, ${record.year}` : ""}`}
         title={appTitle}
         aria-haspopup="dialog"
         onClick={(event) => onOpen(record, event.currentTarget)}
@@ -552,24 +558,20 @@ function AchievementApp({
           aria-hidden="true"
         >
           {imageSource ? (
-            <>
-              <span className="award-app-preview">
-                <img
-                  src={asset(imageSource)}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                />
-              </span>
-              {!appIcon ? (
-                <span className="award-app-topic-mark">
-                  <Icon size={14} strokeWidth={1.8} />
-                </span>
-              ) : null}
-            </>
+            <span className="award-app-preview">
+              <img
+                src={asset(imageSource)}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+            </span>
           ) : (
             <Icon className="award-app-glyph" size={38} strokeWidth={1.65} />
           )}
+          <span className="award-app-topic-mark">
+            <CategoryIcon size={16} strokeWidth={1.8} />
+          </span>
         </span>
         <span className="award-app-label">
           <span className="award-app-organisation">{label.organisation}</span>
@@ -578,9 +580,6 @@ function AchievementApp({
         <span className="award-app-date">
           {record.year}
         </span>
-        {/Expired/i.test(record.detail ?? "") ? (
-          <span className="award-app-expired">Expired</span>
-        ) : null}
       </button>
     </li>
   );

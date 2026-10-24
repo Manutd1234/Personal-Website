@@ -854,7 +854,6 @@
   transition:
     transform 900ms cubic-bezier(0.4, 0, 0.2, 1),
     left 900ms cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 320ms,
     visibility 0s;
 }
 .book-carousel
@@ -880,13 +879,11 @@
   .book-stage[data-open="true"]
   .book-orbit-item:not([data-selected="true"]) {
   transform: translate3d(var(--orbit-x), 430px, calc(var(--orbit-z) - 100px));
-  opacity: 0;
   pointer-events: none;
   visibility: hidden;
   transition:
     transform 480ms cubic-bezier(0.22, 0.7, 0.15, 1),
-    opacity 260ms,
-    visibility 0s 260ms;
+    visibility 0s 480ms;
 }
 .book-carousel
   .book-stage[data-open="true"]
@@ -1451,7 +1448,8 @@
   }
 }
 
-/* Let the cover finish its measured turn, then dissolve into the paper spread. */
+/* Fade only the flat reader. Opacity on a preserve-3d ancestor flattens its
+   children, causing rear covers to paint over the centered book on return. */
 .book-carousel
   .book-stage:is([data-open="true"], [data-returning="true"])
   .book-details {
@@ -1477,9 +1475,6 @@
 .book-carousel .book-stage[data-returning="true"] .book-details {
   animation: book-reader-leave 240ms ease both;
 }
-.book-carousel .book-stage[data-returning="true"] .book-scene {
-  animation: book-object-return var(--book-return-duration) ease both;
-}
 .book-carousel .book-stage[data-returning="true"] :is(.book-orbit-item, .book-object, .book-click) {
   transition-duration: var(--book-return-duration);
 }
@@ -1492,11 +1487,9 @@
 @keyframes book-object-depart {
   0%,
   62% {
-    opacity: 1;
     visibility: visible;
   }
   100% {
-    opacity: 0;
     visibility: hidden;
   }
 }
@@ -1520,10 +1513,6 @@
     opacity: 0;
     transform: translateY(6px) scale(0.99);
   }
-}
-@keyframes book-object-return {
-  from { opacity: var(--scene-return-opacity, 0); }
-  45%, to { opacity: 1; }
 }
 .book-carousel .book-orbit-item:not([data-current="true"]) .book-click {
   pointer-events: none;

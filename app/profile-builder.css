@@ -188,12 +188,14 @@
   opacity: 1;
   visibility: visible;
 }
-.journey-scene-action {
+.journey-scene-action,
+.scene-builder-pose {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 }
-.journey-scene-action[data-active="true"] {
+.journey-scene-action[data-active="true"],
+.scene-builder-pose[data-active="true"] {
   opacity: 1;
   visibility: visible;
 }
@@ -348,12 +350,14 @@
   /* The builder stays mounted. Outgoing illustrations keep their last motion
      throughout the dissolve, including the final chapter-to-first loop. */
   .journey-scene-action,
+  .scene-builder-pose,
   .journey-scene-caption {
     transition:
       opacity 0.65s cubic-bezier(0.4, 0, 0.2, 1),
       visibility 0s linear 0.65s;
   }
   .journey-scene-action[data-active="true"],
+  .scene-builder-pose[data-active="true"],
   .journey-scene-caption[data-active="true"] {
     transition:
       opacity 0.65s cubic-bezier(0.4, 0, 0.2, 1),
@@ -400,10 +404,64 @@
     transform-origin: center bottom;
     animation: scene-builder-bob 3s ease-in-out infinite;
   }
-  .scene-builder-arm {
-    transform-box: fill-box;
-    transform-origin: left bottom;
-    animation: scene-point 3s ease-in-out infinite;
+  /* Hands meet the actual objects. Each six-second gesture shares its timing
+     with the chapter's checklist, block, connection, keyboard or launch. */
+  .scene-builder-pose > g {
+    transform-box: view-box;
+    transform-origin: 148px 254px;
+  }
+  .scene-builder-pose:is([data-active="true"], [data-outgoing="true"]) .scene-builder-ask {
+    animation: scene-ask 6s ease-in-out both;
+  }
+  .scene-builder-pose:is([data-active="true"], [data-outgoing="true"]) .scene-builder-lift {
+    animation: scene-lift-arm 1.35s cubic-bezier(0.3, 0, 0.25, 1) 0.65s both;
+  }
+  .journey-scene-action:is([data-active="true"], [data-outgoing="true"]) .scene-stack-lift {
+    animation: scene-lift-block 1.35s cubic-bezier(0.3, 0, 0.25, 1) 0.65s both;
+  }
+  .scene-plan-finish {
+    --scene-delay: 2.2s;
+  }
+  .scene-build-finish {
+    --scene-delay: 3.6s;
+  }
+  .scene-share-finish {
+    --scene-delay: 4.5s;
+  }
+  .scene-builder-pose:is([data-active="true"], [data-outgoing="true"]) .scene-builder-connect {
+    animation: scene-connect-arm 6s ease-in-out both;
+  }
+  .journey-scene-action:is([data-active="true"], [data-outgoing="true"]) .scene-connect-spark {
+    animation: scene-contact 0.65s ease-out 1.2s both;
+  }
+  .scene-builder-pose:is([data-active="true"], [data-outgoing="true"]) .scene-builder-type {
+    animation: scene-type-arm 6s ease-in-out both;
+  }
+  .journey-scene-action:is([data-active="true"], [data-outgoing="true"]) .scene-key-flash {
+    animation: scene-key-flash 6s step-end both;
+  }
+  .journey-cartoon[data-scene="3"] .scene-code-line {
+    --scene-delay: 0.8s;
+  }
+  .journey-cartoon[data-scene="3"] .scene-code-line.scene-delay-one {
+    --scene-delay: 1.5s;
+  }
+  .journey-cartoon[data-scene="3"] .scene-code-line.scene-delay-two {
+    --scene-delay: 2.2s;
+  }
+  .journey-cartoon[data-scene="3"] .scene-code-line.scene-delay-three {
+    --scene-delay: 2.9s;
+  }
+  .scene-builder-pose:is([data-active="true"], [data-outgoing="true"]) .scene-builder-launch {
+    animation: scene-launch-arm 6s ease-in-out both;
+  }
+  .journey-cartoon[data-scene="4"] .scene-builder {
+    animation: scene-builder-celebrate 6s ease-in-out both;
+  }
+  .journey-cartoon[data-scene="4"] .scene-builder-left-arm {
+    transform-box: view-box;
+    transform-origin: 73px 254px;
+    animation: scene-celebrate-arm 6s ease-in-out both;
   }
   .scene-builder-eyes {
     transform-box: fill-box;
@@ -438,15 +496,15 @@
   /* An explicit pause reveals the whole chapter. Scrolling offscreen only
      freezes its progress; returning resumes smoothly without replaying it. */
   .build-journey:is([data-paused="true"], [data-entrance="false"])
-    .journey-scene-action[data-active="true"]
-    :is(.scene-arrive, .scene-stack, .scene-code-line) {
+    :is(.journey-scene-action, .scene-builder-pose)[data-active="true"]
+    :is(.scene-arrive, .scene-stack, .scene-stack-lift, .scene-code-line, .scene-builder-lift, .scene-builder-connect) {
     animation: none;
     opacity: 1;
     transform: none;
     clip-path: none;
   }
   .build-journey[data-running="false"]
-    :is(.journey-scene-action, .journey-copy)[data-active="true"] {
+    :is(.journey-scene-action, .scene-builder-pose, .journey-copy)[data-active="true"] {
     transition: none;
     opacity: 1;
     transform: none;
@@ -502,19 +560,51 @@
     transform: translateY(-2px);
   }
 }
-@keyframes scene-point {
-  0%,
-  15%,
-  100% {
-    transform: rotate(-3deg);
+@keyframes scene-ask {
+  0%, 10% { transform: rotate(-12deg); }
+  30%, 50% { transform: rotate(0); }
+  65%, 100% { transform: rotate(6deg); }
+}
+@keyframes scene-lift-arm {
+  from { transform: rotate(-24deg); }
+  to { transform: rotate(0); }
+}
+@keyframes scene-lift-block {
+  from { transform: translate(-20px, -24px) rotate(-2deg); }
+  to { transform: none; }
+}
+@keyframes scene-connect-arm {
+  0%, 8% { transform: rotate(-20deg); }
+  20%, 100% { transform: rotate(0); }
+}
+@keyframes scene-contact {
+  0%, 100% { opacity: 0; }
+  20%, 65% { opacity: 1; }
+}
+@keyframes scene-type-arm {
+  0%, 10%, 16%, 22%, 28%, 34%, 40%, 46%, 52%, 100% {
+    transform: rotate(-10deg);
   }
-  40%,
-  60% {
-    transform: rotate(6deg);
-  }
-  75% {
-    transform: rotate(2deg);
-  }
+  13%, 25%, 37%, 49% { transform: rotate(0); }
+}
+@keyframes scene-key-flash {
+  0%, 16%, 28%, 40%, 52%, 100% { opacity: 0; }
+  13%, 25%, 37%, 49% { opacity: 1; }
+}
+@keyframes scene-launch-arm {
+  0%, 30% { transform: rotate(-15deg); }
+  39%, 43% { transform: rotate(0); }
+  60%, 78%, 100% { transform: rotate(-105deg); }
+  69%, 89% { transform: rotate(-85deg); }
+}
+@keyframes scene-celebrate-arm {
+  0%, 46% { transform: rotate(0); }
+  62%, 80%, 100% { transform: rotate(125deg); }
+  71%, 90% { transform: rotate(105deg); }
+}
+@keyframes scene-builder-celebrate {
+  0%, 49%, 64%, 84%, 100% { transform: translateY(0); }
+  57%, 75% { transform: translateY(-7px); }
 }
 @keyframes scene-blink {
   0%,

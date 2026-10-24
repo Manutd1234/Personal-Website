@@ -8,7 +8,8 @@
     "build": "node ./node_modules/next/dist/bin/next build",
     "preview": "python3 -m http.server 8766 --bind 127.0.0.1 --directory out",
     "typecheck": "node ./node_modules/typescript/bin/tsc --noEmit",
-    "check": "npm run typecheck && npm run build"
+    "check:skills": "node scripts/check-skill-physics.mjs",
+    "check": "npm run typecheck && npm run check:skills && npm run build"
   },
   "dependencies": {
     "next": "15.5.28",

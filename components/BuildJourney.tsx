@@ -19,74 +19,74 @@ const STEP_DURATION_MS = 6000;
 
 const steps = [
   {
-    title: "Frame the right problem.",
-    short: "Frame",
+    title: "Start with the right question.",
+    short: "Understand",
     icon: Lightbulb,
-    question: "What should become possible—and how will I know?",
-    body: "I start with the user, the friction and the outcome. I make success measurable, name the constraints and keep the first version small enough to prove the idea.",
+    question: "Who is this for, and what would make their day easier?",
+    body: "I listen, ask questions and look at how things work today. Before jumping into a solution, I get clear on the problem and what a useful first step would look like.",
     decisions: [
-      "Acceptance criteria + failure cases",
-      "Latency, cost and correctness constraints",
-      "The smallest useful version",
+      "Understand the people using it",
+      "Find the problem worth solving",
+      "Agree on what a good result looks like",
     ],
-    artifact: "A problem statement I can test.",
+    artifact: "A clear problem and a shared goal.",
     scene: "Every build starts with a question.",
   },
   {
-    title: "Choose tools with a reason.",
-    short: "Stack",
+    title: "Choose a practical starting point.",
+    short: "Plan",
     icon: Blocks,
-    question: "What does this workload need from its tools?",
-    body: "I work backwards from the workload: data shape, latency, correctness and deployment. I compare the tradeoffs, then prototype the riskiest dependency before committing.",
+    question: "What do we need, and what should come first?",
+    body: "I break the idea into manageable pieces, choose tools that fit the job and make room for the unknowns. A small first version helps me learn before committing to more.",
     decisions: [
-      "TypeScript for the interface and contracts",
-      "Python when the workload needs AI or data tools",
-      "SQL when relationships and transactions matter",
+      "Choose the essentials",
+      "Balance time, effort and cost",
+      "Try the uncertain parts early",
     ],
-    artifact: "A stack decision, with the tradeoffs written down.",
-    scene: "Choose the right pieces for the job.",
+    artifact: "A simple plan with room to learn.",
+    scene: "One useful piece at a time.",
   },
   {
-    title: "Design the path through.",
-    short: "Architect",
+    title: "Make the pieces fit together.",
+    short: "Design",
     icon: GitBranch,
-    question: "Where does each responsibility—and failure—belong?",
-    body: "I follow a request from the interface to storage and back. I sketch the boundaries, define the contracts and ask what happens when each dependency fails.",
+    question: "How should it work from beginning to end?",
+    body: "I sketch the experience and work out how the parts connect. Walking through the idea helps me spot missing steps and make it easier to understand and use.",
     decisions: [
-      "Validate inputs and enforce permissions",
-      "Define schemas, indexes and migrations",
-      "Plan timeouts, retries and useful logs",
+      "Map the main steps",
+      "Give each part a clear purpose",
+      "Think through what could go wrong",
     ],
-    artifact: "A system diagram and an API contract.",
-    scene: "Connect the parts before adding the walls.",
+    artifact: "A clear picture of how it all connects.",
+    scene: "Connect the pieces. Follow the idea through.",
   },
   {
-    title: "Make one real path work.",
-    short: "Code",
+    title: "Turn the idea into something real.",
+    short: "Build",
     icon: Braces,
-    question: "Can a real action travel through the whole system?",
-    body: "I connect the interface, API, logic and storage in one working slice. Small, reviewable changes give me something real to exercise before I expand the solution.",
+    question: "What can we make useful today?",
+    body: "I build in small steps and try things as I go. Each working piece gives me something to show, discuss and improve, so the project keeps moving with a clear purpose.",
     decisions: [
-      "Typed boundaries and focused modules",
-      "Loading, empty and error states",
-      "Small commits with a clear reason to exist",
+      "Start with one complete task",
+      "Keep the work easy to follow",
+      "Review and improve along the way",
     ],
-    artifact: "Working software, one complete slice at a time.",
-    scene: "A little code. A working connection.",
+    artifact: "A working version people can try.",
+    scene: "Small steps become something real.",
   },
   {
-    title: "Prove it. Ship it. Observe it.",
-    short: "Test & ship",
+    title: "Try it. Share it. Make it better.",
+    short: "Improve",
     icon: Rocket,
-    question: "Does it survive real inputs and a real deployment?",
-    body: "I test the logic, the boundaries and the complete user journey. CI checks the release; a smoke test checks deployment. Errors, latency and feedback shape the next iteration.",
+    question: "Does it help, and what should we improve next?",
+    body: "I check the details, put the work in people's hands and listen to what happens. Real use reveals what works well and where the next version can do better.",
     decisions: [
-      "Unit → integration → browser tests",
-      "Typecheck, test and production build in CI",
-      "Deploy, verify, monitor; keep a rollback path",
+      "Check it with real examples",
+      "Share it and listen to feedback",
+      "Keep learning after it goes live",
     ],
-    artifact: "A verified release—and the next useful question.",
-    scene: "Test the build. Then let it take flight.",
+    artifact: "Something useful—and a direction for what comes next.",
+    scene: "Ready to share. Still room to grow.",
   },
 ] as const;
 
@@ -111,7 +111,7 @@ function BuilderScene({
           strokeWidth="2"
           strokeLinecap="round"
         />
-        <ellipse cx="113" cy="329" rx="64" ry="8" fill="#d5dfc8" />
+        <ellipse cx="155" cy="329" rx="64" ry="8" fill="#d5dfc8" />
         <ellipse cx="365" cy="329" rx="145" ry="9" fill="#d5dfc8" />
         <path
           d="M47 83h12m-6-6v12M496 120h10m-5-5v10M461 48h12m-6-6v12"
@@ -155,7 +155,7 @@ function BuilderScene({
                   fill="#e6eddb"
                 />
                 <text x="250" y="125" className="scene-mono">
-                  problem-statement.md
+                  The starting point
                 </text>
                 <g className="scene-arrive scene-delay-one">
                   <circle cx="247" cy="164" r="5" fill="#dfb857" />
@@ -172,7 +172,7 @@ function BuilderScene({
                 <g className="scene-arrive scene-delay-two">
                   <circle cx="247" cy="209" r="5" fill="#dfb857" />
                   <text x="263" y="214" className="scene-label">
-                    What must hold?
+                    What would help?
                   </text>
                   <path
                     d="M263 226h129"
@@ -190,20 +190,22 @@ function BuilderScene({
                     strokeLinejoin="round"
                   />
                   <text x="263" y="257" className="scene-label">
-                    Success = testable
+                    A clear goal
                   </text>
                 </g>
-                <g className="scene-thought">
-                  <path
-                    d="M94 160c-17-1-29-12-29-27s13-29 32-28c8-19 39-18 49 0 20-2 34 9 34 26s-14 28-34 29H94Z"
-                    fill="#fffdf4"
-                    stroke="#a4b98e"
-                    strokeWidth="2"
-                  />
-                  <text x="112" y="144" className="scene-question">
-                    ?
-                  </text>
-                  <circle cx="108" cy="175" r="4" fill="#d1d9c5" />
+                <g transform="translate(42 0)">
+                  <g className="scene-thought">
+                    <path
+                      d="M94 160c-17-1-29-12-29-27s13-29 32-28c8-19 39-18 49 0 20-2 34 9 34 26s-14 28-34 29H94Z"
+                      fill="#fffdf4"
+                      stroke="#a4b98e"
+                      strokeWidth="2"
+                    />
+                    <text x="112" y="144" className="scene-question">
+                      ?
+                    </text>
+                    <circle cx="108" cy="175" r="4" fill="#d1d9c5" />
+                  </g>
                 </g>
               </>
             ) : null}
@@ -227,13 +229,13 @@ function BuilderScene({
                     strokeWidth="2"
                   />
                   <text x="259" y="265" className="scene-label">
-                    PostgreSQL
+                    The essentials
                   </text>
                   <text x="259" y="284" className="scene-note">
-                    relationships · transactions
+                    what matters most
                   </text>
                 </g>
-                <g className="scene-stack scene-delay-one">
+                <g className="scene-stack-lift">
                   <rect
                     x="257"
                     y="170"
@@ -245,13 +247,13 @@ function BuilderScene({
                     strokeWidth="2"
                   />
                   <text x="276" y="195" className="scene-label">
-                    Python
+                    The right tools
                   </text>
                   <text x="276" y="214" className="scene-note">
-                    models · data · APIs
+                    a good fit for the job
                   </text>
                 </g>
-                <g className="scene-stack scene-delay-two">
+                <g className="scene-stack scene-plan-finish">
                   <rect
                     x="240"
                     y="100"
@@ -263,10 +265,10 @@ function BuilderScene({
                     strokeWidth="2"
                   />
                   <text x="259" y="125" className="scene-label">
-                    TypeScript
+                    A first version
                   </text>
                   <text x="259" y="144" className="scene-note">
-                    interface · typed contracts
+                    small enough to try
                   </text>
                 </g>
                 <g className="scene-arrive scene-delay-three">
@@ -284,18 +286,6 @@ function BuilderScene({
                     strokeLinejoin="round"
                   />
                 </g>
-                <path
-                  d="M160 173c22-28 43-31 68-29"
-                  stroke="#9cad8b"
-                  strokeWidth="2"
-                  strokeDasharray="4 6"
-                />
-                <path
-                  d="m218 136 10 8-11 5"
-                  stroke="#9cad8b"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
               </>
             ) : null}
             {sceneIndex === 2 ? (
@@ -328,10 +318,10 @@ function BuilderScene({
                     fill="#dce9cd"
                   />
                   <text x="225" y="139" className="scene-label">
-                    Client
+                    Start
                   </text>
                   <text x="218" y="157" className="scene-note">
-                    typed request
+                    a person, an idea
                   </text>
                 </g>
                 <g className="scene-arrive scene-delay-one">
@@ -345,11 +335,11 @@ function BuilderScene({
                     stroke="#688062"
                     strokeWidth="2"
                   />
-                  <text x="425" y="206" className="scene-label">
-                    API
+                  <text x="423" y="206" className="scene-label">
+                    Make
                   </text>
                   <text x="400" y="227" className="scene-note">
-                    validate · auth
+                    do the useful work
                   </text>
                 </g>
                 <g className="scene-arrive scene-delay-two">
@@ -368,8 +358,8 @@ function BuilderScene({
                     stroke="#688062"
                     strokeWidth="2"
                   />
-                  <text x="328" y="293" className="scene-label">
-                    Store
+                  <text x="331" y="293" className="scene-label">
+                    Result
                   </text>
                 </g>
                 <g className="scene-arrive scene-delay-three">
@@ -384,8 +374,12 @@ function BuilderScene({
                     strokeWidth="2"
                   />
                   <text x="390" y="95" className="scene-note">
-                    explicit errors
+                    What if…?
                   </text>
+                </g>
+                <circle cx="215" cy="169" r="5" fill="#dce9cd" stroke="#688062" strokeWidth="2" />
+                <g className="scene-connect-spark" stroke="#dfb857" strokeWidth="3" strokeLinecap="round">
+                  <path d="M205 175l-5 5m25-5 5 5m-15-25v-6" />
                 </g>
                 <circle
                   className="scene-packet"
@@ -419,37 +413,60 @@ function BuilderScene({
                 <circle cx="237" cy="102" r="4" fill="#9dc898" />
                 <circle cx="250" cy="102" r="4" fill="#bfdbb6" />
                 <text x="307" y="106" className="scene-mono scene-code-muted">
-                  one-complete-path.ts
+                  A working version
                 </text>
                 <g className="scene-code-line">
                   <text x="226" y="151" className="scene-code">
-                    const input = validate(req);
+                    start with one useful piece
                   </text>
                 </g>
                 <g className="scene-code-line scene-delay-one">
                   <text x="226" y="181" className="scene-code">
-                    await checkAccess(user);
+                    try it with real examples
                   </text>
                 </g>
                 <g className="scene-code-line scene-delay-two">
                   <text x="226" y="211" className="scene-code">
-                    const row = await save(input);
+                    make small improvements
                   </text>
                 </g>
                 <g className="scene-code-line scene-delay-three">
                   <text x="226" y="241" className="scene-code">
-                    return respond(row);
+                    keep what works
                   </text>
                   <rect
                     className="scene-cursor"
-                    x="432"
+                    x="337"
                     y="229"
                     width="7"
                     height="15"
                     fill="#d9e9bf"
                   />
                 </g>
-                <g className="scene-arrive scene-delay-three">
+                <g className="scene-keyboard">
+                  <path
+                    d="M198 285h57l10 19h-78Z"
+                    fill="#dce9cd"
+                    stroke="#688062"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M203 291h47m-51 6h57m-45-9v12m10-12v12m10-12v12m10-12v12"
+                    stroke="#8da77e"
+                    strokeWidth="1.5"
+                  />
+                  <rect
+                    className="scene-key-flash"
+                    x="216"
+                    y="288"
+                    width="9"
+                    height="5"
+                    rx="1"
+                    fill="#dfb857"
+                  />
+                </g>
+                <g className="scene-arrive scene-build-finish">
                   <rect
                     x="273"
                     y="268"
@@ -468,7 +485,7 @@ function BuilderScene({
                     strokeLinejoin="round"
                   />
                   <text x="312" y="292" className="scene-note">
-                    UI → API → data
+                    It works!
                   </text>
                 </g>
               </>
@@ -487,9 +504,9 @@ function BuilderScene({
                 />
                 <path d="M196 195h202" stroke="#ced8bd" strokeWidth="2" />
                 <text x="213" y="184" className="scene-mono">
-                  release-checks.yml
+                  Ready to share?
                 </text>
-                {["unit + integration", "browser flow", "production build"].map(
+                {["try it out", "listen and learn", "make it better"].map(
                   (label, index) => (
                     <g
                       key={label}
@@ -545,7 +562,7 @@ function BuilderScene({
                   />
                   <path d="M431 187h22v10h-22z" fill="#557455" />
                 </g>
-                <g className="scene-arrive scene-delay-three">
+                <g className="scene-arrive scene-share-finish">
                   <rect
                     x="409"
                     y="272"
@@ -556,106 +573,168 @@ function BuilderScene({
                   />
                   <circle cx="426" cy="288" r="4" fill="#008363" />
                   <text x="438" y="293" className="scene-note">
-                    deployed
+                    shared
                   </text>
                 </g>
               </>
             ) : null}
           </g>
         ))}
-        <g className="scene-builder">
-          <path
-            d="M84 300v24H70m65-24v24h14"
-            stroke="#46664e"
-            strokeWidth="11"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <rect
-            x="71"
-            y="242"
-            width="80"
-            height="65"
-            rx="19"
-            fill="#008363"
-            stroke="#355c43"
-            strokeWidth="2"
-          />
-          <path d="M91 243v43h40v-43" stroke="#d7e6b8" strokeWidth="3" />
-          <rect x="99" y="264" width="25" height="16" rx="4" fill="#c9dcad" />
-          <path
-            d="m106 270-4 3 4 3m11-6 4 3-4 3"
-            stroke="#355c43"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="m73 254-15 27 14 8"
-            stroke="#8da77e"
-            strokeWidth="11"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <g className="scene-builder-arm">
+        <g transform="translate(42 0)">
+          <g className="scene-builder">
             <path
-              d="m148 254 23-15 8-21"
+              d="M84 300v24H70m65-24v24h14"
+              stroke="#46664e"
+              strokeWidth="11"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <rect
+              x="71"
+              y="242"
+              width="80"
+              height="65"
+              rx="19"
+              fill="#008363"
+              stroke="#355c43"
+              strokeWidth="2"
+            />
+            <path d="M91 243v43h40v-43" stroke="#d7e6b8" strokeWidth="3" />
+            <rect x="99" y="264" width="25" height="16" rx="4" fill="#c9dcad" />
+            <path
+              d="m106 270-4 3 4 3m11-6 4 3-4 3"
+              stroke="#355c43"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              className="scene-builder-left-arm"
+              d="m73 254-15 27 14 8"
               stroke="#8da77e"
               strokeWidth="11"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
+            {steps.map((step, index) => (
+              <g
+                key={step.short}
+                className="scene-builder-pose"
+                data-active={stage === index}
+                data-outgoing={outgoing === index}
+              >
+                {index === 0 ? (
+                  <g className="scene-builder-ask">
+                    <path
+                      d="m148 254 24-15 21-17"
+                      stroke="#8da77e"
+                      strokeWidth="11"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path d="m193 222 9-10" stroke="#dfb857" strokeWidth="7" strokeLinecap="round" />
+                    <path d="m202 212 3-3" stroke="#46664e" strokeWidth="3" strokeLinecap="round" />
+                  </g>
+                ) : null}
+                {index === 1 ? (
+                  <g className="scene-builder-lift">
+                    <path
+                      d="m148 254 36-17 31-17"
+                      stroke="#8da77e"
+                      strokeWidth="11"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path d="m213 220 6-3" stroke="#e4eccc" strokeWidth="9" strokeLinecap="round" />
+                  </g>
+                ) : null}
+                {index === 2 ? (
+                  <g className="scene-builder-connect">
+                    <path
+                      d="m148 254 17-31 8-37"
+                      stroke="#8da77e"
+                      strokeWidth="11"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <rect
+                      x="168"
+                      y="175"
+                      width="10"
+                      height="14"
+                      rx="3"
+                      fill="#dfb857"
+                      stroke="#89793f"
+                      strokeWidth="1.5"
+                    />
+                    <path d="M171 175v-6m4 6v-6" stroke="#46664e" strokeWidth="2" strokeLinecap="round" />
+                  </g>
+                ) : null}
+                {index === 3 ? (
+                  <g className="scene-builder-type">
+                    <path
+                      d="m148 254 16 15 16 15"
+                      stroke="#8da77e"
+                      strokeWidth="11"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path d="m177 284 6 3" stroke="#e4eccc" strokeWidth="8" strokeLinecap="round" />
+                  </g>
+                ) : null}
+                {index === 4 ? (
+                  <g className="scene-builder-launch">
+                    <path
+                      d="m148 254 15 14 13 11"
+                      stroke="#8da77e"
+                      strokeWidth="11"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path d="m176 278v6" stroke="#e4eccc" strokeWidth="8" strokeLinecap="round" />
+                  </g>
+                ) : null}
+              </g>
+            ))}
+            <rect
+              x="77"
+              y="193"
+              width="69"
+              height="53"
+              rx="17"
+              fill="#e4eccc"
+              stroke="#557455"
+              strokeWidth="2"
+            />
+            <g className="scene-builder-eyes">
+              <circle cx="98" cy="218" r="4" fill="#355c43" />
+              <circle cx="127" cy="218" r="4" fill="#355c43" />
+            </g>
             <path
-              d="m174 219 8-18"
-              stroke="#dfb857"
-              strokeWidth="7"
+              d="M105 231q8 6 15-1"
+              stroke="#557455"
+              strokeWidth="2"
               strokeLinecap="round"
             />
             <path
-              d="m180 203 4-8"
-              stroke="#46664e"
+              d="M74 198c0-21 13-34 37-34s37 13 37 34"
+              fill="#dfb857"
+              stroke="#89793f"
+              strokeWidth="2"
+            />
+            <path
+              d="M105 167v22m12-22v22"
+              stroke="#b99b49"
               strokeWidth="3"
               strokeLinecap="round"
             />
+            <path
+              d="M68 199h87"
+              stroke="#89793f"
+              strokeWidth="6"
+              strokeLinecap="round"
+            />
           </g>
-          <rect
-            x="77"
-            y="193"
-            width="69"
-            height="53"
-            rx="17"
-            fill="#e4eccc"
-            stroke="#557455"
-            strokeWidth="2"
-          />
-          <g className="scene-builder-eyes">
-            <circle cx="98" cy="218" r="4" fill="#355c43" />
-            <circle cx="127" cy="218" r="4" fill="#355c43" />
-          </g>
-          <path
-            d="M105 231q8 6 15-1"
-            stroke="#557455"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-          <path
-            d="M74 198c0-21 13-34 37-34s37 13 37 34"
-            fill="#dfb857"
-            stroke="#89793f"
-            strokeWidth="2"
-          />
-          <path
-            d="M105 167v22m12-22v22"
-            stroke="#b99b49"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <path
-            d="M68 199h87"
-            stroke="#89793f"
-            strokeWidth="6"
-            strokeLinecap="round"
-          />
         </g>
         <path
           d="M36 326v-28m0 16c-17-4-17-17-17-17 16 0 17 17 17 17m0-7c15-5 15-18 15-18-15 3-15 18-15 18"
@@ -842,7 +921,7 @@ export default function BuildJourney({
         </div>
         <ol
           className="journey-transcript"
-          aria-label="How I take an idea into production"
+          aria-label="How I turn an idea into something useful"
         >
           {steps.map((step, index) => (
             <li key={step.short}>

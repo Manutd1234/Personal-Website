@@ -2,14 +2,24 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent, PointerEvent } from "react";
-import type {
-  Body as PhysicsBody,
-  Constraint as PhysicsConstraint,
-} from "matter-js";
+import type { Body as PhysicsBody } from "matter-js";
 import { ArrowDown, List, RotateCcw } from "lucide-react";
 import { skillGroups } from "@/content/portfolio";
 import { useMotionPreference } from "./useMotionPreference";
-import { containSkillBody, createSkillWalls, layoutSkillRows } from "./skill-physics";
+import {
+  containSkillBody,
+  createSkillBody,
+  createSkillWalls,
+  layoutSkillRows,
+  limitSkillVelocity,
+  moveSkillBody,
+  steerSkillBody,
+  SKILL_COLLISION_PADDING,
+  SKILL_DROP_BLOCKED_MS,
+  SKILL_PACKING_DENSITY,
+  SKILL_MAX_VELOCITY,
+  SKILL_PHYSICS_STEP,
+} from "./skill-physics";
 import "@/app/skills-blocks.css";
 import "@/app/skills-atelier.css";
 
@@ -191,11 +201,11 @@ export default function SkillsSandbox({
       (element): element is HTMLButtonElement => Boolean(element),
     );
     if (!world || elements.length !== skills.length) return;
-    const { Bodies, Body, Composite, Constraint, Engine, Sleeping } = matter;
+    const { Body, Composite, Engine, Sleeping } = matter;
     const engine = Engine.create({
       enableSleeping: true,
-      positionIterations: 8,
-      velocityIterations: 6,
+      positionIterations: 14,
+      velocityIterations: 8,
       constraintIterations: 3,
     });
     engine.gravity.y = 0.46;
@@ -208,6 +218,7 @@ export default function SkillsSandbox({
     let nextDropAt = 0;
     let handfulRemaining = 0;
     let releaseX = 0;
+    let blockedSince: number | null = null;
     let width = 0,
       height = 0,
       frame = 0,
@@ -220,7 +231,8 @@ export default function SkillsSandbox({
       pointer: number;
       index: number;
       body: PhysicsBody;
-      constraint: PhysicsConstraint;
+      offsetX: number;
+      offsetY: number;
       element: HTMLButtonElement;
       startX: number;
       startY: number;
@@ -253,14 +265,14 @@ export default function SkillsSandbox({
           `translate3d(${body.position.x - sizes[index].width / 2}px, ${body.position.y - sizes[index].height / 2}px, 0) rotate(${body.angle}rad)`;
       });
     }
-    function spawn(index: number, atHome = false) {
+    function spawn(index: number) {
       if (spawned[index] || !bodies[index]) return true;
       const body = bodies[index];
-      if (atHome) {
-        Body.setPosition(body, homes[index]);
-        Body.setAngle(body, 0);
-      } else {
-        const size = sizes[index];
+      {
+        const size = {
+          width: sizes[index].width + SKILL_COLLISION_PADDING * 2,
+          height: sizes[index].height + SKILL_COLLISION_PADDING * 2,
+        };
         // A little tilt keeps the pile playful without turning labels sideways.
         const angle = (Math.random() - 0.5) * 0.2;
         const halfWidth =
@@ -305,7 +317,7 @@ export default function SkillsSandbox({
       }
       Body.setAngularVelocity(body, 0);
       Body.setVelocity(body, {
-        x: atHome ? 0 : (Math.random() - 0.5) * 0.9,
+        x: (Math.random() - 0.5) * 0.9,
         y: 0,
       });
       Composite.add(engine.world, body);
@@ -332,9 +344,17 @@ export default function SkillsSandbox({
         }
       }
       if (released === -1) {
-        nextDropAt = elapsed + 40;
+        blockedSince ??= elapsed;
+        // A random pile can bridge across the entry even with room below.
+        // Repack safely rather than hiding the remaining skills or inserting
+        // them through another label. Then let the complete stack settle.
+        if (!drag && elapsed - blockedSince > SKILL_DROP_BLOCKED_MS) {
+          arrangeAll(false);
+          blockedSince = null;
+        } else nextDropAt = elapsed + 40;
         return;
       }
+      blockedSince = null;
       [dropOrder[nextDrop], dropOrder[released]] = [
         dropOrder[released],
         dropOrder[nextDrop],
@@ -358,12 +378,19 @@ export default function SkillsSandbox({
       elapsed += delta;
       accumulator += delta;
       releaseNextPill();
-      while (accumulator >= STEP) {
-        Engine.update(engine, STEP);
+      while (accumulator >= SKILL_PHYSICS_STEP) {
+        if (drag) steerSkillBody(matter!, drag.body, {
+          x: drag.x - drag.offsetX,
+          y: drag.y - drag.offsetY,
+        }, bodies.filter((_, index) => spawned[index]), width, height);
+        bodies.forEach((body, index) => {
+          if (spawned[index]) limitSkillVelocity(matter!, body);
+        });
+        Engine.update(engine, SKILL_PHYSICS_STEP);
         bodies.forEach((body, index) => {
           if (spawned[index]) contain(body);
         });
-        accumulator -= STEP;
+        accumulator -= SKILL_PHYSICS_STEP;
       }
       draw();
       if (
@@ -384,11 +411,10 @@ export default function SkillsSandbox({
       const current = drag;
       drag = null;
       delete current.element.dataset.held;
-      Composite.remove(engine.world, current.constraint);
       if (!cancel && current.moved && performance.now() - current.time < 100) {
         Body.setVelocity(current.body, {
-          x: clamp(current.velocityX, -12, 12),
-          y: clamp(current.velocityY, -12, 12),
+          x: clamp(current.velocityX, -SKILL_MAX_VELOCITY, SKILL_MAX_VELOCITY),
+          y: clamp(current.velocityY, -SKILL_MAX_VELOCITY, SKILL_MAX_VELOCITY),
         });
       }
       if (current.element.hasPointerCapture(current.pointer))
@@ -434,7 +460,7 @@ export default function SkillsSandbox({
         element.style.height = `${sizes[index].height}px`;
       });
       const area = sizes.reduce(
-        (total, size) => total + size.width * size.height,
+        (total, size) => total + (size.width + SKILL_COLLISION_PADDING * 2) * (size.height + SKILL_COLLISION_PADDING * 2),
         0,
       );
       // Smaller measured tiles and compact rows fit the full desktop set.
@@ -442,9 +468,9 @@ export default function SkillsSandbox({
       const packed = layoutSkillRows(sizes, width);
       height = Math.ceil(
         Math.max(
-          viewportRef.current?.clientHeight ?? 550,
+          viewportRef.current?.clientHeight ?? 605,
           packed.height,
-          area / Math.max(1, (width - 24) * 0.72) + 28,
+          area / Math.max(1, (width - 24) * SKILL_PACKING_DENSITY) + 28,
         ),
       );
       world!.style.height = `${height}px`;
@@ -453,32 +479,7 @@ export default function SkillsSandbox({
         y: position.y + (height - packed.height) / 2,
       }));
       Composite.add(engine.world, createSkillWalls(matter!, width, height));
-      bodies = sizes.map((size, index) => {
-        const curve = Math.max(4, size.height / 2 - 1);
-        const form = tileForm(index);
-        // Conservative rounded collision bounds keep even the concave paper
-        // shapes apart without allowing another label through their writing area.
-        const cornerRadius = form === "ellipse" || form === "pebble"
-          ? curve
-          : Math.min(6, size.height / 4);
-        return Bodies.rectangle(
-          homes[index].x,
-          homes[index].y,
-          size.width,
-          size.height,
-          {
-            chamfer: { radius: cornerRadius },
-            // Free translation and gentle collisions; stable text orientation.
-            inertia: Infinity,
-            density: 0.0011 + (index % 5) * 0.00008,
-            restitution: 0.06,
-            friction: 0.52 + (index % 4) * 0.035,
-            frictionStatic: 0.82,
-            frictionAir: 0.018 + (index % 5) * 0.002,
-            sleepThreshold: 70,
-          },
-        );
-      });
+      bodies = sizes.map((size, index) => createSkillBody(matter!, size, homes[index], index));
       spawned = bodies.map(() => false);
       dropOrder = bodies.map((_, index) => index);
       for (let index = dropOrder.length - 1; index > 1; index -= 1) {
@@ -489,6 +490,7 @@ export default function SkillsSandbox({
         ];
       }
       nextDrop = 0;
+      blockedSince = null;
       nextDropAt = 120;
       handfulRemaining = 3 + Math.floor(Math.random() * 3);
       releaseX = width * (0.25 + Math.random() * 0.5);
@@ -504,6 +506,28 @@ export default function SkillsSandbox({
       setReady(true);
       start();
     }
+    function arrangeAll(settled = true) {
+      release(undefined, true);
+      stop();
+      bodies.forEach((body, index) => {
+        Body.setPosition(body, homes[index]);
+        Body.setAngle(body, 0);
+        Body.setVelocity(body, { x: 0, y: 0 });
+        Body.setAngularVelocity(body, 0);
+        if (!spawned[index]) Composite.add(engine.world, body);
+        spawned[index] = true;
+        elements[index].style.opacity = "1";
+        Sleeping.set(body, settled);
+      });
+      nextDrop = dropOrder.length;
+      nextDropAt = Infinity;
+      draw();
+    }
+    function ensureVisible(index: number) {
+      // A keyboard jump may target a label that has not dropped yet. Its home
+      // can already be occupied, so expose the complete safe layout together.
+      if (!spawned[index]) arrangeAll();
+    }
     const controller: Controller = {
       availability(next) {
         enabled = next;
@@ -516,33 +540,19 @@ export default function SkillsSandbox({
       replay() {
         rebuild();
       },
-      arrange() {
-        release(undefined, true);
-        stop();
-        bodies.forEach((body, index) => {
-          spawn(index, true);
-          Body.setPosition(body, homes[index]);
-          Body.setAngle(body, 0);
-          Body.setVelocity(body, { x: 0, y: 0 });
-          Body.setAngularVelocity(body, 0);
-          Sleeping.set(body, true);
-        });
-        nextDrop = dropOrder.length;
-        nextDropAt = Infinity;
-        draw();
-      },
+      arrange: arrangeAll,
       reveal(index) {
-        spawn(index, true);
+        ensureVisible(index);
         draw();
         start();
       },
       nudge(index, key, large) {
         const body = bodies[index];
         if (!body || !enabled) return;
-        spawn(index, true);
+        ensureVisible(index);
         Sleeping.set(body, false);
         const distance = large ? 30 : 12;
-        Body.translate(body, {
+        moveSkillBody(matter!, body, {
           x:
             key === "ArrowLeft"
               ? -distance
@@ -550,9 +560,7 @@ export default function SkillsSandbox({
                 ? distance
                 : 0,
           y: key === "ArrowUp" ? -distance : key === "ArrowDown" ? distance : 0,
-        });
-        Body.setVelocity(body, { x: 0, y: 0 });
-        contain(body);
+        }, bodies.filter((_, other) => spawned[other]), width, height);
         draw();
         elements[index].scrollIntoView({ block: "nearest", inline: "nearest" });
         start();
@@ -567,27 +575,17 @@ export default function SkillsSandbox({
         )
           return;
         release(undefined, true);
-        spawn(index, true);
+        ensureVisible(index);
         Sleeping.set(body, false);
         const point = local(event),
           dx = point.x - body.position.x,
           dy = point.y - body.position.y;
-        const cosine = Math.cos(-body.angle),
-          sine = Math.sin(-body.angle);
-        const constraint = Constraint.create({
-          pointA: point,
-          bodyB: body,
-          pointB: { x: dx * cosine - dy * sine, y: dx * sine + dy * cosine },
-          stiffness: 0.28,
-          damping: 0.22,
-          length: 0,
-        });
-        Composite.add(engine.world, constraint);
         drag = {
           pointer: event.pointerId,
           index,
           body,
-          constraint,
+          offsetX: dx,
+          offsetY: dy,
           element: event.currentTarget,
           startX: point.x,
           startY: point.y,
@@ -616,13 +614,9 @@ export default function SkillsSandbox({
           drag.velocityY * 0.4 + ((point.y - drag.y) / delta) * STEP * 0.6;
         drag.moved ||=
           Math.hypot(point.x - drag.startX, point.y - drag.startY) > 5;
-        drag.x = point.x;
-        drag.y = point.y;
+        drag.x = clamp(point.x, 8, width - 8);
+        drag.y = clamp(point.y, 8, height - 8);
         drag.time = now;
-        drag.constraint.pointA = {
-          x: clamp(point.x, 8, width - 8),
-          y: clamp(point.y, 8, height - 8),
-        };
         event.preventDefault();
         start();
       },

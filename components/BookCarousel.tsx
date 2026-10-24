@@ -435,6 +435,9 @@ export default function BookCarousel({
 
   function rotateTo(target: number, focusBook = false, onSettled?: () => void) {
     if (!count || !canInteract()) return;
+    // Browsing or a project link can interrupt closing. Do not restore focus
+    // to the old book while its replacement moves into view.
+    returnFocusRef.current = false;
     let velocity = velocityRef.current;
     setHovered(null);
     stopAnimation();
@@ -497,7 +500,6 @@ export default function BookCarousel({
   }
 
   function browse(direction: number, focusBook = false) {
-    if (returning) return;
     const destination =
       animationRef.current !== null
         ? targetAngleRef.current
@@ -548,12 +550,6 @@ export default function BookCarousel({
       detailRef.current.style.setProperty(
         "--reader-exit-opacity",
         getComputedStyle(detailRef.current).opacity,
-      );
-    }
-    if (sceneRef.current) {
-      sceneRef.current.style.setProperty(
-        "--scene-return-opacity",
-        getComputedStyle(sceneRef.current).opacity,
       );
     }
     returnFocusRef.current = true;
@@ -747,7 +743,7 @@ export default function BookCarousel({
 
   useEffect(() => {
     if (!returning) return undefined;
-    const timeout = window.setTimeout(() => setReturning(false), BOOK_RETURN_MS + 80);
+    const timeout = window.setTimeout(() => setReturning(false), BOOK_RETURN_MS);
     return () => window.clearTimeout(timeout);
   }, [returning]);
 
@@ -992,10 +988,6 @@ export default function BookCarousel({
             aria-hidden={isOpen ? true : undefined}
             inert={isOpen || returning}
             className="book-scene"
-            onAnimationEnd={(event) => {
-              if (event.target === event.currentTarget && event.animationName === "book-object-return")
-                setReturning(false);
-            }}
             onLostPointerCapture={onPointerCancel}
             onPointerCancel={onPointerCancel}
             onPointerDown={onPointerDown}
@@ -1104,13 +1096,13 @@ export default function BookCarousel({
         <div
           className="book-browse-controls-shell"
           aria-hidden={isOpen ? true : undefined}
-          inert={isOpen || returning}
+          inert={isOpen}
         >
           <div className="book-browse-controls">
             <button
               aria-label="Rotate to previous book"
               className="book-arrow"
-              disabled={count < 2 || returning || isOpen}
+              disabled={count < 2 || isOpen}
               onClick={() => browse(-1)}
               type="button"
             >
@@ -1135,7 +1127,7 @@ export default function BookCarousel({
             <button
               aria-label="Rotate to next book"
               className="book-arrow"
-              disabled={count < 2 || returning || isOpen}
+              disabled={count < 2 || isOpen}
               onClick={() => browse(1)}
               type="button"
             >
