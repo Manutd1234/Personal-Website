@@ -24,17 +24,17 @@ export default function BuildJourneyScene({ stage, description, onFocusChange }:
   const replay = () => setAction(previous => ({ stage, count: previous.count + 1, invalid: stage === 0 && !(previous.stage === 0 && previous.invalid) }));
 
   return <div className="journey-scene journey-montage" data-stage={stage} data-acted={acted}>
-    <svg className="journey-scene-svg" viewBox="0 0 640 520" role="img" aria-labelledby={`${id}-title ${id}-description`}>
+    <svg className="journey-scene-svg" viewBox="0 0 640 544" role="img" aria-labelledby={`${id}-title ${id}-description`}>
       <title id={`${id}-title`}>{`Building a Task API: ${titles[stage]}`}</title>
-      <desc id={`${id}-description`}>{`${description} A cartoon engineer sits behind a computer as the same task API develops from a brief into an observable release.`}</desc>
+      <desc id={`${id}-description`}>{`${description} A cartoon engineer types on a keyboard, selects components, traces a request, runs tests and deploys from a control screen. The large monitor shows the corresponding technical result.`}</desc>
       <defs>
         <pattern id={`${id}-grid`} width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#bed0c7" strokeWidth=".7" opacity=".45" /></pattern>
       </defs>
-      <rect width="640" height="520" fill="#f2f6eb" />
-      <path d="M0 0H640V520H0Z" fill={`url(#${id}-grid)`} />
+      <rect width="640" height="544" fill="#f2f6eb" />
+      <path d="M0 0H640V544H0Z" fill={`url(#${id}-grid)`} />
       <path d="M0 169L320 58L640 169" fill="none" stroke="#c9ddd8" strokeWidth="2" />
       <path d="M320 58V156" stroke="#c9ddd8" strokeWidth="2" />
-      <ellipse cx="320" cy="487" rx="269" ry="15" fill="#ccdbca" />
+      <ellipse cx="320" cy="527" rx="269" ry="15" fill="#ccdbca" />
 
       {/* Artifacts remain in the workspace as the feature acquires a stack, tests and a release. */}
       <g className="montage-artifact montage-spec" data-complete={stage >= 0}>
@@ -63,8 +63,8 @@ export default function BuildJourneyScene({ stage, description, onFocusChange }:
         <path d="M116 52V70M109 63L116 70L123 63" fill="none" stroke="#4e8eba" strokeWidth="2" strokeLinecap="round" />
       </g>
 
-      {/* An outlined, proportionate seated character. Foreground hardware occludes the torso. */}
-      <g className="montage-engineer">
+      {/* Hands and controls stay above the foreground monitor, so each action is visible. */}
+      <g className="montage-engineer" key={`operator-${stage}-${action.count}`}>
         <path d="M262 157V117Q262 103 276 103H358Q373 103 374 119V169" fill="#81a89a" stroke="#335746" strokeWidth="2.5" />
         <path d="M276 167L281 118Q286 108 301 108H336Q353 108 361 123L368 171" fill="#69a585" stroke="#335746" strokeWidth="2.5" />
         <path d="M303 99V112L319 124L334 111V96" fill="#e8b48f" stroke="#6f5141" strokeWidth="2" />
@@ -79,11 +79,37 @@ export default function BuildJourneyScene({ stage, description, onFocusChange }:
           <g className="montage-person-eyes" fill="#335746"><ellipse cx="312" cy="72" rx="2" ry="2.7" /><ellipse cx="333" cy="73" rx="2" ry="2.7" /></g>
           <path d="M328 74L334 83L328 84M313 93Q321 98 328 92" fill="none" stroke="#9c7156" strokeWidth="1.8" strokeLinecap="round" />
         </g>
-        <path d="M284 123L270 161M354 124L369 161" stroke="#335746" strokeWidth="25" strokeLinecap="round" />
-        <path d="M284 123L270 161M354 124L369 161" stroke="#69a585" strokeWidth="20" strokeLinecap="round" />
-        <path d="M267 158L259 182M371 159L381 182" stroke="#e8b48f" strokeWidth="13" strokeLinecap="round" />
+        <g className="montage-control-surface">
+          <path d="M279 139H354L361 170H273Z" fill="#315746" stroke="#244336" strokeWidth="2" strokeLinejoin="round" />
+          <path d="M285 144H349L353 164H280Z" fill="#d9ead4" />
+          <path className="montage-control-code" d="M291 150H319M291 155H335M291 160H312" fill="none" stroke="#65967d" strokeWidth="2" strokeLinecap="round" />
+          <path d="M273 170H361L390 190H249Z" fill="#dce8d3" stroke="#335746" strokeWidth="2" strokeLinejoin="round" />
+          <path className="montage-control-keys" d="M270 175H362M263 180H370M283 171L275 184M300 171L296 184M320 171V184M340 171L344 184M357 171L364 184" stroke="#8ba98d" strokeWidth="1.6" />
+          <path d="M307 184H337L341 188H303Z" fill="#a9c5ac" />
+          <circle className="montage-control-touch" cx="341" cy="174" r="9" fill="none" stroke="#e79271" strokeWidth="2.5" />
+        </g>
+        <g className="montage-arm-left">
+          <path d="M284 123L270 151" stroke="#335746" strokeWidth="25" strokeLinecap="round" />
+          <path d="M284 123L270 151" stroke="#69a585" strokeWidth="20" strokeLinecap="round" />
+          <path d="M270 155Q271 162 283 166L292 170" fill="none" stroke="#6f5141" strokeWidth="14" strokeLinecap="round" />
+          <path d="M270 155Q271 162 283 166L292 170" fill="none" stroke="#efc39d" strokeWidth="11" strokeLinecap="round" />
+          <g className="montage-hand-left"><path d="M289 165Q295 163 303 170L308 174Q310 178 306 178L297 173L302 178Q302 181 298 179L290 175Z" fill="#efc39d" stroke="#9c7156" strokeWidth="1.4" strokeLinejoin="round" /></g>
+        </g>
+        <g className={`montage-arm-right ${stage === 1 ? "is-pointing" : ""}`}>
+          <path d="M354 124L369 151" stroke="#335746" strokeWidth="25" strokeLinecap="round" />
+          <path d="M354 124L369 151" stroke="#69a585" strokeWidth="20" strokeLinecap="round" />
+          {stage === 1 ? <g className="montage-pointing-forearm">
+            <path d="M369 153L390 133" stroke="#6f5141" strokeWidth="14" strokeLinecap="round" />
+            <path d="M369 153L390 133" stroke="#efc39d" strokeWidth="11" strokeLinecap="round" />
+            <path d="M386 134L391 125L407 116Q411 115 411 119L399 129L405 128Q409 129 406 133L396 140Z" fill="#efc39d" stroke="#9c7156" strokeWidth="1.5" strokeLinejoin="round" />
+          </g> : <g className="montage-working-forearm">
+            <path d="M369 155Q366 162 355 166L346 170" fill="none" stroke="#6f5141" strokeWidth="14" strokeLinecap="round" />
+            <path d="M369 155Q366 162 355 166L346 170" fill="none" stroke="#efc39d" strokeWidth="11" strokeLinecap="round" />
+            <g className="montage-hand-right"><path d="M349 165Q342 163 335 170L330 174Q328 178 332 178L341 173L336 178Q336 181 340 179L348 175Z" fill="#efc39d" stroke="#9c7156" strokeWidth="1.4" strokeLinejoin="round" /></g>
+          </g>}
+        </g>
       </g>
-
+      <g transform="translate(0 40)">
       {/* A shallow isometric desk grounds the upright, readable monitor. */}
       <path d="M37 425H601L626 449H13Z" fill="#e9d6ad" stroke="#335746" strokeWidth="2.2" strokeLinejoin="round" />
       <path d="M13 449H626V466H13Z" fill="#c1ad87" stroke="#335746" strokeWidth="2.2" />
@@ -93,11 +119,9 @@ export default function BuildJourneyScene({ stage, description, onFocusChange }:
       <rect x="19" y="148" width="602" height="263" rx="13" fill="#365c4c" stroke="#244336" strokeWidth="2.5" />
       <rect x="30" y="160" width="580" height="236" rx="7" fill="#fffef9" />
       <circle cx="320" cy="403" r="2" fill="#bdd3bd" />
-      <path d="M212 431H415L428 443H198Z" fill="#f5f2dc" stroke="#6b8b71" strokeWidth="1.6" />
-      <path className="montage-keyboard" d="M218 435H406M222 439H411M235 432L240 442M260 432L265 442M285 432L290 442M310 432L315 442M335 432L340 442M360 432L365 442M385 432L390 442" stroke="#a0b095" strokeWidth="1.2" />
       <g className="montage-cup"><path d="M541 417H563L559 440H545Z" fill="#fff9dc" stroke="#42634b" strokeWidth="1.7" /><path d="M563 422Q578 421 573 430Q570 435 561 433" fill="none" stroke="#42634b" strokeWidth="2" /><path className="montage-steam" d="M551 410Q546 405 551 399" fill="none" stroke="#8faa8e" strokeWidth="1.6" /></g>
       <g className="montage-plant"><path d="M80 429V405M80 416Q63 416 61 402Q78 403 80 416M80 408Q81 393 94 388Q97 402 80 408" fill="#89ba78" stroke="#42634b" strokeWidth="1.8" /><path d="M68 425H93L88 443H73Z" fill="#edc571" stroke="#42634b" strokeWidth="1.8" /></g>
-      <g aria-hidden="true" fontSize="15" fontWeight="600" fill="#456653"><text x="25" y="505">ONE FEATURE</text><text x="615" y="505" textAnchor="end">{["contract", "contract + stack", "contract + stack + flow", "working slice + tests", "release + feedback"][stage]}</text></g>
+      </g>
     </svg>
 
     <div className="montage-monitor" aria-label={`Task API example: ${titles[stage]}`}>

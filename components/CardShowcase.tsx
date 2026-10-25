@@ -12,6 +12,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { decks, type Deck, type DeckId } from "@/content/card-decks";
+import { asset } from "@/content/paths";
 import TradingCard from "./TradingCard";
 import { useMotionPreference } from "./useMotionPreference";
 
@@ -44,6 +45,26 @@ const deckMotion = {
 const AUTO_SPEED = 24;
 const MAX_FRAME_DELTA = 50;
 const MANUAL_IDLE = 1200;
+
+// Decode each logical logo before the carousel scrolls to its distant copies.
+// Retaining the image also avoids throwing away a decoded logo when a category
+// is unmounted. Only an active or intentionally previewed category is warmed.
+const deckLogoCache = new Map<string, HTMLImageElement>();
+function warmDeckLogos(deck: Deck) {
+  for (const card of deck.cards) {
+    if (!card.logo) continue;
+    const src = asset(card.logo.file);
+    if (deckLogoCache.has(src)) continue;
+    const image = new Image();
+    image.decoding = "async";
+    deckLogoCache.set(src, image);
+    image.src = src;
+    void image.decode().catch(() => {
+      // A transient network failure can be retried on the next visit.
+      if (deckLogoCache.get(src) === image) deckLogoCache.delete(src);
+    });
+  }
+}
 
 // The card whose snap position is closest to the current scroll. On a phone no
 // card sits fully inside the track between snap points, so position must come
@@ -537,6 +558,7 @@ function DeckTrack({
               <TradingCard
                 card={card}
                 reduced={reduced}
+                loadLogo={active}
                 tabbable={exposed && physical === focusIndex}
                 flipped={reading.has(card.id)}
                 onFlipChange={recordFlip}
@@ -601,6 +623,7 @@ export default function CardShowcase({
   const prefix = useId();
 
   const select = useCallback((id: DeckId) => {
+    warmDeckLogos(decks[deckIndex(id)]);
     setDeckState((previous) =>
       previous.active === id
         ? previous
@@ -648,6 +671,10 @@ export default function CardShowcase({
 
   const deck = decks.find((item) => item.id === active)!;
 
+  useEffect(() => {
+    if (sectionActive) warmDeckLogos(deck);
+  }, [deck, sectionActive]);
+
   return (
     <div className="deck-showcase career-archive-shell">
       <div className="deck-toolbar">
@@ -666,6 +693,8 @@ export default function CardShowcase({
               aria-selected={active === item.id}
               tabIndex={active === item.id ? 0 : -1}
               onClick={() => select(item.id)}
+              onPointerEnter={() => warmDeckLogos(item)}
+              onFocus={() => warmDeckLogos(item)}
               onKeyDown={(event) => tabKeys(event, index)}
               ref={(element) => {
                 tabRefs.current[index] = element;

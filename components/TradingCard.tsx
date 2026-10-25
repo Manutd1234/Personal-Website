@@ -92,12 +92,14 @@ function CardSkills({ card }: { card: TradingCardData }) {
 export default function TradingCard({
   card,
   reduced,
+  loadLogo,
   tabbable,
   flipped,
   onFlipChange,
 }: {
   card: TradingCardData;
   reduced: boolean;
+  loadLogo: boolean;
   tabbable: boolean;
   flipped: boolean;
   onFlipChange: (id: string, flipped: boolean) => void;
@@ -314,7 +316,7 @@ export default function TradingCard({
                   <img
                     src={asset(card.logo.file)}
                     alt={card.logo.alt ?? `${card.org} logo`}
-                    loading="lazy"
+                    loading={loadLogo ? "eager" : "lazy"}
                     decoding="async"
                     draggable={false}
                   />

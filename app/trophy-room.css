@@ -167,6 +167,25 @@
 .trophy-search input::placeholder {
   color: #c1d7b8;
 }
+.trophy-search input::-webkit-search-cancel-button {
+  appearance: none;
+}
+.trophy-search-clear {
+  display: inline-flex;
+  flex: none;
+  min-width: 58px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-right: -8px;
+  border-radius: 8px;
+  color: #edf8df;
+  font: 600 11px/1.3 var(--classic-display);
+}
+.trophy-search-clear:hover {
+  background: #d6edbf20;
+}
 .trophy-search:focus-within {
   outline: 2px solid #d1f0ad;
   outline-offset: 3px;
@@ -177,6 +196,7 @@
 .trophy-results {
   min-height: 16px;
   margin: 12px 28px 15px;
+  overflow-wrap: anywhere;
   color: #c3d7b7;
   font: 400 9px/1.6 var(--font-mono);
 }

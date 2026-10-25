@@ -610,6 +610,13 @@ export default function TrophyRoom() {
   const visible = matches.filter(
     (record) => filter === "all" || record.category === filter,
   );
+  const categoryLabel = categories.find((category) => category.id === filter)?.label;
+
+  function clearSearch() {
+    setQuery("");
+    appsRef.current?.scrollTo({ top: 0, behavior: "instant" });
+    searchRef.current?.focus({ preventScroll: true });
+  }
 
   useEffect(() => {
     mountedRef.current = true;
@@ -755,36 +762,44 @@ export default function TrophyRoom() {
               <h3>
                 {filter === "all"
                   ? "All achievements"
-                  : categories.find((category) => category.id === filter)
-                      ?.label}
+                  : categoryLabel}
               </h3>
             </div>
-            <label className="trophy-search">
+            <div className="trophy-search">
               <Search size={17} aria-hidden="true" />
-              <span className="sr-only">Search all awards and credentials</span>
+              <label className="sr-only" htmlFor={`${prefix}-search`}>Search all awards and credentials</label>
               <input
                 ref={searchRef}
+                id={`${prefix}-search`}
                 type="search"
                 value={query}
                 placeholder="Search awards & certificates…"
+                aria-controls={`${prefix}-cards`}
                 onChange={(event) => {
                   setQuery(event.target.value);
                   setFilter("all");
                   appsRef.current?.scrollTo({ top: 0, behavior: "instant" });
                 }}
               />
-            </label>
+              {query ? (
+                <button
+                  className="trophy-search-clear"
+                  type="button"
+                  aria-label="Clear award search"
+                  onClick={clearSearch}
+                >
+                  <X size={14} aria-hidden="true" />
+                  Clear
+                </button>
+              ) : null}
+            </div>
           </div>
-          <p className="trophy-results" role="status">
-            {visible.length}{" "}
-            {search
-              ? visible.length === 1
-                ? "match"
-                : "matches"
-              : visible.length === 1
-                ? "achievement"
-                : "achievements"}
-            {search ? ` for “${query.trim()}”` : ""}
+          <p className="trophy-results" role="status" aria-atomic="true">
+            {search || filter !== "all"
+              ? `Showing ${visible.length} of ${collection.length} achievements`
+              : `All ${collection.length} achievements`}
+            {search ? ` matching “${query.trim()}”` : ""}
+            {filter !== "all" ? ` in ${categoryLabel}` : ""}
           </p>
           <div
             className="award-app-scroll"

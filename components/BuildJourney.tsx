@@ -17,7 +17,7 @@ import BuildJourneyScene from "./BuildJourneyScene";
 import { useMotionPreference } from "./useMotionPreference";
 import { useVisiblePlayback } from "./useVisiblePlayback";
 
-const STEP_DURATION_MS = 9500;
+const STEP_DURATION_MS = 6500;
 const steps = [
   {
     label: "Define",
