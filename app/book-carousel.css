@@ -1092,7 +1092,7 @@
   }
 }
 
-/* Twelve covers, each typeset as its own book. No synthetic project artwork. */
+/* Covers are typeset individually, using authentic media where available. */
 .book-carousel [data-cover-layout="terminal"] .book-cover-title {
   font-size: calc(var(--book-width) * 0.125);
   font-weight: 750;

@@ -1,5 +1,6 @@
 import { featuredProjectStories } from "./project-stories-featured";
 import { archiveProjectStories } from "./project-stories-archive";
+import { expandedProjectStories } from "./project-stories-expanded";
 
 export type ProjectPoint = {
   label: string;
@@ -22,4 +23,5 @@ export type ProjectStory = {
 export const projectStories: Readonly<Record<string, ProjectStory | undefined>> = {
   ...featuredProjectStories,
   ...archiveProjectStories,
+  ...expandedProjectStories,
 };

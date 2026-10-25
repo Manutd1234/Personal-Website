@@ -184,8 +184,61 @@ const DESIGN_INDEX: Readonly<Record<string, number | undefined>> = {
 };
 const mod = (value: number, length: number) =>
   ((value % length) + length) % length;
-const coverFor = (project: Project, index: number) =>
-  COVER_DESIGNS[DESIGN_INDEX[project.title] ?? index % COVER_DESIGNS.length];
+type BookCover = { [Key in keyof (typeof COVER_DESIGNS)[number]]: string };
+const EXPANDED_COVERS: Readonly<Record<string, BookCover | undefined>> = {
+  "ML Trainee: Credit Risk": {
+    ...COVER_DESIGNS[6], title: "Credit\nRisk", subtitle: "ML Trainee · From data to evidence",
+    color: "#d6b783", ink: "#433222", mark: "fit / validate / test",
+  },
+  "CrossFlow AI": {
+    ...COVER_DESIGNS[0], title: "CrossFlow\nAI", subtitle: "Roads, ferries & the route between",
+    color: "#28698a", ink: "#f6f1d5", mark: "A → B",
+  },
+  "IBKR Scenario Stress Test": {
+    ...COVER_DESIGNS[6], title: "IBKR\nStress Test", subtitle: "A portfolio under pressure",
+    color: "#bdc8a1", ink: "#294338", mark: "Δ / Γ / VaR",
+  },
+  "EC2 Recovery & Trade Automation": {
+    ...COVER_DESIGNS[0], title: "EC2 +\nTrades", subtitle: "Recovery, risk & order control",
+    color: "#334d63", ink: "#f1dfad", mark: "lease → act",
+  },
+  "Portfolio Manager Competition": {
+    ...COVER_DESIGNS[6], title: "PM\nCompetition", subtitle: "Holdings, performance & risk",
+    color: "#a55943", ink: "#fff1d1", mark: "NAV / ES",
+  },
+  "Internal Trading Competition": {
+    ...COVER_DESIGNS[6], title: "Internal\nTrading", subtitle: "The competition behind the returns",
+    color: "#716085", ink: "#f7e7c4", mark: "return / risk",
+  },
+  FormForward: {
+    ...COVER_DESIGNS[7], title: "Form\nForward", subtitle: "Running form, explained",
+    color: "#b4cca8", ink: "#254d39", layout: "terminal", mark: "stride → insight",
+  },
+  "RiskSignal · SAP Group 4": {
+    ...COVER_DESIGNS[0], title: "RiskSignal", subtitle: "SAP Group 4 · Explainable triage",
+    color: "#4c638c", ink: "#fff0d0", mark: "risk ≠ urgency",
+  },
+  "Panic at the Classroom": {
+    ...COVER_DESIGNS[3], title: "PANIC AT\nCLASSROOM", subtitle: "A playful desktop vision experiment",
+    color: "#e3a56b", ink: "#4c3229", layout: "poster", mark: "⌘ ⇧ P",
+  },
+  Help4Good: {
+    ...COVER_DESIGNS[7], title: "Help4Good", subtitle: "A conversation about care",
+    color: "#8daf9f", ink: "#203f34", layout: "terminal", mark: "listen / reflect",
+  },
+};
+const BOOK_DEPTHS = [30, 26, 34, 28, 32, 24, 34, 26, 28, 26, 32, 30];
+function coverFor(project: Project, index: number): BookCover {
+  const known = DESIGN_INDEX[project.title];
+  if (known !== undefined) return COVER_DESIGNS[known];
+  const custom = EXPANDED_COVERS[project.title];
+  if (custom) return custom;
+  // Reuse the palette, never another project's printed identity.
+  return {
+    ...COVER_DESIGNS[index % COVER_DESIGNS.length],
+    title: project.title, subtitle: project.category, layout: "terminal", mark: "IW",
+  };
+}
 
 function sizePreviewPages(stage: HTMLElement, book: HTMLElement, pageWidth: number, pageHeight: number, single: boolean) {
   stage.style.setProperty("--preview-page-width", `${pageWidth}px`);
@@ -250,9 +303,7 @@ function Book({
   index: number;
 }) {
   const design = coverFor(project, index);
-  const thickness = [30, 26, 34, 28, 32, 24, 34, 26, 28, 26, 32, 30][
-    DESIGN_INDEX[project.title] ?? index % COVER_DESIGNS.length
-  ];
+  const thickness = BOOK_DEPTHS[(DESIGN_INDEX[project.title] ?? index) % BOOK_DEPTHS.length];
   return (
     <span
       aria-hidden="true"
@@ -1169,7 +1220,8 @@ export default function BookCarousel({
       setDragging(true);
     }
     const now = performance.now();
-    const multiplier = radiusRef.current < 230 ? 0.38 : 0.25;
+    // Keep drag distance per book consistent as the library grows.
+    const multiplier = (radiusRef.current < 230 ? 0.38 : 0.25) * Math.min(1, 12 / count);
     const sample =
       ((event.clientX - gesture.lastX) / Math.max(8, now - gesture.time)) *
       multiplier;
@@ -1284,7 +1336,7 @@ export default function BookCarousel({
         ref={stageRef}
       >
         <div className="book-stage-header">
-          <span className="book-library-label">THE PROJECT LIBRARY</span>
+          <span className="book-library-label">THE PROJECT LIBRARY · {count} PROJECTS</span>
           {isOpen || returning ? (
             <button
               aria-disabled={returning || undefined}

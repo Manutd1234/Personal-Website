@@ -1,4 +1,5 @@
 import { assetBase } from "@/content/paths";
+import { expandedProjects } from "./projects-expanded";
 
 export const profile = {
   name: "Ian Abiel Wangsa",
@@ -331,6 +332,7 @@ export const projectArchive = [
       },
     ],
   },
+  ...expandedProjects,
 ];
 
 export const experience = [
