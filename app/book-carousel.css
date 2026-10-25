@@ -128,7 +128,6 @@
   margin-left: calc(var(--book-width) / -2);
   transform: translate3d(var(--orbit-x), var(--orbit-y), var(--orbit-z));
   transform-style: preserve-3d;
-  will-change: transform;
 }
 .book-carousel .book-ground-shadow {
   position: absolute;

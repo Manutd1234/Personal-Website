@@ -31,7 +31,7 @@ jobs:
         run: npm ci
 
       - name: Check and build Next.js static site
-        run: npm run check:skills && npm run build
+        run: npm run check:interactions && npm run check:skills && npm run build && npm run check:assets
         env:
           NEXT_PUBLIC_BASE_PATH: /Personal-Website
 

@@ -103,11 +103,11 @@ export const projectMedia = {
       "Original interactive Coca-Cola Indonesia strategy presentation, with navigation to the proposal and linked investment scenarios.",
   },
   "ML Trainee: Credit Risk": {
-    src: "images/project-frontends/credit-risk-whitepaper.webp",
-    alt: "Original credit-risk browser whitepaper showing the six public datasets and feature-analysis tables.",
-    kind: "Research whitepaper",
+    src: "images/project-frontends/credit-risk-validation.webp",
+    alt: "Original credit-risk evaluation figure comparing ROC and precision–recall curves for six models on the Taiwan credit-card default hold-out set.",
+    kind: "Model evaluation",
     caption:
-      "Original credit-risk research whitepaper covering six public datasets, feature analysis, model selection and validation.",
+      "Original model-evaluation output: ROC and precision–recall curves on the Taiwan credit-card default hold-out set. Models and decision thresholds were selected using validation data before the test set was scored.",
   },
   "CrossFlow AI": {
     src: "images/project-frontends/crossflow.webp",

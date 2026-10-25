@@ -22,7 +22,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import {
-  useEffect,
+  useLayoutEffect,
   useId,
   useRef,
   type MouseEvent,
@@ -105,9 +105,8 @@ export default function TradingCard({
   onFlipChange: (id: string, flipped: boolean) => void;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const frontButton = useRef<HTMLButtonElement>(null);
-  const backButton = useRef<HTMLButtonElement>(null);
-  const focusFrame = useRef<number | null>(null);
+  const flipButton = useRef<HTMLButtonElement>(null);
+  const flippedRef = useRef(flipped);
   const blockedClickUntil = useRef(0);
   const gesture = useRef<{
     pointer: number;
@@ -140,12 +139,9 @@ export default function TradingCard({
   const washMask = useMotionTemplate`radial-gradient(farthest-corner circle at ${pointerX}% ${pointerY}%, #000 0%, rgba(0,0,0,0.35) 32%, transparent 64%)`;
   const glare = useMotionTemplate`radial-gradient(circle at ${pointerX}% ${pointerY}%, rgba(255,255,255,0.55), rgba(255,255,255,0.08) 34%, transparent 62%)`;
 
-  useEffect(
-    () => () => {
-      if (focusFrame.current !== null) cancelAnimationFrame(focusFrame.current);
-    },
-    [],
-  );
+  useLayoutEffect(() => {
+    flippedRef.current = flipped;
+  }, [flipped]);
 
   function beginGesture(event: PointerEvent<HTMLDivElement>) {
     blockedClickUntil.current = 0;
@@ -200,22 +196,18 @@ export default function TradingCard({
     tiltY.set(0);
     hover.set(0);
   }
-  function flip() {
-    const next = !flipped;
+  function showFace(next: boolean) {
+    // Read and return are explicit, idempotent actions. A second click before
+    // React commits must not reverse an action using a stale prop value.
+    if (flippedRef.current === next) return;
+    flippedRef.current = next;
     const hadFocus = rootRef.current?.contains(document.activeElement);
     onFlipChange(card.id, next);
     settle();
-    // The face that held focus becomes inert, so hand focus to the other side.
-    if (focusFrame.current !== null) cancelAnimationFrame(focusFrame.current);
-    if (hadFocus)
-      focusFrame.current = requestAnimationFrame(() => {
-        focusFrame.current = null;
-        const button = (next ? backButton : frontButton).current;
-        if (!button?.closest('[hidden], [inert], [aria-hidden="true"]'))
-          button?.focus({ preventScroll: true });
-      });
+    // This control stays outside both inert faces and never rotates away.
+    if (hadFocus) flipButton.current?.focus({ preventScroll: true });
   }
-  function flipFromFace(event: MouseEvent<HTMLElement>) {
+  function flipFromFace(event: MouseEvent<HTMLElement>, next: boolean) {
     if (
       (event.target as Element).closest(CARD_CONTROLS) ||
       performance.now() < blockedClickUntil.current ||
@@ -229,7 +221,7 @@ export default function TradingCard({
         rootRef.current?.contains(selection.focusNode))
     )
       return;
-    flip();
+    showFace(next);
   }
 
   const certificates = card.certificates.flatMap((key) =>
@@ -265,7 +257,7 @@ export default function TradingCard({
             className="tcg-face tcg-front"
             aria-labelledby={nameId}
             inert={flipped}
-            onClick={flipFromFace}
+            onClick={(event) => flipFromFace(event, true)}
           >
             <div className="tcg-inner">
               {/* The paper reflection stays beneath the readable content. */}
@@ -358,27 +350,16 @@ export default function TradingCard({
                 ))}
               </ul>
 
-              <footer className="tcg-band tcg-footer">
-                <button
-                  type="button"
-                  ref={frontButton}
-                  data-card-control
-                  tabIndex={tabbable ? 0 : -1}
-                  onClick={flip}
-                  aria-label={`Read the full story: ${card.org}`}
-                >
-                  Read story
-                  <RotateCcw size={13} strokeWidth={2.3} aria-hidden="true" />
-                </button>
-              </footer>
+              <footer className="tcg-band tcg-footer" aria-hidden="true" />
             </div>
           </article>
 
           <section
             className="tcg-face tcg-back"
+            id={`${nameId}-story`}
             aria-label={`${card.org}: story and full record`}
             inert={!flipped}
-            onClick={flipFromFace}
+            onClick={(event) => flipFromFace(event, false)}
           >
             <div className="tcg-inner">
               <header className="tcg-band tcg-header">
@@ -435,23 +416,28 @@ export default function TradingCard({
                   </div>
                 ) : null}
               </div>
-              <footer className="tcg-band tcg-footer">
-                <button
-                  type="button"
-                  ref={backButton}
-                  data-card-control
-                  tabIndex={tabbable ? 0 : -1}
-                  onClick={flip}
-                  aria-label={`Return to ${card.org} highlights`}
-                >
-                  <ArrowLeft size={13} strokeWidth={2.3} aria-hidden="true" />
-                  Back to highlights
-                </button>
-              </footer>
+              <footer className="tcg-band tcg-footer" aria-hidden="true" />
             </div>
           </section>
         </motion.div>
       </motion.div>
+      <button
+        className="tcg-turn-button"
+        type="button"
+        ref={flipButton}
+        data-card-control
+        tabIndex={tabbable ? 0 : -1}
+        aria-controls={`${nameId}-story`}
+        aria-expanded={flipped}
+        aria-label={flipped ? `Return to ${card.org} highlights` : `Read the full story: ${card.org}`}
+        onClick={() => showFace(flipped ? false : true)}
+      >
+        {flipped ? (
+          <><ArrowLeft size={13} strokeWidth={2.3} aria-hidden="true" />Back to highlights</>
+        ) : (
+          <>Read story<RotateCcw size={13} strokeWidth={2.3} aria-hidden="true" /></>
+        )}
+      </button>
     </div>
   );
 }

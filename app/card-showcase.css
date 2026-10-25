@@ -545,7 +545,12 @@
 .tcg-front .tcg-footer {
   justify-content: flex-end;
 }
-.tcg-footer button {
+/* One stationary control serves both faces, including mid-flip reversals. */
+.tcg-turn-button {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  z-index: 3;
   display: inline-flex;
   min-height: 44px;
   flex: none;
@@ -807,7 +812,7 @@
     color: #153c27;
     background: #a6e5ba;
   }
-  .tcg-footer button:hover {
+  .tcg-turn-button:hover {
     border-color: var(--tcg-ink);
     color: var(--tcg-ink);
     background: #eaf3e0;
@@ -915,7 +920,7 @@
   .tcg-footer {
     gap: 8px;
   }
-  .tcg-footer button {
+  .tcg-turn-button {
     padding-inline: 9px;
     font-size: 11px;
   }

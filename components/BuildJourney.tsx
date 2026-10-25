@@ -14,10 +14,10 @@ import {
 } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import BuildJourneyScene from "./BuildJourneyScene";
+import { ActivePlaybackClock, BUILD_STAGE_DURATION_MS, journeyPlayback } from "./build-journey-timeline";
 import { useMotionPreference } from "./useMotionPreference";
 import { useVisiblePlayback } from "./useVisiblePlayback";
 
-const STEP_DURATION_MS = 6100;
 const steps = [
   {
     label: "Define",
@@ -95,48 +95,32 @@ export default function BuildJourney({
   const [playing, setPlaying] = useState(true);
   const [sceneFocused, setSceneFocused] = useState(false);
   const [replay, setReplay] = useState(0);
-  const remainingMs = useRef(STEP_DURATION_MS);
+  const stageClock = useRef(new ActivePlaybackClock());
   const timerStage = useRef(active);
   const timerReplay = useRef(replay);
   const { ref, visible } = useVisiblePlayback<HTMLElement>();
   const reduced = useMotionPreference();
   const prefix = useId();
-  const running = playing && visible && !reduced;
-  const advancing = running && !sceneFocused;
+  const { animate: running, advance: advancing } = journeyPlayback(playing, visible, reduced, sceneFocused);
   const step = steps[active];
 
   useEffect(() => {
+    const clock = stageClock.current;
     if (timerStage.current !== active || timerReplay.current !== replay) {
       timerStage.current = active;
       timerReplay.current = replay;
-      remainingMs.current = STEP_DURATION_MS;
+      clock.reset();
     }
+    clock.setRunning(advancing, performance.now());
     if (!advancing) return;
-    const startedAt = performance.now();
-    let completed = false;
     const timer = window.setTimeout(() => {
-      completed = true;
-      remainingMs.current = STEP_DURATION_MS;
       setActive(value => (value + 1) % steps.length);
-    }, remainingMs.current);
+    }, clock.remainingUntil(BUILD_STAGE_DURATION_MS, performance.now()));
     return () => {
       window.clearTimeout(timer);
-      if (!completed) remainingMs.current = Math.max(100, remainingMs.current - (performance.now() - startedAt));
+      clock.setRunning(false, performance.now());
     };
   }, [advancing, active, replay]);
-
-  useEffect(() => {
-    const panel = ref.current?.closest('[role="tabpanel"]');
-    if (!panel) return;
-    let wasHidden = panel.hasAttribute("hidden");
-    const observer = new MutationObserver(() => {
-      const hidden = panel.hasAttribute("hidden");
-      if (wasHidden && !hidden) setPlaying(true);
-      wasHidden = hidden;
-    });
-    observer.observe(panel, { attributes: true, attributeFilter: ["hidden"] });
-    return () => observer.disconnect();
-  }, [ref]);
 
   return (
     <section

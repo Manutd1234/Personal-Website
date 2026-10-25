@@ -9,7 +9,9 @@
     "preview": "python3 -m http.server 8766 --bind 127.0.0.1 --directory out",
     "typecheck": "node ./node_modules/typescript/bin/tsc --noEmit",
     "check:skills": "node scripts/check-skill-physics.mjs",
-    "check": "npm run typecheck && npm run check:skills && npm run build"
+    "check:interactions": "node --experimental-strip-types --test tests/*.test.mjs && node scripts/check-builder-journey.mjs",
+    "check:assets": "node scripts/check-site-assets.mjs",
+    "check": "npm run typecheck && npm run check:interactions && npm run check:skills && npm run build && npm run check:assets"
   },
   "dependencies": {
     "next": "15.5.28",

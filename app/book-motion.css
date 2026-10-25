@@ -129,3 +129,24 @@
   .book-orbit-item[data-return-book="true"] .book-leaf-front {
   border-radius: 0 10px 10px 0;
 }
+
+/* A completed book is static DOM, not a retained stack of fill:both effects.
+   These phases are committed before the transition controller releases WAAPI. */
+.book-carousel .book-stage[data-motion-phase="reading"] .book-scene {
+  visibility: hidden;
+  pointer-events: none;
+}
+.book-carousel .book-stage:is([data-motion-phase="opening"], [data-motion-phase="closing"], [data-motion-phase="shelf"]) .book-scene {
+  visibility: visible;
+}
+.book-carousel .book-stage:is([data-motion-phase="opening"], [data-motion-phase="shelf"]) .book-details {
+  visibility: hidden;
+}
+.book-carousel .book-stage:is([data-motion-phase="reading"], [data-motion-phase="closing"]) .book-details {
+  visibility: visible;
+  opacity: 1;
+}
+.book-carousel .book-stage:is([data-motion-phase="opening"], [data-motion-phase="closing"])
+  .book-orbit-item[data-return-book="true"] {
+  will-change: transform;
+}

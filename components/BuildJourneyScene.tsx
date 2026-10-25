@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useId, useRef, useState } from "react";
+import { ActivePlaybackClock, BUILD_ACTION_BEATS_MS, sceneActionStart, sceneBeatAt } from "./build-journey-timeline";
 
 const actions = ["Explore the idea", "Compare the approaches", "Trace the user journey", "Build, test & review", "Release the update"];
 const titles = ["Understand the need", "Choose an approach", "Design the flow", "Build, test and review", "Release and learn"];
@@ -19,7 +20,7 @@ const screenStages = [
   { label: "Put it in people’s hands", state: "Live", working: "Releasing", note: "Listen to feedback. Bring the next idea back.", cards: [["PREPARE", "Check the release", "Ready to use"], ["SHIP", "Share the update", "Verify it live"], ["LEARN", "Hear from people", "Improve the next version"]] },
 ] as const;
 // Each gesture leads the matching screen response by a perceptible half-second.
-const actionBeats = [240, 880, 1540, 2180, 2840, 3480, 4260, 5000];
+const actionBeats = BUILD_ACTION_BEATS_MS;
 
 /** The workspace and task stay in place while the same feature takes shape. */
 export default function BuildJourneyScene({ stage, description, onFocusChange, onReplay, animate, reducedMotion }: {
@@ -31,14 +32,14 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
   reducedMotion: boolean;
 }) {
   const id = useId();
-  const [action, setAction] = useState({ stage: -1, count: 0, immediate: false });
+  const [action, setAction] = useState({ stage: -1, count: 0, immediate: false, start: 0 });
   const acted = action.stage === stage;
-  const replay = () => {
+  const replay = (step = 0) => {
     onReplay();
-    setAction(previous => ({ stage, count: previous.count + 1, immediate: !animate }));
+    setAction(previous => ({ stage, count: previous.count + 1, immediate: !animate, start: sceneActionStart(step) }));
   };
   const [beat, setBeat] = useState(0);
-  const clock = useRef({ stage, run: action.count, elapsed: 0 });
+  const clock = useRef({ stage, run: action.count, playback: new ActivePlaybackClock() });
   const screen = screenStages[stage];
   const currentRun = clock.current.stage === stage && clock.current.run === action.count;
   const visibleBeat = reducedMotion ? actionBeats.length : currentRun ? beat : 0;
@@ -46,37 +47,57 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
   const working = visibleBeat > 0 && visibleBeat < 7;
   const selecting = working && (stage === 1 || stage === 2 || stage === 4);
   const pressing = selecting && visibleBeat % 2 === 0;
-  const typing = working && (stage === 0 || stage === 3);
+  const sketching = working && stage === 0;
+  const inspecting = stage === 3 && visibleBeat >= 5 && visibleBeat < 8;
+  const celebrating = stage === 4 && visibleBeat >= 7;
+  const typing = working && stage === 3 && !inspecting;
   const finished = visibleBeat >= 7;
   const pointerIndex = Math.min(2, Math.max(0, Math.floor((visibleBeat - 1) / 2)));
-  const handX = selecting ? 53 + pointerIndex * 2 : 0;
-  const handY = selecting ? (pressing ? 7 : 2) : 0;
+  const handX = celebrating ? 39 : selecting ? 53 + pointerIndex * 2 : 0;
+  const handY = celebrating ? -69 : selecting ? (pressing ? 7 : 2) : 0;
+  const leftX = sketching ? -40 + pointerIndex * 3 : inspecting ? -45 : 0;
+  const leftY = sketching ? -18 : inspecting ? -40 : 0;
+  const rightElbowY = celebrating ? 129 : 155;
+  const leftForearm = `M270 155Q${sketching || inspecting ? 263 : 271} ${sketching || inspecting ? 155 + leftY : 162} ${283 + leftX} ${166 + leftY}L${292 + leftX} ${170 + leftY}`;
+  const rightForearm = celebrating
+    ? "M369 129Q375 116 381 108L385 101"
+    : selecting ? `M369 155Q381 164 396 ${166 + handY}L${346 + handX} ${170 + handY}` : "M369 155Q366 162 355 166L346 170";
   const poseTransition = { duration: reducedMotion ? 0 : .58, ease: [0.22, 0.61, 0.36, 1] as const };
 
-  // One purposeful sequence per stage, then a quiet hold. Pausing preserves its place.
+  // Schedule only the eight visible beats; pauses preserve exact active time.
   useEffect(() => {
+    const playback = clock.current.playback;
     if (clock.current.stage !== stage || clock.current.run !== action.count) {
-      const completeImmediately = action.stage === stage && action.immediate;
-      clock.current = { stage, run: action.count, elapsed: completeImmediately ? actionBeats[actionBeats.length - 1] : 0 };
-      setBeat(completeImmediately ? actionBeats.length : 0);
-    }
-    if (!animate) return;
-    let frame = 0;
-    let previous = performance.now();
-    let previousBeat = actionBeats.filter(at => clock.current.elapsed >= at).length;
-    const tick = (now: number) => {
-      clock.current.elapsed += Math.min(now - previous, 100);
-      previous = now;
-      const nextBeat = actionBeats.filter(at => clock.current.elapsed >= at).length;
-      if (nextBeat !== previousBeat) {
-        previousBeat = nextBeat;
-        setBeat(nextBeat);
+      const replayRequested = clock.current.run !== action.count && action.stage === stage;
+      const completeImmediately = replayRequested && action.immediate;
+      const elapsed = completeImmediately ? actionBeats[actionBeats.length - 1] : replayRequested ? action.start : 0;
+      // A replay belongs to this visit only. Later autoplay cycles start fresh,
+      // and must not re-announce an earlier interaction as a new completed run.
+      if (clock.current.stage !== stage && !replayRequested && action.stage !== -1) {
+        setAction(previous => ({ ...previous, stage: -1 }));
       }
-      if (nextBeat < actionBeats.length) frame = requestAnimationFrame(tick);
+      clock.current.stage = stage;
+      clock.current.run = action.count;
+      playback.reset(elapsed);
+      setBeat(sceneBeatAt(elapsed));
+    }
+    playback.setRunning(animate, performance.now());
+    if (!animate) return;
+    let timer = 0;
+    const scheduleNext = () => {
+      const elapsed = playback.elapsedAt(performance.now());
+      const nextBeat = sceneBeatAt(elapsed);
+      setBeat(nextBeat);
+      if (nextBeat < actionBeats.length) {
+        timer = window.setTimeout(scheduleNext, playback.remainingUntil(actionBeats[nextBeat], performance.now()));
+      }
     };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [animate, stage, action.count, action.stage, action.immediate]);
+    scheduleNext();
+    return () => {
+      window.clearTimeout(timer);
+      playback.setRunning(false, performance.now());
+    };
+  }, [animate, stage, action.count, action.stage, action.immediate, action.start]);
 
   return <div
     className="journey-scene journey-montage"
@@ -84,6 +105,13 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
     data-acted={acted}
     data-beat={visibleBeat}
     data-typing={typing}
+    data-sketching={sketching}
+    data-inspecting={inspecting}
+    data-celebrating={celebrating}
+    data-connecting={stage === 2 && working}
+    data-delivering={stage === 4 && completed >= 2}
+    data-phase={pointerIndex}
+    data-completed={completed}
     data-pressing={pressing}
     data-finished={finished}
     onFocusCapture={() => onFocusChange(true)}
@@ -91,7 +119,7 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
   >
     <svg className="journey-scene-svg" viewBox="0 0 640 544" role="img" aria-labelledby={`${id}-title ${id}-description`}>
       <title id={`${id}-title`}>{`From an idea to a useful release: ${titles[stage]}`}</title>
-      <desc id={`${id}-description`}>{`${description} A cartoon engineer types, reaches for the mouse and clicks. Those actions reveal the brief, compare approaches, connect the journey, verify the work and release the update on the large monitor.`}</desc>
+      <desc id={`${id}-description`}>{`${description} A cartoon engineer types, reaches for the mouse and clicks. The engineer writes a brief with a pencil, compares approaches with the mouse, traces connections, checks work with a magnifier and celebrates a release. Select a step on the monitor to replay that action.`}</desc>
       <defs>
         <pattern id={`${id}-grid`} width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#bed0c7" strokeWidth=".7" opacity=".45" /></pattern>
       </defs>
@@ -105,6 +133,10 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
         <path className="montage-workspace-link" data-complete={stage > 1 || (stage === 1 && completed >= 2)} d="M155 115Q320 183 485 118" />
         <path className="montage-workspace-link" data-complete={stage > 2 || (stage === 2 && completed >= 2)} d="M197 102Q313 151 447 78" />
         <path className="montage-workspace-link" data-complete={stage === 4 && completed >= 2} d="M121 48Q270 3 442 48" />
+      </g>
+      <g className="montage-signal-routes" fill="none" stroke="#4e9478" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+        <path className="montage-signal-route montage-signal-route-one" d="M155 115Q320 183 485 118" pathLength="100" />
+        <path className="montage-signal-route montage-signal-route-two" d="M197 102Q313 151 447 78" pathLength="100" />
       </g>
       {/* Artifacts remain in the workspace as the feature acquires an approach, checks and a release. */}
       <g className="montage-artifact montage-spec" data-complete={stage > 0 || completed >= 1}>
@@ -133,6 +165,19 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
         <path d="M116 52V70M109 63L116 70L123 63" fill="none" stroke="#4e8eba" strokeWidth="2" strokeLinecap="round" />
       </g>
 
+      <g className="montage-note-prop" aria-hidden="true">
+        <path d="M221 137L268 131L279 173L230 179Z" fill="#fff7d7" stroke="#ae9d70" strokeWidth="1.6" />
+        <path className="montage-note-ink" d="M234 146L258 143M237 153L266 149M239 160L258 157M241 167L266 163" stroke="#63877a" strokeWidth="1.7" strokeLinecap="round" fill="none" pathLength="100" />
+      </g>
+      <g className="montage-idea-bubble" aria-hidden="true">
+        <path d="M210 22H249Q257 22 257 31V53Q257 61 249 61H238L226 70V61H210Q202 61 202 53V31Q202 22 210 22Z" fill="#fff8db" stroke="#c6b77d" strokeWidth="1.5" />
+        <path d="M221 38Q221 29 230 29Q239 29 239 38Q239 43 234 47V51H226V47Q221 43 221 38M226 55H234" fill="none" stroke="#8e8645" strokeWidth="2" strokeLinecap="round" />
+      </g>
+      <g className="montage-choice-pieces" aria-hidden="true">
+        <g className="montage-choice-piece"><path d="M515 55L536 49L553 58L532 65Z" fill="#e6efb6" stroke="#68856c" strokeWidth="1.5" /><path d="M515 55V67L532 76V65L553 58V70L532 76" fill="#b6cd83" stroke="#68856c" strokeWidth="1.5" /></g>
+        <g className="montage-choice-piece"><path d="M565 63L586 57L603 66L582 73Z" fill="#dceaf5" stroke="#688594" strokeWidth="1.5" /><path d="M565 63V75L582 84V73L603 66V78L582 84" fill="#a3c9e3" stroke="#688594" strokeWidth="1.5" /></g>
+      </g>
+
       {/* Hands and controls stay above the foreground monitor, so each action is visible. */}
       <g className="montage-engineer">
         <path d="M262 157V117Q262 103 276 103H358Q373 103 374 119V169" fill="#81a89a" stroke="#335746" strokeWidth="2.5" />
@@ -140,14 +185,15 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
         <path d="M303 99V112L319 124L334 111V96" fill="#e8b48f" stroke="#6f5141" strokeWidth="2" />
         <path d="M301 108L319 123L334 108L344 116L329 134L319 127L310 135L291 117Z" fill="#fffaf0" stroke="#335746" strokeWidth="2" />
         <path d="M319 130V174" stroke="#335746" strokeWidth="1.8" />
-        <motion.g className="montage-person-head" animate={{ rotate: finished ? -4 : selecting ? pointerIndex * 3 - 3 : typing ? 5 : 0, y: typing ? 2 : 0 }} transition={poseTransition}>
+        <motion.g className="montage-person-head" animate={{ rotate: celebrating ? -7 : inspecting ? -9 : sketching ? -7 : finished ? -3 : selecting ? pointerIndex * 3 - 3 : typing ? 5 : 0, y: typing || sketching ? 2 : 0 }} transition={poseTransition}>
           <path d="M290 57Q291 31 317 31Q344 32 346 57L343 84Q341 101 323 106Q306 105 296 93L291 77" fill="#efc39d" stroke="#6f5141" strokeWidth="2" />
           <path d="M292 76Q283 63 288 47Q293 27 317 26Q342 27 349 46L345 60L337 54L331 43Q315 54 299 49L299 74Z" fill="#284b3e" stroke="#284b3e" strokeWidth="2" />
           <path d="M296 43Q309 33 324 36M330 34Q340 37 343 44" fill="none" stroke="#658a6e" strokeWidth="2" strokeLinecap="round" />
           <path d="M298 71Q286 64 289 78Q292 86 298 84" fill="#efc39d" stroke="#6f5141" strokeWidth="1.5" />
           <path d="M307 64L314 63M329 64L336 67" stroke="#335746" strokeWidth="2.3" strokeLinecap="round" />
           <g className="montage-person-eyes" fill="#335746"><ellipse cx="312" cy="72" rx="2" ry="2.7" /><ellipse cx="333" cy="73" rx="2" ry="2.7" /></g>
-          <path d="M328 74L334 83L328 84M313 93Q321 98 328 92" fill="none" stroke="#9c7156" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M328 74L334 83L328 84" fill="none" stroke="#9c7156" strokeWidth="1.8" strokeLinecap="round" />
+          <motion.path d="M313 93Q321 98 328 92" animate={{ d: celebrating ? "M312 91Q322 105 332 91" : "M313 93Q321 98 328 92" }} transition={poseTransition} fill="none" stroke="#9c7156" strokeWidth="1.8" strokeLinecap="round" />
         </motion.g>
         <g className="montage-control-surface">
           <path d="M279 139H354L361 170H273Z" fill="#315746" stroke="#244336" strokeWidth="2" strokeLinejoin="round" />
@@ -161,20 +207,30 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
         <g className="montage-arm-left">
           <path d="M284 123L270 151" stroke="#335746" strokeWidth="25" strokeLinecap="round" />
           <path d="M284 123L270 151" stroke="#69a585" strokeWidth="20" strokeLinecap="round" />
-          <path d="M270 155Q271 162 283 166L292 170" fill="none" stroke="#6f5141" strokeWidth="14" strokeLinecap="round" />
-          <path d="M270 155Q271 162 283 166L292 170" fill="none" stroke="#efc39d" strokeWidth="11" strokeLinecap="round" />
-          <g className="montage-hand-left"><path d="M289 165Q295 163 303 170L308 174Q310 178 306 178L297 173L302 178Q302 181 298 179L290 175Z" fill="#efc39d" stroke="#9c7156" strokeWidth="1.4" strokeLinejoin="round" /></g>
+          <motion.path d="M270 155Q271 162 283 166L292 170" animate={{ d: leftForearm }} transition={poseTransition} fill="none" stroke="#6f5141" strokeWidth="14" strokeLinecap="round" />
+          <motion.path d="M270 155Q271 162 283 166L292 170" animate={{ d: leftForearm }} transition={poseTransition} fill="none" stroke="#efc39d" strokeWidth="11" strokeLinecap="round" />
+          <motion.g animate={{ x: leftX, y: leftY }} transition={poseTransition}>
+            <g className="montage-hand-left"><path d="M289 165Q295 163 303 170L308 174Q310 178 306 178L297 173L302 178Q302 181 298 179L290 175Z" fill="#efc39d" stroke="#9c7156" strokeWidth="1.4" strokeLinejoin="round" />
+              <g className="montage-pencil" aria-hidden="true"><path d="M302 153L307 152L312 178L308 184L305 179Z" fill="#e9bb68" stroke="#8d774f" strokeWidth="1.2" /><path d="M308 184L312 178L305 179Z" fill="#f7e1b5" /><path d="M308 184L309 180" stroke="#465e4e" strokeWidth="1.5" /></g>
+              <g className="montage-magnifier" aria-hidden="true"><path d="M303 170L313 152" stroke="#577e6a" strokeWidth="5" strokeLinecap="round" /><circle cx="318" cy="143" r="14" fill="#dceef4cc" stroke="#3f6b57" strokeWidth="3" /><path d="M312 136Q318 132 324 138" fill="none" stroke="#fffef6" strokeWidth="3" strokeLinecap="round" /></g>
+            </g>
+          </motion.g>
         </g>
         <g className="montage-arm-right">
-          <path d="M354 124L369 151" stroke="#335746" strokeWidth="25" strokeLinecap="round" />
-          <path d="M354 124L369 151" stroke="#69a585" strokeWidth="20" strokeLinecap="round" />
+          <motion.path d="M354 124L369 151" animate={{ d: `M354 124L369 ${rightElbowY - 4}` }} transition={poseTransition} stroke="#335746" strokeWidth="25" strokeLinecap="round" />
+          <motion.path d="M354 124L369 151" animate={{ d: `M354 124L369 ${rightElbowY - 4}` }} transition={poseTransition} stroke="#69a585" strokeWidth="20" strokeLinecap="round" />
           <g className="montage-working-forearm">
-            <motion.path d="M369 155Q366 162 355 166L346 170" animate={{ d: selecting ? `M369 155Q381 164 396 ${166 + handY}L${346 + handX} ${170 + handY}` : "M369 155Q366 162 355 166L346 170" }} transition={poseTransition} fill="none" stroke="#6f5141" strokeWidth="14" strokeLinecap="round" />
-            <motion.path d="M369 155Q366 162 355 166L346 170" animate={{ d: selecting ? `M369 155Q381 164 396 ${166 + handY}L${346 + handX} ${170 + handY}` : "M369 155Q366 162 355 166L346 170" }} transition={poseTransition} fill="none" stroke="#efc39d" strokeWidth="11" strokeLinecap="round" />
+            <motion.path d="M369 155Q366 162 355 166L346 170" animate={{ d: rightForearm }} transition={poseTransition} fill="none" stroke="#6f5141" strokeWidth="14" strokeLinecap="round" />
+            <motion.path d="M369 155Q366 162 355 166L346 170" animate={{ d: rightForearm }} transition={poseTransition} fill="none" stroke="#efc39d" strokeWidth="11" strokeLinecap="round" />
             <motion.g animate={{ x: handX, y: handY }} transition={poseTransition}><g className="montage-hand-right"><path d="M349 165Q342 163 335 170L330 174Q328 178 332 178L341 173L336 178Q336 181 340 179L348 175Z" fill="#efc39d" stroke="#9c7156" strokeWidth="1.4" strokeLinejoin="round" /></g></motion.g>
           </g>
         </g>
       </g>
+      <g className="montage-release-plane" aria-hidden="true"><path d="M-13 4L18-9L3 15L0 5Z" fill="#fff6da" stroke="#4a7962" strokeWidth="1.6" strokeLinejoin="round" /><path d="M0 5L18-9" stroke="#7fa58b" strokeWidth="1.4" /></g>
+      <g className="montage-release-sparkles" fill="none" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+        <path d="M374 49V58M369 54H379" stroke="#c8a052" /><path d="M405 70L410 65M405 65L410 70" stroke="#c77a62" /><path d="M353 15L358 10M353 10L358 15" stroke="#679b8c" />
+      </g>
+      <g className="montage-review-seal" aria-hidden="true"><circle cx="472" cy="57" r="18" fill="#eef5df" stroke="#7ba075" strokeWidth="1.6" /><path d="M462 57L469 64L482 49" fill="none" stroke="#438361" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></g>
       <g transform="translate(0 40)">
       {/* A shallow isometric desk grounds the upright, readable monitor. */}
       <path d="M37 425H601L626 449H13Z" fill="#e9d6ad" stroke="#335746" strokeWidth="2.2" strokeLinejoin="round" />
@@ -202,13 +258,13 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
         </div>
         <div className="montage-screen-caption">{screen.label}</div>
         <div className="montage-step-cards" data-flow={stage === 2 || stage === 4}>
-          {screen.cards.map(([kind, label, detail], index) => <div className="montage-step-card" data-complete={completed > index} data-current={working && pointerIndex === index} key={index}>
+          {screen.cards.map(([kind, label, detail], index) => <button type="button" className="montage-step-card" data-complete={completed > index} data-current={working && pointerIndex === index} key={index} onClick={() => replay(index)} aria-label={`Watch the engineer: ${label.toLowerCase()}`}>
             <AnimatePresence initial={false} mode="wait"><motion.div key={`${stage}-${index}`} initial={animate ? { opacity: 0, y: 5 } : false} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: reducedMotion ? 0 : .28, delay: reducedMotion ? 0 : index * .035 }}>
               <span>{kind}</span><b>{label}</b><small>{detail}</small>
             </motion.div></AnimatePresence>
             <i className="montage-step-check" aria-hidden="true">✓</i>
             {index < 2 && <i className="montage-flow-arrow" aria-hidden="true">→</i>}
-          </div>)}
+          </button>)}
         </div>
         <div className="montage-continuity-note">
           <span aria-hidden="true">{stage === 4 && finished ? "↻" : "↳"}</span>
@@ -226,7 +282,7 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
       </motion.div>
       <div className="montage-screen-feedback" data-visible={stage === 4 && visibleBeat >= 8} aria-hidden="true"><span>♡</span> A new idea from a user</div>
     </div>
-    <button className="journey-monitor-action" type="button" aria-controls={`${id}-result`} onClick={replay}>
+    <button className="journey-monitor-action" type="button" aria-controls={`${id}-result`} onClick={() => replay()}>
       <span>{acted ? "Replay this moment" : actions[stage]}</span><span aria-hidden="true">{acted ? "↻" : "→"}</span>
     </button>
     <span className="journey-action-status" id={`${id}-result`} role="status" aria-live="polite" aria-atomic="true">{acted && finished ? `${results[stage]} Run ${action.count} complete.` : ""}</span>
