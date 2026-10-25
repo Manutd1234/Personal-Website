@@ -2,25 +2,16 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { getBookSceneIndexes, queueBookTransition, runBookTransition } from '../components/book-transition.ts';
 
-test('an opening or closing spread never shares its 3D scene with other books', () => {
-  for (let activeBook = 0; activeBook < 22; activeBook++) {
-    // Includes the wraparound neighbors from the screenshots: Help4Good and
-    // BrainHack must disappear when AlphaEngine unfolds, and stay absent while
-    // the reader closes even though opened has already been reset to null.
-    assert.deepEqual(getBookSceneIndexes(22, activeBook, activeBook), [activeBook]);
-  }
-});
-
-test('closing restores the nearby shelf, including wraparound books, without losing projects', () => {
-  assert.deepEqual(getBookSceneIndexes(22, 0, null), [0, 1, 2, 3, 19, 20, 21]);
-  assert.deepEqual(getBookSceneIndexes(22, 21, null), [0, 1, 2, 18, 19, 20, 21]);
+test('the mounted shelf stays stable through reading and restores wraparound neighbors', () => {
+  assert.deepEqual(getBookSceneIndexes(22, 0), [0, 1, 2, 3, 19, 20, 21]);
+  assert.deepEqual(getBookSceneIndexes(22, 21), [0, 1, 2, 18, 19, 20, 21]);
   for (let current = 0; current < 22; current++) {
-    const shelf = getBookSceneIndexes(22, current, null);
+    const shelf = getBookSceneIndexes(22, current);
     assert.equal(shelf.length, 7);
     assert.ok(shelf.includes(current));
   }
-  assert.deepEqual(getBookSceneIndexes(0, 0, null), []);
-  assert.deepEqual(getBookSceneIndexes(2, 0, null), [0, 1]);
+  assert.deepEqual(getBookSceneIndexes(0, 0), []);
+  assert.deepEqual(getBookSceneIndexes(2, 0), [0, 1]);
 });
 
 function pendingFixture() {

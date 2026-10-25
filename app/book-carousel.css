@@ -825,6 +825,7 @@
   .book-stage:is([data-open="true"], [data-returning="true"])
   :is(.book-orbit-item, .book-click, .book-object, .book-cover-hinge, .book-page-leaf, .book-under-leaf) {
   transition: none;
+  animation: none;
 }
 .book-carousel .book-stage[data-open="true"] .book-scene {
   visibility: hidden;
@@ -1332,13 +1333,55 @@
   transition: none;
   animation: none;
 }
-/* Hover keeps the book closed. A page-flipping hover competed with the full
-   opening timeline and reopened the book when keyboard focus returned. */
+/* Keep cover and leaf preview under one motion/visibility guard. */
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .book-carousel:not([data-reduced-motion="true"])
-    .book-stage:not([data-open="true"]):not([data-returning="true"]):not([data-dragging="true"]):not([data-rotating]):not([data-suspended])
-    .book-orbit-item[data-current="true"] > .book-click[data-hovered="true"] .book-front::after {
-    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--cover-ink) 30%, transparent);
+    .book-stage:not([data-open="true"]):not([data-returning="true"]):not(
+      [data-dragging="true"]
+    ):not([data-rotating]):not([data-suspended])
+    .book-orbit-item[data-current="true"] > .book-click:is([data-hovered="true"], :focus-visible) {
+    --preview-cover-angle: -68deg;
+    --preview-leaf-angle: -18deg;
+    --preview-under-first-angle: -2deg;
+    --preview-under-second-angle: -4deg;
+    --preview-page-delay: 140ms;
+    --preview-under-delay: 100ms;
+  }
+  .book-carousel:not([data-reduced-motion="true"])
+    .book-stage:not([data-open="true"]):not([data-returning="true"]):not(
+      [data-dragging="true"]
+    ):not([data-rotating]):not([data-suspended])
+    .book-orbit-item[data-current="true"] > .book-click:is([data-hovered="true"], :focus-visible)
+    .book-page-leaf {
+    animation: book-preview-leaf 4200ms 300ms ease-in-out infinite;
+  }
+  .book-carousel:not([data-reduced-motion="true"])
+    .book-stage:not([data-open="true"]):not([data-returning="true"]):not(
+      [data-dragging="true"]
+    ):not([data-rotating]):not([data-suspended])
+    .book-orbit-item[data-current="true"] > .book-click:is([data-hovered="true"], :focus-visible)
+    .book-under-leaf-second {
+    animation: book-preview-underleaf 4200ms 750ms ease-in-out infinite;
+  }
+}
+@keyframes book-preview-leaf {
+  0%,
+  100% {
+    transform: translateZ(calc(var(--page-half-depth) + 0.6px)) rotateY(-12deg);
+  }
+  42%,
+  62% {
+    transform: translateZ(calc(var(--page-half-depth) + 0.6px)) rotateY(-55deg);
+  }
+}
+@keyframes book-preview-underleaf {
+  0%,
+  100% {
+    transform: translateZ(calc(var(--page-half-depth) + 0.4px)) rotateY(-3deg);
+  }
+  42%,
+  62% {
+    transform: translateZ(calc(var(--page-half-depth) + 0.4px)) rotateY(-25deg);
   }
 }
 @container project-books (max-width: 760px) {

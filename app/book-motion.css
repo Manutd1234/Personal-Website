@@ -111,38 +111,16 @@
   }
 }
 
-/* The physical paper reaches the reader's exact page dimensions before its
-   visibility handoff. Both surfaces use the same padding and full-size type. */
-.book-carousel .book-stage:is([data-open="true"], [data-returning="true"])
-  .book-orbit-item[data-return-book="true"] .book-page-leaf {
-  inset: 0;
-}
-.book-carousel .book-stage:is([data-open="true"], [data-returning="true"])
-  .book-orbit-item[data-return-book="true"] .book-leaf-front .book-preview-page {
-  transform: scale(var(--preview-cover-scale-x), var(--preview-cover-scale-y));
-}
-.book-carousel .book-stage:is([data-open="true"], [data-returning="true"])
-  .book-orbit-item[data-return-book="true"] .book-inside-cover {
-  border-radius: 4px 0 0 4px;
-}
-.book-carousel .book-stage:is([data-open="true"], [data-returning="true"])
-  .book-orbit-item[data-return-book="true"] .book-leaf-front {
-  border-radius: 0 10px 10px 0;
-}
-
-/* A completed book is static DOM, not a retained stack of fill:both effects.
-   These phases are committed before the transition controller releases WAAPI. */
-.book-carousel .book-stage:is([data-open="true"], [data-returning="true"])
-  .book-orbit-item:not([data-return-book="true"]) {
-  visibility: hidden;
-  pointer-events: none;
+/* Keep the original lift / unfold / grow motion in its own layer. The flat
+   reader sits above the 3D shelf, so background covers cannot cut through it. */
+.book-carousel .book-scene { z-index: 1; }
+.book-carousel .book-theatre-flow { z-index: 2; isolation: isolate; }
+.book-carousel .book-stage:is([data-motion-phase="opening"], [data-motion-phase="closing"], [data-motion-phase="shelf"]) .book-scene {
+  visibility: visible;
 }
 .book-carousel .book-stage[data-motion-phase="reading"] .book-scene {
   visibility: hidden;
   pointer-events: none;
-}
-.book-carousel .book-stage:is([data-motion-phase="opening"], [data-motion-phase="closing"], [data-motion-phase="shelf"]) .book-scene {
-  visibility: visible;
 }
 .book-carousel .book-stage:is([data-motion-phase="opening"], [data-motion-phase="shelf"]) .book-details {
   visibility: hidden;
@@ -150,8 +128,8 @@
 .book-carousel .book-stage:is([data-motion-phase="reading"], [data-motion-phase="closing"]) .book-details {
   visibility: visible;
   opacity: 1;
+  transform: none;
 }
-.book-carousel .book-stage:is([data-motion-phase="opening"], [data-motion-phase="closing"])
-  .book-orbit-item[data-return-book="true"] {
+.book-carousel .book-stage:is([data-motion-phase="opening"], [data-motion-phase="closing"]) .book-orbit-item[data-return-book="true"] {
   will-change: transform;
 }

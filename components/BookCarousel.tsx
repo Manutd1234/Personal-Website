@@ -668,7 +668,8 @@ export default function BookCarousel({
       setReturning(true);
       stageRef.current?.setAttribute("data-motion-phase", "closing");
       if (transitionRef.current?.isActive()) transitionRef.current.close();
-      else startBookTransitionRef.current(-1);
+      // A fresh close starts after the child settles its visible page turn.
+      // The closing layout effect below copies that exact committed spread.
     } else {
       stopBookTransition();
       stageRef.current?.setAttribute("data-motion-phase", "shelf");
@@ -751,12 +752,6 @@ export default function BookCarousel({
     const paper = reader?.querySelector<HTMLElement>(".reader-spread");
     const pose = openingPoseRef.current;
     if (!opening || !stage || !theatre || !scene || !details || !controls || !book || !reader || !paper || !pose) return;
-    if (reducedMotion) {
-      stage.dataset.motionPhase = "reading";
-      setReaderReady(true);
-      return;
-    }
-    stage.dataset.motionPhase = readerReady ? "reading" : "opening";
     const complete = (direction: 1 | -1) => {
       launchFrameRef.current = null;
       transitionRef.current = null;
@@ -768,40 +763,41 @@ export default function BookCarousel({
         setReturning(false);
       }
     };
+    if (reducedMotion) { complete(1); return; }
+    stage.dataset.motionPhase = readerReady ? "reading" : "opening";
     const start = (direction: 1 | -1) => {
       launchFrameRef.current?.cancel();
       launchFrameRef.current = null;
       transitionRef.current?.cancel();
       if (!canInteract()) { complete(direction); return; }
-      const object = book.querySelector<HTMLElement>(".book-object");
-      const cover = book.querySelector<HTMLElement>(".book-cover-hinge");
-      const button = book.querySelector<HTMLElement>(".book-click");
-      if (!object || !cover || !button) return;
-      // Measure once, after the reader's single-page layout has committed.
-      // A fresh close measures the current layout; no completed animations are
-      // kept alive, retargeted or traversed while the visitor reads.
+      // Restore the original twelve-project choreography: lift the closed
+      // book, unfold at its natural proportions, then grow the paper to read.
+      const scale = Math.min(1.18, Math.max(1, stage.clientWidth -
+        parseFloat(getComputedStyle(stage).paddingLeft) -
+        parseFloat(getComputedStyle(stage).paddingRight) - 24) / (book.offsetWidth * 2.12));
       const singlePage = reader.clientWidth < 680;
-      const pageWidth = paper.offsetWidth / (singlePage ? 1 : 2);
-      const pageHeight = paper.offsetHeight;
+      sizePreviewPages(stage, book, paper.offsetWidth / (singlePage ? 1 : 2), paper.offsetHeight, singlePage);
       let paperTop = 0;
       let parent: HTMLElement | null = paper;
-      while (parent && parent !== theatre) {
+      while (parent && parent !== details) {
         paperTop += parent.offsetTop;
         parent = parent.offsetParent as HTMLElement | null;
       }
-      const bookWidth = book.offsetWidth;
-      const bookHeight = book.offsetHeight;
-      if (!bookWidth || !bookHeight || !pageWidth || !pageHeight) { complete(direction); return; }
-      const depth = parseFloat(getComputedStyle(object).getPropertyValue("--book-depth")) || 30;
-      const geometry = {
-        scaleX: pageWidth / bookWidth, scaleY: pageHeight / bookHeight,
-        x: singlePage ? pageWidth : pageWidth / 2,
-        y: paperTop + pageHeight / 2 - scene.offsetHeight / 2,
-        z: -(depth / 2 - 2), rise: Math.min(82, Math.max(48, scene.clientWidth * 0.065)),
-      };
-      sizePreviewPages(stage, book, pageWidth, pageHeight, singlePage);
-      const openEnd = 0.9;
-      const handoff = 0.92;
+      const paperCenter = paperTop + paper.offsetHeight / 2;
+      const bookOffset = book.offsetHeight * .12;
+      const bookCenter = scene.offsetHeight / 2 + bookOffset;
+      const perspective = parseFloat(getComputedStyle(scene).perspective) || 1400;
+      const lift = Math.min(160, perspective * .2);
+      const compensation = 1 - lift / perspective;
+      const originOffset = scene.offsetHeight * .12;
+      const rise = Math.min(104, Math.max(80, scene.clientWidth * .095));
+      const raised = `translate3d(0, ${(originOffset - rise) * compensation - originOffset}px, ${lift}px) scale(${compensation * 1.04})`;
+      const positioned = `translate3d(${book.offsetWidth * scale / 2 * compensation}px, ${(originOffset + bookOffset) * compensation - originOffset}px, ${lift}px) scale(${compensation})`;
+      const arrival = `translate(${singlePage ? -book.offsetWidth * scale / 2 : 0}px, ${bookCenter - details.offsetTop - paperCenter}px) scale(${book.offsetWidth * scale * (singlePage ? 1 : 2) / paper.offsetWidth}, ${book.offsetHeight * scale / paper.offsetHeight})`;
+      details.style.transformOrigin = `50% ${paperCenter}px`;
+      const liftEnd = .22;
+      const unfoldStart = .12;
+      const openEnd = .54;
       const ease = "cubic-bezier(.4,0,.2,1)";
       const animations: Animation[] = [];
       const animate = (element: HTMLElement, frames: Keyframe[]) => {
@@ -809,42 +805,67 @@ export default function BookCarousel({
         animation.pause();
         animations.push(animation);
       };
-      const move = (element: HTMLElement, to: string, delay = 0) => {
-        const from = pose.transforms.get(element) ?? getComputedStyle(element).transform;
+      const move = (element: HTMLElement, to: string) => {
+        let from = pose.transforms.get(element) ?? getComputedStyle(element).transform;
+        // A fresh return ends closed, even if opening began with a hovered
+        // cover. Interrupted opening still reverses its captured pose directly.
+        if (direction === -1) {
+          if (element.matches(".book-cover-hinge"))
+            from = "translateZ(calc(var(--book-half-depth) - 1px)) rotateY(0deg)";
+          else if (element.matches(".book-page-leaf"))
+            from = "translateZ(calc(var(--page-half-depth) + .6px)) rotateY(0deg)";
+          else if (element.matches(".book-under-leaf"))
+            from = `translateZ(calc(var(--page-half-depth) + ${element.matches(".book-under-leaf-second") ? ".4" : ".2"}px)) rotateY(0deg)`;
+        }
         animate(element, [
-          {transform: from, offset: 0},
-          {transform: from, offset: delay, easing: ease},
+          {transform: from, offset: 0}, {transform: from, offset: unfoldStart, easing: ease},
           {transform: to, offset: openEnd}, {transform: to, offset: 1},
         ]);
       };
-      const initial = pose.transforms.get(book);
-      const origin = new DOMMatrixReadOnly(initial && initial !== "none" ? initial : undefined);
-      const arcFrames = Array.from({length: 37}, (_, index): Keyframe => {
-        const t = index / 36;
-        const eased = t * t * (3 - 2 * t);
-        const arc = Math.sin(Math.PI * eased);
-        return {offset: t * openEnd, transform: `translate3d(${origin.m41 + (geometry.x - origin.m41) * eased}px, ${origin.m42 + (geometry.y - origin.m42) * eased - geometry.rise * arc}px, ${origin.m43 + (geometry.z - origin.m43) * eased + 54 * arc}px)`};
+      animate(book, [
+        {transform: pose.transforms.get(book), visibility: "visible", offset: 0, easing: ease},
+        {transform: raised, visibility: "visible", offset: liftEnd, easing: "cubic-bezier(.3,0,.7,.75)"},
+        {transform: positioned, visibility: "visible", offset: openEnd},
+        {transform: positioned, visibility: "hidden", offset: openEnd + .0001},
+        {transform: positioned, visibility: "hidden", offset: 1},
+      ]);
+      const button = book.querySelector<HTMLElement>(".book-click");
+      const object = book.querySelector<HTMLElement>(".book-object");
+      const cover = book.querySelector<HTMLElement>(".book-cover-hinge");
+      const leaf = book.querySelector<HTMLElement>(".book-page-leaf");
+      if (button) move(button, "rotateY(0deg)");
+      if (object) move(object, `rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(${scale})`);
+      if (cover) move(cover, "translateZ(calc(var(--book-half-depth) - 1px)) rotateY(-180deg)");
+      if (leaf) move(leaf, "translateZ(calc(var(--page-half-depth) + 0.6px)) rotateY(0deg)");
+      book.querySelectorAll<HTMLElement>(".book-under-leaf").forEach(under =>
+        move(under, "translateZ(calc(var(--page-half-depth) + 0.2px)) rotateY(0deg)"));
+      orbitRefs.current.forEach(neighbor => {
+        if (!neighbor || neighbor === book) return;
+        const rest = "translate3d(var(--orbit-x), var(--orbit-y), var(--orbit-z))";
+        animate(neighbor, [
+          {transform: rest, offset: 0, easing: ease},
+          {transform: `${rest} translate3d(0, 32px, -80px)`, offset: openEnd},
+          {transform: `${rest} translate3d(0, 32px, -80px)`, offset: 1},
+        ]);
       });
-      animate(book, [...arcFrames, {...arcFrames[arcFrames.length - 1], offset: 1}]);
-      move(button, "rotateY(0deg)");
-      move(object, `rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale3d(${geometry.scaleX}, ${geometry.scaleY}, 1)`);
-      move(cover, "translateZ(calc(var(--book-half-depth) - 1px)) rotateY(-180deg)", 0.08);
-      // This scene contains only the selected book. Neighboring covers are
-      // unmounted until closing completes, so 3D depth sorting cannot put them
-      // through the unfolding paper. The reader takes over at one handoff.
       animate(scene, [
-        {visibility: "visible", offset: 0}, {visibility: "visible", offset: handoff},
-        {visibility: "hidden", offset: handoff + 0.0001}, {visibility: "hidden", offset: 1},
+        {visibility: "visible", offset: 0}, {visibility: "visible", offset: .9999},
+        {visibility: "hidden", offset: 1},
       ]);
       animate(controls, [
-        {opacity: 1, offset: 0, easing: ease}, {opacity: 0, offset: 0.3}, {opacity: 0, offset: 1},
+        {opacity: 1, offset: 0, easing: ease}, {opacity: 0, offset: openEnd}, {opacity: 0, offset: 1},
       ]);
-      reader.querySelectorAll<HTMLElement>(".reader-running-title, .reader-navigation, .reader-key-hint").forEach((chrome) => {
-        animate(chrome, [{opacity: 0, offset: 0}, {opacity: 0, offset: handoff}, {opacity: 1, offset: 1}]);
+      reader.querySelectorAll<HTMLElement>(".reader-running-title, .reader-navigation, .reader-key-hint").forEach(chrome => {
+        animate(chrome, [
+          {opacity: 0, offset: 0}, {opacity: 0, offset: openEnd, easing: ease},
+          {opacity: 1, offset: .88}, {opacity: 1, offset: 1},
+        ]);
       });
       animate(details, [
-        {opacity: 1, visibility: "hidden", offset: 0}, {opacity: 1, visibility: "hidden", offset: handoff},
-        {opacity: 1, visibility: "visible", offset: handoff + 0.0001}, {opacity: 1, visibility: "visible", offset: 1},
+        {opacity: 1, visibility: "hidden", transform: arrival, offset: 0},
+        {opacity: 1, visibility: "hidden", transform: arrival, offset: openEnd},
+        {opacity: 1, visibility: "visible", transform: arrival, offset: openEnd + .0001, easing: "cubic-bezier(.25,.35,.25,1)"},
+        {opacity: 1, visibility: "visible", transform: "translate(0, 0) scale(1)", offset: 1},
       ]);
       stage.dataset.motionPhase = direction === 1 ? "opening" : "closing";
       transitionRef.current = runBookTransition({
@@ -860,38 +881,34 @@ export default function BookCarousel({
       onSkip: () => complete(1),
     });
     return stopBookTransition;
-    // An opening is a discrete event. Closing either reverses the active run
-    // or starts a new bounded run from the static reader.
+    // The original visual keyframes use the bounded controller so finishing,
+    // Escape, tab switches and resize cannot retain or restart filled effects.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opening, reducedMotion, stopBookTransition]);
 
   useLayoutEffect(() => {
-    if (!returning) return;
-    // Wait for the child's closing layout update to settle any in-flight turn.
-    // Copy only the visible paper, preserving its scroll position, so a reader
-    // closing page 8 does not suddenly see page 1 halfway through the fold.
-    const frame = requestAnimationFrame(() => {
-      if (!closingRef.current) return;
-      const book = orbitRefs.current[lastOpenedRef.current];
-      const reader = detailRef.current?.querySelector<HTMLElement>(".project-book-reader");
-      if (!book || !reader) return;
-      const single = reader.dataset.single === "true";
-      for (const side of ["left", "right"] as const) {
-        const source = reader.querySelector<HTMLElement>(`.reader-static-${single ? "left" : side} .reader-page`);
-        const destination = book.querySelector<HTMLElement>(`[data-preview-side="${side}"]`);
-        if (!source || !destination) continue;
-        const copy = source.cloneNode(true) as HTMLElement;
-        copy.classList.add("book-preview-page");
-        copy.inert = true;
-        copy.setAttribute("aria-hidden", "true");
-        copy.querySelectorAll("[id]").forEach((node) => node.removeAttribute("id"));
-        destination.replaceChildren(copy);
-        const body = copy.querySelector<HTMLElement>(".reader-page-body");
-        const originalBody = source.querySelector<HTMLElement>(".reader-page-body");
-        if (body && originalBody) body.scrollTop = originalBody.scrollTop;
-      }
-    });
-    return () => cancelAnimationFrame(frame);
+    if (!returning || !closingRef.current) return;
+    // Child layout effects settle any page turn before this exact visible
+    // spread is copied. Start the reverse only after its paper is ready.
+    const book = orbitRefs.current[lastOpenedRef.current];
+    const reader = detailRef.current?.querySelector<HTMLElement>(".project-book-reader");
+    if (!book || !reader) return;
+    const single = reader.dataset.single === "true";
+    for (const side of ["left", "right"] as const) {
+      const source = reader.querySelector<HTMLElement>(`.reader-static-${single ? "left" : side} .reader-page`);
+      const destination = book.querySelector<HTMLElement>(`[data-preview-side="${side}"]`);
+      if (!source || !destination) continue;
+      const copy = source.cloneNode(true) as HTMLElement;
+      copy.classList.add("book-preview-page");
+      copy.inert = true;
+      copy.setAttribute("aria-hidden", "true");
+      copy.querySelectorAll("[id]").forEach(node => node.removeAttribute("id"));
+      destination.replaceChildren(copy);
+      const body = copy.querySelector<HTMLElement>(".reader-page-body");
+      const originalBody = source.querySelector<HTMLElement>(".reader-page-body");
+      if (body && originalBody) body.scrollTop = originalBody.scrollTop;
+    }
+    if (!transitionRef.current?.isActive()) startBookTransitionRef.current(-1);
   }, [returning]);
 
   useEffect(() => {
@@ -1189,7 +1206,7 @@ export default function BookCarousel({
             role="region"
             tabIndex={isOpen || returning ? -1 : 0}
           >
-            {getBookSceneIndexes(count, current, detailIndex).map((index) => {
+            {getBookSceneIndexes(count, current).map((index) => {
               const project = projects[index];
               // Stable SSR seed; updateAngle owns these CSS variables after
               // mount, so a label update cannot rewind the animated pose.
@@ -1247,7 +1264,7 @@ export default function BookCarousel({
                       index={index}
                       project={project}
                       media={media[project.title]}
-                      showPages={index === detailIndex}
+                      showPages={index === current || index === detailIndex}
                     />
                   </button>
                 </div>

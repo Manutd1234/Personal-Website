@@ -12,11 +12,9 @@ export type BookTransitionLaunch = {
   finish: () => void;
 };
 
-/** Opening paper must never share its 3D scene with neighboring covers.
- * A z-index cannot prevent intersections inside a preserve-3d context. Keep
- * only the active book mounted until its closing pose has fully settled. */
-export function getBookSceneIndexes(count: number, current: number, activeBook: number | null): number[] {
-  if (activeBook !== null) return activeBook >= 0 && activeBook < count ? [activeBook] : [];
+/** A fixed nearby shelf stays mounted through opening and closing, so covers
+ * can recede in place without popping neighbors or re-decoding their images. */
+export function getBookSceneIndexes(count: number, current: number): number[] {
   return Array.from({length: count}, (_, index) => index).filter((index) => {
     const distance = Math.abs(index - current);
     return Math.min(distance, count - distance) <= 3;
