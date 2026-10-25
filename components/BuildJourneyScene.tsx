@@ -59,8 +59,8 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
   // and wrist travel together, keeping the larger gestures attached to the body.
   const handX = celebrating ? 35 : selecting ? (pressing ? 20 : 10) : typing ? (gesture ? 7 : -3) : 0;
   const handY = celebrating ? -70 : selecting ? (pressing ? 6 : -3) : typing ? (gesture ? -5 : 1) : 0;
-  const leftX = sketching ? -45 + pointerIndex * 5 : guiding ? -47 + pointerIndex * 7 : inspecting ? -36 + (gesture ? -7 : 0) : typing ? (gesture ? -5 : 4) : 0;
-  const leftY = sketching ? (gesture ? -18 : -34) : guiding ? -46 + pointerIndex * 5 : inspecting ? -44 + (gesture ? -3 : 3) : typing ? (gesture ? 1 : -6) : 0;
+  const leftX = sketching ? -5 + pointerIndex * 3 : guiding ? -47 + pointerIndex * 7 : inspecting ? 8 + (gesture ? -3 : 3) : typing ? (gesture ? -5 : 4) : 0;
+  const leftY = sketching ? (gesture ? -5 : -9) + pointerIndex : guiding ? -46 + pointerIndex * 5 : inspecting ? -29 + (gesture ? -2 : 1) : typing ? (gesture ? 1 : -6) : 0;
   const leftWrist = { x: 292 + leftX, y: 170 + leftY };
   const rightWrist = { x: 346 + handX, y: 170 + handY };
   // Keep upper arms beside the torso. The forearms carry the action, without
@@ -77,7 +77,7 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
   // backward tail at the wrist as the magnifier and mouse poses change.
   const leftForearm = `M${leftElbow.x} ${leftElbow.y}Q${(leftElbow.x + leftWrist.x) / 2 - 2} ${(leftElbow.y + leftWrist.y) / 2 + 2} ${leftWrist.x} ${leftWrist.y}`;
   const rightForearm = `M${rightElbow.x} ${rightElbow.y}Q${(rightElbow.x + rightWrist.x) / 2 + 2} ${(rightElbow.y + rightWrist.y) / 2 + 2} ${rightWrist.x} ${rightWrist.y}`;
-  const poseTransition = { duration: reducedMotion ? 0 : .46, ease: [0.22, 0.61, 0.36, 1] as const };
+  const poseTransition = { duration: reducedMotion ? 0 : .5, ease: [0.22, 0.61, 0.36, 1] as const };
 
   // Schedule only the eight visible beats; pauses preserve exact active time.
   useEffect(() => {
@@ -186,10 +186,6 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
         <path d="M116 52V70M109 63L116 70L123 63" fill="none" stroke="#4e8eba" strokeWidth="2" strokeLinecap="round" />
       </g>
 
-      <g className="montage-note-prop" aria-hidden="true">
-        <path d="M221 137L268 131L279 173L230 179Z" fill="#fff7d7" stroke="#ae9d70" strokeWidth="1.6" />
-        <path className="montage-note-ink" d="M234 146L258 143M237 153L266 149M239 160L258 157M241 167L266 163" stroke="#63877a" strokeWidth="1.7" strokeLinecap="round" fill="none" pathLength="100" />
-      </g>
       <g className="montage-idea-bubble" aria-hidden="true">
         <path d="M210 22H249Q257 22 257 31V53Q257 61 249 61H238L226 70V61H210Q202 61 202 53V31Q202 22 210 22Z" fill="#fff8db" stroke="#c6b77d" strokeWidth="1.5" />
         <path d="M221 38Q221 29 230 29Q239 29 239 38Q239 43 234 47V51H226V47Q221 43 221 38M226 55H234" fill="none" stroke="#8e8645" strokeWidth="2" strokeLinecap="round" />
@@ -206,7 +202,7 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
         <path d="M303 99V112L319 124L334 111V96" fill="#e8b48f" stroke="#6f5141" strokeWidth="2" />
         <path d="M301 108L319 123L334 108L344 116L329 134L319 127L310 135L291 117Z" fill="#fffaf0" stroke="#335746" strokeWidth="2" />
         <path d="M319 130V174" stroke="#335746" strokeWidth="1.8" />
-        <motion.g className="montage-person-head" animate={{ rotate: celebrating ? -9 : inspecting ? -12 : sketching ? -10 : guiding ? -8 + pointerIndex * 4 : finished ? -3 : selecting ? pointerIndex * 3 - 3 : typing ? 5 : 0, y: typing || sketching ? 3 : celebrating ? -2 : 0 }} transition={poseTransition}>
+        <motion.g className="montage-person-head" animate={{ rotate: celebrating ? -9 : inspecting ? 5 : sketching ? -10 : guiding ? -8 + pointerIndex * 4 : finished ? -3 : selecting ? pointerIndex * 3 - 3 : typing ? 5 : 0, y: typing || sketching ? 3 : celebrating ? -2 : 0 }} transition={poseTransition}>
           <path d="M290 57Q291 31 317 31Q344 32 346 57L343 84Q341 101 323 106Q306 105 296 93L291 77" fill="#efc39d" stroke="#6f5141" strokeWidth="2" />
           <path d="M292 76Q283 63 288 47Q293 27 317 26Q342 27 349 46L345 60L337 54L331 43Q315 54 299 49L299 74Z" fill="#284b3e" stroke="#284b3e" strokeWidth="2" />
           <path d="M296 43Q309 33 324 36M330 34Q340 37 343 44" fill="none" stroke="#658a6e" strokeWidth="2" strokeLinecap="round" />
@@ -225,14 +221,21 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
           <path d="M307 184H337L341 188H303Z" fill="#a9c5ac" />
           <ellipse cx="364" cy="183" rx="13" ry="8" fill="#f4f3df" stroke="#53765c" strokeWidth="1.8" /><path d="M364 176V181" stroke="#53765c" strokeWidth="1.4" /><circle className="montage-control-touch" cx="364" cy="181" r="12" fill="none" stroke="#e79271" strokeWidth="2.5" />
         </g>
+        {/* The paper shares the hand's coordinate system, so the pencil lands
+            on it without a backward reach or a floating grip. */}
+        <g className="montage-note-prop" aria-hidden="true">
+          <path d="M270 157L312 153L327 183L280 187Z" fill="#fff7d7" stroke="#ae9d70" strokeWidth="1.6" />
+          <path className="montage-note-ink" d="M284 164L305 162M287 170L312 167M289 176L311 173M292 181L316 177" stroke="#63877a" strokeWidth="1.7" strokeLinecap="round" fill="none" pathLength="100" />
+        </g>
         <g className="montage-arm-left">
           <motion.path d="M284 123L277 151" animate={{ d: `M284 123L${leftElbow.x} ${leftElbow.y - 4}` }} transition={poseTransition} stroke="#335746" strokeWidth="25" strokeLinecap="round" />
           <motion.path d="M284 123L277 151" animate={{ d: `M284 123L${leftElbow.x} ${leftElbow.y - 4}` }} transition={poseTransition} stroke="#69a585" strokeWidth="20" strokeLinecap="round" />
           <motion.path d="M277 155Q282.5 164.5 292 170" animate={{ d: leftForearm }} transition={poseTransition} fill="none" stroke="#6f5141" strokeWidth="15" strokeLinecap="round" />
           <motion.path d="M277 155Q282.5 164.5 292 170" animate={{ d: leftForearm }} transition={poseTransition} fill="none" stroke="#efc39d" strokeWidth="12" strokeLinecap="round" />
           <motion.g animate={{ x: leftX, y: leftY }} transition={poseTransition}>
-            <g className="montage-hand-left"><path d={guiding ? "M289 165L277 156Q274 154 273 157Q272 159 276 162L286 170L291 176Q298 179 300 175L301 170Q300 167 296 168L293 166Z" : "M289 165Q295 163 303 170L308 174Q310 178 306 178L297 173L302 178Q302 181 298 179L290 175Z"} fill="#efc39d" stroke="#9c7156" strokeWidth="1.4" strokeLinejoin="round" />
+            <g className="montage-hand-left">
               <g className="montage-pencil" aria-hidden="true"><path d="M302 153L307 152L312 178L308 184L305 179Z" fill="#e9bb68" stroke="#8d774f" strokeWidth="1.2" /><path d="M308 184L312 178L305 179Z" fill="#f7e1b5" /><path d="M308 184L309 180" stroke="#465e4e" strokeWidth="1.5" /></g>
+              <path d={guiding ? "M289 165L277 156Q274 154 273 157Q272 159 276 162L286 170L291 176Q298 179 300 175L301 170Q300 167 296 168L293 166Z" : "M289 165Q295 163 303 170L308 174Q310 178 306 178L297 173L302 178Q302 181 298 179L290 175Z"} fill="#efc39d" stroke="#9c7156" strokeWidth="1.4" strokeLinejoin="round" />
               <g className="montage-magnifier" aria-hidden="true"><path d="M303 170L313 152" stroke="#577e6a" strokeWidth="5" strokeLinecap="round" /><circle cx="318" cy="143" r="14" fill="#dceef4cc" stroke="#3f6b57" strokeWidth="3" /><path d="M312 136Q318 132 324 138" fill="none" stroke="#fffef6" strokeWidth="3" strokeLinecap="round" /></g>
             </g>
           </motion.g>

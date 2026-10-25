@@ -239,7 +239,7 @@
    the work, a review earns a stamp and the release brings feedback back. */
 .montage-note-prop, .montage-idea-bubble, .montage-pencil, .montage-magnifier,
 .montage-choice-pieces, .montage-review-seal, .montage-release-sparkles { opacity: 0; transition: opacity 350ms ease, transform 600ms cubic-bezier(.22,.61,.36,1); }
-.montage-note-prop { transform: translateY(8px) rotate(-3deg); transform-origin: 250px 156px; }
+.montage-note-prop { transform: translateY(8px) rotate(-3deg); transform-origin: 299px 170px; }
 .journey-montage[data-stage="0"] .montage-note-prop { opacity: 1; transform: translateY(0) rotate(0); }
 .montage-note-ink { stroke-dasharray: 100; stroke-dashoffset: 100; transition: stroke-dashoffset 650ms ease; }
 .journey-montage[data-stage="0"]:is([data-phase="1"], [data-phase="2"]) .montage-note-ink { stroke-dashoffset: 0; }
@@ -311,7 +311,7 @@
 @keyframes montage-blink { 0%, 38%, 42%, 100% { transform: scaleY(1); } 40% { transform: scaleY(.1); } }
 @keyframes montage-steam-rise { 0% { opacity: .2; transform: translateY(0); } 60% { opacity: .65; } 100% { opacity: 0; transform: translateY(-6px); } }
 @keyframes montage-finger-tap { 0%, 100% { transform: rotate(0); } 42% { transform: rotate(-12deg); } 64% { transform: rotate(3deg); } }
-@keyframes montage-sketch { 0%, 100% { transform: rotate(-5deg); } 35% { transform: rotate(7deg); } 70% { transform: rotate(-1deg); } }
+@keyframes montage-sketch { 0%, 100% { transform: rotate(-3deg); } 35% { transform: rotate(4deg); } 70% { transform: rotate(-1deg); } }
 @keyframes montage-inspect { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(5deg); } }
 @keyframes montage-wave { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(16deg); } 50% { transform: rotate(-8deg); } 75% { transform: rotate(10deg); } }
 @keyframes montage-celebrate { 0% { opacity: 0; transform: scale(.7); } 50% { opacity: 1; transform: scale(1.08); } 100% { opacity: .8; transform: scale(1); } }
