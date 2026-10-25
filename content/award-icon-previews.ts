@@ -23,7 +23,7 @@ export const awardAppIcons: Readonly<
     artwork: "emblem",
   },
   "Hack the Future AI Hackathon 2026": {
-    src: "images/logos/hack-the-future-poster.webp",
+    src: "images/award-icons/hack-the-future-poster.webp",
     artwork: "poster",
   },
   "BügleRock Rockathon 2026": {

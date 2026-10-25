@@ -1,0 +1,115 @@
+/* A painted-paper collection, with real project evidence inside each book. */
+.book-carousel .book-stage .book-library-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  font: 500 clamp(20px, 2.5cqw, 27px)/1.2 var(--portfolio-serif), Georgia, serif;
+  letter-spacing: -0.045em;
+}
+.book-carousel .book-library-label > span {
+  border: 1px solid color-mix(in srgb, var(--book-cream) 18%, transparent);
+  border-radius: 999px;
+  padding: 4px 9px;
+  font: 500 11px/1.4 var(--portfolio-sans), sans-serif;
+  letter-spacing: 0;
+  color: var(--book-muted);
+}
+.book-carousel .book-stage .book-project-picker {
+  width: min(350px, 49%);
+}
+.book-carousel .book-stage .book-project-picker select {
+  min-height: 46px;
+  padding: 10px 36px 10px 15px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--paper) 40%, transparent);
+  font: 500 14px/1.5 var(--portfolio-sans), "Helvetica Neue", sans-serif;
+  letter-spacing: -0.015em;
+}
+.book-carousel .book-object[data-cover-art] .book-front {
+  background: #f4efdf;
+  color: #253c35;
+}
+.book-carousel .book-object[data-cover-art] .book-front::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: auto;
+  height: auto;
+  background: linear-gradient(#f6f1e3 0%, #f6f1e3f5 28%, #f6f1e3c9 46%, transparent 62%);
+  pointer-events: none;
+}
+.book-carousel .book-cover-painting {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--cover-art-position) center;
+  filter: hue-rotate(var(--cover-art-hue)) saturate(0.7);
+  pointer-events: none;
+}
+.book-carousel .book-object[data-cover-art] .book-front::after {
+  z-index: 3;
+  opacity: 0.36;
+  background: linear-gradient(90deg, #2033283b 0, #fff8 2%, transparent 5%, transparent 97%, #20332829);
+  pointer-events: none;
+}
+.book-carousel .book-object[data-cover-art] :is(.book-cover-author, .book-cover-title, .book-cover-subtitle, .book-cover-footer) {
+  z-index: 2;
+  left: 10%;
+  right: 9%;
+}
+.book-carousel .book-object[data-cover-art] .book-cover-author {
+  font: 600 calc(var(--book-width) * 0.031)/1.5 var(--portfolio-sans), sans-serif;
+  letter-spacing: 0.075em;
+  border-bottom: 1px solid #253c3540;
+  opacity: 1;
+}
+.book-carousel .book-object[data-cover-art] .book-cover-title {
+  top: 18%;
+  height: 25%;
+  font: 550 calc(var(--book-width) * 0.135)/1.05 var(--portfolio-serif), Georgia, serif;
+  text-transform: none;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+.book-carousel .book-object[data-cover-art][data-cover-layout="orbit"] .book-cover-title,
+.book-carousel .book-object[data-cover-art][data-cover-layout="journal"] .book-cover-title,
+.book-carousel .book-object[data-cover-art][data-cover-layout="notebook"] .book-cover-title {
+  font-size: calc(var(--book-width) * 0.205);
+  font-style: italic;
+  font-weight: 450;
+}
+.book-carousel .book-object[data-cover-art][data-cover-layout="poster"] .book-cover-title {
+  font-size: calc(var(--book-width) * 0.12);
+}
+.book-carousel .book-object[data-cover-art] .book-cover-subtitle {
+  top: 44%;
+  height: 9%;
+  font: 450 calc(var(--book-width) * 0.039)/1.4 var(--portfolio-sans), sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.book-carousel .book-object[data-cover-art] .book-cover-footer {
+  left: 7%;
+  right: 6%;
+  bottom: 4%;
+  min-height: 8%;
+  height: auto;
+  padding: 6px 8px;
+  align-items: center;
+  background: #f6f1e3ed;
+  border-radius: 2px;
+  font: 500 calc(var(--book-width) * 0.03)/1.4 var(--portfolio-sans), sans-serif;
+  color: #253c35;
+}
+.book-carousel .book-spine b {
+  font-family: var(--portfolio-serif), Georgia, serif;
+}
+@container project-books (max-width: 560px) {
+  .book-carousel .book-stage .book-library-label { font-size: 22px; }
+  .book-carousel .book-stage .book-project-picker { width: 100%; }
+  .book-carousel .book-stage .book-project-picker select { font-size: 13px; }
+}

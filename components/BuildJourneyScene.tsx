@@ -1,21 +1,23 @@
+import { AnimatePresence, motion } from "framer-motion";
 import { useId, useState } from "react";
 
-const actions = ["Try an empty title", "Show the tradeoff", "Trace one request", "Run the three tests", "Deploy the example"];
-const replays = ["Try valid input", "Replay comparison", "Trace again", "Run tests again", "Replay deployment"];
-const titles = ["Write the contract", "Choose the components", "Follow the request", "Implement & test", "Release & observe"];
+const actions = ["Try a missing task name", "Compare the choices", "Follow the user journey", "Run checks & review", "Release & collect feedback"];
+const replays = ["Try a useful task name", "Replay comparison", "Follow it again", "Run checks again", "Replay the release"];
+const titles = ["Understand the need", "Choose the tools", "Design the flow", "Build, test and review", "Release and learn"];
 const results = [
-  "The example rejects an empty title with 422. The API accepts a title between 1 and 120 characters.",
-  "The example uses React, a TypeScript API and PostgreSQL. One service keeps deployment simple; SQL provides transactional writes. A cache can wait until measurements justify it.",
-  "Request req_01 passes validation and domain rules, writes one task, then returns 201 Created with task_01.",
-  "Three example tests pass: valid input returns 201, an empty title returns 422, and a store failure returns 503.",
-  "The example passes build and test checks, releases version 1, then reports illustrative latency and error metrics. The previous version remains available for rollback.",
+  "The task board asks for a task name before saving. Clear feedback helps the user fix the problem.",
+  "The example combines a React interface, TypeScript application logic and a SQL database. The choices favor fast iteration, clear responsibilities and reliable storage.",
+  "The user adds a task, the application checks and saves it, and the board shows the new task with a confirmation.",
+  "The example feature passes checks for normal use and missing input, then is reviewed as a small change.",
+  "The example passes build and test checks and is published. User feedback becomes the next improvement: adding a due date.",
 ];
 
 /** A single feature, built across five shots in the same illustrated workspace. */
-export default function BuildJourneyScene({ stage, description, onFocusChange }: {
+export default function BuildJourneyScene({ stage, description, onFocusChange, animate }: {
   stage: number;
   description: string;
   onFocusChange: (focused: boolean) => void;
+  animate: boolean;
 }) {
   const id = useId();
   const [action, setAction] = useState({ stage: -1, count: 0, invalid: false });
@@ -25,8 +27,8 @@ export default function BuildJourneyScene({ stage, description, onFocusChange }:
 
   return <div className="journey-scene journey-montage" data-stage={stage} data-acted={acted}>
     <svg className="journey-scene-svg" viewBox="0 0 640 544" role="img" aria-labelledby={`${id}-title ${id}-description`}>
-      <title id={`${id}-title`}>{`Building a Task API: ${titles[stage]}`}</title>
-      <desc id={`${id}-description`}>{`${description} A cartoon engineer types on a keyboard, selects components, traces a request, runs tests and deploys from a control screen. The large monitor shows the corresponding technical result.`}</desc>
+      <title id={`${id}-title`}>{`Building a task board: ${titles[stage]}`}</title>
+      <desc id={`${id}-description`}>{`${description} A cartoon engineer types on a keyboard, selects components, follows the user journey, tests a feature and releases it from a control screen. The large monitor shows each part of the process.`}</desc>
       <defs>
         <pattern id={`${id}-grid`} width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#bed0c7" strokeWidth=".7" opacity=".45" /></pattern>
       </defs>
@@ -36,6 +38,11 @@ export default function BuildJourneyScene({ stage, description, onFocusChange }:
       <path d="M320 58V156" stroke="#c9ddd8" strokeWidth="2" />
       <ellipse cx="320" cy="527" rx="269" ry="15" fill="#ccdbca" />
 
+      <g className="montage-workspace-links" aria-hidden="true" fill="none" stroke="#7daa97" strokeWidth="2" strokeLinecap="round">
+        <path className="montage-workspace-link" data-complete={stage >= 1} d="M155 115Q320 183 485 118" />
+        <path className="montage-workspace-link" data-complete={stage >= 2} d="M197 102Q313 151 447 78" />
+        <path className="montage-workspace-link" data-complete={stage >= 4} d="M121 48Q270 3 442 48" />
+      </g>
       {/* Artifacts remain in the workspace as the feature acquires a stack, tests and a release. */}
       <g className="montage-artifact montage-spec" data-complete={stage >= 0}>
         <path d="M35 101L112 80L155 104L78 128Z" fill="#d7e9fb" stroke="#335746" strokeWidth="2" strokeLinejoin="round" />
@@ -124,40 +131,48 @@ export default function BuildJourneyScene({ stage, description, onFocusChange }:
       </g>
     </svg>
 
-    <div className="montage-monitor" aria-label={`Task API example: ${titles[stage]}`}>
-      <header className="montage-window-heading"><span className="montage-window-dots" aria-hidden="true"><i /><i /><i /></span><strong>task-api</strong><span>{["brief.md", "stack.md", "request.trace", "tasks.test.ts", "release v1"][stage]}</span></header>
-      <div className="montage-shot" key={`${stage}-${action.count}`} data-shot={stage} data-acted={acted}>
-        {stage === 0 && <div className="montage-contract-screen">
-          <div className="montage-endpoint"><b>POST</b> /tasks <span>Create one task</span></div>
-          <div className={`montage-input ${invalid ? "is-invalid" : ""}`}><span>title</span><code>{invalid ? '""' : '"Ship demo"'}</code><span className="montage-input-caret" aria-hidden="true" /></div>
-          <div className="montage-rules"><span><i>✓</i> Required</span><span><i>✓</i> 1–120 characters</span></div>
-          <div className={`montage-response ${invalid ? "is-invalid" : ""}`}><b>{invalid ? "422" : "201"}</b><span>{invalid ? "Reject empty input before saving" : "Create once. Return the task ID."}</span></div>
-        </div>}
-        {stage === 1 && <div className="montage-stack-screen">
-          <p className="montage-screen-label">One service. One source of truth.</p>
-          <div className="montage-components">{[["UI", "React", "Fast iteration"], ["API", "TypeScript", "Shared contracts"], ["DATA", "PostgreSQL", "Atomic writes"]].map(([kind, name, reason], index) => <div className={`montage-component montage-component-${index}`} key={kind}><span>{kind}</span><b>{name}</b><small>{reason}</small></div>)}</div>
-          <div className="montage-decision"><span aria-hidden="true">↳</span>{acted ? "Atomic writes first. Cache only if measured." : "Prototype the riskiest dependency."}</div>
-        </div>}
-        {stage === 2 && <div className="montage-flow-screen">
-          <div className="montage-endpoint"><b>POST</b> /tasks <span>req_01</span></div>
-          <div className="montage-request-flow"><div className="montage-request-wire" aria-hidden="true"><span /></div>{[["Validate", "title: string"], ["Own rules", "Task service"], ["Persist", "INSERT task"]].map(([label, detail], index) => <div className={`montage-flow-node montage-flow-node-${index}`} key={label}><b>{label}</b><small>{detail}</small></div>)}</div>
-          <div className="montage-response"><b>{acted ? "201" : "↩"}</b><span>{acted ? "Created · { id: task_01 }" : "Validate → write → respond"}</span></div>
-        </div>}
-        {stage === 3 && <div className="montage-build-screen">
-          <div className="montage-code"><span><em>01</em> <b>parse</b>(body)</span><span><em>02</em> <b>await</b> tasks.create()</span><span><em>03</em> <b>return</b> reply(201)</span></div>
-          <div className="montage-tests-list"><span className="montage-screen-label">{acted ? "3 / 3 passed" : "Behavior checks"}</span>{[["201", "valid title"], ["422", "empty title"], ["503", "store offline"]].map(([code, label], index) => <div className={`montage-test montage-test-${index}`} key={code}><i aria-hidden="true">✓</i><b>{code}</b><span>{label}</span></div>)}</div>
-          <p className="montage-build-note">A complete path. Success and failure covered.</p>
-        </div>}
-        {stage === 4 && <div className="montage-release-screen">
-          <div className="montage-pipeline">{["Build", "Test", "Release"].map((label, index) => <span className={`montage-gate montage-gate-${index}`} key={label}><i aria-hidden="true">✓</i>{label}</span>)}</div>
-          <div className="montage-telemetry"><div><span className="montage-live"><i />{acted ? "v1 live" : "Smoke test"}</span><b>82<small> ms p95</small></b><span>0 errors · example data</span></div><svg viewBox="0 0 220 68" aria-label="Illustrative response latency stabilizes after deployment" role="img"><path d="M0 58H220M0 32H220M0 6H220" stroke="#d5e3dc" strokeWidth="1" /><path className="montage-chart-fill" d="M0 42L18 37L36 45L54 18L72 26L90 35L108 28L126 31L144 30L162 33L180 29L200 30L220 28V68H0Z" fill="#deedd6" /><path className="montage-chart-line" pathLength="1" d="M0 42L18 37L36 45L54 18L72 26L90 35L108 28L126 31L144 30L162 33L180 29L200 30L220 28" fill="none" stroke="#418663" strokeWidth="3" /></svg></div>
-          <div className="montage-release-note">Observe → improve <span>Rollback: v0 ready</span></div>
-        </div>}
-      </div>
+    <div className="montage-monitor" aria-label={`Task board example: ${titles[stage]}`}>
+      <header className="montage-window-heading"><span className="montage-window-dots" aria-hidden="true"><i /><i /><i /></span><strong>Task board</strong><span>{["The brief", "Tool choices", "User journey", "Feature review", "Release notes"][stage]}</span></header>
+      <AnimatePresence initial={false}>
+        <motion.div className="montage-shot" key={`${stage}-${action.count}`} data-shot={stage} data-acted={acted}
+          initial={animate ? { opacity: 0, x: 18 } : false}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -14 }}
+          transition={{ duration: animate ? .38 : 0, ease: [.22, .7, .3, 1] }}
+        >
+          {stage === 0 && <div className="montage-contract-screen">
+            <div className="montage-endpoint"><b>Goal</b> Keep track of work <span>First version</span></div>
+            <div className={`montage-input ${invalid ? "is-invalid" : ""}`}><span>Task</span><span className="montage-input-value">{invalid ? "Add a task name…" : "Prepare the demo"}</span><span className="montage-input-caret" aria-hidden="true" /></div>
+            <div className="montage-rules"><span><i>✓</i> Add a task</span><span><i>✓</i> Mark it done</span></div>
+            <div className={`montage-response ${invalid ? "is-invalid" : ""}`}><b>{invalid ? "!" : "✓"}</b><span>{invalid ? "A helpful message when a name is missing." : "Clear goal. Small scope. Useful first step."}</span></div>
+          </div>}
+          {stage === 1 && <div className="montage-stack-screen">
+            <p className="montage-screen-label">Simple to build. Straightforward to maintain.</p>
+            <div className="montage-components">{[["INTERFACE", "React", "Fast iteration"], ["APP LOGIC", "TypeScript", "Clear changes"], ["STORAGE", "SQL", "Reliable saves"]].map(([kind, name, reason], index) => <div className={`montage-component montage-component-${index}`} key={kind}><span>{kind}</span><b>{name}</b><small>{reason}</small><i className="montage-choice-check" aria-hidden="true">✓</i></div>)}</div>
+            <div className="montage-decision"><span aria-hidden="true">↳</span>{acted ? "A small prototype makes the tradeoffs tangible." : "Try the uncertain part before committing."}</div>
+          </div>}
+          {stage === 2 && <div className="montage-flow-screen">
+            <div className="montage-endpoint"><b>Flow</b> From action to result</div>
+            <div className="montage-request-flow"><div className="montage-request-wire" aria-hidden="true"><span /></div>{[["Add task", "User action"], ["Check & save", "App logic"], ["Show result", "Clear feedback"]].map(([label, detail], index) => <div className={`montage-flow-node montage-flow-node-${index}`} key={label}><b>{label}</b><small>{detail}</small></div>)}</div>
+            <div className="montage-response"><b>{acted ? "✓" : "↩"}</b><span>{acted ? "Task saved. The user can see what changed." : "Plan the happy path—and a way to recover."}</span></div>
+          </div>}
+          {stage === 3 && <div className="montage-build-screen">
+            <div className="montage-feature-preview"><span className="montage-screen-label">A small, complete change</span><div className="montage-task-row"><i aria-hidden="true">✓</i><span>Prepare the demo</span></div><div className="montage-task-row"><i aria-hidden="true">+</i><span>Add the next task</span></div><span className="montage-review-note">Small change · ready to review</span></div>
+            <div className="montage-tests-list"><span className="montage-screen-label">{acted ? "Ready to merge" : "Check the behavior"}</span>{["Works as expected", "Handles mistakes", "Reviewed & clear"].map((label, index) => <div className={`montage-test montage-test-${index}`} key={label}><i aria-hidden="true">✓</i><span>{label}</span></div>)}</div>
+            <p className="montage-build-note">Build → test → review. Keep each change manageable.</p>
+          </div>}
+          {stage === 4 && <div className="montage-release-screen">
+            <div className="montage-pipeline">{["Build", "Check", "Publish"].map((label, index) => <span className={`montage-gate montage-gate-${index}`} key={label}><i aria-hidden="true">✓</i>{label}</span>)}</div>
+            <div className="montage-feedback"><div><span className="montage-live"><i />{acted ? "Released" : "Ready to share"}</span><b>Listen. Learn.</b><span>Check the live experience.</span></div><div className="montage-feedback-card"><span>User feedback</span><p>“Could I add a due date?”</p><small>Next improvement ↗</small></div></div>
+            <div className="montage-release-note">Keep improving <span>A rollback is ready, too.</span></div>
+          </div>}
+          <svg className={`montage-screen-pointer montage-screen-pointer-${stage}`} viewBox="0 0 24 28" aria-hidden="true"><path d="M3 2L20 15L12 16L8 24Z" fill="#315c49" stroke="#fffdf3" strokeWidth="2" strokeLinejoin="round" /></svg>
+        </motion.div>
+      </AnimatePresence>
     </div>
     <button className="journey-monitor-action" type="button" aria-controls={`${id}-result`} onFocus={() => onFocusChange(true)} onBlur={() => onFocusChange(false)} onClick={replay}>
       <span>{stage === 0 ? (invalid ? replays[0] : actions[0]) : (acted ? replays[stage] : actions[stage])}</span><span aria-hidden="true">{acted ? "↻" : "→"}</span>
     </button>
-    <span className="journey-action-status" id={`${id}-result`} role="status" aria-live="polite" aria-atomic="true">{acted ? `${stage === 0 && !invalid ? "Valid title accepted: 201 Created with task_01." : results[stage]} Run ${action.count} complete.` : ""}</span>
+    <span className="journey-action-status" id={`${id}-result`} role="status" aria-live="polite" aria-atomic="true">{acted ? `${stage === 0 && !invalid ? "The task “Prepare the demo” is accepted and appears on the board." : results[stage]} Run ${action.count} complete.` : ""}</span>
   </div>;
 }

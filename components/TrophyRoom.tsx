@@ -342,6 +342,31 @@ function previewForAchievement(record: Achievement): CertificateFile {
   );
 }
 
+function appImageSource(record: Achievement, preview = previewForAchievement(record)) {
+  return awardAppIcons[record.title]?.src ?? awardIconPreviews[preview.src] ?? preview.src;
+}
+
+// The tablet has its own scroll container. Waiting for each icon to enter that
+// viewport leaves blank apps on a fast scroll; warm the small, deduplicated icon
+// collection on navigation intent and keep the decoded images for later visits.
+// Full certificate scans and event photos in the detail view remain lazy.
+const awardLogoCache = new Map<string, HTMLImageElement>();
+export function warmAwardLogos() {
+  if (typeof window === "undefined") return;
+  for (const record of collection) {
+    const src = asset(appImageSource(record));
+    if (awardLogoCache.has(src)) continue;
+    const image = new Image();
+    image.decoding = "async";
+    awardLogoCache.set(src, image);
+    image.src = src;
+    void image.decode().catch(() => {
+      // Retry a failed request on the next visit instead of caching the error.
+      if (awardLogoCache.get(src) === image) awardLogoCache.delete(src);
+    });
+  }
+}
+
 type MediaLayout = "document" | "photo" | "project" | "emblem";
 function mediaLayout(file: CertificateFile): MediaLayout {
   if (/emblem|patch/i.test(file.kind ?? "")) return "emblem";
@@ -523,9 +548,11 @@ function AchievementSections({ record }: { record: Achievement }) {
 function AchievementApp({
   record,
   onOpen,
+  loadLogo,
 }: {
   record: Achievement;
   onOpen: (record: Achievement, opener: HTMLButtonElement) => void;
+  loadLogo: boolean;
 }) {
   const Icon = iconForAchievement(record);
   const CategoryIcon = categories.find((category) => category.id === record.category)?.icon ?? Award;
@@ -535,7 +562,7 @@ function AchievementApp({
   const appTitle = `${label.organisation} — ${label.recognition}`;
   const photographic = /photo|patch|screenshot/i.test(preview.kind ?? "");
   const emblem = appIcon?.artwork === "emblem" || (!appIcon && /emblem/i.test(preview.kind ?? ""));
-  const imageSource = appIcon?.src ?? awardIconPreviews[preview.src] ?? preview.src;
+  const imageSource = appImageSource(record, preview);
   return (
     <li className="award-app" data-category={record.category}>
       <button
@@ -559,7 +586,7 @@ function AchievementApp({
               <img
                 src={asset(imageSource)}
                 alt=""
-                loading="lazy"
+                loading={loadLogo ? "eager" : "lazy"}
                 decoding="async"
               />
             </span>
@@ -617,6 +644,10 @@ export default function TrophyRoom() {
     appsRef.current?.scrollTo({ top: 0, behavior: "instant" });
     searchRef.current?.focus({ preventScroll: true });
   }
+
+  useEffect(() => {
+    if (available) warmAwardLogos();
+  }, [available]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -819,6 +850,7 @@ export default function TrophyRoom() {
                     key={record.id}
                     record={record}
                     onOpen={open}
+                    loadLogo={available}
                   />
                 ))}
               </ul>

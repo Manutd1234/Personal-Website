@@ -1,0 +1,112 @@
+/* The shelf and its reader share one frame. Only the paper moves: neither a
+   disappearing controls row nor a long chapter can resize the green surround. */
+.book-carousel .book-stage {
+  --library-theatre-height: clamp(530px, 64svh, 680px);
+  --library-side-padding: 34px;
+  --library-bottom-padding: 24px;
+}
+
+.book-carousel .book-stage-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  height: 44px;
+  min-height: 44px;
+  flex-wrap: nowrap;
+}
+.book-carousel .book-stage-header > :last-child {
+  grid-column: 2;
+  justify-self: end;
+}
+.book-carousel .book-stage-header .book-project-picker {
+  width: min(310px, 36cqw);
+}
+
+.book-carousel .book-theatre,
+.book-carousel .book-theatre-flow {
+  height: var(--library-theatre-height);
+  min-height: 0;
+}
+.book-carousel .book-theatre-flow {
+  display: block;
+}
+.book-carousel .book-scene {
+  height: calc(var(--library-theatre-height) - 80px);
+  min-height: 0;
+}
+.book-carousel .book-stage:is([data-open], [data-returning]) .book-browse-controls-shell {
+  position: absolute;
+  inset: auto var(--library-side-padding) var(--library-bottom-padding);
+  height: 72px;
+  align-items: center;
+}
+.book-carousel .book-stage:is([data-open="true"], [data-returning="true"]) .book-browse-controls-shell {
+  pointer-events: none;
+}
+
+.book-carousel .book-stage .book-details {
+  height: 100%;
+  padding: 20px 8px 0;
+}
+.book-carousel .book-details > div {
+  height: 100%;
+}
+.book-carousel .book-details .project-book-reader {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  height: 100%;
+  min-height: 0;
+}
+.book-carousel .book-details .reader-spread {
+  height: auto;
+  min-height: 0;
+}
+.book-carousel .book-details .reader-running-title {
+  align-self: start;
+}
+.book-carousel .book-details .reader-navigation {
+  margin-top: 24px;
+}
+.book-carousel .book-details .reader-key-hint {
+  margin: 10px 0 0;
+}
+
+@container project-books (max-width: 760px) {
+  .book-carousel .book-stage {
+    --library-theatre-height: clamp(530px, 66svh, 650px);
+    --library-side-padding: 22px;
+    --library-bottom-padding: 20px;
+  }
+  .book-carousel .book-stage .book-details {
+    padding: 18px 1px 0;
+  }
+}
+
+@container project-books (max-width: 560px) {
+  .book-carousel .book-stage-header {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 22px 44px;
+    height: 78px;
+    min-height: 78px;
+    gap: 12px;
+  }
+  .book-carousel .book-stage-header > :last-child {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .book-carousel .book-stage-header .book-project-picker {
+    width: 100%;
+  }
+  .book-carousel .book-stage .book-details {
+    padding-top: 16px;
+  }
+  .book-carousel .book-details .reader-navigation {
+    margin-top: 22px;
+  }
+}
+
+@container project-books (max-width: 480px) {
+  .book-carousel .book-stage {
+    --library-side-padding: 17px;
+  }
+}

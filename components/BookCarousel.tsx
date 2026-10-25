@@ -12,8 +12,9 @@ import { asset } from "@/content/paths";
 import { BookClosingContext, OpeningContext, OpeningNotes, openingPageTitles } from "./ProjectBookOpening";
 import "@/app/book-carousel.css";
 import "@/app/project-book-reader.css";
+import "@/app/book-motion.css";
 
-const BOOK_TRANSITION_MS = 820;
+const BOOK_TRANSITION_MS = 940;
 
 export type ProjectSource = {
   url: string;
@@ -295,11 +296,9 @@ function BookOpeningPage({ project, page }: { project: Project; page: 0 | 1 }) {
 
 function Book({
   project,
-  media,
   index,
 }: {
   project: Project;
-  media?: ProjectMedia;
   index: number;
 }) {
   const design = coverFor(project, index);
@@ -308,6 +307,7 @@ function Book({
     <span
       aria-hidden="true"
       className="book-object"
+      data-cover-art="painted"
       data-cover-layout={design.layout}
       data-cover-material={
         ["terminal", "journal", "ledger", "deal"].includes(design.layout)
@@ -319,6 +319,8 @@ function Book({
           "--cover": design.color,
           "--cover-ink": design.ink,
           "--cover-font": design.font,
+          "--cover-art-hue": `${[0, 58, 170, 285][index % 4]}deg`,
+          "--cover-art-position": `${[50, 35, 65][index % 3]}%`,
           "--book-depth": `${thickness}px`,
         } as CSSProperties
       }
@@ -358,24 +360,18 @@ function Book({
       </span>
       <span className="book-cover-hinge">
         <span className="book-front">
-          <span className="book-cover-author">IAN WANGSA</span>
+          <img
+            className="book-cover-painting"
+            alt=""
+            src={asset("/images/portfolio/book-cover-painting.webp")}
+            width={640}
+            height={960}
+            decoding="async"
+            draggable={false}
+          />
+          <span className="book-cover-author">IAN WANGSA <span>VOL. {String(index + 1).padStart(2, "0")}</span></span>
           <span className="book-cover-title">{design.title}</span>
           <span className="book-cover-subtitle">{design.subtitle}</span>
-          <span className="book-cover-image">
-            {media?.src ? (
-              <img
-                alt=""
-                decoding="async"
-                draggable={false}
-                height={400}
-                loading="lazy"
-                src={asset(media.src)}
-                width={640}
-              />
-            ) : (
-              <span className="book-cover-mark">{design.mark}</span>
-            )}
-          </span>
           <span className="book-cover-footer">
             {project.category}
             <span>→</span>
@@ -437,8 +433,6 @@ export default function BookCarousel({
   const closingRef = useRef(false);
   const openingPoseRef = useRef<{
     transforms: Map<HTMLElement, string>;
-    height: number;
-    controlsHeight: number;
   } | null>(null);
   const detailRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -624,8 +618,6 @@ export default function BookCarousel({
     }
     openingPoseRef.current = {
       transforms,
-      height: theatreRef.current?.offsetHeight ?? 430,
-      controlsHeight: controlsRef.current?.offsetHeight ?? 0,
     };
     setHovered(null);
     cancelGesture();
@@ -677,12 +669,12 @@ export default function BookCarousel({
             // Opening may begin from an already-hovered cover. Return to the
             // closed shelf pose, not that captured hover followed by a snap.
             // If interrupted, anchor the current transform before retargeting.
-            effect.setKeyframes(progress < 0.54 ? [
+            effect.setKeyframes(progress < 0.58 ? [
               { transform: closed, offset: 0, easing: "cubic-bezier(.4,0,.2,1)" },
               { transform: getComputedStyle(element).transform, offset: progress },
               ...frames.filter((frame) => frame.offset > progress),
             ] : frames.map((frame) => ({
-              ...frame, transform: frame.offset <= 0.12 ? closed : frame.transform,
+              ...frame, transform: frame.offset <= 0.15 ? closed : frame.transform,
             })));
           }
         }
@@ -792,15 +784,13 @@ export default function BookCarousel({
     const flow = flowRef.current;
     if (!theatre || !flow) return;
     const resize = () => {
-      // The shared timeline owns height while moving. Resize only the settled
-      // endpoint, so an observer cannot restart an animation mid-handoff.
+      // The shell has one responsive size in both states. A resize only needs
+      // to retarget the paper/book transforms, never the surrounding frame.
       if (bookAnimationsRef.current.some((animation) => animation.playState === "running")) return;
       const reading = stageRef.current?.dataset.open === "true";
       if (reading && bookAnimationsRef.current.length) {
         refreshBookGeometryRef.current();
-        return;
       }
-      theatre.style.height = `${reading ? flow.offsetHeight : parseFloat(getComputedStyle(flow).minHeight)}px`;
     };
     const observer = new ResizeObserver(resize);
     resizeTheatreRef.current = resize;
@@ -808,7 +798,6 @@ export default function BookCarousel({
     resize();
     return () => {
       observer.disconnect();
-      theatre.style.height = "";
       resizeTheatreRef.current = () => {};
     };
   }, []);
@@ -831,9 +820,9 @@ export default function BookCarousel({
       return;
     }
 
-    const liftEnd = 0.22;
-    const unfoldStart = 0.12;
-    const openEnd = 0.54;
+    const liftEnd = 0.24;
+    const unfoldStart = 0.15;
+    const openEnd = 0.58;
     const handoff = openEnd;
     const measureTransition = () => {
       const scale = parseFloat(getComputedStyle(stage).getPropertyValue("--open-book-scale")) || 1;
@@ -846,25 +835,23 @@ export default function BookCarousel({
         parent = parent.offsetParent as HTMLElement | null;
       }
       const paperCenter = paperTop + paper.offsetHeight / 2;
-      const bookOffset = book.offsetHeight * 0.12;
-      const bookCenter = scene.offsetHeight / 2 + bookOffset;
       const perspective = parseFloat(getComputedStyle(scene).perspective) || 1400;
       const lift = Math.min(160, perspective * 0.2);
       const compensation = 1 - lift / perspective;
       const originOffset = scene.offsetHeight * 0.12;
       const rise = Math.min(104, Math.max(80, scene.clientWidth * 0.095));
+      const bookCenter = scene.offsetHeight / 2 - rise;
       // Lift the still-closed cover above the shelf before opening it. Keep
       // perspective compensation, with a small visible move toward the reader.
-      const raised = `translate3d(0, ${(originOffset - rise) * compensation - originOffset}px, ${lift}px) scale(${compensation * 1.04})`;
-      const positioned = `translate3d(${book.offsetWidth * scale / 2 * compensation}px, ${(originOffset + bookOffset) * compensation - originOffset}px, ${lift}px) scale(${compensation})`;
+      const raised = `translate3d(0, ${(originOffset - rise) * compensation - originOffset}px, ${lift}px) scale(${compensation * 1.025})`;
+      const positioned = `translate3d(${book.offsetWidth * scale / 2 * compensation}px, ${(originOffset - rise) * compensation - originOffset}px, ${lift}px) scale(${compensation})`;
       // Page one is on the inside cover. A narrow reader grows from that same
       // left page; desktop keeps both opening pages through the handoff.
       const arrival = `translate(${singlePage ? -book.offsetWidth * scale / 2 : 0}px, ${bookCenter - details.offsetTop - paperCenter}px) scale(${book.offsetWidth * scale * (singlePage ? 1 : 2) / paper.offsetWidth}, ${book.offsetHeight * scale / paper.offsetHeight})`;
       details.style.transformOrigin = `50% ${paperCenter}px`;
-      return { scale, raised, positioned, arrival, finalHeight: flow.offsetHeight };
+      return { scale, raised, positioned, arrival };
     };
     let geometry = measureTransition();
-    theatre.style.height = `${geometry.finalHeight}px`;
     const animations: Animation[] = [];
     const animate = (element: HTMLElement, frames: Keyframe[]) => {
       const animation = element.animate(frames, {
@@ -923,15 +910,11 @@ export default function BookCarousel({
       { visibility: "visible", offset: 0.9999 },
       { visibility: "hidden", offset: 1 },
     ]);
-    const controlsAnimation = animate(controls, [
-      { height: `${pose.controlsHeight}px`, opacity: 1, offset: 0, easing: ease },
-      { height: "0px", opacity: 0, offset: openEnd },
-      { height: "0px", opacity: 0, offset: 1 },
+    animate(controls, [
+      { opacity: 1, transform: "translateY(0)", offset: 0, easing: ease },
+      { opacity: 0, transform: "translateY(12px)", offset: 0.3 },
+      { opacity: 0, transform: "translateY(12px)", offset: 1 },
     ]);
-    const theatreFrames = (): Keyframe[] => [
-      { height: `${pose.height}px`, offset: 0, easing: ease },
-      { height: `${geometry.finalHeight}px`, offset: 1 },
-    ];
     const paperFrames = (): Keyframe[] => [
       { opacity: 1, visibility: "hidden", transform: geometry.arrival, offset: 0 },
       { opacity: 1, visibility: "hidden", transform: geometry.arrival, offset: handoff },
@@ -946,25 +929,14 @@ export default function BookCarousel({
         { opacity: 1, offset: 1 },
       ]);
     });
-    const theatreAnimation = animate(theatre, theatreFrames());
     const paperAnimation = animate(details, paperFrames());
     const updateFrames = (animation: Animation, frames: Keyframe[]) => {
       (animation.effect as KeyframeEffect).setKeyframes(frames);
     };
-    // Finished fill:both animations still own their styles. Update the actual
-    // keyframes on a settled resize, including the reverse endpoint, rather
-    // than writing a height that a finished animation would keep overriding.
+    // Finished fill:both animations still own their transforms. Retarget both
+    // endpoints after a resize so reversing returns to the current shelf size.
     refreshBookGeometryRef.current = () => {
       geometry = measureTransition();
-      pose.height = parseFloat(getComputedStyle(flow).minHeight);
-      const controlsBody = controls.querySelector<HTMLElement>(".book-browse-controls");
-      if (controlsBody) {
-        // The collapsed flex row centres children outside its zero-height box;
-        // scrollHeight only sees the lower half. Measure the actual controls.
-        pose.controlsHeight = Math.max(...Array.from(controlsBody.children, (child) => (child as HTMLElement).offsetHeight));
-      }
-      theatre.style.height = `${geometry.finalHeight}px`;
-      updateFrames(theatreAnimation, theatreFrames());
       updateFrames(paperAnimation, paperFrames());
       updateFrames(bookAnimation, bookFrames());
       const retarget = (animation: Animation, to: string) => {
@@ -976,11 +948,6 @@ export default function BookCarousel({
         })));
       };
       if (objectAnimation) retarget(objectAnimation, `rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(${geometry.scale})`);
-      updateFrames(controlsAnimation, [
-        { height: `${pose.controlsHeight}px`, opacity: 1, offset: 0, easing: ease },
-        { height: "0px", opacity: 0, offset: openEnd },
-        { height: "0px", opacity: 0, offset: 1 },
-      ]);
     };
     const startTime = document.timeline.currentTime;
     if (typeof startTime === "number") animations.forEach((animation) => { animation.startTime = startTime; });
@@ -992,8 +959,6 @@ export default function BookCarousel({
       if (closingRef.current) {
         stopBookTransition();
         setReturning(false);
-        // Clear the open-height endpoint before the closed flow re-renders.
-        theatre.style.height = `${pose.height}px`;
       } else {
         setReaderReady(true);
         resizeTheatreRef.current();
@@ -1071,20 +1036,7 @@ export default function BookCarousel({
 
   useEffect(() => {
     resizeTheatreRef.current();
-    if (!isOpen || !canInteract()) return;
-    const stage = stageRef.current;
-    if (!stage) return;
-    const headerBottom =
-      document.querySelector(".classic-header")?.getBoundingClientRect()
-        .bottom ?? 0;
-    const stageTop = stage.getBoundingClientRect().top;
-    if (stageTop < headerBottom + 16) {
-      window.scrollTo({
-        top: Math.max(0, window.scrollY + stageTop - headerBottom - 16),
-        behavior: reducedMotion ? "instant" : "smooth",
-      });
-    }
-  }, [isOpen, canInteract, reducedMotion]);
+  }, [isOpen]);
 
 
   useEffect(() => {
@@ -1336,7 +1288,7 @@ export default function BookCarousel({
         ref={stageRef}
       >
         <div className="book-stage-header">
-          <span className="book-library-label">THE PROJECT LIBRARY · {count} PROJECTS</span>
+          <span className="book-library-label">Project library <span>{count} projects</span></span>
           {isOpen || returning ? (
             <button
               aria-disabled={returning || undefined}
@@ -1437,7 +1389,6 @@ export default function BookCarousel({
                   >
                     <Book
                       index={index}
-                      media={media[project.title]}
                       project={project}
                     />
                   </button>

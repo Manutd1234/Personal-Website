@@ -8,6 +8,7 @@ import ProjectsPanel from "./ProjectsPanel";
 import ProfilePanel from "./ProfilePanel";
 import ContactPanel from "./ContactPanel";
 import OffDutyPanel from "./OffDutyPanel";
+import { warmAwardLogos } from "./TrophyRoom";
 
 const tabs = [
   {
@@ -95,6 +96,7 @@ export default function Portfolio() {
       const hash = window.location.hash.slice(1).toLowerCase();
       if (["main", "contact"].includes(hash)) return;
       const next = hash === "life-in-pictures" ? "profile" : aliases[hash] ?? "profile";
+      if (next === "awards") warmAwardLogos();
       keepSectionFocus(next);
       setActive(next);
       if (hash === "life-in-pictures") {
@@ -119,6 +121,7 @@ export default function Portfolio() {
   }, [keepSectionFocus]);
   function navigate(id: TabId, history: "push" | "replace" = "push") {
     cancelAnimationFrame(scrollFrameRef.current);
+    if (id === "awards") warmAwardLogos();
     keepSectionFocus(id);
     setActive(id);
     const hash = `#${tabs.find((tab) => tab.id === id)!.hash}`;
@@ -205,6 +208,8 @@ export default function Portfolio() {
                       navRefs.current[index] = el;
                     }}
                     onKeyDown={(e) => navKeys(e, index)}
+                    onPointerEnter={tab.id === "awards" ? warmAwardLogos : undefined}
+                    onFocus={tab.id === "awards" ? warmAwardLogos : undefined}
                     onClick={() => navigate(tab.id)}
                     className={active === tab.id ? "is-active" : ""}
                   >

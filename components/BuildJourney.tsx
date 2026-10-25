@@ -22,66 +22,66 @@ const steps = [
   {
     label: "Define",
     icon: Lightbulb,
-    title: "Turn the problem into a contract.",
-    body: "I define inputs, expected behavior and invariants—what must always hold. Acceptance criteria and failure cases give me something concrete to build and test.",
-    outcome: "A clear contract and testable acceptance criteria.",
-    preview: "01 · Define the task API",
+    title: "Start with the person using it.",
+    body: "I clarify the user’s goal, work through a real example and agree on what success looks like. Then I scope a useful first version, including the cases that could go wrong.",
+    outcome: "A focused problem and clear acceptance criteria.",
+    preview: "01 · Understand the need",
     rows: [
-      { label: "User goal", detail: "Inputs and expected behavior" },
-      { label: "Success criteria", detail: "Acceptance criteria and invariants" },
-      { label: "Edge cases", detail: "Invalid inputs and failure behavior" },
+      { label: "Understand", detail: "Who is it for, and what do they need?" },
+      { label: "Scope", detail: "Choose a useful first version" },
+      { label: "Check", detail: "Define success and edge cases" },
     ],
   },
   {
     label: "Choose",
     icon: Blocks,
-    title: "Choose the simplest stack that fits.",
-    body: "I weigh latency, data access and delivery speed against operational complexity. A small prototype tests the riskiest dependency before I commit to the stack.",
-    outcome: "A stack chosen for the workload and its tradeoffs.",
-    preview: "02 · Give the feature a stack",
+    title: "Choose tools with a reason.",
+    body: "I compare the options against the project’s needs, the team’s experience and the cost of maintaining it. A small prototype helps me test uncertain choices before building more.",
+    outcome: "A practical stack with understood tradeoffs.",
+    preview: "02 · Try the building blocks",
     rows: [
-      { label: "Interface", detail: "Delivery speed and user needs" },
-      { label: "Backend", detail: "Latency and dependency tradeoffs" },
-      { label: "Data", detail: "Access patterns and operational complexity" },
+      { label: "Compare", detail: "Consider delivery, reliability and maintenance" },
+      { label: "Prototype", detail: "Try the uncertain part early" },
+      { label: "Choose", detail: "Keep the first version simple" },
     ],
   },
   {
     label: "Design",
     icon: GitBranch,
-    title: "Make boundaries and ownership explicit.",
-    body: "I define API contracts, data ownership and failure paths. Each module has a clear job, so I can trace a request and reason about changes.",
-    outcome: "Interfaces, state and failure paths I can trace.",
-    preview: "03 · Trace the same request",
+    title: "Make the pieces work together.",
+    body: "I sketch the user journey and give each part of the system a clear responsibility. I consider how data moves, how errors are handled and how the design can change as I learn.",
+    outcome: "A clear flow from user action to useful result.",
+    preview: "03 · Connect the user journey",
     rows: [
-      { label: "Interface", detail: "Validate the request contract" },
-      { label: "Service", detail: "Own domain rules and failure behavior" },
-      { label: "Database", detail: "Make data ownership explicit" },
+      { label: "Sketch", detail: "Follow the user’s journey" },
+      { label: "Connect", detail: "Give each part a clear responsibility" },
+      { label: "Recover", detail: "Plan helpful feedback when things go wrong" },
     ],
   },
   {
     label: "Build",
     icon: Braces,
-    title: "Build a verified vertical slice.",
-    body: "I connect input, domain logic and persistence in one complete feature. I test success and failure paths, debug at the boundaries and keep changes reviewable.",
-    outcome: "An end-to-end feature with focused tests.",
-    preview: "04 · Make the contract executable",
+    title: "Build small. Test. Review.",
+    body: "I build one complete feature at a time, test normal and unexpected behavior, and review the change. Small commits and clear feedback make it easier to find problems and keep improving.",
+    outcome: "Working software that is tested and easy to review.",
+    preview: "04 · Turn the plan into a feature",
     rows: [
-      { label: "Implement", detail: "Input, domain logic and persistence" },
-      { label: "Test", detail: "Test the behavior at each boundary" },
-      { label: "Review", detail: "Keep the change small and explainable" },
+      { label: "Build", detail: "Deliver one complete feature" },
+      { label: "Test", detail: "Check success and failure cases" },
+      { label: "Review", detail: "Keep changes clear and manageable" },
     ],
   },
   {
     label: "Ship & learn",
     icon: Rocket,
-    title: "Verify production. Learn from evidence.",
-    body: "I check the build, deployment and critical user journey. Logs, errors, latency and user feedback guide the next change, with a rollback path in mind.",
-    outcome: "A verified release and an observable feedback loop.",
-    preview: "05 · Take it into production",
+    title: "Release, listen and improve.",
+    body: "I check the release and try the real user journey. Then I watch for errors, listen to feedback and turn what I learn into the next improvement, with a way back if something goes wrong.",
+    outcome: "A reliable release and a clear next improvement.",
+    preview: "05 · Put it in people’s hands",
     rows: [
-      { label: "Check", detail: "Run tests and a production build" },
-      { label: "Release", detail: "Smoke-test the critical user journey" },
-      { label: "Learn", detail: "Observe errors, latency and user feedback" },
+      { label: "Release", detail: "Check the build and live user journey" },
+      { label: "Observe", detail: "Watch for errors and collect feedback" },
+      { label: "Improve", detail: "Use what I learn in the next version" },
     ],
   },
 ] as const;
@@ -147,7 +147,7 @@ export default function BuildJourney({
         <div>
           <p className="classic-kicker">How I build</p>
           <h2 id={`${prefix}-title`}>From a question to a <em>working system.</em></h2>
-          <p className="journey-mindset">I turn assumptions into explicit contracts, testable behavior and observable software.</p>
+          <p className="journey-mindset">I turn user needs into thoughtful designs, tested features and useful releases.</p>
         </div>
         {!reduced && <button
           className="journey-play"
@@ -193,7 +193,8 @@ export default function BuildJourney({
             <BuildJourneyScene
               stage={active}
               onFocusChange={setSceneFocused}
-              description={`An illustrative task-creation API evolves through five engineering stages. ${step.rows.map(row => `${row.label}: ${row.detail}.`).join(" ")}`}
+              animate={running}
+              description={`An illustrative task board evolves from a user need into a tested release. ${step.rows.map(row => `${row.label}: ${row.detail}.`).join(" ")}`}
             />
           </div>
         </div>

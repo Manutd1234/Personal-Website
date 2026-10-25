@@ -13,6 +13,7 @@ import "./role-intro.css";
 import "./tab-polish.css";
 import "./contact-panel.css";
 import "./handmade-details.css";
+import "./book-covers.css";
 
 const bodyFont = localFont({
   src: "./fonts/dm-sans-latin.woff2",
