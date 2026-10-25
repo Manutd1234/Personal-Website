@@ -1,6 +1,23 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { getBookSceneIndexes, queueBookTransition, runBookTransition } from '../components/book-transition.ts';
+import { BOOK_MOTION, getBookLiftGeometry, getBookSceneIndexes, queueBookTransition, runBookTransition } from '../components/book-transition.ts';
+
+test('the cover starts unfolding only after lifting has finished, and closes before lowering on reverse', () => {
+  assert.ok(BOOK_MOTION.liftEnd > 0);
+  assert.ok(BOOK_MOTION.unfoldStart > BOOK_MOTION.liftEnd);
+  assert.ok(BOOK_MOTION.openEnd > BOOK_MOTION.unfoldStart);
+  assert.ok(BOOK_MOTION.openEnd < 1);
+});
+
+test('the raised paper fits below the library header across phone, tablet and desktop sizes', () => {
+  for (const [sceneHeight, bookHeight, scale] of [[450, 241.4, .8], [450, 338, 1], [570, 338, 1]]) {
+    const {lift, compensation, rise, raisedY} = getBookLiftGeometry(sceneHeight, bookHeight, scale, 1400);
+    const projectedCenter = sceneHeight * .38 + (sceneHeight * .12 + raisedY) / compensation;
+    assert.ok(projectedCenter - bookHeight * scale / 2 >= 12 - .001);
+    assert.ok(rise > 0 && rise <= 72);
+    assert.ok(lift < 1400);
+  }
+});
 
 test('the mounted shelf stays stable through reading and restores wraparound neighbors', () => {
   assert.deepEqual(getBookSceneIndexes(22, 0), [0, 1, 2, 3, 19, 20, 21]);

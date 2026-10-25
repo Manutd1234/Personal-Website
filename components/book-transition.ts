@@ -12,6 +12,26 @@ export type BookTransitionLaunch = {
   finish: () => void;
 };
 
+export const BOOK_MOTION = {
+  duration: 820,
+  liftEnd: .28,
+  unfoldStart: .32,
+  openEnd: .64,
+} as const;
+
+/** Keep the raised book below the library header at every responsive size. */
+export function getBookLiftGeometry(sceneHeight: number, bookHeight: number, scale: number, perspective: number) {
+  const lift = Math.min(160, perspective * .2);
+  const compensation = 1 - lift / perspective;
+  const headroom = Math.max(0, sceneHeight / 2 - bookHeight * scale / 2 - 12);
+  const rise = Math.min(72, headroom);
+  const originOffset = sceneHeight * .12;
+  return {
+    lift, compensation, rise,
+    raisedY: (originOffset - rise) * compensation - originOffset,
+  };
+}
+
 /** A fixed nearby shelf stays mounted through opening and closing, so covers
  * can recede in place without popping neighbors or re-decoding their images. */
 export function getBookSceneIndexes(count: number, current: number): number[] {

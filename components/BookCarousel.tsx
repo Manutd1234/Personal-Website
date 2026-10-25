@@ -9,13 +9,13 @@ import type {
 } from "react";
 
 import { asset } from "@/content/paths";
-import { getBookSceneIndexes, queueBookTransition, runBookTransition, type BookTransition, type BookTransitionLaunch } from "./book-transition";
+import { BOOK_MOTION, getBookLiftGeometry, getBookSceneIndexes, queueBookTransition, runBookTransition, type BookTransition, type BookTransitionLaunch } from "./book-transition";
 import { BookClosingContext, OpeningContext, OpeningNotes, openingPageTitles } from "./ProjectBookOpening";
 import "@/app/book-carousel.css";
 import "@/app/project-book-reader.css";
 import "@/app/book-motion.css";
 
-const BOOK_TRANSITION_MS = 820;
+const BOOK_TRANSITION_MS = BOOK_MOTION.duration;
 
 export type ProjectSource = {
   url: string;
@@ -730,8 +730,7 @@ export default function BookCarousel({
     return () => resize.disconnect();
   }, [count, finishBookTransition, updateAngle]);
 
-  // Neighbors remount only after the selected book is fully closed. Refresh
-  // their orbit even when the current index did not change while reading.
+  // Keep the mounted neighborhood positioned before the browser paints.
   useLayoutEffect(() => {
     updateAngle(angleRef.current);
     const pending = pendingShelfFocusRef.current;
@@ -772,7 +771,7 @@ export default function BookCarousel({
       if (!canInteract()) { complete(direction); return; }
       // Restore the original twelve-project choreography: lift the closed
       // book, unfold at its natural proportions, then grow the paper to read.
-      const scale = Math.min(1.18, Math.max(1, stage.clientWidth -
+      const scale = Math.min(1, Math.max(1, stage.clientWidth -
         parseFloat(getComputedStyle(stage).paddingLeft) -
         parseFloat(getComputedStyle(stage).paddingRight) - 24) / (book.offsetWidth * 2.12));
       const singlePage = reader.clientWidth < 680;
@@ -784,20 +783,14 @@ export default function BookCarousel({
         parent = parent.offsetParent as HTMLElement | null;
       }
       const paperCenter = paperTop + paper.offsetHeight / 2;
-      const bookOffset = book.offsetHeight * .12;
-      const bookCenter = scene.offsetHeight / 2 + bookOffset;
       const perspective = parseFloat(getComputedStyle(scene).perspective) || 1400;
-      const lift = Math.min(160, perspective * .2);
-      const compensation = 1 - lift / perspective;
-      const originOffset = scene.offsetHeight * .12;
-      const rise = Math.min(104, Math.max(80, scene.clientWidth * .095));
-      const raised = `translate3d(0, ${(originOffset - rise) * compensation - originOffset}px, ${lift}px) scale(${compensation * 1.04})`;
-      const positioned = `translate3d(${book.offsetWidth * scale / 2 * compensation}px, ${(originOffset + bookOffset) * compensation - originOffset}px, ${lift}px) scale(${compensation})`;
+      const {lift, compensation, rise, raisedY} = getBookLiftGeometry(scene.offsetHeight, book.offsetHeight, scale, perspective);
+      const bookCenter = scene.offsetHeight / 2 - rise;
+      const raised = `translate3d(0, ${raisedY}px, ${lift}px) scale(${compensation})`;
+      const positioned = `translate3d(${book.offsetWidth * scale / 2 * compensation}px, ${raisedY}px, ${lift}px) scale(${compensation})`;
       const arrival = `translate(${singlePage ? -book.offsetWidth * scale / 2 : 0}px, ${bookCenter - details.offsetTop - paperCenter}px) scale(${book.offsetWidth * scale * (singlePage ? 1 : 2) / paper.offsetWidth}, ${book.offsetHeight * scale / paper.offsetHeight})`;
       details.style.transformOrigin = `50% ${paperCenter}px`;
-      const liftEnd = .22;
-      const unfoldStart = .12;
-      const openEnd = .54;
+      const {liftEnd, unfoldStart, openEnd} = BOOK_MOTION;
       const ease = "cubic-bezier(.4,0,.2,1)";
       const animations: Animation[] = [];
       const animate = (element: HTMLElement, frames: Keyframe[]) => {
@@ -824,7 +817,8 @@ export default function BookCarousel({
       };
       animate(book, [
         {transform: pose.transforms.get(book), visibility: "visible", offset: 0, easing: ease},
-        {transform: raised, visibility: "visible", offset: liftEnd, easing: "cubic-bezier(.3,0,.7,.75)"},
+        {transform: raised, visibility: "visible", offset: liftEnd},
+        {transform: raised, visibility: "visible", offset: unfoldStart, easing: ease},
         {transform: positioned, visibility: "visible", offset: openEnd},
         {transform: positioned, visibility: "hidden", offset: openEnd + .0001},
         {transform: positioned, visibility: "hidden", offset: 1},
@@ -844,7 +838,7 @@ export default function BookCarousel({
         const rest = "translate3d(var(--orbit-x), var(--orbit-y), var(--orbit-z))";
         animate(neighbor, [
           {transform: rest, offset: 0, easing: ease},
-          {transform: `${rest} translate3d(0, 32px, -80px)`, offset: openEnd},
+          {transform: `${rest} translate3d(0, 32px, -80px)`, offset: liftEnd},
           {transform: `${rest} translate3d(0, 32px, -80px)`, offset: 1},
         ]);
       });
