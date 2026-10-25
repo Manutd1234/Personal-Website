@@ -57,16 +57,26 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
   const pointerIndex = Math.min(2, Math.max(0, Math.floor((visibleBeat - 1) / 2)));
   // Reach, act, then let the screen respond on the following beat. The elbow
   // and wrist travel together, keeping the larger gestures attached to the body.
-  const handX = celebrating ? 55 : selecting ? (pressing ? 55 : 42) : typing ? (gesture ? 7 : -3) : 0;
-  const handY = celebrating ? -81 : selecting ? (pressing ? 8 : -17) : typing ? (gesture ? -5 : 1) : 0;
-  const leftX = sketching ? -45 + pointerIndex * 5 : guiding ? -58 + pointerIndex * 9 : inspecting ? -36 + (gesture ? -7 : 0) : typing ? (gesture ? -5 : 4) : 0;
+  const handX = celebrating ? 35 : selecting ? (pressing ? 20 : 10) : typing ? (gesture ? 7 : -3) : 0;
+  const handY = celebrating ? -70 : selecting ? (pressing ? 6 : -3) : typing ? (gesture ? -5 : 1) : 0;
+  const leftX = sketching ? -45 + pointerIndex * 5 : guiding ? -47 + pointerIndex * 7 : inspecting ? -36 + (gesture ? -7 : 0) : typing ? (gesture ? -5 : 4) : 0;
   const leftY = sketching ? (gesture ? -18 : -34) : guiding ? -46 + pointerIndex * 5 : inspecting ? -44 + (gesture ? -3 : 3) : typing ? (gesture ? 1 : -6) : 0;
-  const leftElbowX = sketching || guiding || inspecting ? 261 : 270;
-  const leftElbowY = guiding ? 141 : sketching || inspecting ? 147 : 155;
-  const rightElbowX = celebrating ? 371 : selecting ? 375 : 369;
-  const rightElbowY = celebrating ? 125 : selecting ? (pressing ? 153 : 142) : 155;
-  const leftForearm = `M${leftElbowX} ${leftElbowY}Q${leftElbowX - (guiding ? 11 : 0)} ${leftElbowY + 9} ${283 + leftX} ${166 + leftY}L${292 + leftX} ${170 + leftY}`;
-  const rightForearm = `M${rightElbowX} ${rightElbowY}Q${celebrating || selecting ? rightElbowX + 15 : 366} ${celebrating ? 110 : rightElbowY + 10} ${355 + handX} ${166 + handY}L${346 + handX} ${170 + handY}`;
+  const leftWrist = { x: 292 + leftX, y: 170 + leftY };
+  const rightWrist = { x: 346 + handX, y: 170 + handY };
+  // Keep upper arms beside the torso. The forearms carry the action, without
+  // an unconstrained elbow solver swinging the sleeves out between poses.
+  const leftElbow = {
+    x: guiding ? 274 : sketching ? 275 : inspecting ? 276 : typing && !gesture ? 278 : 277,
+    y: guiding ? 147 : sketching ? 153 : inspecting ? 150 : typing && !gesture ? 156 : 155,
+  };
+  const rightElbow = {
+    x: celebrating || selecting ? 365 : typing ? 362 : 363,
+    y: celebrating ? 136 : selecting ? (pressing ? 153 : 151) : typing && !gesture ? 156 : 155,
+  };
+  // One smooth segment meets the hand exactly; there is no overshoot or
+  // backward tail at the wrist as the magnifier and mouse poses change.
+  const leftForearm = `M${leftElbow.x} ${leftElbow.y}Q${(leftElbow.x + leftWrist.x) / 2 - 2} ${(leftElbow.y + leftWrist.y) / 2 + 2} ${leftWrist.x} ${leftWrist.y}`;
+  const rightForearm = `M${rightElbow.x} ${rightElbow.y}Q${(rightElbow.x + rightWrist.x) / 2 + 2} ${(rightElbow.y + rightWrist.y) / 2 + 2} ${rightWrist.x} ${rightWrist.y}`;
   const poseTransition = { duration: reducedMotion ? 0 : .46, ease: [0.22, 0.61, 0.36, 1] as const };
 
   // Schedule only the eight visible beats; pauses preserve exact active time.
@@ -129,8 +139,7 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
     onFocusCapture={() => onFocusChange(true)}
     onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) onFocusChange(false); }}
   >
-    <svg className="journey-scene-svg" viewBox="0 0 640 544" role="img" aria-labelledby={`${id}-title ${id}-description`}>
-      <title id={`${id}-title`}>{`From an idea to a useful release: ${titles[stage]}`}</title>
+    <svg className="journey-scene-svg" viewBox="0 0 640 544" role="img" aria-label={`From an idea to a useful release: ${titles[stage]}`} aria-describedby={`${id}-description`}>
       <desc id={`${id}-description`}>{`${description} A cartoon engineer types, reaches for the mouse and clicks. The engineer writes a brief with a pencil, compares approaches with the mouse, traces connections, checks work with a magnifier and celebrates a release. Select a step on the monitor to replay that action.`}</desc>
       <defs>
         <pattern id={`${id}-grid`} width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#bed0c7" strokeWidth=".7" opacity=".45" /></pattern>
@@ -212,15 +221,15 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
           <path d="M285 144H349L353 164H280Z" fill="#d9ead4" />
           <path className="montage-control-code" d="M291 150H319M291 155H335M291 160H312" fill="none" stroke="#65967d" strokeWidth="2" strokeLinecap="round" />
           <path d="M273 170H361L390 190H249Z" fill="#dce8d3" stroke="#335746" strokeWidth="2" strokeLinejoin="round" />
-          <path className="montage-control-keys" d="M270 175H362M263 180H370M283 171L275 184M300 171L296 184M320 171V184M340 171L344 184M357 171L364 184" stroke="#8ba98d" strokeWidth="1.6" />
+          <path className="montage-control-keys" d="M270 175H339M263 180H344M283 171L275 184M300 171L296 184M320 171V184M337 171L341 184" stroke="#8ba98d" strokeWidth="1.6" />
           <path d="M307 184H337L341 188H303Z" fill="#a9c5ac" />
-          <ellipse cx="398" cy="183" rx="15" ry="8" fill="#f4f3df" stroke="#53765c" strokeWidth="1.8" /><path d="M398 176V181" stroke="#53765c" strokeWidth="1.4" /><circle className="montage-control-touch" cx="398" cy="181" r="13" fill="none" stroke="#e79271" strokeWidth="2.5" />
+          <ellipse cx="364" cy="183" rx="13" ry="8" fill="#f4f3df" stroke="#53765c" strokeWidth="1.8" /><path d="M364 176V181" stroke="#53765c" strokeWidth="1.4" /><circle className="montage-control-touch" cx="364" cy="181" r="12" fill="none" stroke="#e79271" strokeWidth="2.5" />
         </g>
         <g className="montage-arm-left">
-          <motion.path d="M284 123L270 151" animate={{ d: `M284 123L${leftElbowX} ${leftElbowY - 4}` }} transition={poseTransition} stroke="#335746" strokeWidth="25" strokeLinecap="round" />
-          <motion.path d="M284 123L270 151" animate={{ d: `M284 123L${leftElbowX} ${leftElbowY - 4}` }} transition={poseTransition} stroke="#69a585" strokeWidth="20" strokeLinecap="round" />
-          <motion.path d="M270 155Q271 162 283 166L292 170" animate={{ d: leftForearm }} transition={poseTransition} fill="none" stroke="#6f5141" strokeWidth="15" strokeLinecap="round" />
-          <motion.path d="M270 155Q271 162 283 166L292 170" animate={{ d: leftForearm }} transition={poseTransition} fill="none" stroke="#efc39d" strokeWidth="12" strokeLinecap="round" />
+          <motion.path d="M284 123L277 151" animate={{ d: `M284 123L${leftElbow.x} ${leftElbow.y - 4}` }} transition={poseTransition} stroke="#335746" strokeWidth="25" strokeLinecap="round" />
+          <motion.path d="M284 123L277 151" animate={{ d: `M284 123L${leftElbow.x} ${leftElbow.y - 4}` }} transition={poseTransition} stroke="#69a585" strokeWidth="20" strokeLinecap="round" />
+          <motion.path d="M277 155Q282.5 164.5 292 170" animate={{ d: leftForearm }} transition={poseTransition} fill="none" stroke="#6f5141" strokeWidth="15" strokeLinecap="round" />
+          <motion.path d="M277 155Q282.5 164.5 292 170" animate={{ d: leftForearm }} transition={poseTransition} fill="none" stroke="#efc39d" strokeWidth="12" strokeLinecap="round" />
           <motion.g animate={{ x: leftX, y: leftY }} transition={poseTransition}>
             <g className="montage-hand-left"><path d={guiding ? "M289 165L277 156Q274 154 273 157Q272 159 276 162L286 170L291 176Q298 179 300 175L301 170Q300 167 296 168L293 166Z" : "M289 165Q295 163 303 170L308 174Q310 178 306 178L297 173L302 178Q302 181 298 179L290 175Z"} fill="#efc39d" stroke="#9c7156" strokeWidth="1.4" strokeLinejoin="round" />
               <g className="montage-pencil" aria-hidden="true"><path d="M302 153L307 152L312 178L308 184L305 179Z" fill="#e9bb68" stroke="#8d774f" strokeWidth="1.2" /><path d="M308 184L312 178L305 179Z" fill="#f7e1b5" /><path d="M308 184L309 180" stroke="#465e4e" strokeWidth="1.5" /></g>
@@ -229,11 +238,11 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
           </motion.g>
         </g>
         <g className="montage-arm-right">
-          <motion.path d="M354 124L369 151" animate={{ d: `M354 124L${rightElbowX} ${rightElbowY - 4}` }} transition={poseTransition} stroke="#335746" strokeWidth="25" strokeLinecap="round" />
-          <motion.path d="M354 124L369 151" animate={{ d: `M354 124L${rightElbowX} ${rightElbowY - 4}` }} transition={poseTransition} stroke="#69a585" strokeWidth="20" strokeLinecap="round" />
+          <motion.path d="M354 124L363 151" animate={{ d: `M354 124L${rightElbow.x} ${rightElbow.y - 4}` }} transition={poseTransition} stroke="#335746" strokeWidth="25" strokeLinecap="round" />
+          <motion.path d="M354 124L363 151" animate={{ d: `M354 124L${rightElbow.x} ${rightElbow.y - 4}` }} transition={poseTransition} stroke="#69a585" strokeWidth="20" strokeLinecap="round" />
           <g className="montage-working-forearm">
-            <motion.path d="M369 155Q366 162 355 166L346 170" animate={{ d: rightForearm }} transition={poseTransition} fill="none" stroke="#6f5141" strokeWidth="15" strokeLinecap="round" />
-            <motion.path d="M369 155Q366 162 355 166L346 170" animate={{ d: rightForearm }} transition={poseTransition} fill="none" stroke="#efc39d" strokeWidth="12" strokeLinecap="round" />
+            <motion.path d="M363 155Q356.5 164.5 346 170" animate={{ d: rightForearm }} transition={poseTransition} fill="none" stroke="#6f5141" strokeWidth="15" strokeLinecap="round" />
+            <motion.path d="M363 155Q356.5 164.5 346 170" animate={{ d: rightForearm }} transition={poseTransition} fill="none" stroke="#efc39d" strokeWidth="12" strokeLinecap="round" />
             <motion.g animate={{ x: handX, y: handY }} transition={poseTransition}><g className="montage-hand-right"><path d={celebrating ? "M346 175Q338 171 337 164L331 156Q329 152 332 151L339 157L335 143Q334 139 337 139Q340 139 341 143L344 153L343 138Q343 134 346 135Q349 135 349 139L350 153L353 140Q354 136 357 138Q359 139 358 143L355 157L360 150Q362 147 365 150Q367 152 364 156L354 172L350 176Z" : "M349 165Q342 163 335 170L330 174Q328 178 332 178L341 173L336 178Q336 181 340 179L348 175Z"} fill="#efc39d" stroke="#9c7156" strokeWidth="1.4" strokeLinejoin="round" /></g></motion.g>
           </g>
         </g>

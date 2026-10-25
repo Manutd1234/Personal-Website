@@ -207,8 +207,8 @@
 .montage-person-eyes { transform-origin: 322px 73px; }
 .montage-arm-left { transform-origin: 284px 123px; }
 .montage-arm-right { transform-origin: 354px 124px; }
-.montage-hand-left { transform-origin: 291px 169px; }
-.montage-hand-right { transform-origin: 347px 169px; }
+.montage-hand-left { transform-origin: 292px 170px; }
+.montage-hand-right { transform-origin: 346px 170px; }
 .montage-working-forearm { transform-origin: 369px 155px; }
 .montage-control-touch { opacity: 0; transform-origin: 341px 174px; }
 .montage-control-code { stroke-dasharray: 75; }
@@ -266,7 +266,7 @@
 /* Gesture first, response second: the engineer drives a single continuous workspace. */
 .montage-engineer { transform-origin: 320px 174px; transform: scale(1.1); }
 .montage-person-head { transform-origin: 320px 104px; }
-.montage-control-touch { transform-origin: 398px 181px; }
+.montage-control-touch { transform-origin: 364px 181px; }
 .montage-step-card { transition: transform 600ms cubic-bezier(.22,.61,.36,1), border-color 450ms ease, background-color 450ms ease, box-shadow 450ms ease; }
 .montage-step-card[data-current="true"] { transform: translateY(-2px); box-shadow: 0 3px 0 #33574615; }
 .montage-step-card b, .montage-step-card small { opacity: 1; }
@@ -292,13 +292,12 @@
   .montage-person-eyes { animation: montage-blink 5.5s ease-in-out infinite; }
   .montage-steam { animation: montage-steam-rise 3.5s ease-in-out infinite; }
   .journey-montage[data-sketching="true"] .montage-hand-left { animation: montage-sketch 720ms ease-in-out infinite; }
-  .journey-montage[data-inspecting="true"] .montage-magnifier { animation: montage-inspect 1.5s ease-in-out infinite; }
+  .journey-montage[data-inspecting="true"] .montage-hand-left { animation: montage-inspect 1.5s ease-in-out infinite; }
   .journey-montage[data-celebrating="true"] .montage-hand-right { animation: montage-wave 1.15s ease-in-out 1; }
   .journey-montage[data-celebrating="true"] .montage-release-sparkles { animation: montage-celebrate 900ms ease-out both; }
   .journey-montage[data-delivering="true"] .montage-release-plane { animation: montage-deliver 1.45s cubic-bezier(.22,.61,.36,1) both; }
   .journey-montage[data-typing="true"] .montage-hand-left { animation: montage-finger-tap 480ms ease-in-out infinite; }
   .journey-montage[data-typing="true"] .montage-hand-right { animation: montage-finger-tap 520ms 160ms ease-in-out infinite; }
-  .journey-montage[data-typing="true"] .montage-arm-left { animation: montage-typing-arm 1s ease-in-out infinite; }
   .journey-montage[data-typing="true"] .montage-control-code { animation: montage-writing 1.25s ease-in-out infinite; }
   .journey-montage[data-typing="true"] .montage-step-card[data-current="true"] b { animation: montage-type-line 600ms steps(12, end) both; }
   .journey-montage[data-pressing="true"] .montage-control-touch,
@@ -311,10 +310,9 @@
 @keyframes montage-breathe { 0%, 100% { transform: scale(1.1) translateY(0); } 50% { transform: scale(1.1) translateY(1.2px); } }
 @keyframes montage-blink { 0%, 38%, 42%, 100% { transform: scaleY(1); } 40% { transform: scaleY(.1); } }
 @keyframes montage-steam-rise { 0% { opacity: .2; transform: translateY(0); } 60% { opacity: .65; } 100% { opacity: 0; transform: translateY(-6px); } }
-@keyframes montage-finger-tap { 0%, 100% { transform: rotate(0); } 42% { transform: rotate(-12deg) translateY(-2px); } 64% { transform: rotate(3deg) translateY(1px); } }
-@keyframes montage-typing-arm { 0%, 100% { transform: rotate(0); } 45% { transform: rotate(-3deg); } }
-@keyframes montage-sketch { 0%, 100% { transform: translate(0, 0) rotate(-3deg); } 35% { transform: translate(5px, -2px) rotate(5deg); } 70% { transform: translate(2px, 1px) rotate(-1deg); } }
-@keyframes montage-inspect { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(6px, -4px); } }
+@keyframes montage-finger-tap { 0%, 100% { transform: rotate(0); } 42% { transform: rotate(-12deg); } 64% { transform: rotate(3deg); } }
+@keyframes montage-sketch { 0%, 100% { transform: rotate(-5deg); } 35% { transform: rotate(7deg); } 70% { transform: rotate(-1deg); } }
+@keyframes montage-inspect { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(5deg); } }
 @keyframes montage-wave { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(16deg); } 50% { transform: rotate(-8deg); } 75% { transform: rotate(10deg); } }
 @keyframes montage-celebrate { 0% { opacity: 0; transform: scale(.7); } 50% { opacity: 1; transform: scale(1.08); } 100% { opacity: .8; transform: scale(1); } }
 @keyframes montage-deliver { 0% { opacity: 0; transform: translate(398px, 171px) rotate(-10deg); } 15% { opacity: 1; } 60% { opacity: 1; transform: translate(215px, 104px) rotate(-35deg); } 88% { opacity: 1; } 100% { opacity: 0; transform: translate(115px, 43px) rotate(-20deg); } }
