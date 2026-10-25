@@ -21,6 +21,11 @@
     "lucide-react": "^1.61.0",
     "matter-js": "^0.20.0"
   },
+  "overrides": {
+    "next@15.5.28": {
+      "postcss": "8.5.31"
+    }
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
     "tailwindcss": "^4.3.3",
