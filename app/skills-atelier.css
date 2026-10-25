@@ -123,6 +123,19 @@
   text-wrap: balance;
 }
 
+.skill-atelier .skill-pill[data-fitted="true"] {
+  max-width: none;
+  padding: 0;
+}
+
+.skill-atelier .skill-pill[data-fitted="true"] > span {
+  flex: 0 0 auto;
+  width: var(--skill-text-width);
+  max-width: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .skill-atelier .skill-pill[data-size="medium"] {
   --tile-x: 6px;
   --tile-y: 4px;

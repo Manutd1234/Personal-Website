@@ -349,8 +349,8 @@ export function stepSkillPhysics(
     const travel = Math.max(Math.min(distance, SKILL_DRAG_MAX_VELOCITY / 2), fastest / 2);
     // Compact touch boards have denser contact chains and retain the finer
     // sweep; desktop travel can use 3px steps without redundant world solves.
-    const sweep = width < 700 ? 2 : 3;
-    substeps = Math.max(4, Math.min(width < 700 ? 24 : 16, Math.ceil(travel / sweep)));
+    const sweep = width < 700 ? 1 : 3;
+    substeps = Math.max(4, Math.min(width < 700 ? 48 : 16, Math.ceil(travel / sweep)));
   }
   const maximum = drag ? SKILL_DRAG_MAX_VELOCITY : SKILL_MAX_VELOCITY;
   const iterations = engine.positionIterations;

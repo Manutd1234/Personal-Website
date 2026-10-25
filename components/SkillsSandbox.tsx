@@ -22,6 +22,7 @@ import {
   releaseSkillDrag,
   skillPointerPosition,
   type SkillDrag,
+  type SkillShape,
   SKILL_COLLISION_PADDING,
   SKILL_DROP_BLOCKED_MS,
   SKILL_PHYSICS_STEP,
@@ -45,6 +46,55 @@ const skills = skillGroups
   );
 function tileForm(index: number) {
   return skillTileForm(index, skills[index].label);
+}
+// Fractions of the SVG occupied by a centred rectangle that stays inside its
+// curves and notches. Fixed pixel padding cannot protect a long, stretched tile.
+const textSafeArea: Record<SkillShape, { width: number; height: number }> = {
+  ellipse: { width: 0.76, height: 0.56 },
+  hexagon: { width: 0.76, height: 0.76 },
+  ticket: { width: 0.84, height: 0.76 },
+  pebble: { width: 0.72, height: 0.68 },
+  cloud: { width: 0.66, height: 0.5 },
+  pennant: { width: 0.72, height: 0.76 },
+  seal: { width: 0.7, height: 0.48 },
+};
+
+function clearTileSize(element: HTMLButtonElement) {
+  element.style.width = "";
+  element.style.height = "";
+  element.style.removeProperty("--skill-text-width");
+  delete element.dataset.fitted;
+}
+
+function fitSkillTiles(elements: HTMLButtonElement[], worldWidth: number) {
+  const maxWidth = Math.max(1, worldWidth - 24);
+  const labels = elements.map((element) => element.querySelector("span")!);
+  elements.forEach((element) => {
+    clearTileSize(element);
+    element.dataset.fitted = "true";
+    element.style.setProperty("--skill-text-width", "max-content");
+  });
+  // Batch natural text reads, width writes, and wrapped-height reads. This runs
+  // only when fonts or the board width change, never in the physics frame loop.
+  const widths = labels.map((label, index) => Math.min(maxWidth,
+    Math.ceil((label.getBoundingClientRect().width + 3) / textSafeArea[tileForm(index)].width),
+  ));
+  elements.forEach((element, index) => {
+    element.style.width = `${widths[index]}px`;
+    element.style.setProperty("--skill-text-width", `${Math.max(1,
+      widths[index] * textSafeArea[tileForm(index)].width - 3,
+    )}px`);
+  });
+  const heights = labels.map((label, index) => Math.ceil(
+    (label.getBoundingClientRect().height + 3) / textSafeArea[tileForm(index)].height,
+  ));
+  elements.forEach((element, index) => {
+    element.style.height = `${heights[index]}px`;
+  });
+  return elements.map((element) => ({
+    width: element.getBoundingClientRect().width,
+    height: element.getBoundingClientRect().height,
+  }));
 }
 const STEP = 1000 / 60;
 const clamp = (value: number, low: number, high: number) =>
@@ -102,6 +152,42 @@ export default function SkillsSandbox({
     );
   const matchingIndices = new Set(matching.map(({ index }) => index));
   const still = reducedMotion || loadFailed;
+
+  // The same fit also protects the static/reduced-motion view before Matter
+  // loads, or when animation cannot load at all.
+  useEffect(() => {
+    if (matter && !reducedMotion) return;
+    const world = worldRef.current;
+    const elements = pillRefs.current.filter(
+      (element): element is HTMLButtonElement => Boolean(element),
+    );
+    if (!world || elements.length !== skills.length) return;
+    let cancelled = false;
+    let frame = 0;
+    let measuredWidth = 0;
+    const measure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (cancelled || !world.clientWidth) return;
+        measuredWidth = world.clientWidth;
+        fitSkillTiles(elements, measuredWidth);
+      });
+    };
+    const fontsLoaded = () => { void document.fonts.ready.then(() => { if (!cancelled) measure(); }); };
+    const resize = new ResizeObserver(() => {
+      if (world.clientWidth !== measuredWidth) measure();
+    });
+    resize.observe(world);
+    document.fonts.addEventListener("loadingdone", fontsLoaded);
+    fontsLoaded();
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+      resize.disconnect();
+      document.fonts.removeEventListener("loadingdone", fontsLoaded);
+      elements.forEach(clearTileSize);
+    };
+  }, [matter, reducedMotion]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -435,8 +521,7 @@ export default function SkillsSandbox({
     }
     function clearElementStyles() {
       elements.forEach((element) => {
-        element.style.width = "";
-        element.style.height = "";
+        clearTileSize(element);
         element.style.transform = "";
         element.style.opacity = "";
         element.style.pointerEvents = "";
@@ -455,23 +540,7 @@ export default function SkillsSandbox({
       if (viewportRef.current) viewportRef.current.style.height = "";
       clearElementStyles();
       width = nextWidth;
-      // Natural flex widths are fractional. Rounding offsetWidth down and then
-      // freezing height can wrap the text onto an extra line in the live world.
-      // Fix widths first, then measure their final wrapped heights.
-      const maxTileWidth = Math.max(1, width - 24);
-      const tileWidths = elements.map((element) =>
-        Math.min(maxTileWidth, Math.ceil(element.getBoundingClientRect().width) + 2),
-      );
-      elements.forEach((element, index) => {
-        element.style.width = `${tileWidths[index]}px`;
-      });
-      sizes = elements.map((element, index) => ({
-        width: tileWidths[index],
-        height: Math.ceil(element.getBoundingClientRect().height),
-      }));
-      elements.forEach((element, index) => {
-        element.style.height = `${sizes[index].height}px`;
-      });
+      sizes = fitSkillTiles(elements, width);
       // Estimate space from measured envelopes; this layout is only a sizing
       // calculation. Labels enter from the top and never snap to its positions.
       height = skillBoardHeight(sizes, width, viewportRef.current?.clientHeight ?? 428);

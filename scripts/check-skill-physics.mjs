@@ -268,14 +268,18 @@ function assertGrounded(bodies, floor, context) {
 
 const layoutOnly = process.argv.includes("--layout");
 const dragOnly = process.argv.includes("--drag");
+const selectedCase = process.argv.find((argument) => argument.startsWith("--case="))?.slice(7);
+const selectedSeed = process.argv.find((argument) => argument.startsWith("--seed="))?.slice(7);
+assert.ok(selectedSeed === undefined || Number.isInteger(Number(selectedSeed)), "--seed must be an integer");
 const compactDesktop = layoutOnly || dragOnly;
 const scenarios = compactDesktop
   ? [["1055px viewport", 924, 428, 1], ["1835px viewport", 1054, 428, 1]]
   : [["desktop", 980, 538, 1], ["narrow", 340, 478, 1.1]];
-for (const [name, width, frameHeight, scale] of scenarios) {
+assert.ok(!selectedCase || scenarios.some(([name]) => name === selectedCase), "--case must name a scenario");
+for (const [name, width, frameHeight, scale] of scenarios.filter(([name]) => !selectedCase || name === selectedCase)) {
   const sizes = desktopSizes.map((size) => ({ width: Math.ceil(size.width * scale), height: Math.ceil(size.height * scale) }));
   const area = sizes.reduce((sum, size) => sum + (size.width + physics.SKILL_COLLISION_PADDING * 2) * (size.height + physics.SKILL_COLLISION_PADDING * 2), 0);
-  for (const seed of compactDesktop ? [42] : [7, 42, 2026]) {
+  for (const seed of selectedSeed !== undefined ? [Number(selectedSeed)] : compactDesktop ? [42] : [7, 42, 2026]) {
     let height = compactDesktop
       ? physics.skillBoardHeight(sizes, width, frameHeight)
       : Math.ceil(Math.max(frameHeight, area / ((width - 24) * physics.SKILL_PACKING_DENSITY) + 28));
