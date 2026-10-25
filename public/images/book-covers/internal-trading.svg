@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400"><rect width="600" height="400" fill="#f4efdf"/><g stroke="#40564a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+<path d="m51 72 486 0 0 260-486 0z" fill="#e4d9df"/><path d="m51 135 486 0m-486 66 486 0m-486 66 486 0" fill="none" stroke="#b9a8be" stroke-width="2" stroke-dasharray="8 9"/>
+<path d="m88 294 0-188" fill="none" stroke="#716085" stroke-width="3"/><path d="m479 294 0-188" fill="none" stroke="#716085" stroke-width="4"/>
+<path d="m98 121 55 0 35-23 28 34 43-14 35-34 45 18 39-40 86 20" fill="none" stroke="#bb7b4e" stroke-width="5"/>
+<path d="m98 186 38-8 35 21 50-32 33 5 50-40 41 19 43-11 76-24" fill="none" stroke="#567f76" stroke-width="5"/>
+<path d="m98 253 51-19 33 12 35-10 39-30 42 11 49-13 47-34 70 13" fill="none" stroke="#716085" stroke-width="5"/>
+<g fill="#f5e7c8"><circle cx="464" cy="82" r="12"/><circle cx="464" cy="116" r="12"/><circle cx="464" cy="183" r="12"/></g>
+<path d="m474 41 0 40 65 0 0-40z" fill="#faf2dc"/>
+<g fill="#716085" stroke="none"><path d="m474 41 16 0 0 13-16 0zm32 0 16 0 0 13-16 0zm-16 13 16 0 0 13-16 0zm32 0 17 0 0 13-17 0zm-48 13 16 0 0 14-16 0zm32 0 16 0 0 14-16 0z"/></g>
+<path d="m139 329 49 0 0-37 51 0 0 37 50 0 0-67 49 0 0 67 50 0 0-103 49 0 0 103" fill="#ad97b5"/>
+<path d="m73 358 452 0" fill="none" stroke="#b9a8be" stroke-width="2"/>
+</g></svg>

@@ -278,7 +278,9 @@ export default function Portfolio() {
               ) : (
                 <>
                   {tab.id === "projects" ? (
-                    <h1 className="sr-only">Project library</h1>
+                    <header className="classic-section-header">
+                      <h1>Projects I’ve <em>built.</em></h1>
+                    </header>
                   ) : (
                     <header className="classic-section-header">
                       <h1>

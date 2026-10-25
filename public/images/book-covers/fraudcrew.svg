@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" fill="none">
+<rect width="600" height="400" fill="#f5f0df"/>
+<path d="M22 61L98 51M491 346L572 335M25 67L72 61" stroke="#ddd4b9" stroke-width="2"/>
+<g stroke="#4c5140" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+<path d="M76 74L479 61L489 284L85 296Z" fill="#dcc9aa"/><path d="M91 88L464 76L474 270L99 280Z" fill="#ede3c9"/>
+<path d="M130 138L270 117L386 172L243 222L130 138M270 117L243 222" stroke="#b86d56" stroke-width="3"/>
+<path d="M105 100L174 95L181 174L112 181Z" fill="#fcf8e9"/><path d="M123 115L158 112M122 130L165 127M124 145L161 142M125 158L146 156" stroke="#91a28f" stroke-width="2"/>
+<path d="M235 85L304 92L298 158L229 150Z" fill="#f7f4e6"/><path d="M248 104L287 108M246 119L280 123M245 135L288 139" stroke="#9baa95" stroke-width="2"/>
+<path d="M351 136L422 128L431 207L360 214Z" fill="#fbf5e4"/><path d="M369 152L408 148M369 167L409 163M371 182L399 179M373 196L415 191" stroke="#a2af98" stroke-width="2"/>
+<path d="M213 196L279 199L278 258L212 253Z" fill="#c4d1b6"/><path d="M230 219L261 220M230 234L254 236" stroke="#67806a" stroke-width="2"/>
+<circle cx="139" cy="101" r="5" fill="#b56b52"/><circle cx="269" cy="89" r="5" fill="#b56b52"/><circle cx="386" cy="134" r="5" fill="#b56b52"/>
+<circle cx="152" cy="251" r="52" fill="#d9e4cf" fill-opacity=".85" stroke-width="8"/><circle cx="152" cy="251" r="39" stroke="#b3c2a9" stroke-width="2"/>
+<path d="M116 291L80 333" stroke-width="19"/><path d="M116 291L80 333" stroke="#b56b52" stroke-width="12"/>
+<path d="M124 249L141 264L178 231" stroke="#577c65" stroke-width="6"/>
+<path d="M395 343C392 307 403 283 437 281C473 277 498 303 503 340Z" fill="#71978b"/>
+<path d="M423 289L438 304L453 287" fill="#eee3c6"/><ellipse cx="438" cy="259" rx="24" ry="29" fill="#d9ab86"/>
+<path d="M414 254C409 220 461 219 462 252L451 241L426 246L416 259" fill="#35534b"/>
+<path d="M410 307L404 327M474 306L482 327" stroke="#c6d8bf"/>
+<circle cx="519" cy="264" r="24" fill="#e9c68d"/><path d="M507 264L517 274L533 255" stroke-width="4"/>
+</g>
+</svg>

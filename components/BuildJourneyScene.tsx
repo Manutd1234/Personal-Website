@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 const actions = ["Try a missing task name", "Compare the choices", "Follow the user journey", "Run checks & review", "Release & collect feedback"];
 const replays = ["Try a useful task name", "Replay comparison", "Follow it again", "Run checks again", "Replay the release"];
@@ -12,20 +12,59 @@ const results = [
   "The example passes build and test checks and is published. User feedback becomes the next improvement: adding a due date.",
 ];
 
-/** A single feature, built across five shots in the same illustrated workspace. */
-export default function BuildJourneyScene({ stage, description, onFocusChange, animate }: {
+const screenStages = [
+  { label: "A useful first version", state: "Idea", note: "A clear goal, a small scope and helpful feedback.", cards: [["USER NEED", "Add a task", "Keep track of work"], ["FEEDBACK", "Give it a name", "Make mistakes easy to fix"], ["FIRST VERSION", "Mark it done", "Finish one useful journey"]] },
+  { label: "Choose the building blocks", state: "Planned", note: "Try the uncertain part before committing to the tools.", cards: [["INTERFACE", "React", "Fast iteration"], ["APP LOGIC", "TypeScript", "Clear changes"], ["STORAGE", "SQL", "Reliable saves"]] },
+  { label: "Connect the user journey", state: "Connected", note: "Every action has a result the user can understand.", cards: [["USER ACTION", "Add task", "Prepare the demo"], ["APP LOGIC", "Check & save", "Keep the task safe"], ["FEEDBACK", "Show result", "The new task appears"]] },
+  { label: "Make a small, complete change", state: "Verified", note: "Build, test and review before adding the next feature.", cards: [["BUILD", "One feature", "Works from end to end"], ["TEST", "Check behavior", "Normal use and mistakes"], ["REVIEW", "Clear changes", "Ready to merge"]] },
+  { label: "Put it in people’s hands", state: "Live", note: "User feedback: “Could I add a due date?” → the next iteration.", cards: [["BUILD", "Package it", "A repeatable release"], ["CHECK", "Try it live", "Verify the user journey"], ["PUBLISH", "Listen & learn", "Improve with feedback"]] },
+] as const;
+const actionBeats = [650, 1600, 2750, 3900, 5050];
+
+/** The workspace and task stay in place while the same feature takes shape. */
+export default function BuildJourneyScene({ stage, description, onFocusChange, animate, reducedMotion }: {
   stage: number;
   description: string;
   onFocusChange: (focused: boolean) => void;
   animate: boolean;
+  reducedMotion: boolean;
 }) {
   const id = useId();
-  const [action, setAction] = useState({ stage: -1, count: 0, invalid: false });
+  const [action, setAction] = useState({ stage: -1, count: 0, invalid: false, immediate: false });
   const acted = action.stage === stage;
   const invalid = acted && action.invalid;
-  const replay = () => setAction(previous => ({ stage, count: previous.count + 1, invalid: stage === 0 && !(previous.stage === 0 && previous.invalid) }));
+  const replay = () => setAction(previous => ({ stage, count: previous.count + 1, invalid: stage === 0 && !(previous.stage === 0 && previous.invalid), immediate: !animate }));
+  const [beat, setBeat] = useState(0);
+  const clock = useRef({ stage, run: action.count, elapsed: 0 });
+  const screen = screenStages[stage];
+  const visibleBeat = reducedMotion ? 5 : beat;
 
-  return <div className="journey-scene journey-montage" data-stage={stage} data-acted={acted}>
+  // One purposeful sequence per stage, then a quiet hold. Pausing preserves its place.
+  useEffect(() => {
+    if (clock.current.stage !== stage || clock.current.run !== action.count) {
+      const completeImmediately = action.stage === stage && action.immediate;
+      clock.current = { stage, run: action.count, elapsed: completeImmediately ? actionBeats[actionBeats.length - 1] : 0 };
+      setBeat(completeImmediately ? actionBeats.length : 0);
+    }
+    if (!animate) return;
+    let frame = 0;
+    let previous = performance.now();
+    let previousBeat = actionBeats.filter(at => clock.current.elapsed >= at).length;
+    const tick = (now: number) => {
+      clock.current.elapsed += Math.min(now - previous, 100);
+      previous = now;
+      const nextBeat = actionBeats.filter(at => clock.current.elapsed >= at).length;
+      if (nextBeat !== previousBeat) {
+        previousBeat = nextBeat;
+        setBeat(nextBeat);
+      }
+      if (nextBeat < actionBeats.length) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [animate, stage, action.count, action.stage, action.immediate]);
+
+  return <div className="journey-scene journey-montage" data-stage={stage} data-acted={acted} data-beat={visibleBeat}>
     <svg className="journey-scene-svg" viewBox="0 0 640 544" role="img" aria-labelledby={`${id}-title ${id}-description`}>
       <title id={`${id}-title`}>{`Building a task board: ${titles[stage]}`}</title>
       <desc id={`${id}-description`}>{`${description} A cartoon engineer types on a keyboard, selects components, follows the user journey, tests a feature and releases it from a control screen. The large monitor shows each part of the process.`}</desc>
@@ -71,7 +110,7 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, a
       </g>
 
       {/* Hands and controls stay above the foreground monitor, so each action is visible. */}
-      <g className="montage-engineer" key={`operator-${stage}-${action.count}`}>
+      <g className="montage-engineer">
         <path d="M262 157V117Q262 103 276 103H358Q373 103 374 119V169" fill="#81a89a" stroke="#335746" strokeWidth="2.5" />
         <path d="M276 167L281 118Q286 108 301 108H336Q353 108 361 123L368 171" fill="#69a585" stroke="#335746" strokeWidth="2.5" />
         <path d="M303 99V112L319 124L334 111V96" fill="#e8b48f" stroke="#6f5141" strokeWidth="2" />
@@ -102,18 +141,14 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, a
           <path d="M270 155Q271 162 283 166L292 170" fill="none" stroke="#efc39d" strokeWidth="11" strokeLinecap="round" />
           <g className="montage-hand-left"><path d="M289 165Q295 163 303 170L308 174Q310 178 306 178L297 173L302 178Q302 181 298 179L290 175Z" fill="#efc39d" stroke="#9c7156" strokeWidth="1.4" strokeLinejoin="round" /></g>
         </g>
-        <g className={`montage-arm-right ${stage === 1 ? "is-pointing" : ""}`}>
+        <g className="montage-arm-right">
           <path d="M354 124L369 151" stroke="#335746" strokeWidth="25" strokeLinecap="round" />
           <path d="M354 124L369 151" stroke="#69a585" strokeWidth="20" strokeLinecap="round" />
-          {stage === 1 ? <g className="montage-pointing-forearm">
-            <path d="M369 153L390 133" stroke="#6f5141" strokeWidth="14" strokeLinecap="round" />
-            <path d="M369 153L390 133" stroke="#efc39d" strokeWidth="11" strokeLinecap="round" />
-            <path d="M386 134L391 125L407 116Q411 115 411 119L399 129L405 128Q409 129 406 133L396 140Z" fill="#efc39d" stroke="#9c7156" strokeWidth="1.5" strokeLinejoin="round" />
-          </g> : <g className="montage-working-forearm">
+          <g className="montage-working-forearm">
             <path d="M369 155Q366 162 355 166L346 170" fill="none" stroke="#6f5141" strokeWidth="14" strokeLinecap="round" />
             <path d="M369 155Q366 162 355 166L346 170" fill="none" stroke="#efc39d" strokeWidth="11" strokeLinecap="round" />
             <g className="montage-hand-right"><path d="M349 165Q342 163 335 170L330 174Q328 178 332 178L341 173L336 178Q336 181 340 179L348 175Z" fill="#efc39d" stroke="#9c7156" strokeWidth="1.4" strokeLinejoin="round" /></g>
-          </g>}
+          </g>
         </g>
       </g>
       <g transform="translate(0 40)">
@@ -133,42 +168,29 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, a
 
     <div className="montage-monitor" aria-label={`Task board example: ${titles[stage]}`}>
       <header className="montage-window-heading"><span className="montage-window-dots" aria-hidden="true"><i /><i /><i /></span><strong>Task board</strong><span>{["The brief", "Tool choices", "User journey", "Feature review", "Release notes"][stage]}</span></header>
-      <AnimatePresence initial={false}>
-        <motion.div className="montage-shot" key={`${stage}-${action.count}`} data-shot={stage} data-acted={acted}
-          initial={animate ? { opacity: 0, x: 18 } : false}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -14 }}
-          transition={{ duration: animate ? .38 : 0, ease: [.22, .7, .3, 1] }}
-        >
-          {stage === 0 && <div className="montage-contract-screen">
-            <div className="montage-endpoint"><b>Goal</b> Keep track of work <span>First version</span></div>
-            <div className={`montage-input ${invalid ? "is-invalid" : ""}`}><span>Task</span><span className="montage-input-value">{invalid ? "Add a task name…" : "Prepare the demo"}</span><span className="montage-input-caret" aria-hidden="true" /></div>
-            <div className="montage-rules"><span><i>✓</i> Add a task</span><span><i>✓</i> Mark it done</span></div>
-            <div className={`montage-response ${invalid ? "is-invalid" : ""}`}><b>{invalid ? "!" : "✓"}</b><span>{invalid ? "A helpful message when a name is missing." : "Clear goal. Small scope. Useful first step."}</span></div>
-          </div>}
-          {stage === 1 && <div className="montage-stack-screen">
-            <p className="montage-screen-label">Simple to build. Straightforward to maintain.</p>
-            <div className="montage-components">{[["INTERFACE", "React", "Fast iteration"], ["APP LOGIC", "TypeScript", "Clear changes"], ["STORAGE", "SQL", "Reliable saves"]].map(([kind, name, reason], index) => <div className={`montage-component montage-component-${index}`} key={kind}><span>{kind}</span><b>{name}</b><small>{reason}</small><i className="montage-choice-check" aria-hidden="true">✓</i></div>)}</div>
-            <div className="montage-decision"><span aria-hidden="true">↳</span>{acted ? "A small prototype makes the tradeoffs tangible." : "Try the uncertain part before committing."}</div>
-          </div>}
-          {stage === 2 && <div className="montage-flow-screen">
-            <div className="montage-endpoint"><b>Flow</b> From action to result</div>
-            <div className="montage-request-flow"><div className="montage-request-wire" aria-hidden="true"><span /></div>{[["Add task", "User action"], ["Check & save", "App logic"], ["Show result", "Clear feedback"]].map(([label, detail], index) => <div className={`montage-flow-node montage-flow-node-${index}`} key={label}><b>{label}</b><small>{detail}</small></div>)}</div>
-            <div className="montage-response"><b>{acted ? "✓" : "↩"}</b><span>{acted ? "Task saved. The user can see what changed." : "Plan the happy path—and a way to recover."}</span></div>
-          </div>}
-          {stage === 3 && <div className="montage-build-screen">
-            <div className="montage-feature-preview"><span className="montage-screen-label">A small, complete change</span><div className="montage-task-row"><i aria-hidden="true">✓</i><span>Prepare the demo</span></div><div className="montage-task-row"><i aria-hidden="true">+</i><span>Add the next task</span></div><span className="montage-review-note">Small change · ready to review</span></div>
-            <div className="montage-tests-list"><span className="montage-screen-label">{acted ? "Ready to merge" : "Check the behavior"}</span>{["Works as expected", "Handles mistakes", "Reviewed & clear"].map((label, index) => <div className={`montage-test montage-test-${index}`} key={label}><i aria-hidden="true">✓</i><span>{label}</span></div>)}</div>
-            <p className="montage-build-note">Build → test → review. Keep each change manageable.</p>
-          </div>}
-          {stage === 4 && <div className="montage-release-screen">
-            <div className="montage-pipeline">{["Build", "Check", "Publish"].map((label, index) => <span className={`montage-gate montage-gate-${index}`} key={label}><i aria-hidden="true">✓</i>{label}</span>)}</div>
-            <div className="montage-feedback"><div><span className="montage-live"><i />{acted ? "Released" : "Ready to share"}</span><b>Listen. Learn.</b><span>Check the live experience.</span></div><div className="montage-feedback-card"><span>User feedback</span><p>“Could I add a due date?”</p><small>Next improvement ↗</small></div></div>
-            <div className="montage-release-note">Keep improving <span>A rollback is ready, too.</span></div>
-          </div>}
-          <svg className={`montage-screen-pointer montage-screen-pointer-${stage}`} viewBox="0 0 24 28" aria-hidden="true"><path d="M3 2L20 15L12 16L8 24Z" fill="#315c49" stroke="#fffdf3" strokeWidth="2" strokeLinejoin="round" /></svg>
-        </motion.div>
-      </AnimatePresence>
+      <div className="montage-continuity-screen">
+        <div className={`montage-feature-card ${invalid ? "is-invalid" : ""}`}>
+          <span className="montage-feature-icon" aria-hidden="true">{invalid ? "!" : "✓"}</span>
+          <div><span>The feature</span><strong>{invalid ? "Add a task name…" : "Prepare the demo"}</strong></div>
+          <span className="montage-feature-state" data-ready={visibleBeat >= 4}>
+            <AnimatePresence initial={false} mode="wait"><motion.span key={invalid ? "invalid" : stage} initial={animate ? { opacity: 0 } : false} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: animate ? .2 : 0 }}>{invalid ? "Needs a name" : screen.state}</motion.span></AnimatePresence>
+          </span>
+        </div>
+        <div className="montage-screen-caption">{screen.label}</div>
+        <div className="montage-step-cards">
+          {screen.cards.map(([kind, label, detail], index) => <div className="montage-step-card" data-complete={visibleBeat > index + 1} data-current={visibleBeat === index + 1} key={index}>
+            <AnimatePresence initial={false} mode="wait"><motion.div key={`${stage}-${index}`} initial={animate ? { opacity: 0, y: 3 } : false} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: animate ? .23 : 0, delay: animate ? index * .045 : 0 }}>
+              <span>{kind}</span><b>{label}</b><small>{detail}</small>
+            </motion.div></AnimatePresence>
+            <i className="montage-step-check" aria-hidden="true">✓</i>
+          </div>)}
+        </div>
+        <div className={`montage-continuity-note ${invalid ? "is-invalid" : ""}`}>
+          <span aria-hidden="true">{invalid ? "!" : stage === 4 ? "↗" : "↳"}</span>
+          <span>{invalid ? "A helpful message makes the missing name easy to fix." : acted && stage === 1 ? "The prototype makes the tradeoffs tangible." : screen.note}</span>
+        </div>
+      </div>
+      <svg className="montage-screen-pointer" viewBox="0 0 24 28" aria-hidden="true"><path d="M3 2L20 15L12 16L8 24Z" fill="#315c49" stroke="#fffdf3" strokeWidth="2" strokeLinejoin="round" /></svg>
     </div>
     <button className="journey-monitor-action" type="button" aria-controls={`${id}-result`} onFocus={() => onFocusChange(true)} onBlur={() => onFocusChange(false)} onClick={replay}>
       <span>{stage === 0 ? (invalid ? replays[0] : actions[0]) : (acted ? replays[stage] : actions[stage])}</span><span aria-hidden="true">{acted ? "↻" : "→"}</span>

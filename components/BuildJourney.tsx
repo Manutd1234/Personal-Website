@@ -194,6 +194,7 @@ export default function BuildJourney({
               stage={active}
               onFocusChange={setSceneFocused}
               animate={running}
+              reducedMotion={reduced}
               description={`An illustrative task board evolves from a user need into a tested release. ${step.rows.map(row => `${row.label}: ${row.detail}.`).join(" ")}`}
             />
           </div>

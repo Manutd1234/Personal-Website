@@ -229,6 +229,30 @@ const EXPANDED_COVERS: Readonly<Record<string, BookCover | undefined>> = {
   },
 };
 const BOOK_DEPTHS = [30, 26, 34, 28, 32, 24, 34, 26, 28, 26, 32, 30];
+const COVER_ILLUSTRATIONS: Readonly<Record<string, string | undefined>> = {
+  AlphaEngine: "alphaengine",
+  "BrainHack TIL-AI": "brainhack",
+  "Delta1 Research": "delta1",
+  "CS2 Decision Coach": "redecide",
+  "Agentic Fraud Investigation Crew": "fraudcrew",
+  Obital: "obital",
+  "NUSSIF Portfolio & Risk Tools": "portfolio-risk",
+  PneuRelief: "pneurelief",
+  SignMeUp: "signmeup",
+  "Nexus Academic Coach": "nexus",
+  DealMachine: "dealmachine",
+  "Coca-Cola Indonesia growth strategy": "coca-cola",
+  "ML Trainee: Credit Risk": "credit-risk",
+  "CrossFlow AI": "crossflow",
+  "IBKR Scenario Stress Test": "ibkr-stress",
+  "EC2 Recovery & Trade Automation": "ec2-trades",
+  "Portfolio Manager Competition": "pm-competition",
+  "Internal Trading Competition": "internal-trading",
+  FormForward: "formforward",
+  "RiskSignal · SAP Group 4": "risksignal",
+  "Panic at the Classroom": "panic-classroom",
+  Help4Good: "help4good",
+};
 function coverFor(project: Project, index: number): BookCover {
   const known = DESIGN_INDEX[project.title];
   if (known !== undefined) return COVER_DESIGNS[known];
@@ -302,12 +326,13 @@ function Book({
   index: number;
 }) {
   const design = coverFor(project, index);
+  const illustration = COVER_ILLUSTRATIONS[project.title];
   const thickness = BOOK_DEPTHS[(DESIGN_INDEX[project.title] ?? index) % BOOK_DEPTHS.length];
   return (
     <span
       aria-hidden="true"
       className="book-object"
-      data-cover-art="painted"
+      data-cover-art="illustrated"
       data-cover-layout={design.layout}
       data-cover-material={
         ["terminal", "journal", "ledger", "deal"].includes(design.layout)
@@ -319,8 +344,6 @@ function Book({
           "--cover": design.color,
           "--cover-ink": design.ink,
           "--cover-font": design.font,
-          "--cover-art-hue": `${[0, 58, 170, 285][index % 4]}deg`,
-          "--cover-art-position": `${[50, 35, 65][index % 3]}%`,
           "--book-depth": `${thickness}px`,
         } as CSSProperties
       }
@@ -360,18 +383,19 @@ function Book({
       </span>
       <span className="book-cover-hinge">
         <span className="book-front">
-          <img
-            className="book-cover-painting"
-            alt=""
-            src={asset("/images/portfolio/book-cover-painting.webp")}
-            width={640}
-            height={960}
-            decoding="async"
-            draggable={false}
-          />
           <span className="book-cover-author">IAN WANGSA <span>VOL. {String(index + 1).padStart(2, "0")}</span></span>
           <span className="book-cover-title">{design.title}</span>
           <span className="book-cover-subtitle">{design.subtitle}</span>
+          <span className="book-cover-image">
+            {illustration ? <img
+              alt=""
+              src={asset(`/images/book-covers/${illustration}.svg`)}
+              width={600}
+              height={400}
+              decoding="async"
+              draggable={false}
+            /> : <span className="book-cover-mark">{design.mark}</span>}
+          </span>
           <span className="book-cover-footer">
             {project.category}
             <span>→</span>
@@ -907,7 +931,10 @@ export default function BookCarousel({
     });
     animate(scene, [
       { visibility: "visible", offset: 0 },
-      { visibility: "visible", offset: 0.9999 },
+      // Transfer the visible pages to the reader at the same instant. Leaving
+      // the 3D spread underneath until the end paints a second, smaller copy.
+      { visibility: "visible", offset: handoff },
+      { visibility: "hidden", offset: handoff + 0.0001 },
       { visibility: "hidden", offset: 1 },
     ]);
     animate(controls, [
