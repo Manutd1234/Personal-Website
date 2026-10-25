@@ -17,7 +17,7 @@ import BuildJourneyScene from "./BuildJourneyScene";
 import { useMotionPreference } from "./useMotionPreference";
 import { useVisiblePlayback } from "./useVisiblePlayback";
 
-const STEP_DURATION_MS = 6500;
+const STEP_DURATION_MS = 6100;
 const steps = [
   {
     label: "Define",
@@ -37,7 +37,7 @@ const steps = [
     icon: Blocks,
     title: "Choose tools with a reason.",
     body: "I compare the options against the project’s needs, the team’s experience and the cost of maintaining it. A small prototype helps me test uncertain choices before building more.",
-    outcome: "A practical stack with understood tradeoffs.",
+    outcome: "A practical approach with understood tradeoffs.",
     preview: "02 · Try the building blocks",
     rows: [
       { label: "Compare", detail: "Consider delivery, reliability and maintenance" },
@@ -94,8 +94,10 @@ export default function BuildJourney({
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [sceneFocused, setSceneFocused] = useState(false);
+  const [replay, setReplay] = useState(0);
   const remainingMs = useRef(STEP_DURATION_MS);
   const timerStage = useRef(active);
+  const timerReplay = useRef(replay);
   const { ref, visible } = useVisiblePlayback<HTMLElement>();
   const reduced = useMotionPreference();
   const prefix = useId();
@@ -104,8 +106,9 @@ export default function BuildJourney({
   const step = steps[active];
 
   useEffect(() => {
-    if (timerStage.current !== active) {
+    if (timerStage.current !== active || timerReplay.current !== replay) {
       timerStage.current = active;
+      timerReplay.current = replay;
       remainingMs.current = STEP_DURATION_MS;
     }
     if (!advancing) return;
@@ -120,7 +123,7 @@ export default function BuildJourney({
       window.clearTimeout(timer);
       if (!completed) remainingMs.current = Math.max(100, remainingMs.current - (performance.now() - startedAt));
     };
-  }, [advancing, active]);
+  }, [advancing, active, replay]);
 
   useEffect(() => {
     const panel = ref.current?.closest('[role="tabpanel"]');
@@ -193,9 +196,10 @@ export default function BuildJourney({
             <BuildJourneyScene
               stage={active}
               onFocusChange={setSceneFocused}
+              onReplay={() => setReplay(value => value + 1)}
               animate={running}
               reducedMotion={reduced}
-              description={`An illustrative task board evolves from a user need into a tested release. ${step.rows.map(row => `${row.label}: ${row.detail}.`).join(" ")}`}
+              description={`An illustrative project evolves from a user need into a tested release. ${step.rows.map(row => `${row.label}: ${row.detail}.`).join(" ")}`}
             />
           </div>
         </div>

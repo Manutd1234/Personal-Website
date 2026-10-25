@@ -8,18 +8,18 @@ export const projectMedia = {
     caption: "Saved development dashboard with paper execution gates.",
   },
   "BrainHack TIL-AI": {
-    src: "images/portfolio/brainhack-six-team-arena.webp",
-    alt: "The live TIL-AI six-team robot arena and leaderboard at step 106 of 200, with Team Pandamonium in second place during the match.",
-    kind: "Competition photo",
+    src: "images/project-frontends/brainhack-arena.webp",
+    alt: "The official TIL-AI simulator showing the arena and six agents' observation views during a local exploration run.",
+    kind: "Simulation screen",
     caption:
-      "Multimodal AI — live six-team arena; Team Pandamonium finished Novice Champions.",
+      "Local exploration simulation using the repository’s BFS fallback in the official TIL-AI environment. This is a development run, not the finals replay.",
   },
   "Delta1 Research": {
-    src: "images/portfolio/delta1-net-performance.webp",
-    alt: "Delta1 research chart comparing cumulative net performance with trend-following and long-only benchmarks.",
-    kind: "Research output",
+    src: "images/project-frontends/delta1-report.webp",
+    alt: "Original Delta1 browser report showing historical backtest metrics and the cumulative performance comparison.",
+    kind: "Research report",
     caption:
-      "Original research output: growth of $1 after costs, 1990–2015. Historical backtest.",
+      "Original Delta1 research report, showing historical backtest metrics and benchmark comparison after costs.",
   },
   "CS2 Decision Coach": {
     src: "images/portfolio/cs2-redecide-dashboard.webp",
@@ -55,11 +55,31 @@ export const projectMedia = {
       "Actual PneuRelief sign-in interface rendered from the React Native app's web preview.",
   },
   SignMeUp: {
-    src: "images/portfolio/signmeup-gesture-demo.webp",
-    alt: "Actual SignMeUp assistive-interpreter demo showing camera landmark tracking and a live hello prediction.",
-    kind: "Application demo",
+    src: "images/project-frontends/signmeup-aurora.webp",
+    alt: "Aurora's actual concierge interface with links to the PathGuardian and sign-language modules.",
+    kind: "Accessibility suite",
     caption:
-      "Actual SignMeUp demo frame with live gesture landmarks and word prediction.",
+      "Three connected modules: SignMeUp gesture recognition, Aurora wellness support and PathGuardian navigation.",
+    gallery: [
+      {
+        title: "SignMeUp · Interpreter",
+        src: "images/portfolio/signmeup-gesture-demo.webp",
+        alt: "The SignMeUp interpreter demo showing live gesture landmarks and a hello prediction.",
+        caption: "SignMeUp Interpreter — the original gesture-recognition demo, with camera landmarks, live prediction and a typing area.",
+      },
+      {
+        title: "Aurora · Wellness",
+        src: "images/project-frontends/signmeup-aurora.webp",
+        alt: "Aurora's concierge welcome screen and the suite's module navigation.",
+        caption: "Aurora — the actual wellness concierge frontend, captured from the repository with its original welcome message. No camera or AI session was started.",
+      },
+      {
+        title: "PathGuardian · Navigation",
+        src: "images/project-frontends/signmeup-pathguardian.webp",
+        alt: "PathGuardian caregiver map with the repository's example care recipients, safety status and navigation controls.",
+        caption: "PathGuardian — the actual caregiver dashboard with the repository's built-in demonstration people and locations.",
+      },
+    ],
   },
   "Nexus Academic Coach": {
     src: "images/portfolio/nexus-dashboard.webp",
@@ -76,18 +96,18 @@ export const projectMedia = {
       "Saved Rockathon prototype dashboard with the sample pipeline entries defined in the project HTML.",
   },
   "Coca-Cola Indonesia growth strategy": {
-    src: "images/portfolio/coca-cola-indonesia-case-study.webp",
-    alt: "A page from the Coca-Cola Indonesia strategy case study presenting a sourced chart of reported sweet-drink consumption frequency.",
-    kind: "Case-study page",
+    src: "images/project-frontends/coca-cola-presentation.webp",
+    alt: "Opening screen of the original interactive Coca-Cola Indonesia lower-sugar growth strategy presentation.",
+    kind: "Interactive presentation",
     caption:
-      "Page 4 of the saved strategy case study: the audience evidence chart, including its source and assumptions.",
+      "Original interactive Coca-Cola Indonesia strategy presentation, with navigation to the proposal and linked investment scenarios.",
   },
   "ML Trainee: Credit Risk": {
-    src: "images/project-frontends/credit-risk-model-comparison.webp",
-    alt: "Model-comparison results from the credit-risk research report.",
-    kind: "Research output",
+    src: "images/project-frontends/credit-risk-whitepaper.webp",
+    alt: "Original credit-risk browser whitepaper showing the six public datasets and feature-analysis tables.",
+    kind: "Research whitepaper",
     caption:
-      "Original model-comparison output from the repository's credit-risk research report.",
+      "Original credit-risk research whitepaper covering six public datasets, feature analysis, model selection and validation.",
   },
   "CrossFlow AI": {
     src: "images/project-frontends/crossflow.webp",

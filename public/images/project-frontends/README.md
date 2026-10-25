@@ -42,3 +42,13 @@ These four projects use clearly labelled project evidence, rather than an invent
 - **Delta1 Research:** `images/portfolio/delta1-net-performance.webp` is an original historical backtest chart from the [research project](https://github.com/Manutd1234/Delta1_Trading_Strategy).
 - **ML Trainee: Credit Risk:** `credit-risk-model-comparison.webp` shows original model-comparison output from the [repository's research report](https://github.com/Manutd1234/ML_Trainee_Week_6_Task).
 - **Coca-Cola Indonesia growth strategy:** `images/portfolio/coca-cola-indonesia-case-study.webp` shows page 4 of the saved strategy case study, including its evidence chart and source. This is a report, not an application.
+
+## Module and research captures — 25 October 2026
+
+- `signmeup-aurora.webp`: original Aurora Concierge interface from `BBinary/` in https://github.com/Asdao/Signmeup. Captured locally with the repository's welcome message; no AI request, microphone or camera session.
+- `signmeup-pathguardian.webp`: original `PathGuardian/caretaker_dashboard.html` from the same repository, with its built-in demonstration people and locations. OpenStreetMap attribution remains visible in the source application.
+- The SignMeUp reader also retains the authentic interpreter demo frame at `../portfolio/signmeup-gesture-demo.webp`; all three modules are presented together and on separate full-size pages.
+- `delta1-report.webp`: browser capture of `outputs/submission/report.html` in https://github.com/Manutd1234/Delta1_Trading_Strategy (Git blob `b82ad8be775d2e1d2ea3a0732defdf7ce360019e`). Shows original historical metrics and benchmark comparison, cropped to the report body.
+- `credit-risk-whitepaper.webp`: browser capture of `docs/whitepaper.html` in https://github.com/Manutd1234/ML_Trainee_Week_6_Task (`923f3877617edbf104ba70793b5319127e385288`). Original six-dataset research document, not a fabricated application.
+- `coca-cola-presentation.webp`: direct render of page 1 of the already-public `Coca-Cola_Indonesia_Growth_Strategy.pdf`. It is an interactive presentation with real internal navigation and linked scenarios, not a web application.
+- `brainhack-arena.webp`: direct RGB render from the official https://github.com/til-ai/til-26-ae environment (`b32af9727dce29b40869ab6ae26025485fc6a465`), using the unchanged `_rule_act` BFS fallback in https://github.com/Manutd1234/BrainHack_V2 (`8972081412b10a5e39b96657d5e0f14ee9a7c7f2`). Six-agent seeded local development simulation at step 36; the trained weights were unavailable and this is not a finals replay. The original competition photograph is retained elsewhere in the collection.

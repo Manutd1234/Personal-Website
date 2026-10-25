@@ -110,3 +110,22 @@
     --library-side-padding: 17px;
   }
 }
+
+/* The physical paper reaches the reader's exact page dimensions before its
+   visibility handoff. Both surfaces use the same padding and full-size type. */
+.book-carousel .book-stage:is([data-open="true"], [data-returning="true"])
+  .book-orbit-item[data-return-book="true"] .book-page-leaf {
+  inset: 0;
+}
+.book-carousel .book-stage:is([data-open="true"], [data-returning="true"])
+  .book-orbit-item[data-return-book="true"] .book-leaf-front .book-preview-page {
+  transform: scale(var(--preview-cover-scale-x), var(--preview-cover-scale-y));
+}
+.book-carousel .book-stage:is([data-open="true"], [data-returning="true"])
+  .book-orbit-item[data-return-book="true"] .book-inside-cover {
+  border-radius: 4px 0 0 4px;
+}
+.book-carousel .book-stage:is([data-open="true"], [data-returning="true"])
+  .book-orbit-item[data-return-book="true"] .book-leaf-front {
+  border-radius: 0 10px 10px 0;
+}

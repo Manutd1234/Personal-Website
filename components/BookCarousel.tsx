@@ -14,7 +14,7 @@ import "@/app/book-carousel.css";
 import "@/app/project-book-reader.css";
 import "@/app/book-motion.css";
 
-const BOOK_TRANSITION_MS = 940;
+const BOOK_TRANSITION_MS = 820;
 
 export type ProjectSource = {
   url: string;
@@ -44,6 +44,12 @@ export type ProjectMedia = {
   alt: string;
   kind: string;
   caption: string;
+  gallery?: readonly {
+    title: string;
+    src: string;
+    alt: string;
+    caption: string;
+  }[];
 };
 
 type BookCarouselProps = {
@@ -651,34 +657,9 @@ export default function BookCarousel({
       // The same animations run backwards, including an interrupted opening.
       // Nothing is remounted or replaced with a separate closing pose.
       const time = Math.max(1, Number(animations[0].currentTime ?? 0));
-      const progress = Math.min(1, time / BOOK_TRANSITION_MS);
+      // All leaves share a timeline and a closed resting pose. Reverse that
+      // timeline directly; rewriting keyframes here used to snap hovered books.
       animations.forEach((animation) => {
-        const effect = animation.effect as KeyframeEffect;
-        const element = effect.target;
-        let closed: string | null = null;
-        if (element instanceof HTMLElement) {
-          if (element.matches(".book-cover-hinge"))
-            closed = "translateZ(calc(var(--book-half-depth) - 1px)) rotateY(0deg)";
-          else if (element.matches(".book-page-leaf"))
-            closed = "translateZ(calc(var(--page-half-depth) + 0.6px)) rotateY(0deg)";
-          else if (element.matches(".book-under-leaf"))
-            closed = `translateZ(calc(var(--page-half-depth) + ${element.matches(".book-under-leaf-second") ? "0.4" : "0.2"}px)) rotateY(0deg)`;
-          if (closed) {
-            const frames = effect.getKeyframes().map((frame) => ({
-              offset: frame.computedOffset, easing: frame.easing, transform: frame.transform,
-            }));
-            // Opening may begin from an already-hovered cover. Return to the
-            // closed shelf pose, not that captured hover followed by a snap.
-            // If interrupted, anchor the current transform before retargeting.
-            effect.setKeyframes(progress < 0.58 ? [
-              { transform: closed, offset: 0, easing: "cubic-bezier(.4,0,.2,1)" },
-              { transform: getComputedStyle(element).transform, offset: progress },
-              ...frames.filter((frame) => frame.offset > progress),
-            ] : frames.map((frame) => ({
-              ...frame, transform: frame.offset <= 0.15 ? closed : frame.transform,
-            })));
-          }
-        }
         animation.currentTime = time;
         animation.reverse();
       });
@@ -741,12 +722,6 @@ export default function BookCarousel({
           : Math.min(640, Math.max(520, window.innerHeight * 0.62));
         if (book && !bookAnimationsRef.current.length)
           sizePreviewPages(stage, book, readerWidth / (single ? 1 : 2), pageHeight, single);
-        // Reserve room for both leaves while the cover opens into the reader.
-        const openScale = Math.min(
-          1.18,
-          Math.max(1, entry.contentRect.width - 24) / (bookWidth * 2.12),
-        );
-        stage.style.setProperty("--open-book-scale", openScale.toFixed(4));
         const spacingRadius =
           count > 2 ? (bookWidth / (2 * Math.sin(Math.PI / count))) * 1.02 : 0;
         radiusRef.current = Math.max(
@@ -821,36 +796,36 @@ export default function BookCarousel({
       return;
     }
 
-    const liftEnd = 0.24;
-    const unfoldStart = 0.15;
-    const openEnd = 0.58;
-    const handoff = openEnd;
+    const unfoldStart = 0.08;
+    const openEnd = 0.90;
+    const handoff = 0.92;
+    const object = book.querySelector<HTMLElement>(".book-object");
     const measureTransition = () => {
-      const scale = parseFloat(getComputedStyle(stage).getPropertyValue("--open-book-scale")) || 1;
       const singlePage = reader.clientWidth < 680;
-      sizePreviewPages(stage, book, paper.offsetWidth / (singlePage ? 1 : 2), paper.offsetHeight, singlePage);
+      const pageWidth = paper.offsetWidth / (singlePage ? 1 : 2);
+      const pageHeight = paper.offsetHeight;
+      sizePreviewPages(stage, book, pageWidth, pageHeight, singlePage);
+      // Read layout coordinates, not getBoundingClientRect: the latter includes
+      // the opening transforms and would feed each intermediate pose back in.
       let paperTop = 0;
       let parent: HTMLElement | null = paper;
-      while (parent && parent !== details) {
+      while (parent && parent !== theatre) {
         paperTop += parent.offsetTop;
         parent = parent.offsetParent as HTMLElement | null;
       }
-      const paperCenter = paperTop + paper.offsetHeight / 2;
-      const perspective = parseFloat(getComputedStyle(scene).perspective) || 1400;
-      const lift = Math.min(160, perspective * 0.2);
-      const compensation = 1 - lift / perspective;
-      const originOffset = scene.offsetHeight * 0.12;
-      const rise = Math.min(104, Math.max(80, scene.clientWidth * 0.095));
-      const bookCenter = scene.offsetHeight / 2 - rise;
-      // Lift the still-closed cover above the shelf before opening it. Keep
-      // perspective compensation, with a small visible move toward the reader.
-      const raised = `translate3d(0, ${(originOffset - rise) * compensation - originOffset}px, ${lift}px) scale(${compensation * 1.025})`;
-      const positioned = `translate3d(${book.offsetWidth * scale / 2 * compensation}px, ${(originOffset - rise) * compensation - originOffset}px, ${lift}px) scale(${compensation})`;
-      // Page one is on the inside cover. A narrow reader grows from that same
-      // left page; desktop keeps both opening pages through the handoff.
-      const arrival = `translate(${singlePage ? -book.offsetWidth * scale / 2 : 0}px, ${bookCenter - details.offsetTop - paperCenter}px) scale(${book.offsetWidth * scale * (singlePage ? 1 : 2) / paper.offsetWidth}, ${book.offsetHeight * scale / paper.offsetHeight})`;
-      details.style.transformOrigin = `50% ${paperCenter}px`;
-      return { scale, raised, positioned, arrival };
+      const depth = object
+        ? parseFloat(getComputedStyle(object).getPropertyValue("--book-depth")) || 30
+        : 30;
+      return {
+        scaleX: pageWidth / book.offsetWidth,
+        scaleY: pageHeight / book.offsetHeight,
+        // The open cover becomes the left page. On phones it alone fills the
+        // reader; the right leaf stays outside the clipped single-page frame.
+        x: singlePage ? pageWidth : pageWidth / 2,
+        y: paperTop + pageHeight / 2 - scene.offsetHeight / 2,
+        z: -(depth / 2 - 2),
+        rise: Math.min(82, Math.max(48, scene.clientWidth * 0.065)),
+      };
     };
     let geometry = measureTransition();
     const animations: Animation[] = [];
@@ -875,19 +850,30 @@ export default function BookCarousel({
     };
     // Transform only preserve-3d containers. Opacity/filter on any ancestor
     // flattens the covers behind the cream page blocks in WebKit/Chromium.
-    const bookFrames = (): Keyframe[] => [
-      { transform: pose.transforms.get(book), offset: 0, easing: ease },
-      { transform: geometry.raised, offset: liftEnd, easing: "cubic-bezier(.3,0,.7,.75)" },
-      { transform: geometry.positioned, offset: openEnd },
-      { transform: geometry.positioned, offset: 1 },
-    ];
+    const bookFrames = (): Keyframe[] => {
+      const initial = pose.transforms.get(book);
+      const start = new DOMMatrixReadOnly(initial && initial !== "none" ? initial : undefined);
+      // One sampled arc carries the book upward and into its final paper size.
+      // There is no stop between a small open book and a second reader zoom.
+      const frames = Array.from({ length: 37 }, (_, index): Keyframe => {
+        const t = index / 36;
+        const eased = t * t * (3 - 2 * t);
+        const arc = Math.sin(Math.PI * eased);
+        const x = start.m41 + (geometry.x - start.m41) * eased;
+        const y = start.m42 + (geometry.y - start.m42) * eased - geometry.rise * arc;
+        const z = start.m43 + (geometry.z - start.m43) * eased + 54 * arc;
+        return { transform: `translate3d(${x}px, ${y}px, ${z}px)`, offset: t * openEnd };
+      });
+      return [...frames, { ...frames[frames.length - 1], offset: 1 }];
+    };
     const bookAnimation = animate(book, bookFrames());
     const button = book.querySelector<HTMLElement>(".book-click");
-    const object = book.querySelector<HTMLElement>(".book-object");
+    if (button) move(button, "rotateY(0deg)", 0, openEnd);
+    const objectTransform = () =>
+      `rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale3d(${geometry.scaleX}, ${geometry.scaleY}, 1)`;
+    const objectAnimation = object ? move(object, objectTransform(), 0, openEnd) : null;
     const cover = book.querySelector<HTMLElement>(".book-cover-hinge");
     const leaf = book.querySelector<HTMLElement>(".book-page-leaf");
-    if (button) move(button, "rotateY(0deg)");
-    const objectAnimation = object ? move(object, `rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(${geometry.scale})`) : null;
     if (cover) move(cover, "translateZ(calc(var(--book-half-depth) - 1px)) rotateY(-180deg)");
     if (leaf) move(leaf, "translateZ(calc(var(--page-half-depth) + 0.6px)) rotateY(0deg)");
     book.querySelectorAll<HTMLElement>(".book-under-leaf").forEach((under) =>
@@ -920,16 +906,15 @@ export default function BookCarousel({
       { opacity: 0, transform: "translateY(12px)", offset: 1 },
     ]);
     const paperFrames = (): Keyframe[] => [
-      { opacity: 1, visibility: "hidden", transform: geometry.arrival, offset: 0 },
-      { opacity: 1, visibility: "hidden", transform: geometry.arrival, offset: handoff },
-      { opacity: 1, visibility: "visible", transform: geometry.arrival, offset: handoff + 0.0001, easing: "cubic-bezier(.25,.35,.25,1)" },
-      { opacity: 1, visibility: "visible", transform: "translate(0, 0) scale(1)", offset: 1 },
+      { opacity: 1, visibility: "hidden", transform: "none", offset: 0 },
+      { opacity: 1, visibility: "hidden", transform: "none", offset: handoff },
+      { opacity: 1, visibility: "visible", transform: "none", offset: handoff + 0.0001 },
+      { opacity: 1, visibility: "visible", transform: "none", offset: 1 },
     ];
     reader.querySelectorAll<HTMLElement>(".reader-running-title, .reader-navigation, .reader-key-hint").forEach((chrome) => {
       animate(chrome, [
         { opacity: 0, offset: 0 },
         { opacity: 0, offset: handoff, easing: ease },
-        { opacity: 1, offset: 0.88 },
         { opacity: 1, offset: 1 },
       ]);
     });
@@ -951,7 +936,7 @@ export default function BookCarousel({
           transform: frame.computedOffset >= openEnd ? to : frame.transform,
         })));
       };
-      if (objectAnimation) retarget(objectAnimation, `rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(${geometry.scale})`);
+      if (objectAnimation) retarget(objectAnimation, objectTransform());
     };
     const startTime = document.timeline.currentTime;
     if (typeof startTime === "number") animations.forEach((animation) => { animation.startTime = startTime; });
@@ -977,9 +962,9 @@ export default function BookCarousel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opening, reducedMotion, stopBookTransition]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!returning) return;
-    // The closing context settles a turn in the child's layout effect first.
+    // Wait for the child's closing layout update to settle any in-flight turn.
     // Copy only the visible paper, preserving its scroll position, so a reader
     // closing page 8 does not suddenly see page 1 halfway through the fold.
     const frame = requestAnimationFrame(() => {

@@ -15,6 +15,7 @@ import { teamMoments } from "@/content/media";
 import { asset } from "@/content/paths";
 import { BookClosingContext, OpeningContext, OpeningNotes, openingPageTitles } from "./ProjectBookOpening";
 import "@/app/project-book-reader.css";
+import "@/app/project-media.css";
 
 const isReport = (url: string) => /\.pdf(?:$|[?#])/i.test(url);
 
@@ -227,7 +228,38 @@ function chaptersFor(project: Project, media?: ProjectMedia): Chapter[] {
         </>
       ),
     });
-  if (media)
+  if (media?.gallery?.length) {
+    pages.push({
+      title: "Three modules, one suite",
+      kind: "image",
+      content: (
+        <div className="reader-module-gallery">
+          {media.gallery.map((item, index) => (
+            <a key={item.src} href={asset(item.src)} target="_blank" rel="noreferrer"
+              aria-label={`View ${item.title} at full size, in a new tab`}>
+              <Image src={asset(item.src)} alt={item.alt} width={1280} height={800} unoptimized />
+              <span><small>0{index + 1}</small><strong>{item.title}</strong><i aria-hidden="true">↗</i></span>
+            </a>
+          ))}
+          <p>Explore each module on the following pages, or open a screenshot at full size.</p>
+        </div>
+      ),
+    });
+    media.gallery.forEach((item) => pages.push({
+      title: item.title,
+      kind: "image",
+      content: (
+        <figure className="reader-evidence">
+          <a href={asset(item.src)} target="_blank" rel="noreferrer"
+            aria-label={`Open ${item.title} at full size, in a new tab`}>
+            <Image src={asset(item.src)} alt={item.alt} width={1280} height={800} unoptimized />
+            <span>View full size ↗</span>
+          </a>
+          <figcaption>{item.caption}</figcaption>
+        </figure>
+      ),
+    }));
+  } else if (media)
     pages.push({
       title: "A closer look",
       kind: "image",
