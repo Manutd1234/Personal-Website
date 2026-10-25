@@ -125,6 +125,9 @@ export default function BuildJourneyScene({
     <circle cx="141" cy="197" r="3" fill="#d9b868" />
     <circle cx="153" cy="197" r="3" fill="#b8cf9f" />
     <text x="174" y="204" fontSize="21" fontWeight="600" fill="#3b604c">{screenTitles[stage]}</text>
+    <g className="journey-working-dots" aria-hidden="true" fill="#7c9c6f">
+      {[0, 1, 2].map(index => <circle key={index} cx={533 + index * 10} cy="197" r="2.5" />)}
+    </g>
     <g key={`${stage}-${action.count}`} className="journey-screen-content" fill="#284f3c" fontSize="22" fontWeight="500">
       {stage === 0 && <>
         {["User goal", "Success criteria", "Edge cases"].map((label, index) => <g key={label} transform={`translate(149 ${225 + index * 36})`}>
@@ -144,7 +147,7 @@ export default function BuildJourneyScene({
         </g>
       </>}
       {stage === 2 && <>
-        <path d="M350 247V307" stroke="#9bb594" strokeWidth="2.5" fill="none" />
+        <path className="journey-request-path" d="M350 247V307" stroke="#9bb594" strokeWidth="2.5" fill="none" />
         <path d="M345 257L350 262L355 257M345 294L350 299L355 294" stroke="#678969" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
         {["Interface", "Service", "Database"].map((label, index) => <g key={label} className={`journey-trace-node journey-trace-${index}`}>
           <rect x="195" y={222 + index * 38} width="310" height="30" rx="7" fill={["#dfebd6", "#dfeae6", "#eee6cf"][index]} stroke={["#a0ba8e", "#a0bbae", "#c7b88c"][index]} />
@@ -185,7 +188,7 @@ export default function BuildJourneyScene({
     <path d="M543 307Q538 302 543 297" className="journey-mug-steam" fill="none" stroke="#c2ccb5" strokeWidth="1.5" strokeLinecap="round" />
     </g>
     <g transform="translate(0 65)">
-    <path d="M66 328V295M66 311Q51 309 48 297Q63 296 66 311M66 303Q68 288 81 284Q82 298 66 303" fill="#b5c9a2" stroke="#7c9b73" strokeWidth="2" strokeLinejoin="round" />
+    <path className="journey-plant-leaves" d="M66 328V295M66 311Q51 309 48 297Q63 296 66 311M66 303Q68 288 81 284Q82 298 66 303" fill="#b5c9a2" stroke="#7c9b73" strokeWidth="2" strokeLinejoin="round" />
     <path d="M54 322H77L74 339H57Z" fill="#d6c398" stroke="#a89975" strokeWidth="1.6" />
     </g>
   </svg>

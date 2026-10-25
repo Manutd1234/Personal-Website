@@ -13,7 +13,7 @@ import { OpeningContext, OpeningNotes, openingPageTitles } from "./ProjectBookOp
 import "@/app/book-carousel.css";
 import "@/app/project-book-reader.css";
 
-const BOOK_TRANSITION_MS = 1000;
+const BOOK_TRANSITION_MS = 920;
 
 export type ProjectSource = {
   url: string;
@@ -379,6 +379,7 @@ export default function BookCarousel({
   const controlsRef = useRef<HTMLDivElement>(null);
   const resizeTheatreRef = useRef<() => void>(() => {});
   const refreshBookGeometryRef = useRef<() => void>(() => {});
+  const syncBookPlaybackRef = useRef<() => void>(() => {});
   const bookAnimationsRef = useRef<Animation[]>([]);
   const closingRef = useRef(false);
   const openingPoseRef = useRef<{
@@ -606,6 +607,7 @@ export default function BookCarousel({
         animation.currentTime = time;
         animation.reverse();
       });
+      syncBookPlaybackRef.current();
     } else {
       stopBookTransition();
       setReturning(false);
@@ -747,9 +749,9 @@ export default function BookCarousel({
       return;
     }
 
-    const liftEnd = 0.28;
-    const openEnd = 0.58;
-    const handoff = 0.62;
+    const liftEnd = 0.25;
+    const openEnd = 0.55;
+    const handoff = openEnd;
     const measureTransition = () => {
       const scale = parseFloat(getComputedStyle(stage).getPropertyValue("--open-book-scale")) || 1;
       const singlePage = reader.clientWidth < 680;
@@ -837,9 +839,17 @@ export default function BookCarousel({
     const paperFrames = (): Keyframe[] => [
       { opacity: 1, visibility: "hidden", transform: geometry.arrival, offset: 0 },
       { opacity: 1, visibility: "hidden", transform: geometry.arrival, offset: handoff },
-      { opacity: 1, visibility: "visible", transform: geometry.arrival, offset: handoff + 0.0001, easing: ease },
+      { opacity: 1, visibility: "visible", transform: geometry.arrival, offset: handoff + 0.0001, easing: "cubic-bezier(.22,.65,.3,1)" },
       { opacity: 1, visibility: "visible", transform: "translate(0, 0) scale(1)", offset: 1 },
     ];
+    reader.querySelectorAll<HTMLElement>(".reader-running-title, .reader-navigation, .reader-key-hint").forEach((chrome) => {
+      animate(chrome, [
+        { opacity: 0, offset: 0 },
+        { opacity: 0, offset: handoff, easing: ease },
+        { opacity: 1, offset: 0.88 },
+        { opacity: 1, offset: 1 },
+      ]);
+    });
     const theatreAnimation = animate(theatre, theatreFrames());
     const paperAnimation = animate(details, paperFrames());
     const updateFrames = (animation: Animation, frames: Keyframe[]) => {
@@ -901,6 +911,38 @@ export default function BookCarousel({
     // objects directly, rather than rebuilding them when opened becomes null.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opening, reducedMotion, stopBookTransition]);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    let onscreen = true;
+    const suspended = new Set<Animation>();
+    const syncPlayback = () => {
+      const paused = document.hidden || !onscreen;
+      stage.toggleAttribute("data-suspended", paused);
+      bookAnimationsRef.current.forEach(animation => {
+        if (paused && animation.playState === "running") {
+          suspended.add(animation);
+          animation.pause();
+        } else if (!paused && suspended.delete(animation) && animation.playState === "paused") {
+          animation.play();
+        }
+      });
+    };
+    syncBookPlaybackRef.current = syncPlayback;
+    const observer = new IntersectionObserver(([entry]) => {
+      onscreen = entry.isIntersecting;
+      syncPlayback();
+    });
+    observer.observe(stage);
+    document.addEventListener("visibilitychange", syncPlayback);
+    syncPlayback();
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", syncPlayback);
+      syncBookPlaybackRef.current = () => {};
+    };
+  }, [opening]);
 
   useEffect(() => {
     resizeTheatreRef.current();

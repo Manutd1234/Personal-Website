@@ -179,7 +179,7 @@ export default function BuildJourney({
           })}
         </ol>
         <div className="journey-panel" id={`${prefix}-panel`} role="region" aria-labelledby={`${prefix}-stage-title`}>
-          <div className="journey-summary">
+          <div className="journey-summary" key={active}>
             <span className="journey-step-number">My approach · 0{active + 1}</span>
             <h3 id={`${prefix}-stage-title`}>{step.title}</h3>
             <p className="journey-body">{step.body}</p>
