@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useId, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useContext, useEffect, useId, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { KeyboardEvent, PointerEvent, ReactNode } from "react";
 import type {
   Project,
@@ -13,7 +13,7 @@ import { projectStories } from "@/content/project-stories";
 import type { ProjectPoint } from "@/content/project-stories";
 import { teamMoments } from "@/content/media";
 import { asset } from "@/content/paths";
-import { OpeningContext, OpeningNotes, openingPageTitles } from "./ProjectBookOpening";
+import { BookClosingContext, OpeningContext, OpeningNotes, openingPageTitles } from "./ProjectBookOpening";
 import "@/app/project-book-reader.css";
 
 const isReport = (url: string) => /\.pdf(?:$|[?#])/i.test(url);
@@ -384,6 +384,7 @@ export default function ProjectBookReader({
   media?: ProjectMedia;
 }) {
   const pages = useMemo(() => chaptersFor(project, media), [project, media]);
+  const closing = useContext(BookClosingContext);
   const [{ page, target, single, turn }, dispatch] = useReducer(readerReducer, {
     page: 0,
     target: 0,
@@ -397,6 +398,10 @@ export default function ProjectBookReader({
   const id = useId();
   const last = pages.length - (single ? 1 : 2);
   const turning = Boolean(turn) || target !== page;
+
+  useLayoutEffect(() => {
+    if (closing) dispatch({ type: "settle" });
+  }, [closing]);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -424,13 +429,13 @@ export default function ProjectBookReader({
   }, [pages.length]);
 
   useEffect(() => {
-    if (target === page || turn) return;
+    if (target === page || turn || closing) return;
     if (reduced) {
       dispatch({ type: "settle" });
       return;
     }
     dispatch({ type: "start" });
-  }, [target, page, turn, reduced]);
+  }, [target, page, turn, reduced, closing]);
 
   useEffect(() => {
     if (!turn) return;
@@ -438,7 +443,7 @@ export default function ProjectBookReader({
     // backgrounded tab, changed motion preference, or interrupted animation.
     const timer = window.setTimeout(
       () => dispatch({ type: "finish", from: turn.from, to: turn.to }),
-      reduced ? 0 : 640,
+      reduced ? 0 : 560,
     );
     return () => window.clearTimeout(timer);
   }, [turn, reduced]);
@@ -598,9 +603,23 @@ export default function ProjectBookReader({
         >
           <span aria-hidden="true">←</span> Previous
         </button>
-        <span className="reader-page-count">
-          {page + 1}{single ? "" : `–${page + 2}`} <span>/ {pages.length}</span>
-        </span>
+        <div className="reader-position">
+          <label className="reader-chapter-picker">
+            <span className="book-screenreader-status">Go to a chapter</span>
+            <select
+              aria-label="Go to a chapter"
+              value={target}
+              onChange={(event) => jump(Number(event.target.value))}
+            >
+              {pages.map((chapter, index) => single || index % 2 === 0 ?
+                <option key={index} value={index}>{index + 1} · {chapter.title}</option> : null)}
+            </select>
+            <span aria-hidden="true">⌄</span>
+          </label>
+          <span className="reader-page-count">
+            {page + 1}{single ? "" : `–${page + 2}`} <span>/ {pages.length}</span>
+          </span>
+        </div>
         <button
           aria-controls={`${id}-pages`}
           aria-disabled={target >= last}

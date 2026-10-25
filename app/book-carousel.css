@@ -1430,3 +1430,56 @@
     animation: none;
   }
 }
+
+/* Direct access complements the draggable shelf without hiding any projects. */
+.book-carousel .book-project-picker {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: min(310px, 55%);
+  min-width: 0;
+  min-height: 42px;
+  color: var(--book-cream);
+}
+.book-carousel .book-project-picker select {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 8px 32px 8px 13px;
+  border: 1px solid #66885c60;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: 12px/1.5 var(--font-body, sans-serif);
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.book-carousel .book-project-picker > span:last-child {
+  position: absolute;
+  right: 13px;
+  pointer-events: none;
+}
+.book-carousel .book-project-picker select:focus-visible {
+  outline: 2px solid var(--book-lime);
+  outline-offset: 3px;
+}
+.book-carousel .book-project-picker option {
+  color: #173f2e;
+  background: #fffaf0;
+}
+.book-carousel .book-original-preview,
+.book-carousel .book-return-preview { display: block; }
+.book-carousel .book-return-preview { display: none; }
+.book-carousel .book-stage[data-returning="true"] .book-original-preview:has(+ .book-return-preview:not(:empty)) {
+  display: none;
+}
+.book-carousel .book-stage[data-returning="true"] .book-return-preview:not(:empty) {
+  display: block;
+}
+@container project-books (max-width: 480px) {
+  .book-carousel .book-project-picker select {
+    padding-left: 8px;
+    font-size: 11px;
+  }
+}

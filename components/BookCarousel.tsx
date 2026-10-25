@@ -9,11 +9,11 @@ import type {
 } from "react";
 
 import { asset } from "@/content/paths";
-import { OpeningContext, OpeningNotes, openingPageTitles } from "./ProjectBookOpening";
+import { BookClosingContext, OpeningContext, OpeningNotes, openingPageTitles } from "./ProjectBookOpening";
 import "@/app/book-carousel.css";
 import "@/app/project-book-reader.css";
 
-const BOOK_TRANSITION_MS = 920;
+const BOOK_TRANSITION_MS = 820;
 
 export type ProjectSource = {
   url: string;
@@ -300,7 +300,8 @@ function Book({
       <span className="book-under-leaf book-under-leaf-second" />
       <span className="book-page-leaf">
         <span className="book-leaf-front">
-          <BookOpeningPage project={project} page={1} />
+          <span className="book-original-preview"><BookOpeningPage project={project} page={1} /></span>
+          <span className="book-return-preview" data-preview-side="right" />
         </span>
         <span className="book-leaf-back" />
       </span>
@@ -335,7 +336,8 @@ function Book({
           <span className="book-hit-corner" data-book-hit-corner="sw" />
         </span>
         <span className="book-inside-cover">
-          <BookOpeningPage project={project} page={0} />
+          <span className="book-original-preview"><BookOpeningPage project={project} page={0} /></span>
+          <span className="book-return-preview" data-preview-side="left" />
         </span>
         <span className="book-cover-edge" />
       </span>
@@ -452,7 +454,7 @@ export default function BookCarousel({
           "--orbit-x",
           `${Math.sin(theta) * radiusRef.current}px`,
         );
-        node.style.setProperty("--orbit-turn", `${Math.sin(theta) * 12}deg`);
+        node.style.setProperty("--orbit-turn", `${(Math.sin(theta) * 12).toFixed(3)}deg`);
         node.style.setProperty("--orbit-y", `${(Math.cos(theta) - 1) * 26}px`);
         node.style.setProperty(
           "--orbit-z",
@@ -563,6 +565,7 @@ export default function BookCarousel({
       return;
     stopBookTransition();
     const book = orbitRefs.current[index];
+    book?.querySelectorAll(".book-return-preview").forEach((preview) => preview.replaceChildren());
     const transforms = new Map<HTMLElement, string>();
     if (book) {
       [book, ...book.querySelectorAll<HTMLElement>(".book-click, .book-object, .book-cover-hinge, .book-page-leaf, .book-under-leaf")]
@@ -596,6 +599,7 @@ export default function BookCarousel({
     cancelGesture();
     returnFocusRef.current = true;
     setReaderReady(false);
+    closeRef.current?.focus({ preventScroll: true });
     const animations = bookAnimationsRef.current;
     if (!reducedMotion && animations.length) {
       closingRef.current = true;
@@ -603,7 +607,34 @@ export default function BookCarousel({
       // The same animations run backwards, including an interrupted opening.
       // Nothing is remounted or replaced with a separate closing pose.
       const time = Math.max(1, Number(animations[0].currentTime ?? 0));
+      const progress = Math.min(1, time / BOOK_TRANSITION_MS);
       animations.forEach((animation) => {
+        const effect = animation.effect as KeyframeEffect;
+        const element = effect.target;
+        let closed: string | null = null;
+        if (element instanceof HTMLElement) {
+          if (element.matches(".book-cover-hinge"))
+            closed = "translateZ(calc(var(--book-half-depth) - 1px)) rotateY(0deg)";
+          else if (element.matches(".book-page-leaf"))
+            closed = "translateZ(calc(var(--page-half-depth) + 0.6px)) rotateY(0deg)";
+          else if (element.matches(".book-under-leaf"))
+            closed = `translateZ(calc(var(--page-half-depth) + ${element.matches(".book-under-leaf-second") ? "0.4" : "0.2"}px)) rotateY(0deg)`;
+          if (closed) {
+            const frames = effect.getKeyframes().map((frame) => ({
+              offset: frame.computedOffset, easing: frame.easing, transform: frame.transform,
+            }));
+            // Opening may begin from an already-hovered cover. Return to the
+            // closed shelf pose, not that captured hover followed by a snap.
+            // If interrupted, anchor the current transform before retargeting.
+            effect.setKeyframes(progress < 0.54 ? [
+              { transform: closed, offset: 0, easing: "cubic-bezier(.4,0,.2,1)" },
+              { transform: getComputedStyle(element).transform, offset: progress },
+              ...frames.filter((frame) => frame.offset > progress),
+            ] : frames.map((frame) => ({
+              ...frame, transform: frame.offset <= 0.12 ? closed : frame.transform,
+            })));
+          }
+        }
         animation.currentTime = time;
         animation.reverse();
       });
@@ -749,8 +780,9 @@ export default function BookCarousel({
       return;
     }
 
-    const liftEnd = 0.25;
-    const openEnd = 0.55;
+    const liftEnd = 0.22;
+    const unfoldStart = 0.12;
+    const openEnd = 0.54;
     const handoff = openEnd;
     const measureTransition = () => {
       const scale = parseFloat(getComputedStyle(stage).getPropertyValue("--open-book-scale")) || 1;
@@ -793,7 +825,7 @@ export default function BookCarousel({
       return animation;
     };
     const ease = "cubic-bezier(.4,0,.2,1)";
-    const move = (element: HTMLElement, to: string, start = liftEnd, end = openEnd) => {
+    const move = (element: HTMLElement, to: string, start = unfoldStart, end = openEnd) => {
       const from = pose.transforms.get(element) ?? getComputedStyle(element).transform;
       return animate(element, [
         { transform: from, offset: 0 },
@@ -806,7 +838,7 @@ export default function BookCarousel({
     // flattens the covers behind the cream page blocks in WebKit/Chromium.
     const bookFrames = (): Keyframe[] => [
       { transform: pose.transforms.get(book), offset: 0, easing: ease },
-      { transform: geometry.raised, offset: liftEnd, easing: ease },
+      { transform: geometry.raised, offset: liftEnd, easing: "cubic-bezier(.3,0,.7,.75)" },
       { transform: geometry.positioned, offset: openEnd },
       { transform: geometry.positioned, offset: 1 },
     ];
@@ -822,6 +854,19 @@ export default function BookCarousel({
     book.querySelectorAll<HTMLElement>(".book-under-leaf").forEach((under) =>
       move(under, "translateZ(calc(var(--page-half-depth) + 0.2px)) rotateY(0deg)"),
     );
+    // The surrounding books recede as the selected spread expands. Animate
+    // their transforms, never opacity on the preserve-3d shelf hierarchy.
+    orbitRefs.current.forEach((neighbor) => {
+      if (!neighbor || neighbor === book) return;
+      // Keep CSS orbit variables live: a resize updates the resting position
+      // without needing to rebuild every background animation.
+      const rest = "translate3d(var(--orbit-x), var(--orbit-y), var(--orbit-z))";
+      animate(neighbor, [
+        { transform: rest, offset: 0, easing: ease },
+        { transform: `${rest} translate3d(0, 32px, -80px)`, offset: openEnd },
+        { transform: `${rest} translate3d(0, 32px, -80px)`, offset: 1 },
+      ]);
+    });
     animate(scene, [
       { visibility: "visible", offset: 0 },
       { visibility: "visible", offset: 0.9999 },
@@ -839,7 +884,7 @@ export default function BookCarousel({
     const paperFrames = (): Keyframe[] => [
       { opacity: 1, visibility: "hidden", transform: geometry.arrival, offset: 0 },
       { opacity: 1, visibility: "hidden", transform: geometry.arrival, offset: handoff },
-      { opacity: 1, visibility: "visible", transform: geometry.arrival, offset: handoff + 0.0001, easing: "cubic-bezier(.22,.65,.3,1)" },
+      { opacity: 1, visibility: "visible", transform: geometry.arrival, offset: handoff + 0.0001, easing: "cubic-bezier(.25,.35,.25,1)" },
       { opacity: 1, visibility: "visible", transform: "translate(0, 0) scale(1)", offset: 1 },
     ];
     reader.querySelectorAll<HTMLElement>(".reader-running-title, .reader-navigation, .reader-key-hint").forEach((chrome) => {
@@ -911,6 +956,35 @@ export default function BookCarousel({
     // objects directly, rather than rebuilding them when opened becomes null.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opening, reducedMotion, stopBookTransition]);
+
+  useEffect(() => {
+    if (!returning) return;
+    // The closing context settles a turn in the child's layout effect first.
+    // Copy only the visible paper, preserving its scroll position, so a reader
+    // closing page 8 does not suddenly see page 1 halfway through the fold.
+    const frame = requestAnimationFrame(() => {
+      if (!closingRef.current) return;
+      const book = orbitRefs.current[lastOpenedRef.current];
+      const reader = detailRef.current?.querySelector<HTMLElement>(".project-book-reader");
+      if (!book || !reader) return;
+      const single = reader.dataset.single === "true";
+      for (const side of ["left", "right"] as const) {
+        const source = reader.querySelector<HTMLElement>(`.reader-static-${single ? "left" : side} .reader-page`);
+        const destination = book.querySelector<HTMLElement>(`[data-preview-side="${side}"]`);
+        if (!source || !destination) continue;
+        const copy = source.cloneNode(true) as HTMLElement;
+        copy.classList.add("book-preview-page");
+        copy.inert = true;
+        copy.setAttribute("aria-hidden", "true");
+        copy.querySelectorAll("[id]").forEach((node) => node.removeAttribute("id"));
+        destination.replaceChildren(copy);
+        const body = copy.querySelector<HTMLElement>(".reader-page-body");
+        const originalBody = source.querySelector<HTMLElement>(".reader-page-body");
+        if (body && originalBody) body.scrollTop = originalBody.scrollTop;
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [returning]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -1211,8 +1285,9 @@ export default function BookCarousel({
       >
         <div className="book-stage-header">
           <span className="book-library-label">THE PROJECT LIBRARY</span>
-          {isOpen ? (
+          {isOpen || returning ? (
             <button
+              aria-disabled={returning || undefined}
               className="book-close"
               onClick={closeBook}
               ref={closeRef}
@@ -1221,12 +1296,21 @@ export default function BookCarousel({
               ← Back to the books <span aria-hidden="true">Esc</span>
             </button>
           ) : (
-            <span className="book-drag-hint">
-              Drag to browse · Open the centered book
-              <span className="book-keyboard-hint">
-                ← → / Home / End · Enter opens
-              </span>
-            </span>
+            <label className="book-project-picker">
+              <span className="book-screenreader-status">Choose a project</span>
+              <select
+                aria-label="Choose a project"
+                disabled={returning}
+                value={destination ?? current}
+                onChange={(event) => {
+                  const index = Number(event.target.value);
+                  choose(index, false, () => revealBook(index));
+                }}
+              >
+                {projects.map((project, index) => <option key={project.title} value={index}>{String(index + 1).padStart(2, "0")} · {project.title}</option>)}
+              </select>
+              <span aria-hidden="true">⌄</span>
+            </label>
           )}
         </div>
         <div className="book-theatre" ref={theatreRef}>
@@ -1269,7 +1353,7 @@ export default function BookCarousel({
                       "--orbit-x": `${x.toFixed(3)}px`,
                       "--orbit-y": `${y.toFixed(3)}px`,
                       "--orbit-z": `${z.toFixed(3)}px`,
-                      "--orbit-turn": `${Math.sin(theta) * 12}deg`,
+                      "--orbit-turn": `${(Math.sin(theta) * 12).toFixed(3)}deg`,
                       "--book-order": index,
                     } as CSSProperties
                   }
@@ -1326,13 +1410,11 @@ export default function BookCarousel({
               tabIndex={-1}
             >
               <div key={`${detailIndex}-${opening}`}>
-                {openedProject && detailIndex !== null
-                  ? renderDetails(
-                      openedProject,
-                      media[openedProject.title],
-                      detailIndex,
-                    )
-                  : null}
+                <BookClosingContext.Provider value={returning}>
+                  {openedProject && detailIndex !== null
+                    ? renderDetails(openedProject, media[openedProject.title], detailIndex)
+                    : null}
+                </BookClosingContext.Provider>
               </div>
             </div>
           </div>
@@ -1361,7 +1443,7 @@ export default function BookCarousel({
                 aria-label={`Open project: ${projects[displayedBook].title}`}
               >
                 <span className="book-current-action">
-                  {browsing ? "Centering book" : "Open project"}
+                  {browsing ? "Centering book" : `Open project · ${displayedBook + 1} / ${count}`}
                 </span>
                 <span className="book-current-name">
                   {projects[displayedBook].title}{" "}

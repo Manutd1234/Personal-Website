@@ -1,5 +1,11 @@
+"use client";
+
+import { createContext } from "react";
 import type { Project } from "./BookCarousel";
 import { projectStories } from "@/content/project-stories";
+
+// The reader settles a pending leaf before the same spread folds back to the shelf.
+export const BookClosingContext = createContext(false);
 
 export const openingPageTitles = ["Opening notes", "The problem & my role"] as const;
 

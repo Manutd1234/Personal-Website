@@ -1099,7 +1099,7 @@ export const achievementGroups: readonly {
         issuer: "Singapore Armed Forces",
         detail:
           "Outstanding grades for both overall performance and overall conduct",
-        year: "Jan 2025",
+        year: "National Service",
         certificateKey: "nsPerformanceConduct",
       },
       {

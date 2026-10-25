@@ -132,46 +132,112 @@
 .journey-preview-heading { display: flex; align-items: center; gap: 10px; padding: 20px 22px; border-bottom: 1px solid var(--journey-line); }
 .journey-preview-heading h4 { margin: 0; color: var(--ink); font: 600 17px/1.4 var(--classic-display); }
 .journey-preview-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--journey-accent); }
-.journey-scene { position: relative; isolation: isolate; }
+.journey-scene { position: relative; isolation: isolate; container-type: inline-size; }
 .journey-scene-svg { display: block; width: 100%; height: auto; overflow: hidden; }
-.journey-scene-svg text { font-family: var(--classic-display); }
-.journey-scene-svg text[font-family="monospace"] { font-family: var(--font-mono), monospace; }
-.journey-seated-person { transform-origin: 149px 250px; }
-.journey-person-near-arm { transform-origin: 109px 229px; }
-.journey-person-far-arm { transform-origin: 181px 226px; }
-.journey-person-head { transform-origin: 149px 192px; }
-.journey-person-eyes { transform-origin: 154px 157px; }
-.journey-hand-near { transform-origin: 193px 321px; }
-.journey-hand-far { transform-origin: 242px 321px; }
-.journey-pencil { transform-origin: 201px 326px; }
-.journey-screen-underline { stroke-dasharray: 187; stroke-dashoffset: 0; }
-.journey-screen-mark { stroke-dasharray: 1; stroke-dashoffset: 0; }
-.journey-screen-pointer { transform: translate(526px, 236px); }
-.journey-monitor-metrics { transform-origin: 229px 326px; }
-.journey-release-halo { transform-origin: 350px 249px; }
-.journey-release-check { stroke-dasharray: 44; stroke-dashoffset: 0; }
-.journey-monitor-action {
+.journey-scene-svg text { font-family: var(--font-mono), monospace; }
+.montage-monitor {
   position: absolute;
-  left: 24.03%;
-  top: 71.49%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  width: 64.84%;
-  height: 7.87%;
-  min-height: 26px;
-  padding: 0 12px;
-  border: 1px solid #9eb68c;
-  border-radius: 7px;
-  background: #dfebd5;
-  color: #285b43;
-  font: 600 clamp(11px, 1.3vw, 14px)/1.2 var(--classic-display);
-  cursor: pointer;
+  top: calc(160 / 640 * 100cqw);
+  left: 4.6875%;
+  width: 90.625%;
+  height: calc(236 / 640 * 100cqw);
+  overflow: hidden;
+  border-radius: 6px;
+  background: #fffef9;
+  color: #244b3b;
+  font: 500 clamp(10px, 2.55cqw, 15px)/1.3 var(--classic-display);
 }
-.journey-monitor-action:hover { background: #cfdfc0; border-color: #63845e; }
-.journey-monitor-action:active { background: #c6d9b8; }
-.journey-monitor-action > span:last-child { font-size: 18px; line-height: 1; }
+.montage-window-heading { display: flex; align-items: center; gap: 2cqw; height: 16%; padding: 0 2.2cqw; border-bottom: 1px solid #d7e2d8; background: #eff5ed; font: 500 clamp(9px, 2.2cqw, 13px)/1 var(--font-mono), monospace; }
+.montage-window-heading > span:last-child { margin-left: auto; color: #627c6a; }
+.montage-window-heading strong { font-weight: 600; }
+.montage-window-dots { display: flex; gap: .6cqw; }
+.montage-window-dots i { width: .8cqw; height: .8cqw; min-width: 3px; min-height: 3px; border-radius: 50%; background: #e6ad8d; }
+.montage-window-dots i:nth-child(2) { background: #e1c67d; }
+.montage-window-dots i:nth-child(3) { background: #90b58b; }
+.montage-shot { height: 84%; padding: 2cqw 2.5cqw; }
+.montage-shot > div { height: 100%; min-width: 0; }
+.montage-shot p { margin: 0; }
+.montage-contract-screen, .montage-stack-screen, .montage-flow-screen, .montage-release-screen { display: flex; flex-direction: column; justify-content: space-between; gap: 1cqw; }
+.montage-endpoint { display: flex; align-items: center; gap: 1.2cqw; font: 500 clamp(10px, 2.8cqw, 16px)/1.2 var(--font-mono), monospace; }
+.montage-endpoint > b { padding: .5cqw .8cqw; border-radius: 3px; color: #297254; background: #dcecd7; font-size: .8em; }
+.montage-endpoint > span { margin-left: auto; color: #6c8071; font: 400 .8em/1.2 var(--classic-display); }
+.montage-input { display: flex; align-items: center; gap: 2cqw; padding: 1cqw 1.5cqw; border: 1px solid #8eb39b; border-radius: 4px; background: #f1f7eb; }
+.montage-input > span:first-child { color: #637965; font-size: .85em; }
+.montage-input code { font: 500 1.08em var(--font-mono), monospace; }
+.montage-input.is-invalid { border-color: #b56c55; background: #f9e8de; }
+.montage-input-caret { width: 1.5px; height: 1em; margin-left: -1.5cqw; background: #367554; }
+.montage-rules { display: flex; gap: 3cqw; font-size: .83em; }
+.montage-rules i { padding-right: .5cqw; color: #35845b; font-style: normal; }
+.montage-response { display: flex; align-items: center; gap: 1.4cqw; min-height: 20%; padding: .7cqw 1.2cqw; border-left: 2px solid #7ba183; background: #edf4e8; font-size: .86em; }
+.montage-response > b { font-family: var(--font-mono), monospace; }
+.montage-response.is-invalid { border-color: #b77459; background: #f9e7dc; color: #874d38; }
+.montage-screen-label { color: #58725e; font-size: .86em; }
+.montage-components { display: grid; grid-template-columns: 1fr 1.15fr 1.15fr; gap: 1.4cqw; }
+.montage-component { display: flex; flex-direction: column; justify-content: center; gap: .7cqw; padding: 1.4cqw 1.2cqw; border: 1px solid #789e8a; border-radius: 4px; background: #e2efdc; box-shadow: 0 3px 0 #c0d4b7; }
+.montage-component-1 { background: #dcebf7; border-color: #7a9daf; box-shadow: 0 3px 0 #bdd1df; }
+.montage-component-2 { background: #f8e4d2; border-color: #bd9c7e; box-shadow: 0 3px 0 #e2cab2; }
+.montage-component > span { font: 500 .65em var(--font-mono), monospace; letter-spacing: .06em; }
+.montage-component > b { font-size: .96em; }
+.montage-component > small { font-size: .7em; white-space: nowrap; }
+.montage-decision { display: flex; gap: 1cqw; color: #5e745f; font-size: .83em; line-height: 1.3; }
+.montage-decision > span { color: #3b8360; }
+.montage-request-flow { position: relative; display: flex; justify-content: space-between; align-items: center; min-height: 41%; }
+.montage-request-wire { position: absolute; left: 7%; right: 7%; top: 50%; height: 2px; background: #8aac94; }
+.montage-request-wire span { position: absolute; left: 0; top: -4px; width: 10px; height: 10px; border-radius: 3px; background: #e79271; border: 1px solid #8a644e; }
+.montage-flow-node { position: relative; display: flex; flex-direction: column; gap: .6cqw; width: 29%; padding: 1.3cqw .9cqw; border: 1px solid #8aac94; border-radius: 4px; background: #e2efdc; text-align: center; }
+.montage-flow-node-1 { background: #dcebf7; border-color: #8aa9ba; }
+.montage-flow-node-2 { background: #f8e4d2; border-color: #c0a387; }
+.montage-flow-node > b { font-size: .9em; }
+.montage-flow-node > small { font: 400 .7em/1.3 var(--font-mono), monospace; white-space: nowrap; }
+.montage-build-screen { display: grid; grid-template-columns: 1.08fr 1fr; align-content: space-between; gap: 1.8cqw; }
+.montage-code { display: flex; flex-direction: column; justify-content: center; gap: 1.5cqw; min-width: 0; font: 400 .83em/1.3 var(--font-mono), monospace; }
+.montage-code > span { white-space: nowrap; }
+.montage-code em { font-style: normal; color: #98a797; }
+.montage-code b { color: #3a7b94; font-weight: 500; }
+.montage-tests-list { padding: 1cqw; border: 1px solid #c2d5bf; border-radius: 4px; background: #edf4e8; }
+.montage-tests-list > span { display: block; margin-bottom: 1cqw; font-size: .78em; font-weight: 600; }
+.montage-test { display: flex; gap: .7cqw; align-items: center; padding-block: .6cqw; font-size: .76em; white-space: nowrap; }
+.montage-test > i { color: #3c875e; font-style: normal; }
+.montage-test > b { font: 500 1em var(--font-mono), monospace; }
+.montage-build-note { grid-column: 1 / -1; padding-top: 1cqw; border-top: 1px solid #d8e2d4; color: #607760; font-size: .78em; }
+.montage-pipeline { display: flex; align-items: center; gap: 2cqw; }
+.montage-gate { position: relative; display: flex; justify-content: center; gap: 1cqw; flex: 1; padding: .8cqw; border: 1px solid #b2cba9; border-radius: 4px; background: #e6f0de; font-size: .86em; }
+.montage-gate:not(:last-child)::after { content: '→'; position: absolute; right: -1.8cqw; color: #72956e; }
+.montage-gate > i { font-style: normal; color: #3e895c; }
+.montage-telemetry { display: grid; grid-template-columns: 1fr 1.2fr; align-items: center; gap: 2cqw; }
+.montage-telemetry > div { display: flex; flex-direction: column; gap: .5cqw; }
+.montage-telemetry b { font: 500 1.5em/1.1 var(--font-mono), monospace; }
+.montage-telemetry b small { font: 400 .48em var(--classic-display); }
+.montage-telemetry div > span:last-child { color: #6d806b; font-size: .67em; }
+.montage-live { display: flex; align-items: center; gap: 1cqw; color: #3b7852; font-size: .78em; }
+.montage-live > i { width: .7cqw; height: .7cqw; min-width: 3px; min-height: 3px; border-radius: 50%; background: #57a66e; }
+.montage-telemetry > svg { width: 100%; height: auto; }
+.montage-release-note { display: flex; justify-content: space-between; padding-top: 1cqw; border-top: 1px solid #d8e2d4; color: #52714f; font-size: .72em; }
+/* Keep the example legible when the cartoon fits a narrow phone. */
+@container (max-width: 340px) {
+  .montage-monitor { font-size: 10px; }
+  .montage-shot { padding: 1.5cqw 2cqw; }
+  .montage-screen-label, .montage-decision, .montage-response { font-size: 9px; }
+  .montage-component { gap: .4cqw; padding: 1cqw .8cqw; }
+  .montage-component > span { font-size: 8px; }
+  .montage-component > b { font-size: 10px; }
+  .montage-component > small { font-size: 8px; }
+  .montage-flow-node > b { font-size: 10px; }
+  .montage-flow-node > small { font-size: 8px; }
+  .montage-code { font-size: 8.5px; }
+  .montage-test { font-size: 8.5px; }
+  .montage-tests-list > .montage-screen-label { display: none; }
+  .montage-build-note, .montage-release-note { font-size: 8px; }
+  .montage-telemetry div > span:last-child { font-size: 8px; }
+}
+.montage-artifact { transition: opacity 480ms, transform 600ms cubic-bezier(.2,.7,.3,1); }
+.montage-artifact[data-complete="false"] { opacity: .16; transform: translateY(12px); }
+.montage-person-head { transform-origin: 320px 104px; }
+.montage-person-eyes { transform-origin: 322px 73px; }
+.journey-monitor-action { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: calc(100% - 28px); min-height: 44px; margin: 0 14px 14px; padding: 10px 14px; border: 1px solid #a5bea1; border-radius: 8px; background: #e0ecd5; color: #285b43; font: 600 13px/1.3 var(--classic-display); cursor: pointer; }
+.journey-monitor-action:hover { background: #d0e2c4; border-color: #668d63; }
+.journey-monitor-action:active { transform: translateY(1px); }
+.journey-monitor-action > span:last-child { font-size: 20px; line-height: 1; }
 .build-journey .journey-monitor-action:focus-visible { outline: 2px solid #285b43; outline-offset: 2px; }
 .journey-action-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .journey-footer { display: flex; align-items: center; gap: 20px; padding: 14px 36px; border-top: 1px solid var(--journey-line); }
@@ -192,79 +258,52 @@
 .dark .journey-play { border-color: #445b49; }
 .dark .journey-preview { box-shadow: none; }
 @media (prefers-reduced-motion: no-preference) {
-  .journey-seated-person { animation: journey-seated-breath 5.5s ease-in-out infinite; }
-  .journey-summary { animation: journey-stage-arrive 420ms cubic-bezier(.2,.7,.3,1) both; }
-  .journey-screen-content { animation: journey-screen-arrive 360ms ease-out both; }
-  .journey-working-dots circle { animation: journey-working 1.8s ease-in-out infinite; }
-  .journey-working-dots circle:nth-child(2) { animation-delay: 180ms; }
-  .journey-working-dots circle:nth-child(3) { animation-delay: 360ms; }
-  .journey-plant-leaves { transform-origin: 66px 326px; animation: journey-plant-sway 8s ease-in-out infinite; }
-  .journey-request-path { stroke-dasharray: 4 6; animation: journey-request-trace 2s linear infinite; }
-  .journey-person-gaze { animation: journey-screen-glance 7.5s ease-in-out infinite; }
-  .journey-scene-svg[data-stage="3"] .journey-person-near-arm { animation: journey-near-keypress 2.5s ease-in-out infinite; }
-  .journey-scene-svg[data-stage="3"] .journey-person-far-arm { animation: journey-far-keypress 2.5s ease-in-out infinite; }
-  .journey-person-head { animation: journey-attentive-head 7.5s ease-in-out infinite; }
-  .journey-person-eyes { animation: journey-blink 6.5s ease-in-out infinite; }
-  .journey-mug-steam { animation: journey-steam 5s ease-in-out infinite; }
-  .journey-scene-svg[data-stage="0"] .journey-hand-near { animation: journey-note-hand 3.75s ease-in-out infinite; }
-  .journey-scene-svg[data-stage="0"] .journey-pencil { animation: journey-note-pencil 3.75s ease-in-out infinite; }
-  .journey-scene-svg[data-stage="0"] .journey-screen-underline { animation: journey-brief-mark 7.5s ease both; }
-  .journey-scene-svg[data-stage="3"] .journey-hand-near { animation: journey-type-near 2.5s ease-in-out infinite; }
-  .journey-scene-svg[data-stage="3"] .journey-hand-far { animation: journey-type-far 2.5s ease-in-out infinite; }
-  .journey-scene-svg[data-stage="1"] .journey-hand-far,
-  .journey-scene-svg[data-stage="2"] .journey-hand-far,
-  .journey-scene-svg[data-stage="4"] .journey-hand-far { animation: journey-key-tap 3.75s ease-in-out infinite; }
-  .journey-tool-choice > rect { animation: journey-choice-focus 7.5s ease-in-out both; }
-  .journey-tool-choice:nth-child(2) > rect { animation-delay: 1.7s; }
-  .journey-tool-choice:nth-child(3) > rect { animation-delay: 3.4s; }
-  .journey-flow-dot { animation: journey-data-flow 3.75s ease-in-out infinite; }
-  .journey-flow-dot-later { animation-delay: 1.2s; }
-  .journey-code-caret { animation: journey-caret 1.2s steps(1) infinite; }
-  .journey-release-check { animation: journey-check-draw 1.3s .5s ease both; }
-  .journey-screen-mark { animation: journey-mark-draw 1.2s .6s ease both; }
-  .journey-mark-1 { animation-delay: 1.7s; }
-  .journey-mark-2 { animation-delay: 2.8s; }
-  .journey-screen-pointer { animation: journey-compare-pointer 7.5s ease-in-out infinite; }
-  .journey-trace-node > rect { animation: journey-node-highlight 3.75s ease-in-out infinite; }
-  .journey-trace-1 > rect { animation-delay: .8s; }
-  .journey-trace-2 > rect { animation-delay: 1.6s; }
-  .journey-code-highlight { animation: journey-code-review 3.75s ease-in-out infinite; }
-  .journey-code-highlight-later { animation-delay: 1.3s; }
-  .journey-monitor-metrics { animation: journey-metrics-rise 3.75s ease-in-out infinite; }
-  .journey-release-halo { animation: journey-release-ready 3.75s ease-in-out infinite; }
+  .journey-summary { animation: journey-stage-arrive 440ms ease-out both; }
+  .montage-shot { animation: montage-shot-arrive 500ms cubic-bezier(.2,.7,.3,1) both; }
+  .montage-person-head { animation: montage-read-screen 6s ease-in-out infinite; }
+  .montage-person-eyes { animation: montage-blink 5.5s ease-in-out infinite; }
+  .montage-steam { animation: montage-steam-rise 3s ease-in-out infinite; }
+  .journey-montage[data-stage="0"] .montage-ink-line { stroke-dasharray: 90; animation: montage-write 3.5s ease-in-out infinite; }
+  .montage-input-caret { animation: montage-caret 1.1s steps(1) infinite; }
+  .montage-component { animation: montage-component-arrive 700ms cubic-bezier(.2,.7,.3,1) both; }
+  .montage-component-1 { animation-delay: 350ms; }
+  .montage-component-2 { animation-delay: 700ms; }
+  .montage-request-wire span { animation: montage-request 3.5s linear infinite; }
+  .montage-flow-node { animation: montage-node-receive 3.5s ease-in-out infinite; }
+  .montage-flow-node-1 { animation-delay: 1.2s; }
+  .montage-flow-node-2 { animation-delay: 2.4s; }
+  .montage-code > span { animation: montage-code-line 600ms ease-out both; }
+  .montage-code > span:nth-child(2) { animation-delay: 400ms; }
+  .montage-code > span:nth-child(3) { animation-delay: 800ms; }
+  .montage-test { animation: montage-test-pass 2.4s ease-out both; }
+  .montage-test-1 { animation-delay: 400ms; }
+  .montage-test-2 { animation-delay: 800ms; }
+  .montage-gate { animation: montage-gate-pass 1s ease-out both; }
+  .montage-gate-1 { animation-delay: 600ms; }
+  .montage-gate-2 { animation-delay: 1.2s; }
+  .montage-chart-line { stroke-dasharray: 1; animation: montage-chart-draw 3.5s 1.5s ease-out both; }
+  .montage-chart-fill { animation: montage-chart-fill 3.5s 1.5s ease-out both; }
+  .journey-montage[data-stage="3"] .montage-keyboard { animation: montage-keyboard-tap 1.6s steps(2) infinite; }
   .build-journey[data-running="false"] * { animation-play-state: paused !important; }
-  /* Manual stage changes remain fully readable while ambient playback is paused. */
-  .build-journey[data-running="false"] :is(.journey-summary, .journey-screen-content) { animation: none; }
+  /* A manually selected shot always presents its complete technical content. */
+  .build-journey[data-running="false"] :is(.journey-summary, .montage-shot, .montage-component, .montage-code > span, .montage-test, .montage-gate, .montage-chart-line, .montage-chart-fill) { animation: none; }
 }
 @keyframes journey-stage-arrive { from { opacity: .35; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes journey-screen-arrive { from { opacity: .25; } to { opacity: 1; } }
-@keyframes journey-working { 0%, 65%, 100% { opacity: .35; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
-@keyframes journey-plant-sway { 0%, 100% { transform: rotate(-1deg); } 50% { transform: rotate(2deg); } }
-@keyframes journey-request-trace { to { stroke-dashoffset: -20; } }
-@keyframes journey-seated-breath { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(1.6px); } }
-@keyframes journey-screen-glance { 0%, 15%, 100% { transform: translate(0, 0); } 35%, 75% { transform: translate(.5px, 1.2px); } }
-@keyframes journey-near-keypress { 0%, 25%, 60%, 100% { transform: rotate(0deg); } 15%, 50% { transform: rotate(.7deg); } }
-@keyframes journey-far-keypress { 0%, 40%, 75%, 100% { transform: rotate(0deg); } 30%, 65% { transform: rotate(-.6deg); } }
-/* Small authored gestures preserve anatomy and the hands' contact with the desk. */
-@keyframes journey-attentive-head { 0%, 20%, 100% { transform: rotate(0deg); } 45%, 70% { transform: rotate(2.4deg); } }
-@keyframes journey-blink { 0%, 39%, 43%, 77%, 81%, 100% { transform: scaleY(1); } 41%, 79% { transform: scaleY(.08); } }
-@keyframes journey-steam { 0%, 100% { opacity: .3; transform: translateY(0); } 55% { opacity: .65; transform: translateY(-2px); } }
-@keyframes journey-note-hand { 0%, 15%, 80%, 100% { transform: translate(0, 0); } 30%, 55% { transform: translate(1px, .5px); } 42%, 68% { transform: translate(-.5px, 0); } }
-@keyframes journey-note-pencil { 0%, 15%, 80%, 100% { transform: rotate(0deg); } 30%, 55% { transform: rotate(1.5deg); } 42%, 68% { transform: rotate(-1deg); } }
-@keyframes journey-brief-mark { 0%, 20% { stroke-dashoffset: 187; } 48%, 100% { stroke-dashoffset: 0; } }
-@keyframes journey-type-near { 0%, 18%, 45%, 76%, 100% { transform: translateY(0); } 12%, 39%, 70% { transform: translateY(-1.5px); } }
-@keyframes journey-type-far { 0%, 30%, 56%, 86%, 100% { transform: translateY(0); } 24%, 50%, 80% { transform: translateY(-1.5px); } }
-@keyframes journey-key-tap { 0%, 38%, 52%, 100% { transform: rotate(0deg); } 44%, 48% { transform: rotate(1deg); } }
-@keyframes journey-choice-focus { 0%, 10%, 55%, 100% { stroke-width: 1; } 25%, 40% { stroke-width: 2.6; } }
-@keyframes journey-data-flow { 0%, 15% { opacity: 0; transform: translateY(-4px); } 30%, 55% { opacity: 1; } 75%, 100% { opacity: 0; transform: translateY(7px); } }
-@keyframes journey-caret { 0%, 55% { opacity: 1; } 56%, 100% { opacity: 0; } }
-@keyframes journey-check-draw { from { stroke-dashoffset: 44; } to { stroke-dashoffset: 0; } }
-@keyframes journey-mark-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-@keyframes journey-compare-pointer { 0%, 15%, 100% { transform: translate(526px, 236px); } 28%, 43% { transform: translate(526px, 272px); } 57%, 80% { transform: translate(526px, 308px); } }
-@keyframes journey-node-highlight { 0%, 55%, 100% { stroke-width: 1; } 20%, 40% { stroke-width: 2.8; } }
-@keyframes journey-code-review { 0%, 70%, 100% { opacity: .12; } 25%, 50% { opacity: 1; } }
-@keyframes journey-metrics-rise { 0%, 100% { transform: scaleY(.7); } 45%, 75% { transform: scaleY(1); } }
-@keyframes journey-release-ready { 0%, 100% { stroke-width: 1.5; } 45%, 70% { stroke-width: 3; } }
+@keyframes montage-shot-arrive { from { opacity: .2; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes montage-component-arrive { from { opacity: 0; transform: translateY(-15px) rotate(-3deg); } to { opacity: 1; transform: translateY(0) rotate(0); } }
+@keyframes montage-request { 0% { left: 0; } 100% { left: calc(100% - 10px); } }
+@keyframes montage-node-receive { 0%, 28%, 100% { box-shadow: 0 0 0 0 #e6a28200; } 10%, 20% { box-shadow: 0 0 0 3px #e6a28288; } }
+@keyframes montage-code-line { from { opacity: .1; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes montage-test-pass { 0%, 40% { opacity: .35; transform: translateX(4px); } 60%, 100% { opacity: 1; transform: translateX(0); } }
+@keyframes montage-gate-pass { from { opacity: .3; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes montage-chart-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes montage-chart-fill { from { opacity: 0; } to { opacity: 1; } }
+@keyframes montage-read-screen { 0%, 100% { transform: rotate(-2deg); } 40%, 70% { transform: rotate(2.5deg); } }
+@keyframes montage-blink { 0%, 38%, 42%, 100% { transform: scaleY(1); } 40% { transform: scaleY(.1); } }
+@keyframes montage-steam-rise { 0% { opacity: .2; transform: translateY(0); } 60% { opacity: .7; } 100% { opacity: 0; transform: translateY(-6px); } }
+@keyframes montage-write { 0%, 20% { stroke-dashoffset: 90; } 70%, 100% { stroke-dashoffset: 0; } }
+@keyframes montage-caret { 0%, 55% { opacity: 1; } 56%, 100% { opacity: 0; } }
+@keyframes montage-keyboard-tap { 0%, 100% { stroke: #a0b095; } 50% { stroke: #4e8968; } }
 @media (prefers-reduced-motion: reduce) {
   .build-journey * { animation: none !important; transition: none !important; }
 }
@@ -315,9 +354,6 @@
   .journey-outcome p { font-size: 14px; }
   .journey-preview-heading { padding: 15px 16px; }
   .journey-preview-heading h4 { font-size: 16px; }
-  .journey-scene-svg text { font-size: 28px; }
-  .journey-scene-svg[data-stage="1"] .journey-tool-choice text,
-  .journey-scene-svg[data-stage="4"] text[font-size="21"] { font-size: 26px; }
   .journey-monitor-action {
     position: relative;
     left: auto;

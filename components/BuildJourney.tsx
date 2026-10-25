@@ -17,7 +17,7 @@ import BuildJourneyScene from "./BuildJourneyScene";
 import { useMotionPreference } from "./useMotionPreference";
 import { useVisiblePlayback } from "./useVisiblePlayback";
 
-const STEP_DURATION_MS = 7500;
+const STEP_DURATION_MS = 9500;
 const steps = [
   {
     label: "Define",
@@ -25,7 +25,7 @@ const steps = [
     title: "Turn the problem into a contract.",
     body: "I define inputs, expected behavior and invariants—what must always hold. Acceptance criteria and failure cases give me something concrete to build and test.",
     outcome: "A clear contract and testable acceptance criteria.",
-    preview: "A clear brief",
+    preview: "01 · Define the task API",
     rows: [
       { label: "User goal", detail: "Inputs and expected behavior" },
       { label: "Success criteria", detail: "Acceptance criteria and invariants" },
@@ -38,7 +38,7 @@ const steps = [
     title: "Choose the simplest stack that fits.",
     body: "I weigh latency, data access and delivery speed against operational complexity. A small prototype tests the riskiest dependency before I commit to the stack.",
     outcome: "A stack chosen for the workload and its tradeoffs.",
-    preview: "A purposeful stack",
+    preview: "02 · Give the feature a stack",
     rows: [
       { label: "Interface", detail: "Delivery speed and user needs" },
       { label: "Backend", detail: "Latency and dependency tradeoffs" },
@@ -51,7 +51,7 @@ const steps = [
     title: "Make boundaries and ownership explicit.",
     body: "I define API contracts, data ownership and failure paths. Each module has a clear job, so I can trace a request and reason about changes.",
     outcome: "Interfaces, state and failure paths I can trace.",
-    preview: "From request to result",
+    preview: "03 · Trace the same request",
     rows: [
       { label: "Interface", detail: "Validate the request contract" },
       { label: "Service", detail: "Own domain rules and failure behavior" },
@@ -64,7 +64,7 @@ const steps = [
     title: "Build a verified vertical slice.",
     body: "I connect input, domain logic and persistence in one complete feature. I test success and failure paths, debug at the boundaries and keep changes reviewable.",
     outcome: "An end-to-end feature with focused tests.",
-    preview: "One complete feature",
+    preview: "04 · Make the contract executable",
     rows: [
       { label: "Implement", detail: "Input, domain logic and persistence" },
       { label: "Test", detail: "Test the behavior at each boundary" },
@@ -77,7 +77,7 @@ const steps = [
     title: "Verify production. Learn from evidence.",
     body: "I check the build, deployment and critical user journey. Logs, errors, latency and user feedback guide the next change, with a rollback path in mind.",
     outcome: "A verified release and an observable feedback loop.",
-    preview: "A confident release",
+    preview: "05 · Take it into production",
     rows: [
       { label: "Check", detail: "Run tests and a production build" },
       { label: "Release", detail: "Smoke-test the critical user journey" },
@@ -193,7 +193,7 @@ export default function BuildJourney({
             <BuildJourneyScene
               stage={active}
               onFocusChange={setSceneFocused}
-              description={`A seated engineer works at a desk with a large monitor. ${step.rows.map(row => `${row.label}: ${row.detail}.`).join(" ")}`}
+              description={`An illustrative task-creation API evolves through five engineering stages. ${step.rows.map(row => `${row.label}: ${row.detail}.`).join(" ")}`}
             />
           </div>
         </div>

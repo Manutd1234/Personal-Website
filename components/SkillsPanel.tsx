@@ -107,10 +107,6 @@ export default function SkillsPanel({ active = true }: { active?: boolean }) {
             <div>
               <h2 id={credentialsId}>Credentials</h2>
             </div>
-            <a href="#achievements">
-              View awards{" "}
-              <ArrowUpRight size={16} aria-hidden="true" />
-            </a>
           </header>
           <div className="skills-classic-credential-grid">
             {credentialGroups.map((group) => (
