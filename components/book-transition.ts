@@ -12,6 +12,17 @@ export type BookTransitionLaunch = {
   finish: () => void;
 };
 
+/** Opening paper must never share its 3D scene with neighboring covers.
+ * A z-index cannot prevent intersections inside a preserve-3d context. Keep
+ * only the active book mounted until its closing pose has fully settled. */
+export function getBookSceneIndexes(count: number, current: number, activeBook: number | null): number[] {
+  if (activeBook !== null) return activeBook >= 0 && activeBook < count ? [activeBook] : [];
+  return Array.from({length: count}, (_, index) => index).filter((index) => {
+    const distance = Math.abs(index - current);
+    return Math.min(distance, count - distance) <= 3;
+  });
+}
+
 /** The frame that waits for reader layout belongs to the same lifecycle as motion. */
 export function queueBookTransition({
   canStart, onStart, onSkip,

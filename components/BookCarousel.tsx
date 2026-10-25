@@ -9,7 +9,7 @@ import type {
 } from "react";
 
 import { asset } from "@/content/paths";
-import { queueBookTransition, runBookTransition, type BookTransition, type BookTransitionLaunch } from "./book-transition";
+import { getBookSceneIndexes, queueBookTransition, runBookTransition, type BookTransition, type BookTransitionLaunch } from "./book-transition";
 import { BookClosingContext, OpeningContext, OpeningNotes, openingPageTitles } from "./ProjectBookOpening";
 import "@/app/book-carousel.css";
 import "@/app/project-book-reader.css";
@@ -729,8 +729,8 @@ export default function BookCarousel({
     return () => resize.disconnect();
   }, [count, finishBookTransition, updateAngle]);
 
-  // The ring only mounts nearby covers. Newly mounted neighbors receive their
-  // current orbit coordinates before paint, rather than the initial SSR angle.
+  // Neighbors remount only after the selected book is fully closed. Refresh
+  // their orbit even when the current index did not change while reading.
   useLayoutEffect(() => {
     updateAngle(angleRef.current);
     const pending = pendingShelfFocusRef.current;
@@ -738,7 +738,7 @@ export default function BookCarousel({
       bookRefs.current[pending]?.focus({ preventScroll: true });
       pendingShelfFocusRef.current = null;
     }
-  }, [current, updateAngle]);
+  }, [current, detailIndex, updateAngle]);
 
   useLayoutEffect(() => {
     const stage = stageRef.current;
@@ -829,8 +829,9 @@ export default function BookCarousel({
       move(button, "rotateY(0deg)");
       move(object, `rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale3d(${geometry.scaleX}, ${geometry.scaleY}, 1)`);
       move(cover, "translateZ(calc(var(--book-half-depth) - 1px)) rotateY(-180deg)", 0.08);
-      // Background books stay still. Only the selected cover and its paper
-      // animate; the entire shelf is removed from painting at the handoff.
+      // This scene contains only the selected book. Neighboring covers are
+      // unmounted until closing completes, so 3D depth sorting cannot put them
+      // through the unfolding paper. The reader takes over at one handoff.
       animate(scene, [
         {visibility: "visible", offset: 0}, {visibility: "visible", offset: handoff},
         {visibility: "hidden", offset: handoff + 0.0001}, {visibility: "hidden", offset: 1},
@@ -1188,9 +1189,8 @@ export default function BookCarousel({
             role="region"
             tabIndex={isOpen || returning ? -1 : 0}
           >
-            {projects.map((project, index) => {
-              const distance = Math.min(mod(index - current, count), mod(current - index, count));
-              if (distance > 3 && index !== detailIndex) return null;
+            {getBookSceneIndexes(count, current, detailIndex).map((index) => {
+              const project = projects[index];
               // Stable SSR seed; updateAngle owns these CSS variables after
               // mount, so a label update cannot rewind the animated pose.
               const theta = (index * step * Math.PI) / 180;

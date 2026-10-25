@@ -132,6 +132,11 @@
 
 /* A completed book is static DOM, not a retained stack of fill:both effects.
    These phases are committed before the transition controller releases WAAPI. */
+.book-carousel .book-stage:is([data-open="true"], [data-returning="true"])
+  .book-orbit-item:not([data-return-book="true"]) {
+  visibility: hidden;
+  pointer-events: none;
+}
 .book-carousel .book-stage[data-motion-phase="reading"] .book-scene {
   visibility: hidden;
   pointer-events: none;
