@@ -229,30 +229,6 @@ const EXPANDED_COVERS: Readonly<Record<string, BookCover | undefined>> = {
   },
 };
 const BOOK_DEPTHS = [30, 26, 34, 28, 32, 24, 34, 26, 28, 26, 32, 30];
-const COVER_ILLUSTRATIONS: Readonly<Record<string, string | undefined>> = {
-  AlphaEngine: "alphaengine",
-  "BrainHack TIL-AI": "brainhack",
-  "Delta1 Research": "delta1",
-  "CS2 Decision Coach": "redecide",
-  "Agentic Fraud Investigation Crew": "fraudcrew",
-  Obital: "obital",
-  "NUSSIF Portfolio & Risk Tools": "portfolio-risk",
-  PneuRelief: "pneurelief",
-  SignMeUp: "signmeup",
-  "Nexus Academic Coach": "nexus",
-  DealMachine: "dealmachine",
-  "Coca-Cola Indonesia growth strategy": "coca-cola",
-  "ML Trainee: Credit Risk": "credit-risk",
-  "CrossFlow AI": "crossflow",
-  "IBKR Scenario Stress Test": "ibkr-stress",
-  "EC2 Recovery & Trade Automation": "ec2-trades",
-  "Portfolio Manager Competition": "pm-competition",
-  "Internal Trading Competition": "internal-trading",
-  FormForward: "formforward",
-  "RiskSignal · SAP Group 4": "risksignal",
-  "Panic at the Classroom": "panic-classroom",
-  Help4Good: "help4good",
-};
 function coverFor(project: Project, index: number): BookCover {
   const known = DESIGN_INDEX[project.title];
   if (known !== undefined) return COVER_DESIGNS[known];
@@ -321,18 +297,19 @@ function BookOpeningPage({ project, page }: { project: Project; page: 0 | 1 }) {
 function Book({
   project,
   index,
+  media,
 }: {
   project: Project;
   index: number;
+  media?: ProjectMedia;
 }) {
   const design = coverFor(project, index);
-  const illustration = COVER_ILLUSTRATIONS[project.title];
   const thickness = BOOK_DEPTHS[(DESIGN_INDEX[project.title] ?? index) % BOOK_DEPTHS.length];
   return (
     <span
       aria-hidden="true"
       className="book-object"
-      data-cover-art="illustrated"
+      data-cover-art="screenshot"
       data-cover-layout={design.layout}
       data-cover-material={
         ["terminal", "journal", "ledger", "deal"].includes(design.layout)
@@ -387,11 +364,11 @@ function Book({
           <span className="book-cover-title">{design.title}</span>
           <span className="book-cover-subtitle">{design.subtitle}</span>
           <span className="book-cover-image">
-            {illustration ? <img
+            {media ? <img
               alt=""
-              src={asset(`/images/book-covers/${illustration}.svg`)}
-              width={600}
-              height={400}
+              src={asset(media.src)}
+              width={1280}
+              height={800}
               decoding="async"
               draggable={false}
             /> : <span className="book-cover-mark">{design.mark}</span>}
@@ -1417,6 +1394,7 @@ export default function BookCarousel({
                     <Book
                       index={index}
                       project={project}
+                      media={media[project.title]}
                     />
                   </button>
                 </div>

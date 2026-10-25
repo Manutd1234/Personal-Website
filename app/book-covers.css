@@ -1,4 +1,4 @@
-/* Editorial library controls and individually illustrated project covers. */
+/* Editorial library controls and authentic project screenshots. */
 .book-carousel .book-stage .book-library-label {
   display: flex;
   flex-wrap: wrap;
@@ -26,18 +26,17 @@
   font: 500 14px/1.5 var(--portfolio-sans), "Helvetica Neue", sans-serif;
   letter-spacing: -0.015em;
 }
-/* Restore the original title / subtitle / framed-art cover composition.
-   Each commissioned-style plate depicts the subject of that individual book. */
-.book-carousel .book-object[data-cover-art="illustrated"] .book-front::after {
+/* Keep the original title / subtitle / framed-screenshot cover composition. */
+.book-carousel .book-object[data-cover-art="screenshot"] .book-front::after {
   opacity: .65;
 }
-.book-carousel .book-object[data-cover-art="illustrated"] .book-cover-author {
+.book-carousel .book-object[data-cover-art="screenshot"] .book-cover-author {
   font-family: var(--portfolio-sans), sans-serif;
   font-weight: 500;
   letter-spacing: .09em;
   opacity: .88;
 }
-.book-carousel .book-object[data-cover-art="illustrated"] .book-cover-image {
+.book-carousel .book-object[data-cover-art="screenshot"] .book-cover-image {
   top: 52%;
   height: 32%;
   padding: calc(var(--book-width) * .018);
@@ -47,34 +46,27 @@
   box-shadow: 2px 3px 0 color-mix(in srgb, var(--cover-ink) 18%, transparent),
     0 0 0 1px color-mix(in srgb, var(--cover-ink) 20%, transparent);
 }
-.book-carousel .book-object[data-cover-art="illustrated"] .book-cover-image::after {
-  content: "";
-  position: absolute;
-  inset: 4%;
-  border: 1px solid #263a3020;
-  pointer-events: none;
-}
-.book-carousel .book-object[data-cover-art="illustrated"] .book-cover-title {
+.book-carousel .book-object[data-cover-art="screenshot"] .book-cover-title {
   text-wrap: balance;
 }
-.book-carousel .book-object[data-cover-art="illustrated"][data-cover-layout="poster"] .book-cover-title {
+.book-carousel .book-object[data-cover-art="screenshot"][data-cover-layout="poster"] .book-cover-title {
   font-size: calc(var(--book-width) * .132);
 }
-.book-carousel .book-object[data-cover-art="illustrated"][data-cover-layout="dossier"] .book-cover-title {
+.book-carousel .book-object[data-cover-art="screenshot"][data-cover-layout="dossier"] .book-cover-title {
   font-size: calc(var(--book-width) * .163);
 }
-.book-carousel .book-object[data-cover-art="illustrated"] .book-cover-subtitle {
+.book-carousel .book-object[data-cover-art="screenshot"] .book-cover-subtitle {
   font-family: var(--portfolio-sans), sans-serif;
 }
-.book-carousel .book-object[data-cover-art="illustrated"] .book-cover-footer {
+.book-carousel .book-object[data-cover-art="screenshot"] .book-cover-footer {
   font-family: var(--portfolio-sans), sans-serif;
   font-size: calc(var(--book-width) * .032);
   letter-spacing: .01em;
 }
-.book-carousel .book-object[data-cover-art="illustrated"]:is([data-cover-layout="journal"], [data-cover-layout="orbit"], [data-cover-layout="deal"], [data-cover-layout="dossier"], [data-cover-layout="ledger"], [data-cover-layout="gesture"]) .book-cover-title {
+.book-carousel .book-object[data-cover-art="screenshot"]:is([data-cover-layout="journal"], [data-cover-layout="orbit"], [data-cover-layout="deal"], [data-cover-layout="dossier"], [data-cover-layout="ledger"], [data-cover-layout="gesture"]) .book-cover-title {
   font-family: var(--portfolio-serif), Georgia, serif;
 }
-.book-carousel .book-object[data-cover-art="illustrated"][data-cover-layout="terminal"] .book-front::before {
+.book-carousel .book-object[data-cover-art="screenshot"][data-cover-layout="terminal"] .book-front::before {
   background: var(--cover-ink);
   opacity: .55;
   height: 4px;

@@ -41,18 +41,18 @@ export const projectMedia = {
       "Saved Obital development dashboard: points progression, study streak and recent quiz scores.",
   },
   "NUSSIF Portfolio & Risk Tools": {
-    src: "images/portfolio/nussif-sector-heatmap.webp",
-    alt: "Original NUSSIF research heatmap showing 2026 second-quarter sector exposure across investment funds.",
-    kind: "Research output",
+    src: "images/project-frontends/nussif-filings.webp",
+    alt: "NUSSIF Trading Desk's 13F filings dashboard showing institutional sector allocations and research data.",
+    kind: "Dashboard",
     caption:
-      "Original 13F research output: sector exposure by fund for 2026 Q2.",
+      "Actual 13F filings frontend running locally with the saved research database.",
   },
   PneuRelief: {
-    src: "images/portfolio/pneurelief-architecture.svg",
-    alt: "PneuRelief architecture linking BLE pressure-sensor notifications to a React Native and Expo app with a FastAPI backend.",
-    kind: "Architecture diagram",
+    src: "images/project-frontends/pneurelief-signin.webp",
+    alt: "PneuRelief mobile app sign-in screen with its account access controls.",
+    kind: "Application screen",
     caption:
-      "PneuRelief implementation: BLE sensor notifications, a React Native/Expo app and a FastAPI backend.",
+      "Actual PneuRelief sign-in interface rendered from the React Native app's web preview.",
   },
   SignMeUp: {
     src: "images/portfolio/signmeup-gesture-demo.webp",
@@ -81,6 +81,67 @@ export const projectMedia = {
     kind: "Case-study page",
     caption:
       "Page 4 of the saved strategy case study: the audience evidence chart, including its source and assumptions.",
+  },
+  "ML Trainee: Credit Risk": {
+    src: "images/project-frontends/credit-risk-model-comparison.webp",
+    alt: "Model-comparison results from the credit-risk research report.",
+    kind: "Research output",
+    caption:
+      "Original model-comparison output from the repository's credit-risk research report.",
+  },
+  "CrossFlow AI": {
+    src: "images/project-frontends/crossflow.webp",
+    alt: "CrossFlow AI congestion map showing Batam planning hotspots.",
+    kind: "Application screen",
+    caption: "Actual CrossFlow AI congestion workspace with modelled planning hotspots.",
+  },
+  "IBKR Scenario Stress Test": {
+    src: "images/project-frontends/ibkr-stress.webp",
+    alt: "IBKR scenario stress-testing dashboard showing portfolio and scenario analysis controls.",
+    kind: "Dashboard",
+    caption: "Actual stress-testing frontend using offline demonstration data.",
+  },
+  "EC2 Recovery & Trade Automation": {
+    src: "images/project-frontends/ec2-risk.webp",
+    alt: "EC2 recovery and trade automation workbench's Risk History view showing simulated portfolio risk over time.",
+    kind: "Dashboard",
+    caption: "Actual Risk History interface using the repository's simulator, without a live broker connection.",
+  },
+  "Portfolio Manager Competition": {
+    src: "images/project-frontends/pm-competition.webp",
+    alt: "Portfolio Manager Competition dashboard with portfolio performance and risk views.",
+    kind: "Dashboard",
+    caption: "Actual portfolio dashboard using synthetic demonstration accounts.",
+  },
+  "Internal Trading Competition": {
+    src: "images/project-frontends/internal-trading.webp",
+    alt: "Internal Trading Competition terminal showing participant rankings and performance analytics.",
+    kind: "Dashboard",
+    caption: "Actual competition frontend using synthetic demonstration portfolios.",
+  },
+  FormForward: {
+    src: "images/project-frontends/formforward.webp",
+    alt: "FormForward running-analysis interface with its activity and coaching workflow.",
+    kind: "Application screen",
+    caption: "Actual FormForward analysis screen using its built-in sample activity.",
+  },
+  "RiskSignal · SAP Group 4": {
+    src: "images/project-frontends/risksignal.webp",
+    alt: "RiskSignal financial-crime triage dashboard with case priorities and review controls.",
+    kind: "Dashboard",
+    caption: "Actual team dashboard using the repository's demonstration case dataset.",
+  },
+  "Panic at the Classroom": {
+    src: "images/project-frontends/panic-classroom.webp",
+    alt: "Panic at the Classroom dashboard with face-monitoring and screen-mode controls.",
+    kind: "Application screen",
+    caption: "Actual React interface from the Electron hackathon prototype.",
+  },
+  Help4Good: {
+    src: "images/project-frontends/help4good.webp",
+    alt: "Help4Good conversational support interface for caregivers and care recipients.",
+    kind: "Application screen",
+    caption: "Actual Help4Good frontend with a clean demonstration greeting.",
   },
 };
 
