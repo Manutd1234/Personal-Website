@@ -22,9 +22,9 @@ const steps = [
   {
     label: "Define",
     icon: Lightbulb,
-    title: "Start with the person using it.",
-    body: "I clarify the user’s goal, work through a real example and agree on what success looks like. Then I scope a useful first version, including the cases that could go wrong.",
-    outcome: "A focused problem and clear acceptance criteria.",
+    title: "Understand the need.",
+    body: "I start with the user’s goal, work through a real example and scope a useful first version.",
+    outcome: "A clear goal and a way to check it.",
     preview: "01 · Understand the need",
     rows: [
       { label: "Understand", detail: "Who is it for, and what do they need?" },
@@ -35,9 +35,9 @@ const steps = [
   {
     label: "Choose",
     icon: Blocks,
-    title: "Choose tools with a reason.",
-    body: "I compare the options against the project’s needs, the team’s experience and the cost of maintaining it. A small prototype helps me test uncertain choices before building more.",
-    outcome: "A practical approach with understood tradeoffs.",
+    title: "Try before committing.",
+    body: "I compare a few approaches and prototype the uncertain part. The choice should fit the team and stay easy to maintain.",
+    outcome: "A simple approach, with clear tradeoffs.",
     preview: "02 · Try the building blocks",
     rows: [
       { label: "Compare", detail: "Consider delivery, reliability and maintenance" },
@@ -48,9 +48,9 @@ const steps = [
   {
     label: "Design",
     icon: GitBranch,
-    title: "Make the pieces work together.",
-    body: "I sketch the user journey and give each part of the system a clear responsibility. I consider how data moves, how errors are handled and how the design can change as I learn.",
-    outcome: "A clear flow from user action to useful result.",
+    title: "Connect the pieces.",
+    body: "I sketch the user journey, give each part a clear job and plan helpful feedback when something goes wrong.",
+    outcome: "A clear path from action to result.",
     preview: "03 · Connect the user journey",
     rows: [
       { label: "Sketch", detail: "Follow the user’s journey" },
@@ -62,8 +62,8 @@ const steps = [
     label: "Build",
     icon: Braces,
     title: "Build small. Test. Review.",
-    body: "I build one complete feature at a time, test normal and unexpected behavior, and review the change. Small commits and clear feedback make it easier to find problems and keep improving.",
-    outcome: "Working software that is tested and easy to review.",
+    body: "I build one complete feature, test the happy path and edge cases, then review the change before moving on.",
+    outcome: "A tested feature, ready to ship.",
     preview: "04 · Turn the plan into a feature",
     rows: [
       { label: "Build", detail: "Deliver one complete feature" },
@@ -74,9 +74,9 @@ const steps = [
   {
     label: "Ship & learn",
     icon: Rocket,
-    title: "Release, listen and improve.",
-    body: "I check the release and try the real user journey. Then I watch for errors, listen to feedback and turn what I learn into the next improvement, with a way back if something goes wrong.",
-    outcome: "A reliable release and a clear next improvement.",
+    title: "Ship. Listen. Improve.",
+    body: "I verify the live experience, watch for errors and listen to users. What I learn shapes the next improvement.",
+    outcome: "A useful release and a next step.",
     preview: "05 · Put it in people’s hands",
     rows: [
       { label: "Release", detail: "Check the build and live user journey" },

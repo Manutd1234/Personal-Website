@@ -251,6 +251,30 @@ try {
     harness.dispose();
   });
 
+  test("repeated paused actions commit a completed frame even when the beat number stays unchanged", () => {
+    timers.clear(); now = 0;
+    const harness = hookHarness();
+    const componentLoad = sourceLoader({ react: harness.hooks });
+    const Component = componentLoad(resolve(root, "components/BuildJourneyScene.tsx")).default;
+    const props = { stage: 0, description: "Example", onFocusChange() {}, onReplay() {}, animate: false, reducedMotion: false };
+    let tree = harness.render(Component, props);
+    for (const stage of [0, 1, 3, 4, 0]) {
+      props.stage = stage;
+      tree = harness.render(Component, props);
+      assert.equal(tree.props["data-beat"], 0);
+      for (const index of [0, 2, 1, 2]) {
+        const controls = elements(tree).filter(node => node.props?.className === "montage-step-card");
+        controls[index].props.onClick();
+        tree = harness.render(Component, props);
+        assert.equal(tree.props["data-beat"], BUILD_ACTION_BEATS_MS.length);
+        assert.equal(tree.props["data-completed"], 3);
+        assert.equal(tree.props["data-acted"], true);
+        assert.equal(timers.size, 0);
+      }
+    }
+    harness.dispose();
+  });
+
   for (const animate of [true, false]) {
     test(`returning after an ${animate ? "animated" : "immediate paused"} replay starts a fresh stage without a stale announcement`, () => {
       timers.clear(); now = 0;

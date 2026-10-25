@@ -115,8 +115,25 @@ export default function ProfilePanel({
         <div className="classic-about-copy">
           <p>
             I study Computer Science at NUS, with a second major in Mathematics
-            and a minor in Economics. I enjoy following a problem all the way
-            from raw data to something people can use.
+            and a minor in Economics. I enjoy following a problem from raw data
+            to something people can use. My work spans software engineering,
+            applied AI and quantitative systems, from market-data pipelines to
+            everyday web and mobile tools.
+          </p>
+          <p>
+            I like connecting the whole system: the data, the backend and the
+            interface. At Caerus, I worked on market-data infrastructure and
+            backtests; at CTES, recruitment portals and sourcing automation.
+            Across my projects, I care about the details that make software
+            dependable—clear behavior, useful feedback, testing and recovery
+            when something goes wrong.
+          </p>
+          <p>
+            Outside engineering, I have organised student events, taught
+            programming and contributed to community projects. My time as an
+            Air Force signals commander during National Service shaped how I
+            work with others: communicate clearly, take responsibility and
+            follow through.
           </p>
         </div>
       </section>
