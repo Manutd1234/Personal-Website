@@ -251,6 +251,55 @@ try {
     harness.dispose();
   });
 
+  test("the release travels after Deploy, arrives before Observe, and resumes without relaunching", () => {
+    timers.clear(); now = 0;
+    const harness = hookHarness();
+    const componentLoad = sourceLoader({ react: harness.hooks });
+    const Component = componentLoad(resolve(root, "components/BuildJourneyScene.tsx")).default;
+    const props = { stage: 4, description: "Example", onFocusChange() {}, onReplay() {}, animate: true, reducedMotion: false };
+    const render = () => harness.render(Component, props);
+    let tree = render();
+    assert.equal(tree.props["data-delivering"], false);
+    advance(BUILD_ACTION_BEATS_MS[1]); tree = render();
+    assert.equal(tree.props["data-delivering"], true);
+    assert.equal(find(tree, node => node.props?.className === "montage-artifact montage-release").props["data-complete"], false);
+    const flightKey = find(tree, node => node.props?.className === "montage-release-package").key;
+    advance(400); props.animate = false; tree = render();
+    advance(10000); tree = render();
+    assert.equal(tree.props["data-delivering"], true);
+    assert.equal(find(tree, node => node.props?.className === "montage-release-package").key, flightKey);
+    props.animate = true; render();
+    advance(BUILD_ACTION_BEATS_MS[3] - BUILD_ACTION_BEATS_MS[1] - 400); tree = render();
+    assert.equal(tree.props["data-delivering"], false);
+    assert.equal(find(tree, node => node.props?.className === "montage-artifact montage-release").props["data-complete"], true);
+    assert.equal(tree.props["data-celebrating"], false);
+    advance(BUILD_ACTION_BEATS_MS[6] - BUILD_ACTION_BEATS_MS[3]); tree = render();
+    assert.equal(tree.props["data-celebrating"], true);
+    find(tree, node => node.props?.className === "journey-monitor-action").props.onClick(); tree = render();
+    assert.equal(tree.props["data-delivering"], false);
+    assert.notEqual(find(tree, node => node.props?.className === "montage-release-package").key, flightKey);
+    harness.dispose();
+  });
+
+  test("design traces a valid request before demonstrating an invalid request returning to the form", () => {
+    timers.clear(); now = 0;
+    const harness = hookHarness();
+    const componentLoad = sourceLoader({ react: harness.hooks });
+    const Component = componentLoad(resolve(root, "components/BuildJourneyScene.tsx")).default;
+    const props = { stage: 2, description: "Example", onFocusChange() {}, onReplay() {}, animate: true, reducedMotion: false };
+    const render = () => harness.render(Component, props);
+    let tree = render();
+    const labels = elements(tree).filter(node => node.type === "b").map(node => node.props.children);
+    assert.deepEqual(labels, ["Form", "API", "Storage"]);
+    for (const [elapsed, motion] of [[880, "send"], [2180, "save"], [3480, "invalid"], [5000, "idle"]]) {
+      advance(elapsed - now); tree = render();
+      assert.equal(find(tree, node => node.props?.className === "montage-request-token").props["data-motion"], motion);
+      assert.equal(find(tree, node => node.props?.className === "montage-return-path").props["data-visible"], elapsed >= 3480);
+    }
+    assert.match(find(tree, node => node.props?.className === "montage-process-note").props.children[1], /Nothing saved/);
+    harness.dispose();
+  });
+
   test("repeated paused actions commit a completed frame even when the beat number stays unchanged", () => {
     timers.clear(); now = 0;
     const harness = hookHarness();
@@ -258,7 +307,7 @@ try {
     const Component = componentLoad(resolve(root, "components/BuildJourneyScene.tsx")).default;
     const props = { stage: 0, description: "Example", onFocusChange() {}, onReplay() {}, animate: false, reducedMotion: false };
     let tree = harness.render(Component, props);
-    for (const stage of [0, 1, 3, 4, 0]) {
+    for (const stage of [0, 1, 2, 3, 4, 0]) {
       props.stage = stage;
       tree = harness.render(Component, props);
       assert.equal(tree.props["data-beat"], 0);
@@ -312,6 +361,7 @@ test("all five reduced-motion scenes render completed readable states and native
     assert.match(html, /data-completed="3"/);
     assert.match(html, /data-typing="false"/);
     assert.match(html, /data-sketching="false"/);
+    assert.match(html, /Example:<\/span> request tracker/);
     assert.equal((html.match(/aria-label="Watch the engineer:/g) || []).length, 3);
     assert.match(html, /role="status" aria-live="polite"/);
     assert.doesNotMatch(html, />React<|>TypeScript<|>SQL</);

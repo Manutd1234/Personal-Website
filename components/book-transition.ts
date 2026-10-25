@@ -14,17 +14,37 @@ export type BookTransitionLaunch = {
 
 export const BOOK_MOTION = {
   duration: 820,
-  liftEnd: .28,
-  unfoldStart: .32,
-  openEnd: .64,
+  liftEnd: .22,
+  unfoldStart: .12,
+  openEnd: .54,
+  handoffEnd: .64,
 } as const;
+
+type PaperBounds = { x: number; y: number; width: number; height: number };
+
+/** Align the reader to the projected paper, including perspective and cover depth. */
+export function getBookHandoffTransform(reader: PaperBounds, paper: PaperBounds) {
+  const x = paper.x + paper.width / 2 - reader.x - reader.width / 2;
+  const y = paper.y + paper.height / 2 - reader.y - reader.height / 2;
+  return `translate(${x}px, ${y}px) scale(${paper.width / reader.width}, ${paper.height / reader.height})`;
+}
+
+/** Reverse from the exact visible pose, landing at the closed shelf endpoint.
+ * A hover fan must not survive the reverse and fold again after landing. */
+export function getBookReverseFrames(restingFrames: Keyframe[], progress: number, transform: string): Keyframe[] {
+  const offset = Math.max(0, Math.min(1, progress));
+  return [
+    ...restingFrames.filter(frame => typeof frame.offset === "number" && frame.offset < offset),
+    {transform, offset},
+  ];
+}
 
 /** Keep the raised book below the library header at every responsive size. */
 export function getBookLiftGeometry(sceneHeight: number, bookHeight: number, scale: number, perspective: number) {
   const lift = Math.min(160, perspective * .2);
   const compensation = 1 - lift / perspective;
   const headroom = Math.max(0, sceneHeight / 2 - bookHeight * scale / 2 - 12);
-  const rise = Math.min(72, headroom);
+  const rise = Math.min(104, headroom);
   const originOffset = sceneHeight * .12;
   return {
     lift, compensation, rise,
@@ -79,12 +99,13 @@ type TransitionOptions = {
   duration: number;
   direction: 1 | -1;
   onComplete: (direction: 1 | -1) => void;
+  onReverse?: (time: number) => void;
   timelineTime?: () => number | null;
   schedule?: (callback: () => void, delay: number) => () => void;
 };
 
 export function runBookTransition({
-  animations, duration, direction: initialDirection, onComplete,
+  animations, duration, direction: initialDirection, onComplete, onReverse,
   timelineTime = () => null,
   schedule = (callback, delay) => {
     const timer = setTimeout(callback, delay);
@@ -134,7 +155,10 @@ export function runBookTransition({
       if (!active || direction === -1) return;
       direction = -1;
       const time = Number(animations[0]?.currentTime ?? 0);
-      play(Math.max(0, Math.min(duration, Number.isFinite(time) ? time : 0)));
+      const boundedTime = Math.max(0, Math.min(duration, Number.isFinite(time) ? time : 0));
+      animations.forEach(animation => animation.pause());
+      onReverse?.(boundedTime);
+      play(boundedTime);
     },
     finish: () => complete(),
     cancel() {

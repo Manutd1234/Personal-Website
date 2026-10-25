@@ -1,0 +1,49 @@
+/* One dedicated physical model closes the visible paper, then returns home.
+   Opacity belongs only to flat surfaces; 3D ancestors stay unflattened. */
+.book-carousel .book-close-scene {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+  transform-style: preserve-3d;
+}
+.book-carousel .book-close-scene .book-orbit-item,
+.book-carousel .book-close-scene .book-click,
+.book-carousel .book-close-scene .book-object,
+.book-carousel .book-close-scene .book-cover-hinge {
+  transition: none !important;
+  animation: none !important;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.book-carousel .book-close-scene :is(.book-page-leaf, .book-under-leaf, .book-hover-surface) {
+  visibility: hidden;
+}
+.book-carousel .book-close-scene .book-inside-cover {
+  padding: 0;
+  border: 0;
+  background: #fffaf0;
+  box-shadow: none;
+}
+.book-carousel .book-close-shadow {
+  position: absolute;
+  pointer-events: none;
+}
+.book-carousel .book-close-paper {
+  position: absolute;
+  inset: 0;
+  transform: translateZ(calc(var(--book-half-depth) - .05px));
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.book-carousel .book-close-scene .book-front,
+.book-carousel .book-close-scene .book-inside-cover {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.book-carousel .book-stage[data-close-active="true"] .book-details .reader-spread,
+.book-carousel .book-stage[data-close-active="true"] .book-scene [data-close-source="true"] {
+  visibility: hidden !important;
+}
+.book-carousel .book-stage[data-close-active="true"] .book-scene {
+  visibility: visible;
+}

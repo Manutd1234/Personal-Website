@@ -4,7 +4,7 @@ import { createContext } from "react";
 import type { Project } from "./BookCarousel";
 import { projectStories } from "@/content/project-stories";
 
-// The reader settles a pending leaf before the same spread folds back to the shelf.
+// A close request lets the current leaf land before the visible spread folds.
 export const BookClosingContext = createContext(false);
 
 export const openingPageTitles = ["Opening notes", "The problem & my role"] as const;

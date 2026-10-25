@@ -1,12 +1,40 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BOOK_MOTION, getBookLiftGeometry, getBookSceneIndexes, queueBookTransition, runBookTransition } from '../components/book-transition.ts';
+import { BOOK_MOTION, getBookHandoffTransform, getBookLiftGeometry, getBookReverseFrames, getBookSceneIndexes, queueBookTransition, runBookTransition } from '../components/book-transition.ts';
 
-test('the cover starts unfolding only after lifting has finished, and closes before lowering on reverse', () => {
+test('paper handoff maps the reader center and size to the projected surface', () => {
+  const reader = {x: 200, y: 360, width: 1040, height: 500};
+  for (const paper of [
+    {x: 480, y: 470, width: 480, height: 340},
+    {x: 52, y: 533, width: 143, height: 203},
+  ]) {
+    const [x, y, sx, sy] = getBookHandoffTransform(reader, paper).match(/-?\d+(?:\.\d+)?/g).map(Number);
+    assert.ok(Math.abs(reader.x + reader.width / 2 + x - (paper.x + paper.width / 2)) < 1e-9);
+    assert.ok(Math.abs(reader.y + reader.height / 2 + y - (paper.y + paper.height / 2)) < 1e-9);
+    assert.ok(Math.abs(reader.width * sx - paper.width) < 1e-9);
+    assert.ok(Math.abs(reader.height * sy - paper.height) < 1e-9);
+  }
+});
+
+test('reversing a hovered opening preserves its visible pose and lands closed without a second fold', () => {
+  const rest = [{transform: 'closed', offset: 0}, {transform: 'closed', offset: .32},
+    {transform: 'open', offset: .64}, {transform: 'open', offset: 1}];
+  for (const progress of [.12, .28, .46, .64, .9, 1]) {
+    const frames = getBookReverseFrames(rest, progress, 'visible hover or unfolding pose');
+    assert.deepEqual(frames.at(-1), {transform: 'visible hover or unfolding pose', offset: progress});
+    assert.equal(frames[0].transform, 'closed');
+    assert.ok(frames.every(frame => frame.offset <= progress));
+  }
+  assert.equal(rest[0].transform, 'closed');
+  assert.equal(rest.at(-1).transform, 'open');
+});
+
+test('the original lift and fold overlap in one continuous reversible gesture', () => {
   assert.ok(BOOK_MOTION.liftEnd > 0);
-  assert.ok(BOOK_MOTION.unfoldStart > BOOK_MOTION.liftEnd);
-  assert.ok(BOOK_MOTION.openEnd > BOOK_MOTION.unfoldStart);
+  assert.ok(BOOK_MOTION.unfoldStart > 0 && BOOK_MOTION.unfoldStart < BOOK_MOTION.liftEnd);
+  assert.ok(BOOK_MOTION.openEnd > BOOK_MOTION.liftEnd);
   assert.ok(BOOK_MOTION.openEnd < 1);
+  assert.ok(BOOK_MOTION.handoffEnd > BOOK_MOTION.openEnd && BOOK_MOTION.handoffEnd < 1);
 });
 
 test('the raised paper fits below the library header across phone, tablet and desktop sizes', () => {
@@ -14,7 +42,7 @@ test('the raised paper fits below the library header across phone, tablet and de
     const {lift, compensation, rise, raisedY} = getBookLiftGeometry(sceneHeight, bookHeight, scale, 1400);
     const projectedCenter = sceneHeight * .38 + (sceneHeight * .12 + raisedY) / compensation;
     assert.ok(projectedCenter - bookHeight * scale / 2 >= 12 - .001);
-    assert.ok(rise > 0 && rise <= 72);
+    assert.ok(rise > 0 && rise <= 104);
     assert.ok(lift < 1400);
   }
 });
@@ -74,17 +102,19 @@ test('a visible opening launches once and is then owned by the animation control
 function fixture(direction = 1) {
   const jobs = new Set();
   const completed = [];
+  const reversed = [];
   const animations = Array.from({length: 3}, () => ({
     currentTime: null, startTime: null, playbackRate: 1, onfinish: null,
     cancellations: 0, pause() {}, play() {}, cancel() { this.cancellations++; },
   }));
   const controller = runBookTransition({animations, duration: 820, direction,
     onComplete: d => completed.push(d), timelineTime: () => 1000,
+    onReverse: time => reversed.push(time),
     schedule: (callback, delay) => {
       const job = {callback, delay}; jobs.add(job); return () => jobs.delete(job);
     },
   });
-  return {jobs, completed, animations, controller};
+  return {jobs, completed, reversed, animations, controller};
 }
 
 test('normal completion releases all effects exactly once', () => {
@@ -102,6 +132,7 @@ test('Escape during opening reverses at the current position and rejects stale c
   const staleFinish = f.animations.at(-1).onfinish;
   f.animations.forEach(a => {a.currentTime = 315;});
   f.controller.close(); f.controller.close();
+  assert.deepEqual(f.reversed, [315]);
   staleFinish();
   assert.deepEqual(f.completed, []);
   assert.ok(f.animations.every(a => a.currentTime === 315 && a.playbackRate === -1));

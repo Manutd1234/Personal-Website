@@ -366,9 +366,16 @@ type ReaderAction =
   | { type: "resize"; single: boolean; pageCount: number }
   | { type: "start" }
   | { type: "finish"; from: number; to: number }
+  | { type: "close" }
   | { type: "settle" };
 
 function readerReducer(state: ReaderState, action: ReaderAction): ReaderState {
+  if (action.type === "close") {
+    // Finish only the leaf that is already moving. Queued, unseen chapters
+    // must not replace the visible spread when closing is requested.
+    const target = state.turn?.to ?? state.page;
+    return state.target === target ? state : { ...state, target };
+  }
   if (action.type === "navigate" || action.type === "jump") {
     const last = action.pageCount - (state.single ? 1 : 2);
     const requested = action.type === "jump"
@@ -432,7 +439,7 @@ export default function ProjectBookReader({
   const turning = Boolean(turn) || target !== page;
 
   useLayoutEffect(() => {
-    if (closing) dispatch({ type: "settle" });
+    if (closing) dispatch({ type: "close" });
   }, [closing]);
 
   useEffect(() => {

@@ -2,25 +2,40 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useId, useRef, useState } from "react";
 import { ActivePlaybackClock, BUILD_ACTION_BEATS_MS, sceneActionStart, sceneBeatAt } from "./build-journey-timeline";
 
-const actions = ["Explore the idea", "Compare the approaches", "Trace the user journey", "Build, test & review", "Release the update"];
-const titles = ["Understand the need", "Choose an approach", "Design the flow", "Build, test and review", "Release and learn"];
+const actions = ["Define the requirements", "Test the approach", "Trace the data flow", "Build, test & review", "Deploy & observe"];
+const titles = ["Define requirements", "Prototype and compare", "Design interfaces and data flow", "Implement, test and review", "Deploy and observe"];
 const results = [
-  "The engineer turns a user’s goal into a focused first version, with a clear way to tell whether it helps.",
-  "The engineer compares approaches, tries the uncertain part and chooses the simplest option that meets the need.",
-  "The engineer connects a user’s action to the work behind it and clear feedback on screen.",
-  "The engineer builds a small feature, checks normal use and mistakes, then reviews the change.",
-  "The engineer checks and releases the update. Feedback returns to the workspace as the next improvement.",
+  "The example request tracker needs to accept a request, explain missing fields and confirm that it was saved.",
+  "The engineer prototypes that request form and chooses an API and persistent storage to save requests reliably.",
+  "The form sends a request to the API, which validates it before storage. Invalid input returns to the form with a useful explanation.",
+  "The engineer implements the same form, API and storage path, tests valid and invalid requests, and reviews the change.",
+  "The reviewed request tracker is deployed. The engineer checks its health and uses feedback as the next requirement.",
 ];
 
 const screenStages = [
-  { state: "Ready", working: "Exploring", note: "A clear goal. A small first version.", cards: [["LISTEN", "Find the need"], ["SCOPE", "Keep it small"], ["AGREE", "Define success"]] },
-  { state: "Chosen", working: "Comparing", note: "Try it. Learn. Choose.", cards: [["EXPLORE", "Try an idea"], ["COMPARE", "Weigh the options"], ["CHOOSE", "Keep it simple"]] },
-  { state: "Connected", working: "Connecting", note: "One clear path from start to finish.", cards: [["START", "Take an action"], ["CONNECT", "Join the steps"], ["RESPOND", "Show the result"]] },
-  { state: "Verified", working: "Building", note: "Build a little. Check it well.", cards: [["BUILD", "Make it work"], ["TEST", "Catch mistakes"], ["REVIEW", "Make it clear"]] },
-  { state: "Live", working: "Releasing", note: "Ship it. Listen. Improve.", cards: [["PREPARE", "Check it’s ready"], ["SHIP", "Share the update"], ["LEARN", "Use the feedback"]] },
+  { state: "Defined", working: "Defining", cards: [["NEED", "Submit a request"], ["RULE", "Explain errors"], ["CHECK", "Confirm it saved"]], notes: ["One feature, from a need to a release.", "Let a user submit a request.", "Missing fields need a useful explanation.", "Success means a saved request and a receipt."] },
+  { state: "Chosen", working: "Comparing", cards: [["TRY", "Draft the form"], ["COMPARE", "Compare saves"], ["CHOOSE", "API + storage"]], notes: ["Prototype the requirements from stage 1.", "Try the form before building the system.", "Compare a temporary save with persistent storage.", "Choose the API and storage for the design."] },
+  { state: "Mapped", working: "Designing", cards: [["BROWSER", "Form"], ["SERVER", "API"], ["DATA", "Storage"]], notes: ["Map the approach chosen in stage 2.", "Form → API: send the request.", "Valid input: API → storage.", "Invalid? API → form. Nothing saved."] },
+  { state: "Verified", working: "Building", cards: [["BUILD", "Wire the flow"], ["TEST", "Valid + invalid"], ["REVIEW", "Check the change"]], notes: ["Implement the form → API → storage design.", "Connect one complete request journey.", "Test saved requests and helpful error messages.", "The reviewed build is ready to release."] },
+  { state: "Live", working: "Deploying", cards: [["BUILD", "Release v1"], ["SERVICE", "Verify live"], ["FEEDBACK", "Next need"]], notes: ["Deploy the verified build from stage 4.", "Send the reviewed release to the live service.", "Check errors, latency and saved requests.", "Feedback becomes the next requirement."] },
 ] as const;
 // Each gesture leads the matching screen response by a perceptible half-second.
 const actionBeats = BUILD_ACTION_BEATS_MS;
+
+/** The monitor keeps all system diagrams in one plane, away from the character. */
+function JourneyNodeIcon({ stage, index }: { stage: number; index: number }) {
+  const architecture = [
+    <g key="form"><rect x="7" y="3" width="26" height="26" rx="3" /><path d="M7 10H33M12 16H27M12 22H22" /></g>,
+    <g key="api"><rect x="5" y="4" width="30" height="24" rx="4" /><path d="M15 11L10 16L15 21M25 11L30 16L25 21M22 10L18 22" /></g>,
+    <g key="store"><ellipse cx="20" cy="7" rx="13" ry="5" /><path d="M7 7V24C7 31 33 31 33 24V7M7 15C7 22 33 22 33 15" /></g>,
+  ];
+  const release = [
+    <path key="package" d="M7 9L20 3L33 9L20 15ZM7 9V24L20 30L33 24V9M20 15V30M14 6L27 12V19" />,
+    <g key="cloud"><path d="M9 25H31C40 24 39 12 30 12C28 1 11 1 10 13C0 12 0 25 9 25Z" /><path className="montage-cloud-check" d="M14 17L19 22L27 13" /></g>,
+    <path key="feedback" d="M6 4H34V23H18L11 29V23H6ZM12 10H27M12 16H23" />,
+  ];
+  return <svg className="montage-node-icon" viewBox="0 0 40 32" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{(stage === 2 ? architecture : release)[index]}</svg>;
+}
 
 /** The workspace and task stay in place while the same feature takes shape. */
 export default function BuildJourneyScene({ stage, description, onFocusChange, onReplay, animate, reducedMotion }: {
@@ -52,26 +67,28 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
   const guiding = working && stage === 2;
   const inspecting = stage === 3 && visibleBeat >= 5 && visibleBeat < 8;
   const celebrating = stage === 4 && visibleBeat >= 7;
+  const delivering = stage === 4 && visibleBeat >= 2 && visibleBeat < 4;
+  const requestMotion = visibleBeat >= 6 && visibleBeat < 8 ? "invalid" : visibleBeat >= 4 && visibleBeat < 6 ? "save" : visibleBeat >= 2 && visibleBeat < 4 ? "send" : "idle";
   const typing = working && stage === 3 && !inspecting;
   const finished = visibleBeat >= 7;
   const pointerIndex = Math.min(2, Math.max(0, Math.floor((visibleBeat - 1) / 2)));
   // Reach, act, then let the screen respond on the following beat. The elbow
   // and wrist travel together, keeping the larger gestures attached to the body.
-  const handX = celebrating ? 35 : selecting ? (pressing ? 20 : 10) : typing ? (gesture ? 7 : -3) : 0;
-  const handY = celebrating ? -70 : selecting ? (pressing ? 6 : -3) : typing ? (gesture ? -5 : 1) : 0;
-  const leftX = sketching ? -5 + pointerIndex * 3 : guiding ? -47 + pointerIndex * 7 : inspecting ? 8 + (gesture ? -3 : 3) : typing ? (gesture ? -5 : 4) : 0;
-  const leftY = sketching ? (gesture ? -5 : -9) + pointerIndex : guiding ? -46 + pointerIndex * 5 : inspecting ? -29 + (gesture ? -2 : 1) : typing ? (gesture ? 1 : -6) : 0;
+  const handX = selecting ? (pressing ? 20 : 10) : typing ? (gesture ? 7 : -3) : 0;
+  const handY = selecting ? (pressing ? 6 : -3) : typing ? (gesture ? -5 : 1) : 0;
+  const leftX = sketching ? -5 + pointerIndex * 3 : guiding ? -3 : inspecting ? 8 + (gesture ? -3 : 3) : typing ? (gesture ? -5 : 4) : 0;
+  const leftY = sketching ? (gesture ? -5 : -9) + pointerIndex : guiding ? -3 : inspecting ? -29 + (gesture ? -2 : 1) : typing ? (gesture ? 1 : -6) : 0;
   const leftWrist = { x: 292 + leftX, y: 170 + leftY };
   const rightWrist = { x: 346 + handX, y: 170 + handY };
   // Keep upper arms beside the torso. The forearms carry the action, without
   // an unconstrained elbow solver swinging the sleeves out between poses.
   const leftElbow = {
-    x: guiding ? 274 : sketching ? 275 : inspecting ? 276 : typing && !gesture ? 278 : 277,
-    y: guiding ? 147 : sketching ? 153 : inspecting ? 150 : typing && !gesture ? 156 : 155,
+    x: sketching ? 275 : inspecting ? 276 : typing && !gesture ? 278 : 277,
+    y: sketching ? 153 : inspecting ? 150 : typing && !gesture ? 156 : 155,
   };
   const rightElbow = {
-    x: celebrating || selecting ? 365 : typing ? 362 : 363,
-    y: celebrating ? 136 : selecting ? (pressing ? 153 : 151) : typing && !gesture ? 156 : 155,
+    x: selecting ? 365 : typing ? 362 : 363,
+    y: selecting ? (pressing ? 153 : 151) : typing && !gesture ? 156 : 155,
   };
   // One smooth segment meets the hand exactly; there is no overshoot or
   // backward tail at the wrist as the magnifier and mouse poses change.
@@ -131,7 +148,7 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
     data-inspecting={inspecting}
     data-celebrating={celebrating}
     data-connecting={stage === 2 && working}
-    data-delivering={stage === 4 && completed >= 2}
+    data-delivering={delivering}
     data-phase={pointerIndex}
     data-completed={completed}
     data-pressing={pressing}
@@ -139,26 +156,17 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
     onFocusCapture={() => onFocusChange(true)}
     onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) onFocusChange(false); }}
   >
-    <svg className="journey-scene-svg" viewBox="0 0 640 544" role="img" aria-label={`From an idea to a useful release: ${titles[stage]}`} aria-describedby={`${id}-description`}>
-      <desc id={`${id}-description`}>{`${description} A cartoon engineer types, reaches for the mouse and clicks. The engineer writes a brief with a pencil, compares approaches with the mouse, traces connections, checks work with a magnifier and celebrates a release. Select a step on the monitor to replay that action.`}</desc>
+    <svg className="journey-scene-svg" viewBox="0 0 640 584" role="img" aria-label={`From an idea to a useful release: ${titles[stage]}`} aria-describedby={`${id}-description`}>
+      <desc id={`${id}-description`}>{`${description} The same illustrative request tracker moves through all five stages. The engineer writes, compares, designs and reviews it. The monitor shows the form, API and storage, including the return path for invalid input. A release package moves to the live service, then monitoring and feedback inform the next requirement. Select a monitor step to replay it.`}</desc>
       <defs>
         <pattern id={`${id}-grid`} width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#bed0c7" strokeWidth=".7" opacity=".45" /></pattern>
       </defs>
-      <rect width="640" height="544" fill="#f2f6eb" />
-      <path d="M0 0H640V544H0Z" fill={`url(#${id}-grid)`} />
+      <rect width="640" height="584" fill="#f2f6eb" />
+      <path d="M0 0H640V584H0Z" fill={`url(#${id}-grid)`} />
       <path d="M0 169L320 58L640 169" fill="none" stroke="#c9ddd8" strokeWidth="2" />
       <path d="M320 58V156" stroke="#c9ddd8" strokeWidth="2" />
-      <ellipse cx="320" cy="527" rx="269" ry="15" fill="#ccdbca" />
+      <ellipse cx="320" cy="567" rx="269" ry="15" fill="#ccdbca" />
 
-      <g className="montage-workspace-links" aria-hidden="true" fill="none" stroke="#7daa97" strokeWidth="2" strokeLinecap="round">
-        <path className="montage-workspace-link" data-complete={stage > 1 || (stage === 1 && completed >= 2)} d="M155 115Q320 183 485 118" />
-        <path className="montage-workspace-link" data-complete={stage > 2 || (stage === 2 && completed >= 2)} d="M197 102Q313 151 447 78" />
-        <path className="montage-workspace-link" data-complete={stage === 4 && completed >= 2} d="M121 48Q270 3 442 48" />
-      </g>
-      <g className="montage-signal-routes" fill="none" stroke="#4e9478" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
-        <path className="montage-signal-route montage-signal-route-one" d="M155 115Q320 183 485 118" pathLength="100" />
-        <path className="montage-signal-route montage-signal-route-two" d="M197 102Q313 151 447 78" pathLength="100" />
-      </g>
       {/* Artifacts remain in the workspace as the feature acquires an approach, checks and a release. */}
       <g className="montage-artifact montage-spec" data-complete={stage > 0 || completed >= 1}>
         <path d="M35 101L112 80L155 104L78 128Z" fill="#d7e9fb" stroke="#335746" strokeWidth="2" strokeLinejoin="round" />
@@ -185,6 +193,7 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
         <path d="M80 49Q75 32 92 29Q94 12 112 21Q127 13 135 29Q154 30 150 46Z" fill="#b5d5f4" stroke="#335746" strokeWidth="2" />
         <path d="M116 52V70M109 63L116 70L123 63" fill="none" stroke="#4e8eba" strokeWidth="2" strokeLinecap="round" />
       </g>
+
 
       <g className="montage-idea-bubble" aria-hidden="true">
         <path d="M210 22H249Q257 22 257 31V53Q257 61 249 61H238L226 70V61H210Q202 61 202 53V31Q202 22 210 22Z" fill="#fff8db" stroke="#c6b77d" strokeWidth="1.5" />
@@ -235,7 +244,7 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
           <motion.g animate={{ x: leftX, y: leftY }} transition={poseTransition}>
             <g className="montage-hand-left">
               <g className="montage-pencil" aria-hidden="true"><path d="M302 153L307 152L312 178L308 184L305 179Z" fill="#e9bb68" stroke="#8d774f" strokeWidth="1.2" /><path d="M308 184L312 178L305 179Z" fill="#f7e1b5" /><path d="M308 184L309 180" stroke="#465e4e" strokeWidth="1.5" /></g>
-              <path d={guiding ? "M289 165L277 156Q274 154 273 157Q272 159 276 162L286 170L291 176Q298 179 300 175L301 170Q300 167 296 168L293 166Z" : "M289 165Q295 163 303 170L308 174Q310 178 306 178L297 173L302 178Q302 181 298 179L290 175Z"} fill="#efc39d" stroke="#9c7156" strokeWidth="1.4" strokeLinejoin="round" />
+              <path d="M289 165Q295 163 303 170L308 174Q310 178 306 178L297 173L302 178Q302 181 298 179L290 175Z" fill="#efc39d" stroke="#9c7156" strokeWidth="1.4" strokeLinejoin="round" />
               <g className="montage-magnifier" aria-hidden="true"><path d="M303 170L313 152" stroke="#577e6a" strokeWidth="5" strokeLinecap="round" /><circle cx="318" cy="143" r="14" fill="#dceef4cc" stroke="#3f6b57" strokeWidth="3" /><path d="M312 136Q318 132 324 138" fill="none" stroke="#fffef6" strokeWidth="3" strokeLinecap="round" /></g>
             </g>
           </motion.g>
@@ -246,24 +255,22 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
           <g className="montage-working-forearm">
             <motion.path d="M363 155Q356.5 164.5 346 170" animate={{ d: rightForearm }} transition={poseTransition} fill="none" stroke="#6f5141" strokeWidth="15" strokeLinecap="round" />
             <motion.path d="M363 155Q356.5 164.5 346 170" animate={{ d: rightForearm }} transition={poseTransition} fill="none" stroke="#efc39d" strokeWidth="12" strokeLinecap="round" />
-            <motion.g animate={{ x: handX, y: handY }} transition={poseTransition}><g className="montage-hand-right"><path d={celebrating ? "M346 175Q338 171 337 164L331 156Q329 152 332 151L339 157L335 143Q334 139 337 139Q340 139 341 143L344 153L343 138Q343 134 346 135Q349 135 349 139L350 153L353 140Q354 136 357 138Q359 139 358 143L355 157L360 150Q362 147 365 150Q367 152 364 156L354 172L350 176Z" : "M349 165Q342 163 335 170L330 174Q328 178 332 178L341 173L336 178Q336 181 340 179L348 175Z"} fill="#efc39d" stroke="#9c7156" strokeWidth="1.4" strokeLinejoin="round" /></g></motion.g>
+            <motion.g animate={{ x: handX, y: handY }} transition={poseTransition}><g className="montage-hand-right">
+              <path d="M349 165Q342 163 335 170L330 174Q328 178 332 178L341 173L336 178Q336 181 340 179L348 175Z" fill="#efc39d" stroke="#9c7156" strokeWidth="1.4" strokeLinejoin="round" />
+            </g></motion.g>
           </g>
         </g>
       </g>
-      <g className="montage-release-plane" aria-hidden="true"><path d="M-13 4L18-9L3 15L0 5Z" fill="#fff6da" stroke="#4a7962" strokeWidth="1.6" strokeLinejoin="round" /><path d="M0 5L18-9" stroke="#7fa58b" strokeWidth="1.4" /></g>
-      <g className="montage-release-sparkles" fill="none" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-        <path d="M374 49V58M369 54H379" stroke="#c8a052" /><path d="M405 70L410 65M405 65L410 70" stroke="#c77a62" /><path d="M353 15L358 10M353 10L358 15" stroke="#679b8c" />
-      </g>
       <g className="montage-review-seal" aria-hidden="true"><circle cx="472" cy="57" r="18" fill="#eef5df" stroke="#7ba075" strokeWidth="1.6" /><path d="M462 57L469 64L482 49" fill="none" stroke="#438361" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></g>
-      <g transform="translate(0 40)">
+      <g transform="translate(0 80)">
       {/* A shallow isometric desk grounds the upright, readable monitor. */}
       <path d="M37 425H601L626 449H13Z" fill="#e9d6ad" stroke="#335746" strokeWidth="2.2" strokeLinejoin="round" />
       <path d="M13 449H626V466H13Z" fill="#c1ad87" stroke="#335746" strokeWidth="2.2" />
       <path d="M42 467L38 491M595 467L602 491" stroke="#335746" strokeWidth="8" strokeLinecap="round" />
       <path d="M290 403L282 431H358L349 403" fill="#8bab99" stroke="#335746" strokeWidth="2" />
       <path d="M272 432H367" stroke="#335746" strokeWidth="5" strokeLinecap="round" />
-      <rect x="19" y="148" width="602" height="263" rx="13" fill="#365c4c" stroke="#244336" strokeWidth="2.5" />
-      <rect x="30" y="160" width="580" height="236" rx="7" fill="#fffef9" />
+      <rect x="19" y="108" width="602" height="303" rx="13" fill="#365c4c" stroke="#244336" strokeWidth="2.5" />
+      <rect x="30" y="120" width="580" height="276" rx="7" fill="#fffef9" />
       <circle cx="320" cy="403" r="2" fill="#bdd3bd" />
       <g className="montage-cup"><path d="M541 417H563L559 440H545Z" fill="#fff9dc" stroke="#42634b" strokeWidth="1.7" /><path d="M563 422Q578 421 573 430Q570 435 561 433" fill="none" stroke="#42634b" strokeWidth="2" /><path className="montage-steam" d="M551 410Q546 405 551 399" fill="none" stroke="#8faa8e" strokeWidth="1.6" /></g>
       <g className="montage-plant"><path d="M80 429V405M80 416Q63 416 61 402Q78 403 80 416M80 408Q81 393 94 388Q97 402 80 408" fill="#89ba78" stroke="#42634b" strokeWidth="1.8" /><path d="M68 425H93L88 443H73Z" fill="#edc571" stroke="#42634b" strokeWidth="1.8" /></g>
@@ -271,39 +278,39 @@ export default function BuildJourneyScene({ stage, description, onFocusChange, o
     </svg>
 
     <div className="montage-monitor" aria-label={`Project workspace: ${titles[stage]}`}>
-      <header className="montage-window-heading"><span className="montage-window-dots" aria-hidden="true"><i /><i /><i /></span><strong>Project workspace</strong><span>{["The brief", "An approach", "The journey", "The review", "The release"][stage]}</span></header>
-      <div className="montage-continuity-screen">
-        <div className="montage-feature-card">
-          <span className="montage-feature-icon" aria-hidden="true">{finished ? "✓" : "✦"}</span>
-          <div><strong>A useful first version</strong></div>
-          <span className="montage-feature-state" data-ready={finished}>
-            <AnimatePresence initial={false} mode="wait"><motion.span key={`${stage}-${finished}`} initial={animate ? { opacity: 0, y: 3 } : false} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: reducedMotion ? 0 : .18 }}>{finished ? screen.state : screen.working}</motion.span></AnimatePresence>
-          </span>
-        </div>
+      <header className="montage-window-heading">
+        <span className="montage-window-dots" aria-hidden="true"><i /><i /><i /></span>
+        <strong><span className="montage-example-label">Example:</span> request tracker</strong>
+        <span className="montage-feature-state" data-ready={finished}>
+          <AnimatePresence initial={false} mode="wait"><motion.span key={`${stage}-${finished}`} initial={animate ? { opacity: 0, y: 3 } : false} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: reducedMotion ? 0 : .18 }}>{finished ? screen.state : stage === 4 && completed >= 2 ? "Observing" : screen.working}</motion.span></AnimatePresence>
+        </span>
+      </header>
+      <div className="montage-continuity-screen" data-diagram={stage === 2 || stage === 4}>
         <div className="montage-step-cards" data-flow={stage === 2 || stage === 4}>
-          {screen.cards.map(([kind, label], index) => <button type="button" className="montage-step-card" data-complete={completed > index} data-current={working && pointerIndex === index} key={index} onClick={() => replay(index)} aria-label={`Watch the engineer: ${label.toLowerCase()}`}>
+          {screen.cards.map(([tag, label], index) => <button type="button" className="montage-step-card" data-complete={completed > index} data-current={working && pointerIndex === index} key={index} onClick={() => replay(index)} aria-label={`Watch the engineer: ${label.toLowerCase()}`}>
+            <span className="montage-step-index" aria-hidden="true">{tag}</span>
             <AnimatePresence initial={false} mode="wait"><motion.div key={`${stage}-${index}`} initial={animate ? { opacity: 0, y: 5 } : false} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: reducedMotion ? 0 : .28, delay: reducedMotion ? 0 : index * .035 }}>
-              <span>{kind}</span><b>{label}</b>
+              {(stage === 2 || stage === 4) && <JourneyNodeIcon stage={stage} index={index} />}
+              <b>{stage === 4 && index === 1 && completed >= 2 ? "Healthy" : label}</b>
             </motion.div></AnimatePresence>
             <i className="montage-step-check" aria-hidden="true">✓</i>
-            {index < 2 && <i className="montage-flow-arrow" aria-hidden="true">→</i>}
+            {index < 2 && <i className="montage-flow-arrow" data-active={completed >= index + 1} aria-hidden="true">→</i>}
           </button>)}
+          {stage === 2 && <svg className="montage-return-path" data-visible={completed >= 3} viewBox="0 0 540 22" preserveAspectRatio="none" fill="none" aria-hidden="true"><path d="M270 1V15H90V1M85 7L90 1L95 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" pathLength="100" /></svg>}
+          {stage === 2 && <span className="montage-request-token" key={`request-${action.count}`} data-motion={requestMotion} aria-hidden="true" />}
+          {stage === 4 && <span className="montage-release-package" key={`delivery-${action.count}`} data-travel={delivering} aria-hidden="true"><svg viewBox="0 0 24 24" fill="#f4ce87" stroke="#456d56" strokeWidth="1.5" strokeLinejoin="round"><path d="M3 6L12 2L21 6L12 10ZM3 6V17L12 22L21 17V6M12 10V22M8 4L17 8V13" /></svg></span>}
         </div>
-        <div className="montage-continuity-note">
-          <span aria-hidden="true">{stage === 4 && finished ? "↻" : "↳"}</span>
-          <AnimatePresence initial={false} mode="wait"><motion.span key={`${stage}-${finished}`} initial={{ opacity: reducedMotion ? 1 : 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0 : .24 }}>{finished ? screen.note : ["Listen → focus → agree", "Explore → compare → choose", "Start → connect → respond", "Build → test → review", "Prepare → ship → learn"][stage]}</motion.span></AnimatePresence>
-        </div>
+        <p className="montage-process-note" data-return={stage === 2 && completed >= 3} data-feedback={stage === 4 && completed >= 3}><span aria-hidden="true">{stage === 2 && completed >= 3 || stage === 4 && completed >= 3 ? "↶" : "→"}</span>{screen.notes[completed]}</p>
       </div>
       <motion.div
         className="montage-screen-cursor"
         aria-hidden="true"
-        animate={{ left: working ? `${19 + pointerIndex * 31}%` : "88%", top: working ? "63%" : "86%", opacity: selecting ? 1 : 0 }}
+        animate={{ left: working ? `${19 + pointerIndex * 31}%` : "88%", top: working ? "62%" : "84%", opacity: selecting ? 1 : 0 }}
         transition={poseTransition}
       >
         <span className="montage-screen-click" data-click={pressing} />
         <svg viewBox="0 0 24 28"><path d="M3 2L20 15L12 16L8 24Z" fill="#315c49" stroke="#fffdf3" strokeWidth="2" strokeLinejoin="round" /></svg>
       </motion.div>
-      <div className="montage-screen-feedback" data-visible={stage === 4 && visibleBeat >= 8} aria-hidden="true"><span>♡</span> Feedback → the next idea</div>
     </div>
     <button className="journey-monitor-action" type="button" aria-controls={`${id}-result`} onClick={() => replay()}>
       <span>{acted ? "Replay this moment" : actions[stage]}</span><span aria-hidden="true">{acted ? "↻" : "→"}</span>

@@ -48,18 +48,18 @@ export const projectMedia = {
       "Actual 13F filings frontend running locally with the saved research database.",
   },
   PneuRelief: {
-    src: "images/project-frontends/pneurelief-signin.webp",
-    alt: "PneuRelief mobile app sign-in screen with its account access controls.",
+    src: "images/project-frontends/pneurelief-monitoring.webp",
+    alt: "PneuRelief pneumatic-control screen showing four pressure zones, automatic mode and a populated pressure graph with clearly labeled synthetic readings.",
     kind: "Application screen",
     caption:
-      "Actual PneuRelief sign-in interface rendered from the React Native app's web preview.",
+      "PneuRelief’s actual pneumatic-control interface, rendered locally with synthetic pressure readings and offline controls. No device is connected.",
   },
   SignMeUp: {
-    src: "images/project-frontends/signmeup-aurora.webp",
-    alt: "Aurora's actual concierge interface with links to the PathGuardian and sign-language modules.",
+    src: "images/portfolio/signmeup-gesture-demo.webp",
+    alt: "SignMeUp’s interpreter in use, showing gesture landmarks, a live hello prediction and its typing workspace.",
     kind: "Accessibility suite",
     caption:
-      "Three connected modules: SignMeUp gesture recognition, Aurora wellness support and PathGuardian navigation.",
+      "The original SignMeUp gesture-recognition demo. Explore its interpreter, Aurora wellness support and PathGuardian navigation below.",
     gallery: [
       {
         title: "SignMeUp · Interpreter",
@@ -122,10 +122,24 @@ export const projectMedia = {
     caption: "Actual stress-testing frontend using offline demonstration data.",
   },
   "EC2 Recovery & Trade Automation": {
-    src: "images/project-frontends/ec2-risk.webp",
-    alt: "EC2 recovery and trade automation workbench's Risk History view showing simulated portfolio risk over time.",
+    src: "images/project-frontends/ec2-engine.webp",
+    alt: "NUSSIF’s trade-engine operator interface showing readiness checks, its kill switch and measured simulator latency.",
     kind: "Dashboard",
-    caption: "Actual Risk History interface using the repository's simulator, without a live broker connection.",
+    caption: "Actual trade-engine controls running against the project’s local simulator. Prices are synthetic; AWS and the broker are disconnected.",
+    gallery: [
+      {
+        title: "Trade engine · Controls",
+        src: "images/project-frontends/ec2-engine.webp",
+        alt: "Trade readiness checks, kill-switch control and measured local simulator latency in the original NUSSIF operator dashboard.",
+        caption: "The original trading workspace with its C++ simulator running locally. No live orders were placed.",
+      },
+      {
+        title: "EC2 recovery · Architecture",
+        src: "images/project-frontends/ec2-recovery.webp",
+        alt: "The original recovery dashboard’s How it works screen explaining instance replacement, a single-writer lease and order persistence.",
+        caption: "The project’s recovery architecture view. This explains the design; it is not evidence of a live AWS failover run.",
+      },
+    ],
   },
   "Portfolio Manager Competition": {
     src: "images/project-frontends/pm-competition.webp",
@@ -158,10 +172,10 @@ export const projectMedia = {
     caption: "Actual React interface from the Electron hackathon prototype.",
   },
   Help4Good: {
-    src: "images/project-frontends/help4good.webp",
-    alt: "Help4Good conversational support interface for caregivers and care recipients.",
+    src: "images/project-frontends/help4good-workspace.webp",
+    alt: "Help4Good’s conversational support workspace with a clearly labeled fictional caregiver conversation and memory controls.",
     kind: "Application screen",
-    caption: "Actual Help4Good frontend with a clean demonstration greeting.",
+    caption: "Help4Good’s actual Streamlit interface with a clearly labeled fictional conversation; replies supplied by a local demo adapter.",
   },
 };
 

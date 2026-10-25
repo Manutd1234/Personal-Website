@@ -1339,7 +1339,7 @@
     .book-stage:not([data-open="true"]):not([data-returning="true"]):not(
       [data-dragging="true"]
     ):not([data-rotating]):not([data-suspended])
-    .book-orbit-item[data-current="true"] > .book-click:is([data-hovered="true"], :focus-visible) {
+    .book-orbit-item[data-current="true"] > .book-click:is([data-hovered="true"], :focus-visible:not([data-restored-focus="true"])) {
     --preview-cover-angle: -68deg;
     --preview-leaf-angle: -18deg;
     --preview-under-first-angle: -2deg;
@@ -1351,7 +1351,7 @@
     .book-stage:not([data-open="true"]):not([data-returning="true"]):not(
       [data-dragging="true"]
     ):not([data-rotating]):not([data-suspended])
-    .book-orbit-item[data-current="true"] > .book-click:is([data-hovered="true"], :focus-visible)
+    .book-orbit-item[data-current="true"] > .book-click:is([data-hovered="true"], :focus-visible:not([data-restored-focus="true"]))
     .book-page-leaf {
     animation: book-preview-leaf 4200ms 300ms ease-in-out infinite;
   }
@@ -1359,7 +1359,7 @@
     .book-stage:not([data-open="true"]):not([data-returning="true"]):not(
       [data-dragging="true"]
     ):not([data-rotating]):not([data-suspended])
-    .book-orbit-item[data-current="true"] > .book-click:is([data-hovered="true"], :focus-visible)
+    .book-orbit-item[data-current="true"] > .book-click:is([data-hovered="true"], :focus-visible:not([data-restored-focus="true"]))
     .book-under-leaf-second {
     animation: book-preview-underleaf 4200ms 750ms ease-in-out infinite;
   }
@@ -1467,15 +1467,7 @@
   color: #173f2e;
   background: #fffaf0;
 }
-.book-carousel .book-original-preview,
-.book-carousel .book-return-preview { display: block; }
-.book-carousel .book-return-preview { display: none; }
-.book-carousel .book-stage[data-returning="true"] .book-original-preview:has(+ .book-return-preview:not(:empty)) {
-  display: none;
-}
-.book-carousel .book-stage[data-returning="true"] .book-return-preview:not(:empty) {
-  display: block;
-}
+.book-carousel .book-original-preview { display: block; }
 @container project-books (max-width: 480px) {
   .book-carousel .book-project-picker select {
     padding-left: 8px;
